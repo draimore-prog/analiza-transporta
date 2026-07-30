@@ -215,6 +215,157 @@
         </div>
     </div>
 
+    <!-- ================= MODAL ZA UNOS NOVOG TROŠKA / SERVISNOG NALOGA ================= -->
+    <div id="newCostModal" class="fixed inset-0 bg-slate-900/70 hidden flex justify-center items-center z-50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-100">
+            <div class="flex justify-between items-center p-5 bg-gradient-to-r from-emerald-800 to-teal-900 text-white">
+                <div>
+                    <h2 class="text-xl font-extrabold tracking-tight flex items-center gap-2">
+                        <span>📝 Unos Novog Troška / Servisnog Naloga</span>
+                    </h2>
+                    <p class="text-xs text-emerald-200 mt-0.5">Evidentirajte servis ili trošak direktno u bazu bez potrebe za Excel tabelom</p>
+                </div>
+                <button onclick="closeNewCostModal()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-lg w-9 h-9 flex items-center justify-center text-2xl font-light transition-colors">&times;</button>
+            </div>
+
+            <form onsubmit="handleCreateNewCost(event)" class="p-6 overflow-y-auto space-y-6 bg-slate-50">
+                <!-- SEKCIJA 1: OSNOVNI PODACI O VOZILU -->
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <h3 class="text-xs font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <span>🚛 1. Osnovni Podaci o Vozilu / Mehanizaciji</span>
+                        <span class="text-[10px] font-normal text-slate-500 lowercase">(izborom registracije automatski se popunjavaju ostala polja)</span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Reg. Oznaka <span class="text-red-500">*</span></label>
+                            <input type="text" id="ncReg" required list="ncVehicleList" placeholder="Unesite ili izaberite reg..." onchange="ncOnVehicleSelect()" oninput="ncOnVehicleSelect()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-black uppercase outline-none focus:ring-2 focus:ring-emerald-500 bg-emerald-50/30">
+                            <datalist id="ncVehicleList"></datalist>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">MT / Garažni Broj</label>
+                            <input type="text" id="ncMt" placeholder="npr. GB-102 ili MT-50" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Godište (God. Pr.)</label>
+                            <input type="text" id="ncGod" placeholder="npr. 2022" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-semibold outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Tip Mehanizacije <span class="text-red-500">*</span></label>
+                            <select id="ncTip" required class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                                <option value="Teretno">Teretno</option>
+                                <option value="Putničko">Putničko</option>
+                                <option value="Skladišna mehanizacija">Skladišna mehanizacija</option>
+                                <option value="Priključno">Priključno</option>
+                                <option value="Radna mašina">Radna mašina</option>
+                                <option value="Ostalo">Ostalo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Marka i Model Vozila</label>
+                        <input type="text" id="ncMarka" placeholder="npr. Volvo FH500 ili Mercedes Actros" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <!-- SEKCIJA 2: DETALJI SERVISA I RAČUN -->
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <h3 class="text-xs font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <span>🔧 2. Detalji Servisa i Fakture</span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Datum <span class="text-red-500">*</span></label>
+                            <input type="date" id="ncDatum" required class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Broj Računa / RN</label>
+                            <input type="text" id="ncBrojRacuna" placeholder="npr. RN-2026/014" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-mono font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Serviser / Izvođač</label>
+                            <input type="text" id="ncServiser" list="ncSupplierList" placeholder="npr. Centralni Servis..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-emerald-500">
+                            <datalist id="ncSupplierList"></datalist>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Opis Kvara / Servisnih Radova <span class="text-red-500">*</span></label>
+                        <textarea id="ncOpis" required rows="2" placeholder="Unesite detaljan opis zamijenjenih dijelova ili izvršenih usluga..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                    </div>
+                </div>
+
+                <!-- SEKCIJA 3: KATEGORIZACIJA -->
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <h3 class="text-xs font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <span>🏷️ 3. Kategorizacija i Vrsta Troška</span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Segment <span class="text-red-500">*</span></label>
+                            <select id="ncSegment" required class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                                <!-- Pune se dinamički iz postojeće baze -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Vrsta Troška</label>
+                            <select id="ncVrstaTroska" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                                <option value="Interno">Interni rad / servis</option>
+                                <option value="Eksterno">Eksterni dobavljač</option>
+                                <option value="Rezervni dio">Rezervni dio</option>
+                                <option value="Ostalo">Ostalo</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Vrsta Fakture</label>
+                            <select id="ncVrstaFakture" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                                <option value="Kombinovana">Kombinovana faktura (Dijelovi + Usluga)</option>
+                                <option value="Faktura za dijelove">Faktura za rezervne dijelove</option>
+                                <option value="Faktura za uslugu">Faktura za rad / uslugu</option>
+                                <option value="Interni nalog">Interni radni nalog</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEKCIJA 4: FINANSIJSKI IZNOSI -->
+                <div class="bg-gradient-to-br from-emerald-50 to-teal-50 p-5 rounded-xl border border-emerald-200 shadow-sm space-y-4">
+                    <h3 class="text-xs font-black uppercase text-emerald-900 tracking-wider flex items-center gap-2 border-b border-emerald-200/60 pb-2">
+                        <span>💰 4. Finansijski Obračun (Automatski Total)</span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Cijena Rezervnog Dijela (KM)</label>
+                            <input type="number" step="0.01" min="0" id="ncCijenaDijela" placeholder="0.00" oninput="ncCalculateTotal()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Cijena Usluge / Rada (KM)</label>
+                            <input type="number" step="0.01" min="0" id="ncCijenaUsluge" placeholder="0.00" oninput="ncCalculateTotal()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-black uppercase text-emerald-900 mb-1">Total Trošak (KM) <span class="text-red-500">*</span></label>
+                            <input type="number" step="0.01" min="0.01" id="ncTotalTrosak" required placeholder="0.00" class="w-full text-sm border-2 border-emerald-500 rounded-lg p-2 font-black text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-inner">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DUGMAD ZA POTVRDU -->
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeNewCostModal()" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-xs hover:bg-slate-100 transition-colors">
+                        Odustani
+                    </button>
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-6 py-2.5 rounded-xl shadow-lg transition-all text-xs flex items-center gap-2">
+                        <span>💾 Sačuvaj Trošak u Bazu</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MAIN APP WRAPPER -->
     <div class="max-w-7xl mx-auto relative">
         <!-- Header -->
@@ -239,6 +390,9 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-1.5">
+                        <button id="newCostBtn" onclick="openNewCostModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3 py-1.5 rounded-md transition-colors text-[11px] flex items-center gap-1 shadow-sm">
+                            <span>➕ Unos Troška</span>
+                        </button>
                         <button id="adminPanelBtn" onclick="openAdminPanel()" class="hidden bg-blue-600 hover:bg-blue-500 text-white font-bold px-2.5 py-1.5 rounded-md transition-colors text-[11px]">
                             ⚙️ Admin Panel
                         </button>
@@ -2023,6 +2177,187 @@
             
             let fileName = `Analiza_Troskova_Izvoz_${new Date().toISOString().slice(0,10)}.xlsx`;
             XLSX.writeFile(wb, fileName);
+        }
+
+        // ================= MODAL LOGIKA ZA DIREKTAN UNOS TROŠKOVA / SERVISNIH NALOGA =================
+        function openNewCostModal() {
+            if (!currentUser) {
+                alert("Morate biti prijavljeni na sistem za unos novih troškova.");
+                document.getElementById('loginModal').classList.remove('hidden');
+                return;
+            }
+
+            // Postavi podrazumijevani datum na danas
+            const todayStr = new Date().toISOString().slice(0, 10);
+            document.getElementById('ncDatum').value = todayStr;
+
+            // Resetuj polja forme
+            document.getElementById('ncReg').value = '';
+            document.getElementById('ncMt').value = '';
+            document.getElementById('ncGod').value = '';
+            document.getElementById('ncTip').value = 'Teretno';
+            document.getElementById('ncMarka').value = '';
+            document.getElementById('ncBrojRacuna').value = '';
+            document.getElementById('ncServiser').value = '';
+            document.getElementById('ncOpis').value = '';
+            document.getElementById('ncCijenaDijela').value = '';
+            document.getElementById('ncCijenaUsluge').value = '';
+            document.getElementById('ncTotalTrosak').value = '';
+
+            // Dinamičko popunjavanje dataliste vozila za automatsko dopunjavanje
+            let vehicleMap = new Map();
+            globalData.forEach(item => {
+                if (item.reg && !vehicleMap.has(item.reg)) {
+                    vehicleMap.set(item.reg, item);
+                }
+            });
+
+            const ncVehicleList = document.getElementById('ncVehicleList');
+            let vOptions = [];
+            Array.from(vehicleMap.keys()).sort().forEach(reg => {
+                let v = vehicleMap.get(reg);
+                let gb = (v.garazniBroj && v.garazniBroj !== '-') ? ` [GB: ${v.garazniBroj}]` : '';
+                vOptions.push(`<option value="${reg}${gb}"></option>`);
+            });
+            ncVehicleList.innerHTML = vOptions.join('');
+
+            // Dinamičko popunjavanje segmenta iz postojeće baze
+            let segmentsSet = new Set();
+            globalData.forEach(item => {
+                if (item.segment && item.segment !== 'Ostalo') segmentsSet.add(item.segment);
+            });
+            const ncSegmentSelect = document.getElementById('ncSegment');
+            let segOptions = ['<option value="">-- Izaberite Segment --</option>'];
+            Array.from(segmentsSet).sort().forEach(s => {
+                segOptions.push(`<option value="${s}">${s}</option>`);
+            });
+            segOptions.push('<option value="Ostalo">Ostalo</option>');
+            ncSegmentSelect.innerHTML = segOptions.join('');
+
+            // Dinamičko popunjavanje dobavljača / servisera
+            let suppliersSet = new Set();
+            globalData.forEach(item => {
+                if (item.dobavljacOrig && item.dobavljacOrig !== '-' && item.dobavljacOrig !== 'Nepoznato') {
+                    suppliersSet.add(item.dobavljacOrig);
+                }
+            });
+            const ncSupplierList = document.getElementById('ncSupplierList');
+            let supOptions = [];
+            Array.from(suppliersSet).sort().forEach(sup => {
+                supOptions.push(`<option value="${sup}"></option>`);
+            });
+            ncSupplierList.innerHTML = supOptions.join('');
+
+            document.getElementById('newCostModal').classList.remove('hidden');
+        }
+
+        function closeNewCostModal() {
+            document.getElementById('newCostModal').classList.add('hidden');
+        }
+
+        function ncOnVehicleSelect() {
+            let inputVal = document.getElementById('ncReg').value.trim().toUpperCase();
+            if (!inputVal) return;
+
+            let cleanReg = inputVal.split(' [')[0].trim();
+            let match = globalData.find(item => item.reg === cleanReg || item.reg.toUpperCase().includes(cleanReg));
+
+            if (match) {
+                if (match.garazniBroj && match.garazniBroj !== '-') document.getElementById('ncMt').value = match.garazniBroj;
+                if (match.godProizvodnje && match.godProizvodnje !== '-') document.getElementById('ncGod').value = match.godProizvodnje;
+                if (match.tipMehan) document.getElementById('ncTip').value = match.tipMehan;
+                if (match.markaVoz) document.getElementById('ncMarka').value = match.markaVoz;
+            }
+        }
+
+        function ncCalculateTotal() {
+            let part = parseFloat(document.getElementById('ncCijenaDijela').value) || 0;
+            let serv = parseFloat(document.getElementById('ncCijenaUsluge').value) || 0;
+            let total = part + serv;
+            if (total > 0) {
+                document.getElementById('ncTotalTrosak').value = total.toFixed(2);
+            }
+        }
+
+        async function handleCreateNewCost(event) {
+            event.preventDefault();
+
+            let rawReg = document.getElementById('ncReg').value.trim().toUpperCase();
+            let reg = rawReg.split(' [')[0].trim();
+            if (!reg) { alert("Molimo unesite registarsku oznaku!"); return; }
+
+            let dateVal = document.getElementById('ncDatum').value;
+            let dateObj = dateVal ? new Date(dateVal) : new Date();
+            let year = dateObj.getFullYear();
+            let month = dateObj.getMonth() + 1;
+
+            let costPart = parseFloat(document.getElementById('ncCijenaDijela').value) || 0;
+            let costService = parseFloat(document.getElementById('ncCijenaUsluge').value) || 0;
+            let totalCost = parseFloat(document.getElementById('ncTotalTrosak').value) || (costPart + costService);
+
+            if (!totalCost || totalCost <= 0) {
+                alert("Molimo unesite ispravan iznos troška!");
+                return;
+            }
+
+            let segment = document.getElementById('ncSegment').value || 'Ostalo';
+            let tipMehan = document.getElementById('ncTip').value || 'Teretno';
+            let dobavljacOrig = document.getElementById('ncServiser').value.trim() || 'Nepoznato';
+            let opisPopravke = document.getElementById('ncOpis').value.trim();
+            let garazniBroj = document.getElementById('ncMt').value.trim() || '-';
+            let godProizvodnje = document.getElementById('ncGod').value.trim() || '-';
+            let markaVoz = document.getElementById('ncMarka').value.trim() || 'Nepoznato';
+            let brojRacuna = document.getElementById('ncBrojRacuna').value.trim() || '-';
+            let vrstaTroska = document.getElementById('ncVrstaTroska').value;
+            let isInternal = dobavljacOrig.toLowerCase().includes('intern') || vrstaTroska === 'Interno';
+
+            let newItem = {
+                reg,
+                garazniBroj,
+                year,
+                month,
+                datumObj: dateObj,
+                segment,
+                type: isInternal ? 'Interno' : 'Eksterno',
+                dobavljacOrig,
+                opisPopravke,
+                tipMehan,
+                markaVoz,
+                godProizvodnje,
+                cost: totalCost,
+                costPart,
+                costService,
+                brojRacuna
+            };
+
+            // Čuvanje u Cloud Bazu (Firestore)
+            if (window.db) {
+                try {
+                    await window.db.collection('fleet_costs').add({
+                        ...newItem,
+                        datum: dateObj.toISOString(),
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log("Dodano u Firestore");
+                } catch (e) {
+                    console.warn("Notice saving to Firestore:", e);
+                }
+            }
+
+            // Ažuriranje in-memory niza podataka i ponovno primjenjivanje filtera
+            globalData.unshift(newItem);
+            yearsSet.add(year);
+
+            applyFilters();
+            closeNewCostModal();
+
+            alert(`✅ Trošak za vozilo ${reg} od ${totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 2})} KM je uspješno sačuvan u bazu!`);
+        }
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('vehicleModal')) closeVehicleModal();
+            if (event.target == document.getElementById('newCostModal')) closeNewCostModal();
+            if (event.target == document.getElementById('adminPanelModal')) closeAdminPanel();
         }
     </script>
 </body>
