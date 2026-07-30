@@ -4,7 +4,11 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/scratch/**"
+      "**/scratch/**",
+      "node_modules/**",
+      "scripts/**",
+      "package*.json",
+      "*.xlsx"
     ],
     "rewrites": [
       {
