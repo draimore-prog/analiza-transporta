@@ -252,7 +252,7 @@
                         </div>
                         <div>
                             <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Tip Mehanizacije <span class="text-red-500">*</span></label>
-                            <select id="ncTip" required class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                            <select id="ncTip" required onchange="ncOnTipChange()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
                                 <option value="Teretno">Teretno</option>
                                 <option value="Putničko">Putničko</option>
                                 <option value="Skladišna mehanizacija">Skladišna mehanizacija</option>
@@ -263,9 +263,23 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Marka i Model Vozila</label>
-                        <input type="text" id="ncMarka" placeholder="npr. Volvo FH500 ili Mercedes Actros" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-emerald-500">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Marka i Model Vozila</label>
+                            <input type="text" id="ncMarka" placeholder="npr. Volvo FH500 ili Mercedes Actros" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+
+                        <!-- DINAMIČKO POLJE ZA KILOMETRAŽU (PUTNIČKO I TERETNO) -->
+                        <div id="ncKmContainer">
+                            <label class="block text-[11px] font-extrabold uppercase text-indigo-900 mb-1">🛣️ Kilometraža na datum servisa (km)</label>
+                            <input type="number" id="ncKilometraza" placeholder="npr. 285400" class="w-full text-xs border border-indigo-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-indigo-50/40">
+                        </div>
+
+                        <!-- DINAMIČKO POLJE ZA RADNE SATE (SKLADIŠNA MEHANIZACIJA) -->
+                        <div id="ncHoursContainer" class="hidden">
+                            <label class="block text-[11px] font-extrabold uppercase text-amber-900 mb-1">⏱️ Radni Sati na datum servisa (h / radni sati)</label>
+                            <input type="number" id="ncRadniSati" placeholder="npr. 4250" class="w-full text-xs border border-amber-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-amber-500 bg-amber-50/40">
+                        </div>
                     </div>
                 </div>
 
@@ -2181,8 +2195,8 @@
 
         // ================= MODAL LOGIKA ZA DIREKTAN UNOS TROŠKOVA / SERVISNIH NALOGA =================
         function openNewCostModal() {
-            if (!currentUser) {
-                alert("Morate biti prijavljeni na sistem za unos novih troškova.");
+            if (!activeUser) {
+                alert("Morate biti prijavljeni na sistem za unos novih troškova. Prijavite se putem dugmeta 'Prijava u Sistem' (npr. admin / admin123).");
                 document.getElementById('loginModal').classList.remove('hidden');
                 return;
             }
@@ -2203,6 +2217,10 @@
             document.getElementById('ncCijenaDijela').value = '';
             document.getElementById('ncCijenaUsluge').value = '';
             document.getElementById('ncTotalTrosak').value = '';
+            document.getElementById('ncKilometraza').value = '';
+            document.getElementById('ncRadniSati').value = '';
+
+            ncOnTipChange();
 
             // Dinamičko popunjavanje dataliste vozila za automatsko dopunjavanje
             let vehicleMap = new Map();
@@ -2255,6 +2273,24 @@
             document.getElementById('newCostModal').classList.add('hidden');
         }
 
+        function ncOnTipChange() {
+            let tip = document.getElementById('ncTip').value;
+            let kmContainer = document.getElementById('ncKmContainer');
+            let hoursContainer = document.getElementById('ncHoursContainer');
+
+            if (tip === 'Putničko' || tip === 'Teretno') {
+                kmContainer.classList.remove('hidden');
+                hoursContainer.classList.add('hidden');
+            } else if (tip === 'Skladišna mehanizacija') {
+                kmContainer.classList.add('hidden');
+                hoursContainer.classList.remove('hidden');
+            } else {
+                // Priključno, Radna mašina, Ostalo: sakrij oba polja
+                kmContainer.classList.add('hidden');
+                hoursContainer.classList.add('hidden');
+            }
+        }
+
         function ncOnVehicleSelect() {
             let inputVal = document.getElementById('ncReg').value.trim().toUpperCase();
             if (!inputVal) return;
@@ -2265,7 +2301,10 @@
             if (match) {
                 if (match.garazniBroj && match.garazniBroj !== '-') document.getElementById('ncMt').value = match.garazniBroj;
                 if (match.godProizvodnje && match.godProizvodnje !== '-') document.getElementById('ncGod').value = match.godProizvodnje;
-                if (match.tipMehan) document.getElementById('ncTip').value = match.tipMehan;
+                if (match.tipMehan) {
+                    document.getElementById('ncTip').value = match.tipMehan;
+                    ncOnTipChange();
+                }
                 if (match.markaVoz) document.getElementById('ncMarka').value = match.markaVoz;
             }
         }
@@ -2311,6 +2350,9 @@
             let vrstaTroska = document.getElementById('ncVrstaTroska').value;
             let isInternal = dobavljacOrig.toLowerCase().includes('intern') || vrstaTroska === 'Interno';
 
+            let kilometraza = (tipMehan === 'Putničko' || tipMehan === 'Teretno') ? (parseFloat(document.getElementById('ncKilometraza').value) || null) : null;
+            let radniSati = (tipMehan === 'Skladišna mehanizacija') ? (parseFloat(document.getElementById('ncRadniSati').value) || null) : null;
+
             let newItem = {
                 reg,
                 garazniBroj,
@@ -2327,7 +2369,9 @@
                 cost: totalCost,
                 costPart,
                 costService,
-                brojRacuna
+                brojRacuna,
+                kilometraza,
+                radniSati
             };
 
             // Čuvanje u Cloud Bazu (Firestore)
