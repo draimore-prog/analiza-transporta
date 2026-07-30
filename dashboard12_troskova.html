@@ -815,6 +815,20 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Paginacija kontrole -->
+                <div class="flex flex-col sm:flex-row justify-between items-center p-3.5 bg-slate-50 border-t border-slate-200 text-xs gap-3">
+                    <span id="masterFleetPageInfo" class="text-slate-600 font-semibold">Prikazano 1 - 50 od 1.536 vozila</span>
+                    <div class="flex items-center gap-2">
+                        <button onclick="prevMasterFleetPage()" id="masterPrevBtn" class="px-3.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 font-bold text-slate-700 disabled:opacity-40 shadow-sm transition-all">
+                            ◀ Prethodna
+                        </button>
+                        <span id="masterCurrentPageDisplay" class="font-bold text-slate-800 bg-white px-3.5 py-1.5 rounded-lg border border-slate-300 shadow-sm">Stranica 1 od 31</span>
+                        <button onclick="nextMasterFleetPage()" id="masterNextBtn" class="px-3.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 font-bold text-slate-700 disabled:opacity-40 shadow-sm transition-all">
+                            Sledeća ▶
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1282,6 +1296,7 @@
                     
                     switchTab(1);
                     resetDrillDown();
+                    autoLoadMasterFleet();
                 }
             } catch (e) {
                 console.log("Auto-load dataset note:", e);
@@ -2408,37 +2423,60 @@
         }
 
         // ================= MASTER ŠIFRARNIK LOGIKA (TAB 4) =================
+        let masterFleetPage = 1;
+        const masterFleetPerPage = 50;
+
         async function autoLoadMasterFleet() {
             try {
                 const res = await fetch('fleet_master.json');
-                if (!res.ok) return;
-                const data = await res.json();
-                if (data && Array.isArray(data) && data.length > 0) {
-                    masterFleetData = data;
-                    renderMasterFleetTable();
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && Array.isArray(data) && data.length > 0) {
+                        masterFleetData = data;
+                        renderMasterFleetTable();
+                        return;
+                    }
                 }
             } catch (e) {
                 console.log("Notice auto-loading fleet_master.json:", e);
             }
+
+            // Fallback: build from globalData if fleet_master.json isn't loaded yet
+            if (masterFleetData.length === 0 && globalData && globalData.length > 0) {
+                buildFallbackMasterFleetFromGlobalData();
+            }
         }
 
-        function renderMasterFleetTable() {
-            const tbody = document.getElementById('masterFleetTableBody');
-            if (!tbody) return;
+        function buildFallbackMasterFleetFromGlobalData() {
+            let map = new Map();
+            globalData.forEach(d => {
+                let reg = (d.reg || '').trim().toUpperCase();
+                if (!reg || reg === '-') return;
+                if (!map.has(reg)) {
+                    map.set(reg, {
+                        rb: map.size + 1,
+                        reg: reg,
+                        garazniBroj: d.garazniBroj || '-',
+                        tipMehan: d.tipMehan || 'Ostalo',
+                        markaVoz: d.markaVoz || 'Ostalo',
+                        godProizvodnje: d.godProizvodnje || '-',
+                        brojSasije: '-',
+                        status: 'Aktivno',
+                        pocetnaKmRh: 0,
+                        prodajnaKmRh: 0
+                    });
+                }
+            });
+            masterFleetData = Array.from(map.values());
+            renderMasterFleetTable();
+        }
 
+        function getFilteredMasterFleetData() {
             let searchTerm = (document.getElementById('masterFleetSearch')?.value || '').trim().toLowerCase();
             let tipFilter = (document.getElementById('masterFleetTipFilter')?.value || 'all');
             let statusFilter = (document.getElementById('masterFleetStatusFilter')?.value || 'Aktivno');
 
-            let isSuperAdmin = activeUser && (activeUser.username.toLowerCase() === 'emir.durakovic' || activeUser.role === 'superadmin');
-
-            const addBtn = document.getElementById('addVehicleMasterBtn');
-            if (addBtn) {
-                if (isSuperAdmin) addBtn.classList.remove('hidden');
-                else addBtn.classList.add('hidden');
-            }
-
-            let filtered = masterFleetData.filter(v => {
+            return masterFleetData.filter(v => {
                 let matchTip = tipFilter === 'all' || v.tipMehan === tipFilter;
                 let matchStatus = statusFilter === 'all' || (v.status && v.status.toLowerCase().includes(statusFilter.toLowerCase()));
 
@@ -2451,12 +2489,54 @@
                 }
                 return matchTip && matchStatus && matchSearch;
             });
+        }
+
+        function renderMasterFleetTable() {
+            const tbody = document.getElementById('masterFleetTableBody');
+            if (!tbody) return;
+
+            let isSuperAdmin = activeUser && (activeUser.username.toLowerCase() === 'emir.durakovic' || activeUser.role === 'superadmin');
+
+            const addBtn = document.getElementById('addVehicleMasterBtn');
+            if (addBtn) {
+                if (isSuperAdmin) addBtn.classList.remove('hidden');
+                else addBtn.classList.add('hidden');
+            }
+
+            // Fallback load if data is empty but globalData is populated
+            if (masterFleetData.length === 0 && globalData && globalData.length > 0) {
+                buildFallbackMasterFleetFromGlobalData();
+                return;
+            }
+
+            let filtered = getFilteredMasterFleetData();
+
+            let totalRecords = filtered.length;
+            let totalPages = Math.ceil(totalRecords / masterFleetPerPage) || 1;
+            if (masterFleetPage > totalPages) masterFleetPage = totalPages;
+            if (masterFleetPage < 1) masterFleetPage = 1;
+
+            let startIdx = (masterFleetPage - 1) * masterFleetPerPage;
+            let endIdx = Math.min(startIdx + masterFleetPerPage, totalRecords);
+            let pageData = filtered.slice(startIdx, endIdx);
 
             const badgeElem = document.getElementById('masterTotalBadge');
-            if (badgeElem) badgeElem.innerText = `${filtered.length.toLocaleString('bs-BA')} vozila`;
+            if (badgeElem) badgeElem.innerText = `${totalRecords.toLocaleString('bs-BA')} vozila`;
+
+            const pageInfo = document.getElementById('masterFleetPageInfo');
+            if (pageInfo) pageInfo.innerText = totalRecords > 0 ? `Prikazano ${startIdx + 1} - ${endIdx} od ${totalRecords.toLocaleString('bs-BA')} vozila` : 'Nema vozila za prikaz';
+
+            const pageDisp = document.getElementById('masterCurrentPageDisplay');
+            if (pageDisp) pageDisp.innerText = `Stranica ${masterFleetPage} od ${totalPages}`;
+
+            const prevBtn = document.getElementById('masterPrevBtn');
+            if (prevBtn) prevBtn.disabled = masterFleetPage <= 1;
+
+            const nextBtn = document.getElementById('masterNextBtn');
+            if (nextBtn) nextBtn.disabled = masterFleetPage >= totalPages;
 
             let rowsHTML = [];
-            filtered.forEach((v, idx) => {
+            pageData.forEach((v, idx) => {
                 let isInactive = v.status && v.status.toLowerCase().includes('neaktivno');
                 let isRashod = v.status && v.status.toLowerCase().includes('rashod');
                 
@@ -2466,7 +2546,7 @@
 
                 rowsHTML.push(`
                     <tr class="hover:bg-slate-50 border-b border-slate-100 transition-colors">
-                        <td class="py-2.5 px-3 text-center font-mono text-slate-500 text-xs">${idx + 1}</td>
+                        <td class="py-2.5 px-3 text-center font-mono text-slate-500 text-xs">${startIdx + idx + 1}</td>
                         <td class="py-2.5 px-3 font-black text-slate-900 text-xs tracking-tight">${v.reg}</td>
                         <td class="py-2.5 px-3 font-mono font-bold text-slate-700 text-xs">${v.garazniBroj}</td>
                         <td class="py-2.5 px-3 font-semibold text-slate-700 text-xs">${v.tipMehan}</td>
@@ -2499,7 +2579,24 @@
         }
 
         function filterMasterFleetTable() {
+            masterFleetPage = 1;
             renderMasterFleetTable();
+        }
+
+        function prevMasterFleetPage() {
+            if (masterFleetPage > 1) {
+                masterFleetPage--;
+                renderMasterFleetTable();
+            }
+        }
+
+        function nextMasterFleetPage() {
+            let filtered = getFilteredMasterFleetData();
+            let totalPages = Math.ceil(filtered.length / masterFleetPerPage) || 1;
+            if (masterFleetPage < totalPages) {
+                masterFleetPage++;
+                renderMasterFleetTable();
+            }
         }
 
         function openEditVehicleModal(regToEdit = null) {
