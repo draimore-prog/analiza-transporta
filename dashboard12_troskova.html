@@ -133,8 +133,24 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </button>
 
-                <div class="pt-3 border-t border-slate-100 text-center">
-                    <span class="text-[11px] text-slate-400">Podrazumijevani administrator: <strong class="text-slate-600">admin</strong> / <strong class="text-slate-600">admin123</strong></span>
+                <div class="pt-3 border-t border-slate-100 text-left text-[11px] text-slate-500 space-y-1.5 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <p class="font-black text-slate-700 uppercase text-[10px] tracking-wider">Aktivni prijavni nalozi:</p>
+                    <div class="flex items-center justify-between border-b border-slate-200/60 pb-1">
+                        <span>👑 <strong class="text-slate-800">emir.durakovic</strong></span>
+                        <span class="font-mono bg-white px-1.5 py-0.5 rounded border text-[10px]">Emir1235</span>
+                    </div>
+                    <div class="flex items-center justify-between border-b border-slate-200/60 pb-1">
+                        <span>✍️ <strong class="text-slate-800">anisa.bosnjic</strong></span>
+                        <span class="font-mono bg-white px-1.5 py-0.5 rounded border text-[10px]">Anisa1</span>
+                    </div>
+                    <div class="flex items-center justify-between border-b border-slate-200/60 pb-1">
+                        <span>✍️ <strong class="text-slate-800">selma.durakovic</strong></span>
+                        <span class="font-mono bg-white px-1.5 py-0.5 rounded border text-[10px]">Selma1</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span>📊 <strong class="text-slate-800">nedim.kisic</strong></span>
+                        <span class="font-mono bg-white px-1.5 py-0.5 rounded border text-[10px]">Nedim1</span>
+                    </div>
                 </div>
             </form>
         </div>
@@ -176,8 +192,9 @@
                             <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Uloga</label>
                             <div class="flex gap-2">
                                 <select id="newRole" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold bg-slate-50 outline-none">
-                                    <option value="user">Korisnik / Analitičar</option>
-                                    <option value="admin">Administrator</option>
+                                    <option value="editor">Admin - Unos faktura</option>
+                                    <option value="viewer">Analitičar (Samo pregled)</option>
+                                    <option value="superadmin">Super Administrator</option>
                                 </select>
                                 <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-lg shadow text-xs whitespace-nowrap transition-all">
                                     Spremi
@@ -827,12 +844,19 @@
     </div>
 
     <script>
-        // ================= AUTHENTICATION & USER MANAGEMENT (V15) =================
-        const LOCAL_STORAGE_USERS_KEY = 'transport_app_users_v15';
+        // ================= AUTHENTICATION & USER MANAGEMENT (V17) =================
+        const LOCAL_STORAGE_USERS_KEY = 'transport_app_users_v17';
         const SESSION_ACTIVE_USER_KEY = 'transport_app_active_user';
 
         let usersDB = [];
         let activeUser = null;
+
+        const defaultSystemUsers = [
+            { username: 'emir.durakovic', fullname: 'Emir Duraković', password: 'Emir1235', role: 'superadmin', createdAt: '2026-07-30' },
+            { username: 'anisa.bosnjic', fullname: 'Anisa Bošnjak', password: 'Anisa1', role: 'editor', createdAt: '2026-07-30' },
+            { username: 'selma.durakovic', fullname: 'Selma Duraković', password: 'Selma1', role: 'editor', createdAt: '2026-07-30' },
+            { username: 'nedim.kisic', fullname: 'Nedim Kisić', password: 'Nedim1', role: 'viewer', createdAt: '2026-07-30' }
+        ];
 
         function initAuthSystem() {
             let storedUsers = localStorage.getItem(LOCAL_STORAGE_USERS_KEY);
@@ -843,9 +867,19 @@
             }
 
             if (!usersDB || usersDB.length === 0) {
-                usersDB = [
-                    { username: 'admin', fullname: 'Glavni Administrator', password: 'admin123', role: 'admin', createdAt: '2026-07-30' }
-                ];
+                usersDB = [...defaultSystemUsers];
+                saveUsersDB();
+            } else {
+                defaultSystemUsers.forEach(defU => {
+                    let existingIdx = usersDB.findIndex(u => u.username.toLowerCase() === defU.username.toLowerCase());
+                    if (existingIdx === -1) {
+                        usersDB.push(defU);
+                    } else {
+                        usersDB[existingIdx].fullname = defU.fullname;
+                        usersDB[existingIdx].role = defU.role;
+                        usersDB[existingIdx].password = defU.password;
+                    }
+                });
                 saveUsersDB();
             }
 
@@ -853,7 +887,7 @@
             if (savedActive) {
                 try {
                     let userObj = JSON.parse(savedActive);
-                    let found = usersDB.find(u => u.username === userObj.username && u.password === userObj.password);
+                    let found = usersDB.find(u => u.username.toLowerCase() === userObj.username.toLowerCase());
                     if (found) {
                         activeUser = found;
                     }
@@ -871,17 +905,35 @@
             const loginModal = document.getElementById('loginModal');
             const userHeaderBadge = document.getElementById('userHeaderBadge');
             const adminPanelBtn = document.getElementById('adminPanelBtn');
+            const newCostBtn = document.getElementById('newCostBtn');
 
             if (activeUser) {
                 loginModal.classList.add('hidden');
                 userHeaderBadge.classList.remove('hidden');
                 document.getElementById('headerUserFullname').innerText = activeUser.fullname || activeUser.username;
-                document.getElementById('headerUserRole').innerText = activeUser.role === 'admin' ? 'Administrator' : 'Korisnik';
 
-                if (activeUser.role === 'admin') {
+                let roleLabel = 'Analitičar (Samo pregled)';
+                let isEmir = activeUser.username.toLowerCase() === 'emir.durakovic' || activeUser.role === 'superadmin';
+
+                if (isEmir) {
+                    roleLabel = '👑 Super Administrator';
+                } else if (activeUser.role === 'editor' || activeUser.role === 'admin') {
+                    roleLabel = '✍️ Admin (Unos faktura)';
+                }
+                document.getElementById('headerUserRole').innerText = roleLabel;
+
+                // SAMO emir.durakovic (ili superadmin) VIDI ADMIN PANEL!
+                if (isEmir) {
                     adminPanelBtn.classList.remove('hidden');
                 } else {
                     adminPanelBtn.classList.add('hidden');
+                }
+
+                // Samo nalozi sa pravom unosa (editor, superadmin) vide dugme "➕ Unos Troška"
+                if (activeUser.role !== 'viewer') {
+                    if (newCostBtn) newCostBtn.classList.remove('hidden');
+                } else {
+                    if (newCostBtn) newCostBtn.classList.add('hidden');
                 }
             } else {
                 loginModal.classList.remove('hidden');
@@ -915,8 +967,8 @@
         }
 
         function openAdminPanel() {
-            if (!activeUser || activeUser.role !== 'admin') {
-                alert("Pristup odbijen! Samo administratori mogu otvoriti ovaj panel.");
+            if (!activeUser || (activeUser.username.toLowerCase() !== 'emir.durakovic' && activeUser.role !== 'superadmin')) {
+                alert("Pristup odbijen! Samo Emir Duraković (Super Administrator) ima pristup Admin Panelu.");
                 return;
             }
             renderUserTable();
@@ -929,7 +981,7 @@
 
         function handleCreateUser(e) {
             e.preventDefault();
-            if (!activeUser || activeUser.role !== 'admin') return;
+            if (!activeUser || (activeUser.username.toLowerCase() !== 'emir.durakovic' && activeUser.role !== 'superadmin')) return;
 
             const uname = document.getElementById('newUsername').value.trim().toLowerCase();
             const fname = document.getElementById('newFullname').value.trim();
@@ -960,8 +1012,8 @@
         }
 
         function deleteUser(uname) {
-            if (uname === 'admin' || uname === activeUser.username) {
-                alert("Ne možete obrisati vlastiti ili podrazumijevani administrator nalog.");
+            if (uname.toLowerCase() === 'emir.durakovic' || uname === activeUser.username) {
+                alert("Ne možete obrisati vlastiti ili glavne administrator nalog.");
                 return;
             }
 
@@ -991,20 +1043,27 @@
 
             let rowsHTML = [];
             usersDB.forEach(user => {
-                let isSelfOrPrimary = user.username === 'admin';
+                let isSuper = user.username.toLowerCase() === 'emir.durakovic' || user.role === 'superadmin';
+                let roleBadgeHTML = '';
+                if (isSuper) {
+                    roleBadgeHTML = '<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-900 border border-purple-300">👑 Super Administrator</span>';
+                } else if (user.role === 'viewer') {
+                    roleBadgeHTML = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">📊 Analitičar (Samo pregled)</span>';
+                } else {
+                    roleBadgeHTML = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-300">✍️ Admin (Unos faktura)</span>';
+                }
+
                 rowsHTML.push(`
                     <tr class="hover:bg-slate-50 border-b border-slate-100">
                         <td class="py-2.5 px-3 font-bold text-slate-800">${user.username}</td>
                         <td class="py-2.5 px-3 font-medium text-slate-700">${user.fullname || '-'}</td>
                         <td class="py-2.5 px-3">
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${user.role === 'admin' ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-slate-100 text-slate-700 border border-slate-200'}">
-                                ${user.role === 'admin' ? 'Administrator' : 'Korisnik'}
-                            </span>
+                            ${roleBadgeHTML}
                         </td>
                         <td class="py-2.5 px-3 text-slate-500 text-[11px]">${user.createdAt || '-'}</td>
                         <td class="py-2.5 px-3 text-right font-medium">
                             <button onclick="changeUserPassword('${user.username}')" class="text-blue-600 hover:text-blue-800 font-bold mr-2 text-[11px]">🔑 Mijenjaj lozinku</button>
-                            ${!isSelfOrPrimary && user.username !== activeUser.username ? `
+                            ${!isSuper && user.username !== activeUser.username ? `
                                 <button onclick="deleteUser('${user.username}')" class="text-red-600 hover:text-red-800 font-bold text-[11px]">🗑️ Obriši</button>
                             ` : '<span class="text-slate-300 text-[11px]">-</span>'}
                         </td>
