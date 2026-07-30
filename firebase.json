@@ -1,0 +1,16 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/scratch/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/dashboard12_troskova.html"
+      }
+    ]
+  }
+}

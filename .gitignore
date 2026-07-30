@@ -1,0 +1,12 @@
+# Logs & Temp files
+*.log
+*.tmp
+.firebase/
+node_modules/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+.env
+.env.*
+

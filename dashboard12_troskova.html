@@ -1,0 +1,1952 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Održavanje Flote - Analitika V15 (Autentifikacija & Admin Panel)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <style>
+        body { background-color: #f8fafc; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1e293b; }
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.06); transition: all 0.25s ease; border: 1px solid #e2e8f0; }
+        .card:hover { box-shadow: 0 10px 25px rgba(0,0,0,0.06); }
+        .clickable-chart canvas { cursor: pointer; }
+        .filter-badge { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 9999px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .dropzone { border: 2px dashed #93c5fd; background-color: #eff6ff; transition: all 0.2s ease; cursor: pointer; }
+        .dropzone:hover, .dropzone.dragover { border-color: #2563eb; background-color: #dbeafe; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* PRILAGOĐENI STILOVI ZA PRINTE / PDF IZDAVANJE KARTONA VOZILA */
+        @media print {
+            @page { size: A4 portrait; margin: 10mm; }
+            body * { visibility: hidden; }
+            #vehicleModal, #vehicleModal * { visibility: visible; }
+            #vehicleModal { 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 100% !important; 
+                height: auto !important; 
+                background: white !important; 
+                backdrop-filter: none !important; 
+                display: block !important;
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+            .no-print { display: none !important; }
+            .print-full-width { 
+                width: 100% !important; 
+                max-height: none !important; 
+                overflow: visible !important; 
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+            }
+            
+            .modal-header-print {
+                background: white !important;
+                color: #0f172a !important;
+                border-bottom: 3px solid #2563eb !important;
+                padding: 12px 0 !important;
+            }
+            .modal-header-print * {
+                color: #0f172a !important;
+            }
+            #modalRegBadge {
+                border: 1.5px solid #2563eb !important;
+                color: #1d4ed8 !important;
+                background: #eff6ff !important;
+            }
+            
+            .print-kpi-grid {
+                display: grid !important;
+                grid-template-columns: repeat(4, 1fr) !important;
+                gap: 10px !important;
+                margin-top: 10px !important;
+                margin-bottom: 15px !important;
+            }
+            .print-kpi-grid > div {
+                border: 1px solid #cbd5e1 !important;
+                background: #f8fafc !important;
+                padding: 8px 10px !important;
+                border-radius: 6px !important;
+            }
+            .print-kpi-grid span { color: #475569 !important; font-weight: 700 !important; }
+            .print-kpi-grid p { color: #0f172a !important; font-weight: 800 !important; }
+            
+            .overflow-y-auto {
+                max-height: none !important;
+                overflow: visible !important;
+                border: none !important;
+            }
+            table { width: 100% !important; font-size: 10.5px !important; border-collapse: collapse !important; }
+            th, td { border-bottom: 1px solid #e2e8f0 !important; padding: 6px 8px !important; }
+            tr { page-break-inside: avoid !important; }
+            thead { background: #f1f5f9 !important; color: #0f172a !important; display: table-header-group !important; }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- ================= MODAL ZA PRIJAVU (LOGIN SCREEN) ================= -->
+    <div id="loginModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex justify-center items-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 p-8">
+            <div class="text-center mb-6">
+                <div class="inline-flex bg-blue-100 text-blue-700 p-4 rounded-full mb-3 shadow-inner">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-black text-slate-800 tracking-tight">Prijava u Sistem</h2>
+                <p class="text-xs text-slate-500 mt-1">Transport Analitika & Održavanje Flote</p>
+            </div>
+
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Korisničko ime</label>
+                    <input type="text" id="loginUsername" required placeholder="Unesite korisničko ime..." class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 font-semibold outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Lozinka</label>
+                    <input type="password" id="loginPassword" required placeholder="Unesite lozinku..." class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 font-semibold outline-none">
+                </div>
+
+                <div id="loginError" class="hidden p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg font-bold">
+                    Neispravno korisničko ime ili lozinka!
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 px-4 rounded-xl shadow-lg transition-all hover:shadow-xl flex items-center justify-center gap-2">
+                    <span>Prijavi se</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+
+                <div class="pt-3 border-t border-slate-100 text-center">
+                    <span class="text-[11px] text-slate-400">Podrazumijevani administrator: <strong class="text-slate-600">admin</strong> / <strong class="text-slate-600">admin123</strong></span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL ZA ADMIN PANEL (UPRAVLJANJE KORISNICIMA) ================= -->
+    <div id="adminPanelModal" class="fixed inset-0 bg-slate-900/60 hidden flex justify-center items-center z-50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-100">
+            <div class="flex justify-between items-center p-5 bg-gradient-to-r from-blue-900 to-indigo-900 text-white">
+                <div>
+                    <h2 class="text-xl font-extrabold tracking-tight flex items-center gap-2">
+                        <span>👤 Admin Panel - Upravljanje Korisničkim Nalozima</span>
+                    </h2>
+                    <p class="text-xs text-blue-200 mt-0.5">Kreirajte nove naloge, mijenjajte lozinke i upravljajte pristupima</p>
+                </div>
+                <button onclick="closeAdminPanel()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-lg w-9 h-9 flex items-center justify-center text-2xl font-light transition-colors">&times;</button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-6 bg-slate-50">
+                <!-- FORMA ZA KREIRANJE NOVOG KORISNIKA -->
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="text-sm font-extrabold text-slate-800 mb-3 flex items-center gap-2">
+                        <span>➕ Kreiranje Novog Korisnika</span>
+                    </h3>
+                    <form onsubmit="handleCreateUser(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Korisničko ime</label>
+                            <input type="text" id="newUsername" required placeholder="npr. marka" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Ime i prezime</label>
+                            <input type="text" id="newFullname" required placeholder="npr. Marko Marković" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Lozinka</label>
+                            <input type="password" id="newPassword" required placeholder="Lozinka..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Uloga</label>
+                            <div class="flex gap-2">
+                                <select id="newRole" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold bg-slate-50 outline-none">
+                                    <option value="user">Korisnik / Analitičar</option>
+                                    <option value="admin">Administrator</option>
+                                </select>
+                                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-lg shadow text-xs whitespace-nowrap transition-all">
+                                    Spremi
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- LISTA POSTOJEĆIH KORISNIKA -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                        <h3 class="text-sm font-extrabold text-slate-800">📋 Registrovani Korisnički Nalozi</h3>
+                        <span id="userCountBadge" class="text-xs bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full font-bold">1 nalog</span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-xs text-left">
+                            <thead class="bg-slate-100 font-bold text-slate-700 border-b border-slate-200">
+                                <tr>
+                                    <th class="py-2.5 px-3">Korisničko Ime</th>
+                                    <th class="py-2.5 px-3">Ime i Prezime</th>
+                                    <th class="py-2.5 px-3">Uloga</th>
+                                    <th class="py-2.5 px-3">Kreiran</th>
+                                    <th class="py-2.5 px-3 text-right">Akcije</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTableBody" class="divide-y divide-slate-100 bg-white">
+                                <!-- Pune se registrovani nalozi -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div class="max-w-7xl mx-auto relative">
+        <!-- Header -->
+        <header class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-200 pb-5">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tight">
+                    Transport Analitika <span class="text-blue-600">Održavanje</span>
+                    <span class="text-xs font-semibold bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full uppercase ml-2">Verzija 15</span>
+                </h1>
+                <p class="text-slate-500 mt-1 text-sm md:text-base">Struktura flote iz "KPI Total" (964 vozila u 2026.), automatski dani/mjeseci i Autentifikacija</p>
+            </div>
+
+            <!-- Korisnički profil & Upload Zona -->
+            <div class="w-full md:w-auto flex flex-col md:flex-row items-stretch md:items-center gap-3">
+                <!-- User Status Badge & Buttons -->
+                <div id="userHeaderBadge" class="hidden bg-slate-800 text-white p-2.5 rounded-xl text-xs flex items-center justify-between gap-3 shadow-md border border-slate-700">
+                    <div class="flex items-center gap-2">
+                        <span class="bg-blue-500/30 p-1.5 rounded-lg text-blue-300">👤</span>
+                        <div>
+                            <p class="font-extrabold" id="headerUserFullname">Admin</p>
+                            <p class="text-[10px] text-blue-300 font-mono" id="headerUserRole">Administrator</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button id="adminPanelBtn" onclick="openAdminPanel()" class="hidden bg-blue-600 hover:bg-blue-500 text-white font-bold px-2.5 py-1.5 rounded-md transition-colors text-[11px]">
+                            ⚙️ Admin Panel
+                        </button>
+                        <button onclick="handleLogout()" class="bg-red-600/80 hover:bg-red-600 text-white font-bold px-2.5 py-1.5 rounded-md transition-colors text-[11px]" title="Odjavi se sa sistema">
+                            🚪 Odjava
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Upload Zona / Dropzone -->
+                <div id="dropZone" class="dropzone p-4 rounded-xl flex items-center gap-4 shadow-sm relative group">
+                    <div class="bg-blue-600 text-white p-3 rounded-lg group-hover:scale-105 transition-transform shadow-md">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-blue-900" id="uploadStatusTitle">Učitajte vašu Excel tabelu</p>
+                        <p class="text-xs text-blue-600 font-medium" id="uploadStatusSubtitle">Prevucite .xlsx fajl ovdje ili kliknite za izbor</p>
+                    </div>
+                    <input type="file" id="excelFile" accept=".xlsx, .xls" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                </div>
+            </div>
+        </header>
+
+        <!-- Loader Indikator -->
+        <div id="loader" class="hidden my-8 p-6 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-center gap-3">
+            <svg class="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-blue-900 font-medium text-sm" id="loaderText">Parsiranje Excel podataka u toku...</span>
+        </div>
+
+        <!-- Glavni Filteri i Pametna Pretraga -->
+        <div id="filter-section" class="mb-6 bg-white p-5 rounded-xl shadow-sm border border-slate-200 hidden">
+            <div class="flex flex-wrap gap-4 mb-4 pb-4 border-b border-slate-100">
+                <div class="flex-1 min-w-[140px]">
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Godina</label>
+                    <select id="filterYear" class="w-full border-slate-300 rounded-lg shadow-sm p-2 text-sm border focus:ring-2 focus:ring-blue-500 bg-slate-50 font-medium">
+                        <option value="all">Sve godine</option>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[140px]">
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Mjesec</label>
+                    <select id="filterMonth" class="w-full border-slate-300 rounded-lg shadow-sm p-2 text-sm border focus:ring-2 focus:ring-blue-500 bg-slate-50 font-medium">
+                        <option value="all">Svi mjeseci</option>
+                        <option value="1">Januar</option>
+                        <option value="2">Februar</option>
+                        <option value="3">Mart</option>
+                        <option value="4">April</option>
+                        <option value="5">Maj</option>
+                        <option value="6">Juni</option>
+                        <option value="7">Juli</option>
+                        <option value="8">August</option>
+                        <option value="9">Septembar</option>
+                        <option value="10">Oktobar</option>
+                        <option value="11">Novembar</option>
+                        <option value="12">Decembar</option>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[140px]">
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Tip vozila</label>
+                    <select id="filterTip" class="w-full border-slate-300 rounded-lg shadow-sm p-2 text-sm border focus:ring-2 focus:ring-blue-500 bg-slate-50 font-medium">
+                        <option value="all">Svi tipovi</option>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[140px]">
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Proizvođač (Marka)</label>
+                    <select id="filterMarka" class="w-full border-slate-300 rounded-lg shadow-sm p-2 text-sm border focus:ring-2 focus:ring-blue-500 bg-slate-50 font-medium">
+                        <option value="all">Sve marke</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Pametno polje za pretragu vozila & Akcijska dugmad -->
+            <div class="flex flex-col lg:flex-row gap-4 items-stretch lg:items-end bg-gradient-to-r from-blue-50 to-indigo-50/50 p-4 rounded-xl border border-blue-100">
+                <div class="flex-grow relative">
+                    <label class="block text-xs font-bold uppercase text-blue-900 mb-1.5 flex items-center gap-1">
+                        🔍 Univerzalna pretraga (Garažni Broj ili Registracija)
+                    </label>
+                    <input type="text" id="modalVehicleInput" list="vehicleList" placeholder="Ukucaj garažni broj (npr. 1054) ili registraciju..." class="w-full border-blue-300 rounded-lg shadow-sm p-2.5 text-sm border focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 font-semibold placeholder:font-normal">
+                    <datalist id="vehicleList">
+                        <!-- Pune se opcije (Reg + GB) -->
+                    </datalist>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="handleVehicleSearch()" class="flex-1 lg:flex-none bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-lg shadow transition-all hover:shadow-md flex items-center justify-center gap-2 text-sm">
+                        <span>Prikaži karton vozila</span>
+                    </button>
+                    <button onclick="exportFilteredDataToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-lg shadow transition-all hover:shadow-md flex items-center justify-center gap-1.5 text-sm" title="Izvezi trenutni pregled u Excel">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span>Export Excel</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aktivni Filteri (Badges) -->
+        <div id="active-filters-container" class="mb-6 hidden flex flex-wrap gap-2 items-center bg-blue-50 p-3 rounded-lg border border-blue-100 text-sm">
+            <span class="font-semibold text-blue-900">Aktivni segment:</span>
+            <div id="badge-segment" class="filter-badge bg-green-100 text-green-800 hover:bg-green-200 border border-green-300 hidden" onclick="clearSegmentFilter()">
+                Segment: <span id="text-badge-segment" class="ml-1 mr-2 font-bold"></span> ✕
+            </div>
+        </div>
+
+        <!-- GLAVNA NAVIGACIJA SA TABOVIMA -->
+        <div id="tabs-navigation" class="mb-6 hidden border-b border-slate-200 flex flex-wrap gap-2 text-sm font-bold">
+            <button id="tabBtn1" onclick="switchTab(1)" class="px-5 py-3 rounded-t-xl bg-blue-600 text-white shadow-sm flex items-center gap-2 border-t border-x border-blue-600 transition-all">
+                <span>📊 Tab 1: Pregled Flote & KPI</span>
+            </button>
+            <button id="tabBtn2" onclick="switchTab(2)" class="px-5 py-3 rounded-t-xl bg-slate-100 text-slate-600 hover:bg-slate-200 border-t border-x border-slate-200 flex items-center gap-2 transition-all">
+                <span>📈 Tab 2: Analiza Održavanja & Trošak po Vozilu</span>
+            </button>
+            <button id="tabBtn3" onclick="switchTab(3)" class="px-5 py-3 rounded-t-xl bg-slate-100 text-slate-600 hover:bg-slate-200 border-t border-x border-slate-200 flex items-center gap-2 transition-all">
+                <span>📋 Tab 3: Matrica & Filtrirana Tabela</span>
+            </button>
+        </div>
+
+        <!-- ================= TAB 1: PREGLED FLOTE & KPI ================= -->
+        <div id="tabContent1" class="tab-content hidden">
+            <!-- KPI Kartice -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 md:gap-5 mb-8">
+                <div class="card border-l-4 border-blue-500">
+                    <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">Ukupan Trošak</p>
+                    <h3 class="text-2xl font-black text-slate-800 mt-2" id="kpi-total">0 KM</h3>
+                </div>
+                <div class="card border-l-4 border-amber-500">
+                    <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">Trošak po Vozilu / Dan</p>
+                    <h3 class="text-2xl font-black text-slate-800 mt-2" id="kpi-daily-avg">0 KM/dan</h3>
+                    <p class="text-[11px] text-amber-700 font-semibold mt-1" id="kpi-daily-sub">-</p>
+                </div>
+                <div class="card border-l-4 border-yellow-500">
+                    <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">Udio Internog Servisa</p>
+                    <h3 class="text-2xl font-black text-slate-800 mt-2" id="kpi-internal-perc">0%</h3>
+                </div>
+                <div class="card border-l-4 border-red-500">
+                    <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">Top Segment</p>
+                    <h3 class="text-xl font-bold text-slate-800 mt-2 truncate" id="kpi-top-seg">-</h3>
+                </div>
+                <div class="card border-l-4 border-purple-500">
+                    <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">Broj Intervencija</p>
+                    <h3 class="text-2xl font-black text-slate-800 mt-2" id="kpi-count">0</h3>
+                </div>
+                <div class="card border-l-4 border-emerald-500">
+                    <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">Prosjek / Intervenciji</p>
+                    <h3 class="text-2xl font-black text-slate-800 mt-2" id="kpi-avg-cost">0 KM</h3>
+                </div>
+            </div>
+
+            <!-- Grafikoni Tab 1 -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="card lg:col-span-2">
+                    <h3 class="text-base font-bold text-slate-800 mb-3" id="title-trend">Vremenski trend</h3>
+                    <div class="h-[280px] relative"><canvas id="chartTrend"></canvas></div>
+                </div>
+                <div class="card">
+                    <h3 class="text-base font-bold text-slate-800 mb-3">Interno vs Eksterno</h3>
+                    <div class="h-[280px] relative flex items-center justify-center"><canvas id="chartIntExt"></canvas></div>
+                </div>
+                <div class="card lg:col-span-2 clickable-chart" title="Klikni na vozilo za otvaranje kartice">
+                    <div class="flex justify-between items-center mb-1">
+                        <h3 class="text-base font-bold text-slate-800">Top 10 Vozila po troškovima</h3>
+                        <span class="text-xs font-semibold bg-blue-50 text-blue-600 px-2 py-0.5 rounded">💡 Klikni stupac za karton</span>
+                    </div>
+                    <div class="h-[280px] relative"><canvas id="chartVehicles"></canvas></div>
+                </div>
+                <div class="card clickable-chart" title="Klikni na segment za filtriranje">
+                    <div class="flex justify-between items-center mb-1">
+                        <h3 class="text-base font-bold text-slate-800">Struktura po Segmentu</h3>
+                        <span class="text-xs text-slate-400">💡 Klikni krišku</span>
+                    </div>
+                    <div class="h-[280px] relative flex items-center justify-center"><canvas id="chartSegments"></canvas></div>
+                </div>
+                <div class="card lg:col-span-3">
+                    <h3 class="text-base font-bold text-slate-800 mb-2">Top 7 Servisera / Dobavljača po vrijednosti popravki</h3>
+                    <p class="text-xs text-slate-500 mb-4">Pregled dobavljača i servisa koji ostvaruju najveći obim održavanja</p>
+                    <div class="h-[260px] relative"><canvas id="chartSuppliers"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 2: ANALIZA ODRŽAVANJA & TROŠAK PO VOZILU ================= -->
+        <div id="tabContent2" class="tab-content hidden">
+            
+            <!-- Kontrolna Traka za Proračun Flote i Godine -->
+            <div class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-4 rounded-xl mb-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h3 class="text-base font-extrabold flex items-center gap-2" id="tab2DailyTitle">
+                        <span>Prosječan Trošak PO JEDINICI (Vozilu)</span>
+                    </h3>
+                    <p class="text-xs text-blue-200 mt-0.5" id="tab2PeriodSubtitle">Egzaktna struktura flote iz "KPI Total"</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Prekidač Flote: KPI Total (964 vozila) vs Intervencije -->
+                    <div class="bg-white/10 p-1 rounded-lg border border-white/20 flex items-center text-xs">
+                        <button id="fleetModeMasterBtn" onclick="setFleetMode('master')" class="px-3 py-1.5 rounded-md font-bold transition-all bg-white text-blue-950 shadow">
+                            Flota iz KPI Total (<span id="masterFleetCountBadge">964</span>)
+                        </button>
+                        <button id="fleetModeActiveBtn" onclick="setFleetMode('active')" class="px-3 py-1.5 rounded-md font-semibold text-blue-100 hover:text-white transition-all">
+                            Samo Servisirana Vozila
+                        </button>
+                    </div>
+
+                    <!-- Birač Godine za Tab 2 -->
+                    <div class="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-lg border border-white/20 text-xs">
+                        <span class="font-semibold text-blue-200">Godina:</span>
+                        <select id="tab2YearSelect" onchange="changeTab2Year(this.value)" class="bg-white text-slate-800 font-bold rounded p-1 text-xs outline-none cursor-pointer">
+                            <!-- Pune se godine -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dnevni i Mjesečni Troškovi PO VOZILU po Tipovima (KPI Grid) -->
+            <div class="mb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4" id="dailyTypeKpiGrid">
+                    <!-- Pune se dinamičke kartice po formuli: Trošak / (Broj Vozila * Dani ili Mjeseci) -->
+                </div>
+            </div>
+
+            <!-- VIŠEGODIŠNJA KOMPARATIVNA MATRICA I GRAFIKON (YoY Unit Cost Comparison) -->
+            <div class="card mb-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-3">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">📊 Višegodišnje Poređenje Troška Održavanja PO VOZILU (YoY)</h3>
+                        <p class="text-xs text-slate-500">Broj vozila po godinama iz tabele "KPI Total" (2021: 661, 2022: 623, 2023: 652, 2024: 747, 2025: 939, 2026: 964)</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+                    <div class="lg:col-span-2 h-[260px] relative">
+                        <canvas id="chartYoyUnitCost"></canvas>
+                    </div>
+                    <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                        <table class="min-w-full text-xs text-center border-collapse">
+                            <thead class="bg-slate-100 font-bold text-slate-700 border-b border-slate-200">
+                                <tr>
+                                    <th class="py-2 px-2.5 text-left">Godina</th>
+                                    <th class="py-2 px-2.5">Flota</th>
+                                    <th class="py-2 px-2.5">KM / mj / voz.</th>
+                                    <th class="py-2 px-2.5">KM / dan / voz.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="yoyUnitCostTableBody" class="divide-y divide-slate-100 bg-white">
+                                <!-- Pune se redovi -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grafikoni Tab 2 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="card">
+                    <h3 class="text-base font-bold text-slate-800 mb-2">Vrsta Troška: Rezervni Dijelovi vs. Usluge / Rad</h3>
+                    <p class="text-xs text-slate-500 mb-4">Omjer utrošenog novca na dijelove naspram serviserskih radnih sati</p>
+                    <div class="h-[280px] relative flex items-center justify-center"><canvas id="chartPartsVsServices"></canvas></div>
+                </div>
+
+                <div class="card">
+                    <h3 class="text-base font-bold text-slate-800 mb-2">Dnevni Trošak po Vozilu kroz Mjesece</h3>
+                    <p class="text-xs text-slate-500 mb-4">Prosječna dnevna potrošnja po pojedinačnom vozilu (KM/dan/vozilo)</p>
+                    <div class="h-[280px] relative"><canvas id="chartDailyTrend"></canvas></div>
+                </div>
+
+                <div class="card lg:col-span-2">
+                    <h3 class="text-base font-bold text-slate-800 mb-2">Struktura Segmenta po Tipu Vozila</h3>
+                    <p class="text-xs text-slate-500 mb-4">Raspodjela troškova održavanja (Motor, Gume, Kočnice, Skladišna mehanizacija...) po kategorijama vozila</p>
+                    <div class="h-[320px] relative"><canvas id="chartTypeSegmentMatrix"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 3: MATRICA & FILTRIRANA TABELA ================= -->
+        <div id="tabContent3" class="tab-content hidden">
+            <!-- Višegodišnja Matrica (YoY Grid) -->
+            <div class="card mb-8">
+                <h3 class="text-base font-bold text-slate-800 mb-2">Višegodišnja Mjesečna Matrica Troškova (YoY Matrix)</h3>
+                <p class="text-xs text-slate-500 mb-4">Poređenje ukupnih troškova održavanja po mjesecima i godinama</p>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-xs text-center border-collapse">
+                        <thead id="matrixTableHeader" class="bg-slate-100 font-bold text-slate-700 border-b border-slate-200">
+                            <!-- Pune se kolone -->
+                        </thead>
+                        <tbody id="matrixTableBody" class="divide-y divide-slate-100 bg-white">
+                            <!-- Pune se redovi -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Detaljna Tabela Transakcija -->
+            <div class="card">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">📋 Tabela filtriranih servisa i transakcija</h3>
+                        <p class="text-xs text-slate-500 mt-0.5" id="tableRecordCount">Prikazano 0 zapisa</p>
+                    </div>
+                    <div class="flex items-center gap-3 w-full md:w-auto">
+                        <input type="text" id="tableSearchInput" onkeyup="filterTransactionTable()" placeholder="Pretraži opis, reg ili servisera..." class="text-xs border border-slate-300 rounded-lg p-2 w-full md:w-64 focus:ring-2 focus:ring-blue-500 font-medium">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto max-h-[500px] border border-slate-200 rounded-lg">
+                    <table class="min-w-full text-xs text-left">
+                        <thead class="bg-slate-100 sticky top-0 font-bold text-slate-700 border-b border-slate-200">
+                            <tr>
+                                <th class="py-2.5 px-3">Datum</th>
+                                <th class="py-2.5 px-3">Registracija</th>
+                                <th class="py-2.5 px-3">Garažni Broj</th>
+                                <th class="py-2.5 px-3">Tip Vozila</th>
+                                <th class="py-2.5 px-3">Marka</th>
+                                <th class="py-2.5 px-3">Segment</th>
+                                <th class="py-2.5 px-3">Opis Popravke</th>
+                                <th class="py-2.5 px-3">Serviser</th>
+                                <th class="py-2.5 px-3 text-right">Trošak (KM)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionTableBody" class="divide-y divide-slate-100 bg-white">
+                            <!-- Pune se redovi -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal za Karton Vozila -->
+    <div id="vehicleModal" class="fixed inset-0 bg-slate-900/60 hidden flex justify-center items-center z-50 backdrop-blur-sm transition-opacity p-2 sm:p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[96vh] flex flex-col overflow-hidden border border-slate-100 print-full-width">
+            <div class="flex justify-between items-center p-5 bg-gradient-to-r from-blue-900 to-indigo-900 text-white modal-header-print">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-2xl font-extrabold tracking-tight" id="modalTitle">KARTON VOZILA: -</h2>
+                        <span id="modalRegBadge" class="bg-blue-500/30 border border-blue-300 text-white text-xs px-2.5 py-1 rounded-full font-mono font-bold"></span>
+                    </div>
+                    <p class="text-xs text-blue-200 mt-1 font-medium" id="modalSubtitle">Historija servisa i analitika troškova</p>
+                </div>
+                <div class="flex items-center gap-2 no-print">
+                    <button onclick="exportVehicleCardToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5 border border-emerald-500 shadow-sm" title="Izvezi karton ovog vozila u Excel">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span>Export Excel</span>
+                    </button>
+                    <button onclick="printVehicleCard()" class="bg-white/10 hover:bg-white/20 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5 border border-white/20" title="Isprintaj ili sačuvaj u PDF">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        <span>Print / PDF</span>
+                    </button>
+                    <button onclick="closeVehicleModal()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-lg w-9 h-9 flex items-center justify-center text-2xl font-light transition-colors">&times;</button>
+                </div>
+            </div>
+            
+            <div class="p-5 overflow-y-auto flex-grow flex flex-col gap-5 bg-slate-50">
+                <div class="print-kpi-grid grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[11px] font-bold text-slate-500 uppercase">Ukupan Trošak Vozila</span>
+                        <p class="text-lg font-black text-blue-700 mt-1" id="mKpiTotal">0 KM</p>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[11px] font-bold text-slate-500 uppercase">Broj Intervencija</span>
+                        <p class="text-lg font-black text-purple-700 mt-1" id="mKpiCount">0</p>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[11px] font-bold text-slate-500 uppercase">Prosjek po Intervenciji</span>
+                        <p class="text-lg font-black text-emerald-700 mt-1" id="mKpiAvg">0 KM</p>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[11px] font-bold text-slate-500 uppercase">Glavni Serviser</span>
+                        <p class="text-sm font-bold text-slate-800 mt-1 truncate" id="mKpiSupplier">-</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col lg:flex-row gap-6">
+                    <div class="w-full lg:w-3/5 flex flex-col bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                        <div class="mb-3 flex flex-wrap justify-between items-center text-slate-700 border-b border-slate-100 pb-3 gap-3">
+                            <div class="flex items-center gap-3">
+                                <h3 class="text-base font-bold text-slate-800">📋 Pregled svih servisa i zamjena dijelova</h3>
+                                <select id="modalSegmentFilter" class="text-xs border-slate-300 rounded-md p-1.5 border focus:ring-blue-500 bg-slate-50 text-slate-700 font-semibold outline-none no-print">
+                                    <option value="all">Svi segmenti</option>
+                                </select>
+                            </div>
+                            <span id="modalTotalCost" class="text-blue-700 font-extrabold bg-blue-50 px-3 py-1 rounded-full text-xs border border-blue-200"></span>
+                        </div>
+                        
+                        <div class="overflow-y-auto max-h-[50vh] lg:max-h-[55vh] border border-slate-200 rounded-lg shadow-inner bg-white">
+                            <table class="min-w-full text-xs text-left">
+                                <thead class="bg-slate-100 sticky top-0 shadow-sm text-slate-600 font-bold border-b border-slate-200">
+                                    <tr>
+                                        <th class="py-2.5 px-3">Datum</th>
+                                        <th class="py-2.5 px-3">Segment</th>
+                                        <th class="py-2.5 px-3">Opis opravke / Dio</th>
+                                        <th class="py-2.5 px-3">Serviser</th>
+                                        <th class="py-2.5 px-3 text-right">Cijena (KM)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="modalTableBody" class="divide-y divide-slate-100 bg-white">
+                                    <!-- Pune se redovi -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="w-full lg:w-2/5 flex flex-col gap-5 no-print">
+                        <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                            <h3 class="text-sm font-bold text-slate-800 mb-2 border-b pb-2">📅 Trošak po godinama</h3>
+                            <div class="h-[20vh] min-h-[160px] relative"><canvas id="modalYearChart"></canvas></div>
+                        </div>
+                        <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                            <h3 class="text-sm font-bold text-slate-800 mb-2 border-b pb-2">📆 Mjesečna distribucija troškova</h3>
+                            <div class="h-[22vh] min-h-[180px] relative"><canvas id="modalMonthChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================= AUTHENTICATION & USER MANAGEMENT (V15) =================
+        const LOCAL_STORAGE_USERS_KEY = 'transport_app_users_v15';
+        const SESSION_ACTIVE_USER_KEY = 'transport_app_active_user';
+
+        let usersDB = [];
+        let activeUser = null;
+
+        function initAuthSystem() {
+            let storedUsers = localStorage.getItem(LOCAL_STORAGE_USERS_KEY);
+            if (storedUsers) {
+                try {
+                    usersDB = JSON.parse(storedUsers);
+                } catch(e) { usersDB = []; }
+            }
+
+            if (!usersDB || usersDB.length === 0) {
+                usersDB = [
+                    { username: 'admin', fullname: 'Glavni Administrator', password: 'admin123', role: 'admin', createdAt: '2026-07-30' }
+                ];
+                saveUsersDB();
+            }
+
+            let savedActive = sessionStorage.getItem(SESSION_ACTIVE_USER_KEY) || localStorage.getItem(SESSION_ACTIVE_USER_KEY);
+            if (savedActive) {
+                try {
+                    let userObj = JSON.parse(savedActive);
+                    let found = usersDB.find(u => u.username === userObj.username && u.password === userObj.password);
+                    if (found) {
+                        activeUser = found;
+                    }
+                } catch(e) {}
+            }
+
+            updateAuthUI();
+        }
+
+        function saveUsersDB() {
+            localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(usersDB));
+        }
+
+        function updateAuthUI() {
+            const loginModal = document.getElementById('loginModal');
+            const userHeaderBadge = document.getElementById('userHeaderBadge');
+            const adminPanelBtn = document.getElementById('adminPanelBtn');
+
+            if (activeUser) {
+                loginModal.classList.add('hidden');
+                userHeaderBadge.classList.remove('hidden');
+                document.getElementById('headerUserFullname').innerText = activeUser.fullname || activeUser.username;
+                document.getElementById('headerUserRole').innerText = activeUser.role === 'admin' ? 'Administrator' : 'Korisnik';
+
+                if (activeUser.role === 'admin') {
+                    adminPanelBtn.classList.remove('hidden');
+                } else {
+                    adminPanelBtn.classList.add('hidden');
+                }
+            } else {
+                loginModal.classList.remove('hidden');
+                userHeaderBadge.classList.add('hidden');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const uInput = document.getElementById('loginUsername').value.trim();
+            const pInput = document.getElementById('loginPassword').value.trim();
+            const errDiv = document.getElementById('loginError');
+
+            let found = usersDB.find(u => u.username.toLowerCase() === uInput.toLowerCase() && u.password === pInput);
+            if (found) {
+                activeUser = found;
+                sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+                errDiv.classList.add('hidden');
+                updateAuthUI();
+            } else {
+                errDiv.classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            activeUser = null;
+            sessionStorage.removeItem(SESSION_ACTIVE_USER_KEY);
+            localStorage.removeItem(SESSION_ACTIVE_USER_KEY);
+            closeAdminPanel();
+            updateAuthUI();
+        }
+
+        function openAdminPanel() {
+            if (!activeUser || activeUser.role !== 'admin') {
+                alert("Pristup odbijen! Samo administratori mogu otvoriti ovaj panel.");
+                return;
+            }
+            renderUserTable();
+            document.getElementById('adminPanelModal').classList.remove('hidden');
+        }
+
+        function closeAdminPanel() {
+            document.getElementById('adminPanelModal').classList.add('hidden');
+        }
+
+        function handleCreateUser(e) {
+            e.preventDefault();
+            if (!activeUser || activeUser.role !== 'admin') return;
+
+            const uname = document.getElementById('newUsername').value.trim().toLowerCase();
+            const fname = document.getElementById('newFullname').value.trim();
+            const pass = document.getElementById('newPassword').value.trim();
+            const role = document.getElementById('newRole').value;
+
+            if (usersDB.some(u => u.username.toLowerCase() === uname)) {
+                alert(`Korisničko ime "${uname}" već postoji!`);
+                return;
+            }
+
+            let newUser = {
+                username: uname,
+                fullname: fname,
+                password: pass,
+                role: role,
+                createdAt: new Date().toISOString().slice(0,10)
+            };
+
+            usersDB.push(newUser);
+            saveUsersDB();
+            renderUserTable();
+
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newFullname').value = '';
+            document.getElementById('newPassword').value = '';
+            alert(`Novi nalog "${uname}" je uspješno kreiran!`);
+        }
+
+        function deleteUser(uname) {
+            if (uname === 'admin' || uname === activeUser.username) {
+                alert("Ne možete obrisati vlastiti ili podrazumijevani administrator nalog.");
+                return;
+            }
+
+            if (confirm(`Da li ste sigurni da želite obrisati korisnika "${uname}"?`)) {
+                usersDB = usersDB.filter(u => u.username !== uname);
+                saveUsersDB();
+                renderUserTable();
+            }
+        }
+
+        function changeUserPassword(uname) {
+            let newPass = prompt(`Unesite novu lozinku za korisnika "${uname}":`);
+            if (newPass && newPass.trim() !== '') {
+                let user = usersDB.find(u => u.username === uname);
+                if (user) {
+                    user.password = newPass.trim();
+                    saveUsersDB();
+                    renderUserTable();
+                    alert(`Lozinka za korisnika "${uname}" je uspješno izmijenjena!`);
+                }
+            }
+        }
+
+        function renderUserTable() {
+            const tbody = document.getElementById('userTableBody');
+            document.getElementById('userCountBadge').innerText = `${usersDB.length} nalog(a)`;
+
+            let rowsHTML = [];
+            usersDB.forEach(user => {
+                let isSelfOrPrimary = user.username === 'admin';
+                rowsHTML.push(`
+                    <tr class="hover:bg-slate-50 border-b border-slate-100">
+                        <td class="py-2.5 px-3 font-bold text-slate-800">${user.username}</td>
+                        <td class="py-2.5 px-3 font-medium text-slate-700">${user.fullname || '-'}</td>
+                        <td class="py-2.5 px-3">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${user.role === 'admin' ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-slate-100 text-slate-700 border border-slate-200'}">
+                                ${user.role === 'admin' ? 'Administrator' : 'Korisnik'}
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-3 text-slate-500 text-[11px]">${user.createdAt || '-'}</td>
+                        <td class="py-2.5 px-3 text-right font-medium">
+                            <button onclick="changeUserPassword('${user.username}')" class="text-blue-600 hover:text-blue-800 font-bold mr-2 text-[11px]">🔑 Mijenjaj lozinku</button>
+                            ${!isSelfOrPrimary && user.username !== activeUser.username ? `
+                                <button onclick="deleteUser('${user.username}')" class="text-red-600 hover:text-red-800 font-bold text-[11px]">🗑️ Obriši</button>
+                            ` : '<span class="text-slate-300 text-[11px]">-</span>'}
+                        </td>
+                    </tr>
+                `);
+            });
+            tbody.innerHTML = rowsHTML.join('');
+        }
+
+        // Initialize Auth system immediately on load
+        window.addEventListener('DOMContentLoaded', initAuthSystem);
+
+        // ================= GLAVNA LOGIKA DASHBOARDA =================
+        let globalData = [];
+        let activeTab = 1;
+        let fleetMode = 'master'; // 'master' (iz tabele KPI Total) ili 'active' (Servisirana)
+        let tab2SelectedYear = 'latest'; 
+
+        // AUTORITATIVNA STRUKTURA FLOTE I TROŠKOVA DIREKTNO IZ EXCEL SHEET-A "KPI Total"
+        let kpiTotalFleetByYear = {
+            2021: { Total: 661, 'Priključno': 37, 'Putničko': 107, 'Radna mašina': 10, 'Skladišna mehanizacija': 312, 'Teretno': 195 },
+            2022: { Total: 623, 'Priključno': 37, 'Putničko': 103, 'Radna mašina': 5, 'Skladišna mehanizacija': 291, 'Teretno': 187 },
+            2023: { Total: 652, 'Priključno': 38, 'Putničko': 103, 'Radna mašina': 5, 'Skladišna mehanizacija': 352, 'Teretno': 154 },
+            2024: { Total: 747, 'Priključno': 46, 'Putničko': 125, 'Radna mašina': 8, 'Skladišna mehanizacija': 419, 'Teretno': 149 },
+            2025: { Total: 939, 'Priključno': 45, 'Putničko': 124, 'Radna mašina': 8, 'Skladišna mehanizacija': 595, 'Teretno': 167 },
+            2026: { Total: 964, 'Priključno': 51, 'Putničko': 124, 'Radna mašina': 8, 'Skladišna mehanizacija': 608, 'Teretno': 173 }
+        };
+
+        let kpiTotalCostsByYear = {
+            2021: { Total: 863648, 'Priključno': 59951, 'Putničko': 120143, 'Radna mašina': 39347, 'Skladišna mehanizacija': 154418, 'Teretno': 488188 },
+            2022: { Total: 1088803, 'Priključno': 106260, 'Putničko': 153293, 'Radna mašina': 26708, 'Skladišna mehanizacija': 235373, 'Teretno': 564491 },
+            2023: { Total: 1285971, 'Priključno': 121657, 'Putničko': 150136, 'Radna mašina': 22241, 'Skladišna mehanizacija': 346204, 'Teretno': 645022 },
+            2024: { Total: 1377411, 'Priključno': 139402, 'Putničko': 176374, 'Radna mašina': 17495, 'Skladišna mehanizacija': 349736, 'Teretno': 740553 },
+            2025: { Total: 1692956, 'Priključno': 192401, 'Putničko': 195374, 'Radna mašina': 32042, 'Skladišna mehanizacija': 344124, 'Teretno': 923258 },
+            2026: { Total: 761304, 'Priključno': 88970, 'Putničko': 95228, 'Radna mašina': 8055, 'Skladišna mehanizacija': 137748, 'Teretno': 419095 }
+        };
+
+        // Instanca Grafikona
+        let chartTrend, chartIntExt, chartVehicles, chartSegments, chartSuppliers;
+        let chartPartsVsServices, chartDailyTrend, chartTypeSegmentMatrix, chartYoyUnitCost;
+        let modalYearChartInstance = null, modalMonthChartInstance = null;
+        
+        let yearsSet = new Set();
+        let activeSegment = null;
+        let currentModalVehicleData = [];
+        let currentFilteredData = [];
+
+        function switchTab(tabId) {
+            activeTab = tabId;
+            [1, 2, 3].forEach(id => {
+                const btn = document.getElementById(`tabBtn${id}`);
+                const content = document.getElementById(`tabContent${id}`);
+                if (id === tabId) {
+                    btn.className = "px-5 py-3 rounded-t-xl bg-blue-600 text-white shadow-sm flex items-center gap-2 border-t border-x border-blue-600 transition-all";
+                    content.classList.remove('hidden');
+                } else {
+                    btn.className = "px-5 py-3 rounded-t-xl bg-slate-100 text-slate-600 hover:bg-slate-200 border-t border-x border-slate-200 flex items-center gap-2 transition-all";
+                    content.classList.add('hidden');
+                }
+            });
+            if (currentFilteredData.length > 0) {
+                renderActiveTabContent();
+            }
+        }
+
+        function setFleetMode(mode) {
+            fleetMode = mode;
+            const mBtn = document.getElementById('fleetModeMasterBtn');
+            const aBtn = document.getElementById('fleetModeActiveBtn');
+
+            if (mode === 'master') {
+                mBtn.className = "px-3 py-1.5 rounded-md font-bold transition-all bg-white text-blue-950 shadow";
+                aBtn.className = "px-3 py-1.5 rounded-md font-semibold text-blue-100 hover:text-white transition-all";
+            } else {
+                aBtn.className = "px-3 py-1.5 rounded-md font-bold transition-all bg-white text-blue-950 shadow";
+                mBtn.className = "px-3 py-1.5 rounded-md font-semibold text-blue-100 hover:text-white transition-all";
+            }
+            if (currentFilteredData.length > 0) processTab2(currentFilteredData);
+        }
+
+        function changeTab2Year(yearVal) {
+            tab2SelectedYear = yearVal;
+            if (currentFilteredData.length > 0) processTab2(currentFilteredData);
+        }
+
+        // --- DRAG & DROP LOGIKA ---
+        const dropZone = document.getElementById('dropZone');
+        const excelInput = document.getElementById('excelFile');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                excelInput.files = files;
+                processExcelFile(files[0]);
+            }
+        });
+
+        excelInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                processExcelFile(e.target.files[0]);
+            }
+        });
+
+        function ocistiTip(tip) {
+            if (!tip) return 'Ostalo';
+            let t = tip.toString().trim().toLowerCase();
+            if (t.includes('putni')) return 'Putničko';
+            if (t.includes('teretn')) return 'Teretno';
+            if (t.includes('skladis') || t.includes('skladiš') || t.includes('viljušk') || t.includes('viljusk') || t.includes('paletar') || t.includes('staker') || t.includes('regalni')) return 'Skladišna mehanizacija';
+            if (t.includes('priklju')) return 'Priključno';
+            if (t.includes('radna ma') || t.includes('radna')) return 'Radna mašina';
+            if (t.includes('servis motor')) return 'Servis motornih vozila';
+            if (t === '/' || t === '') return 'Ostalo';
+            return t.charAt(0).toUpperCase() + t.slice(1);
+        }
+
+        function ocistiMarku(marka) {
+            if (!marka) return 'Nepoznato';
+            let m = marka.toString().trim();
+            if (m === '/' || m === '') return 'Ostalo';
+            let mLower = m.toLowerCase();
+            if (mLower.includes('mercedes')) return 'Mercedes Benz';
+            if (mLower === 'vw' || mLower.includes('volkswagen')) return 'Volkswagen';
+            if (mLower.includes('man')) return 'MAN';
+            if (mLower.includes('škoda') || mLower.includes('skoda')) return 'Škoda';
+            if (mLower.includes('iveco')) return 'Iveco';
+            if (mLower.includes('volvo')) return 'Volvo';
+            return m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
+        }
+
+        function ocistiSegment(segment) {
+            if (!segment) return 'Ostalo';
+            let s = segment.toString().trim();
+            if (s === '/' || s === '') return 'Ostalo';
+            return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+        }
+
+        function parseExcelDate(rawDate, yearVal, monthVal) {
+            if (!rawDate) {
+                if (yearVal > 2000 && monthVal >= 1 && monthVal <= 12) return new Date(yearVal, monthVal - 1, 1);
+                return null;
+            }
+            if (rawDate instanceof Date && !isNaN(rawDate)) return rawDate;
+            if (typeof rawDate === 'number') return new Date((rawDate - (25567 + 2)) * 86400 * 1000);
+            if (typeof rawDate === 'string') {
+                let clean = rawDate.trim();
+                let partsDot = clean.split('.');
+                if (partsDot.length >= 3) {
+                    let d = parseInt(partsDot[0]), m = parseInt(partsDot[1]), y = parseInt(partsDot[2]);
+                    if (y < 100) y += 2000;
+                    if (y && m && d) return new Date(y, m - 1, d);
+                }
+                let partsDash = clean.split('-');
+                if (partsDash.length >= 3) {
+                    let y = parseInt(partsDash[0]), m = parseInt(partsDash[1]), d = parseInt(partsDash[2]);
+                    if (y && m && d) return new Date(y, m - 1, d);
+                }
+                let dObj = new Date(clean);
+                if (!isNaN(dObj)) return dObj;
+            }
+            if (yearVal > 2000 && monthVal >= 1 && monthVal <= 12) return new Date(yearVal, monthVal - 1, 1);
+            return null;
+        }
+
+        // --- GLAVNA FUNKCIJA ZA OBRADU EXCEL FAJLA ---
+        function processExcelFile(file) {
+            if(!file) return;
+
+            document.getElementById('loader').classList.remove('hidden');
+            document.getElementById('uploadStatusTitle').innerText = file.name;
+            document.getElementById('uploadStatusSubtitle').innerText = `${(file.size / 1024 / 1024).toFixed(2)} MB - Obrada podataka...`;
+
+            setTimeout(() => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, {type: 'array', cellDates: true});
+                        
+                        globalData = [];
+                        yearsSet.clear();
+
+                        // 1. DINAMIČKO ČITANJE SHEET-A "KPI Total" (AKO JE PRISUTAN U FAJLU)
+                        let kpiSheetName = workbook.SheetNames.find(s => s.toLowerCase().includes('kpi total'));
+                        if (kpiSheetName && workbook.Sheets[kpiSheetName]) {
+                            try {
+                                let sheet = workbook.Sheets[kpiSheetName];
+                                let jsonRows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                                if (jsonRows && jsonRows.length >= 8) {
+                                    let headerRow = jsonRows[0] || [];
+                                    let yearCols = {};
+                                    headerRow.forEach((val, idx) => {
+                                        let y = parseInt(val);
+                                        if (y >= 2000 && y <= 2099) yearCols[idx] = y;
+                                    });
+
+                                    // Parsiranje redova 2 do 8 za broj jedinica
+                                    for (let r = 1; r <= 7; r++) {
+                                        let row = jsonRows[r];
+                                        if (!row || row.length === 0) continue;
+                                        let rawCatName = (row[0] || '').toString().trim();
+                                        let catName = ocistiTip(rawCatName);
+                                        if (rawCatName.toLowerCase().includes('grand total') || rawCatName.toLowerCase().includes('total')) catName = 'Total';
+
+                                        Object.keys(yearCols).forEach(cIdx => {
+                                            let y = yearCols[cIdx];
+                                            let countVal = parseInt(row[cIdx]) || 0;
+                                            if (!kpiTotalFleetByYear[y]) kpiTotalFleetByYear[y] = { Total: 0 };
+                                            kpiTotalFleetByYear[y][catName] = countVal;
+                                        });
+                                    }
+
+                                    // Parsiranje redova 11 do 17 za iznose troškova
+                                    for (let r = 10; r <= 16; r++) {
+                                        let row = jsonRows[r];
+                                        if (!row || row.length === 0) continue;
+                                        let rawCatName = (row[0] || '').toString().trim();
+                                        let catName = ocistiTip(rawCatName);
+                                        if (rawCatName.toLowerCase().includes('grand total') || rawCatName.toLowerCase().includes('total')) catName = 'Total';
+
+                                        Object.keys(yearCols).forEach(cIdx => {
+                                            let y = yearCols[cIdx];
+                                            let costVal = parseFloat(row[cIdx]) || 0;
+                                            if (!kpiTotalCostsByYear[y]) kpiTotalCostsByYear[y] = { Total: 0 };
+                                            kpiTotalCostsByYear[y][catName] = costVal;
+                                        });
+                                    }
+                                }
+                            } catch(eKpi) {
+                                console.warn("KPI Total parse note:", eKpi);
+                            }
+                        }
+
+                        // Update master fleet count badge (2026 total)
+                        let latestYear = Math.max(...Object.keys(kpiTotalFleetByYear).map(y => parseInt(y)));
+                        let masterCount2026 = (kpiTotalFleetByYear[latestYear] && kpiTotalFleetByYear[latestYear].Total) ? kpiTotalFleetByYear[latestYear].Total : 964;
+                        document.getElementById('masterFleetCountBadge').innerText = masterCount2026.toLocaleString('bs-BA');
+
+                        // 2. PARSIRANJE TRANSAKCIJSKIH DOKUMENATA (FINALDATA SHEETOVI 2021-2026)
+                        let sheetNames = workbook.SheetNames;
+                        sheetNames.forEach(sheetName => {
+                            let sLower = sheetName.toLowerCase();
+                            if (sLower.includes('šifrarnik') || sLower.includes('sifrarnik') || sLower.includes('kpi') || sLower.includes('pregled odr') || sLower.includes('sipanja')) return;
+
+                            const sheet = workbook.Sheets[sheetName];
+                            if(!sheet) return;
+                            
+                            try {
+                                const jsonData = XLSX.utils.sheet_to_json(sheet);
+                                if(!jsonData || !Array.isArray(jsonData)) return;
+
+                                jsonData.forEach(row => {
+                                    if (!row || typeof row !== 'object') return;
+
+                                    let regRaw = row['Reg.oznaka'] || row['RegBroj'] || row['Reg. Oznaka'] || row['REG'] || row['Registracija'];
+                                    if (!regRaw) return;
+                                    let reg = regRaw.toString().trim().toUpperCase();
+                                    if (reg === '' || reg === 'NEPOZNATO' || reg === '-') return;
+
+                                    let cost = parseFloat(row['cijTot']) || parseFloat(row['CijRezDio']) || parseFloat(row['Cijena']) || parseFloat(row['Trošak']) || 0;
+                                    if (isNaN(cost) || cost <= 0) return;
+
+                                    let costPart = parseFloat(row['CijRezDio']); if (isNaN(costPart)) costPart = 0;
+                                    let costService = parseFloat(row['Cijusluge']); if (isNaN(costService)) costService = 0;
+                                    
+                                    if (costPart === 0 && costService === 0 && cost > 0) {
+                                        let vrsta = (row['VrstaTroska'] || '').toString().toLowerCase();
+                                        if (vrsta.includes('uslug') || vrsta.includes('rad')) costService = cost;
+                                        else costPart = cost;
+                                    }
+
+                                    let year = parseInt(row['Year']) || parseInt(row['Godina']) || 0;
+                                    let month = parseInt(row['Month']) || parseInt(row['Mjesec']) || 0;
+                                    
+                                    let segment = ocistiSegment(row['Segment'] || row['Kategorija']);
+                                    let tipMehan = ocistiTip(row['TipMehan'] || row['Tip']);
+                                    let markaVoz = ocistiMarku(row['MarkaVoz'] || row['Marka']);
+                                    
+                                    let dobavljacOrig = (row['dobavljac'] || row['Dobavljac'] || row['Serviser'] || row['Izvođač'] || '-').toString().trim();
+                                    let isInternal = dobavljacOrig.toLowerCase().includes('intern'); 
+                                    
+                                    let rezDio = (row['RezDio'] || row['rezervni dio'] || '-').toString();
+                                    let vrstaTroska = (row['VrstaTroska'] || row['Opis'] || '-').toString();
+                                    let opisPopravke = rezDio !== '-' ? rezDio : vrstaTroska;
+                                    
+                                    let garazniBroj = (row['MT'] || row['GB'] || row['GarazniBroj'] || '-').toString().trim();
+                                    let godProizvodnje = (row['God.'] || row['Godište'] || row['GodProizvodnje'] || '-').toString();
+                                    
+                                    let dateObj = parseExcelDate(row['Datum'] || row['Date'], year, month);
+                                    
+                                    if(!year && dateObj && !isNaN(dateObj)) year = dateObj.getFullYear();
+                                    if(!month && dateObj && !isNaN(dateObj)) month = dateObj.getMonth() + 1;
+
+                                    if (year >= 2000 && month >= 1 && month <= 12) {
+                                        globalData.push({ 
+                                            reg, cost, costPart, costService, year, month, segment, type: isInternal ? 'Interno' : 'Eksterno',
+                                            dobavljacOrig, datumObj: dateObj, opisPopravke, tipMehan, markaVoz,
+                                            garazniBroj, godProizvodnje
+                                        });
+                                        yearsSet.add(year);
+                                    }
+                                });
+                            } catch (sheetErr) {
+                                console.warn("Notice parsing sheet:", sheetName, sheetErr);
+                            }
+                        });
+
+                        if (globalData.length === 0) {
+                            alert("Upozorenje: Nije pronađen nijedan valjan red sa troškovima u učitanom Excel fajlu.");
+                            document.getElementById('loader').classList.add('hidden');
+                            return;
+                        }
+
+                        // Popunjavanje dropdowna za godine
+                        const yearSelect = document.getElementById('filterYear');
+                        const tab2YearSelect = document.getElementById('tab2YearSelect');
+                        
+                        let sortedYearsArr = Array.from(yearsSet).sort((a,b) => b - a);
+                        let yearOptions = ['<option value="all">Sve godine</option>'];
+                        let tab2YearOptions = ['<option value="latest">Tekuća / Najnovija godina</option>', '<option value="all">Sve godine (Zbirno)</option>'];
+
+                        sortedYearsArr.forEach(y => { 
+                            yearOptions.push(`<option value="${y}">${y}</option>`); 
+                            tab2YearOptions.push(`<option value="${y}">${y}. godina</option>`);
+                        });
+                        yearSelect.innerHTML = yearOptions.join('');
+                        tab2YearSelect.innerHTML = tab2YearOptions.join('');
+
+                        document.getElementById('loader').classList.add('hidden');
+                        document.getElementById('filter-section').classList.remove('hidden');
+                        document.getElementById('tabs-navigation').classList.remove('hidden');
+                        document.getElementById('uploadStatusSubtitle').innerText = `Flota: ${masterCount2026} vozila | Učitano ${globalData.length.toLocaleString('bs-BA')} servisa`;
+                        
+                        switchTab(1);
+                        resetDrillDown();
+                    } catch (err) {
+                        console.error(err);
+                        alert("Došlo je do greške prilikom čitanja Excel fajla: " + err.message);
+                        document.getElementById('loader').classList.add('hidden');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }, 50);
+        }
+
+        document.getElementById('filterYear').addEventListener('change', applyFilters);
+        document.getElementById('filterMonth').addEventListener('change', applyFilters);
+        document.getElementById('filterTip').addEventListener('change', applyFilters);
+        document.getElementById('filterMarka').addEventListener('change', applyFilters);
+
+        function updateFilterOptions() {
+            const selectedYear = document.getElementById('filterYear').value;
+            const selectedMonth = document.getElementById('filterMonth').value;
+            const currentTip = document.getElementById('filterTip').value;
+            const currentMarka = document.getElementById('filterMarka').value;
+
+            let validTips = new Set();
+            let validMarkas = new Set();
+
+            globalData.forEach(item => {
+                let matchYear = selectedYear === 'all' || item.year.toString() === selectedYear;
+                let matchMonth = selectedMonth === 'all' || item.month.toString() === selectedMonth;
+
+                if (matchYear && matchMonth) {
+                    let matchTip = currentTip === 'all' || item.tipMehan === currentTip;
+                    let matchMarka = currentMarka === 'all' || item.markaVoz === currentMarka;
+
+                    if (matchMarka && item.tipMehan !== 'Nepoznato' && item.tipMehan !== 'Ostalo') validTips.add(item.tipMehan);
+                    if (matchTip && item.markaVoz !== 'Nepoznato' && item.markaVoz !== 'Ostalo') validMarkas.add(item.markaVoz);
+                }
+            });
+
+            const tipSelect = document.getElementById('filterTip');
+            let tipOptions = ['<option value="all">Svi tipovi</option>'];
+            Array.from(validTips).sort().forEach(t => { 
+                let sel = (t === currentTip) ? 'selected' : ''; 
+                tipOptions.push(`<option value="${t}" ${sel}>${t}</option>`); 
+            });
+            tipSelect.innerHTML = tipOptions.join('');
+            if (!validTips.has(currentTip) && currentTip !== 'all') tipSelect.value = 'all';
+
+            const markaSelect = document.getElementById('filterMarka');
+            let markaOptions = ['<option value="all">Sve marke</option>'];
+            Array.from(validMarkas).sort().forEach(m => { 
+                let sel = (m === currentMarka) ? 'selected' : ''; 
+                markaOptions.push(`<option value="${m}" ${sel}>${m}</option>`); 
+            });
+            markaSelect.innerHTML = markaOptions.join('');
+            if (!validMarkas.has(currentMarka) && currentMarka !== 'all') markaSelect.value = 'all';
+        }
+
+        function applyFilters() {
+            updateFilterOptions();
+
+            const selectedYear = document.getElementById('filterYear').value;
+            const selectedMonth = document.getElementById('filterMonth').value;
+            const selectedTip = document.getElementById('filterTip').value;
+            const selectedMarka = document.getElementById('filterMarka').value;
+
+            const badgesContainer = document.getElementById('active-filters-container');
+            const badgeSeg = document.getElementById('badge-segment');
+            
+            if (activeSegment) {
+                badgesContainer.classList.remove('hidden');
+                badgeSeg.classList.remove('hidden'); 
+                document.getElementById('text-badge-segment').innerText = activeSegment;
+            } else { 
+                badgesContainer.classList.add('hidden'); 
+            }
+
+            currentFilteredData = globalData.filter(item => {
+                let matchYear = selectedYear === 'all' || item.year.toString() === selectedYear;
+                let matchMonth = selectedMonth === 'all' || item.month.toString() === selectedMonth;
+                let matchTip = selectedTip === 'all' || item.tipMehan === selectedTip;
+                let matchMarka = selectedMarka === 'all' || item.markaVoz === selectedMarka;
+                let matchSeg = activeSegment === null || item.segment === activeSegment;
+                return matchYear && matchMonth && matchTip && matchMarka && matchSeg;
+            });
+
+            let vehicleMap = new Map();
+            currentFilteredData.forEach(item => {
+                if(!vehicleMap.has(item.reg)) vehicleMap.set(item.reg, item.garazniBroj);
+            });
+            const datalist = document.getElementById('vehicleList');
+            let datalistOptions = [];
+            Array.from(vehicleMap.keys()).sort().forEach(v => { 
+                let gb = vehicleMap.get(v);
+                let display = (gb && gb !== '-') ? `${v} [GB: ${gb}]` : v;
+                datalistOptions.push(`<option value="${display}"></option>`); 
+            });
+            datalist.innerHTML = datalistOptions.join('');
+
+            renderActiveTabContent();
+        }
+
+        function renderActiveTabContent() {
+            if (activeTab === 1) processTab1(currentFilteredData);
+            else if (activeTab === 2) processTab2(currentFilteredData);
+            else if (activeTab === 3) processTab3(currentFilteredData);
+        }
+
+        function getDailyCalculationPeriod(data, overrideYear = null) {
+            const selectedYear = document.getElementById('filterYear').value;
+            const selectedMonth = document.getElementById('filterMonth').value;
+
+            let targetYear;
+            if (overrideYear && overrideYear !== 'latest' && overrideYear !== 'all') {
+                targetYear = parseInt(overrideYear);
+            } else if (selectedYear !== 'all') {
+                targetYear = parseInt(selectedYear);
+            } else {
+                targetYear = data.length > 0 ? Math.max(...data.map(d => d.year)) : new Date().getFullYear();
+            }
+
+            let targetMonth = selectedMonth !== 'all' ? parseInt(selectedMonth) : null;
+
+            let yearData = data.filter(d => d.year === targetYear);
+            let activeMonths = Array.from(new Set(yearData.map(d => d.month))).sort((a,b) => a - b);
+            if (activeMonths.length === 0) activeMonths = [1, 2, 3, 4, 5, 6];
+
+            let monthsCount = targetMonth ? 1 : Math.max(1, activeMonths.length);
+            
+            let totalDays = 0;
+            if (targetMonth) {
+                totalDays = new Date(targetYear, targetMonth, 0).getDate();
+            } else {
+                activeMonths.forEach(m => {
+                    totalDays += new Date(targetYear, m, 0).getDate();
+                });
+                if (totalDays === 0) totalDays = 365;
+            }
+
+            let periodLabel = targetMonth ? `${targetMonth}.${targetYear}. (${totalDays} dana)` : `Godina ${targetYear}. (${monthsCount} mj. / ${totalDays} dana)`;
+
+            return { targetYear, targetMonth, activeMonths, monthsCount, daysCount: totalDays, periodLabel };
+        }
+
+        // ================= TAB 1 PROCESSOR =================
+        function processTab1(data) {
+            const selectedYear = document.getElementById('filterYear').value;
+            const isAllYears = selectedYear === 'all';
+
+            if(data.length === 0) {
+                document.getElementById('kpi-total').innerText = '0 KM'; 
+                document.getElementById('kpi-daily-avg').innerText = '0 KM/dan';
+                document.getElementById('kpi-daily-sub').innerText = '-';
+                document.getElementById('kpi-internal-perc').innerText = '0%'; 
+                document.getElementById('kpi-top-seg').innerText = '-'; 
+                document.getElementById('kpi-count').innerText = '0';
+                document.getElementById('kpi-avg-cost').innerText = '0 KM';
+                if(chartTrend) chartTrend.destroy(); if(chartIntExt) chartIntExt.destroy(); if(chartVehicles) chartVehicles.destroy(); if(chartSegments) chartSegments.destroy(); if(chartSuppliers) chartSuppliers.destroy();
+                return;
+            }
+
+            let totalCost = 0, internalCost = 0, externalCost = 0;
+            let costsByVehicle = {}, costsBySegment = {}, trendData = {}, costsBySupplier = {};
+
+            data.forEach(item => {
+                totalCost += item.cost;
+                if (item.type === 'Interno') internalCost += item.cost; else externalCost += item.cost;
+                costsByVehicle[item.reg] = (costsByVehicle[item.reg] || 0) + item.cost;
+                costsBySegment[item.segment] = (costsBySegment[item.segment] || 0) + item.cost;
+
+                let sup = item.dobavljacOrig !== '-' ? item.dobavljacOrig : 'Nepoznato';
+                costsBySupplier[sup] = (costsBySupplier[sup] || 0) + item.cost;
+
+                if(isAllYears) {
+                    if(!trendData[item.year]) trendData[item.year] = { 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0, 12:0 };
+                    trendData[item.year][item.month] += item.cost;
+                } else {
+                    if(!trendData[item.month]) trendData[item.month] = { Interno: 0, Eksterno: 0 };
+                    trendData[item.month][item.type] += item.cost;
+                }
+            });
+
+            let periodInfo = getDailyCalculationPeriod(data);
+            let dailyData = data.filter(item => {
+                let matchY = item.year === periodInfo.targetYear;
+                let matchM = periodInfo.targetMonth ? item.month === periodInfo.targetMonth : true;
+                return matchY && matchM;
+            });
+            
+            let fleetSize = (kpiTotalFleetByYear[periodInfo.targetYear] && kpiTotalFleetByYear[periodInfo.targetYear].Total) ? kpiTotalFleetByYear[periodInfo.targetYear].Total : new Set(dailyData.map(i => i.reg)).size;
+            let yearTotal = dailyData.reduce((acc, i) => acc + i.cost, 0);
+            
+            let dailyAvgPerVehicle = (fleetSize > 0 && periodInfo.daysCount > 0) ? (yearTotal / (fleetSize * periodInfo.daysCount)) : 0;
+
+            document.getElementById('kpi-total').innerText = totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM';
+            document.getElementById('kpi-daily-avg').innerText = dailyAvgPerVehicle.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' KM/dan';
+            document.getElementById('kpi-daily-sub').innerText = `Po vozilu (${fleetSize} vozila u ${periodInfo.targetYear}.)`;
+
+            document.getElementById('kpi-count').innerText = data.length.toLocaleString('bs-BA');
+            document.getElementById('kpi-internal-perc').innerText = ((internalCost / totalCost) * 100).toFixed(1) + '%';
+            let topSeg = Object.keys(costsBySegment).reduce((a, b) => costsBySegment[a] > costsBySegment[b] ? a : b);
+            document.getElementById('kpi-top-seg').innerText = topSeg;
+
+            let avgCost = totalCost / data.length;
+            document.getElementById('kpi-avg-cost').innerText = avgCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM';
+
+            drawChartsTab1(trendData, internalCost, externalCost, costsByVehicle, costsBySegment, costsBySupplier, isAllYears);
+        }
+
+        function drawChartsTab1(trendData, intCost, extCost, byVehicle, bySegment, bySupplier, isAllYears) {
+            if(chartTrend) chartTrend.destroy(); if(chartIntExt) chartIntExt.destroy(); if(chartVehicles) chartVehicles.destroy(); if(chartSegments) chartSegments.destroy(); if(chartSuppliers) chartSuppliers.destroy();
+
+            const ctx1 = document.getElementById('chartTrend').getContext('2d');
+            if (isAllYears) {
+                document.getElementById('title-trend').innerText = 'Poređenje godina po mjesecima (YoY)';
+                let datasets = [], colors = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'], colorIdx = 0;
+                Object.keys(trendData).sort().forEach(year => {
+                    let monthData = []; for(let i=1; i<=12; i++) monthData.push(trendData[year][i]);
+                    datasets.push({ label: year.toString(), data: monthData, borderColor: colors[colorIdx % colors.length], backgroundColor: 'transparent', tension: 0.3, borderWidth: 2.5 });
+                    colorIdx++;
+                });
+                chartTrend = new Chart(ctx1, { type: 'line', data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'], datasets: datasets }, options: { responsive: true, maintainAspectRatio: false } });
+            } else {
+                document.getElementById('title-trend').innerText = 'Interno vs Eksterno po mjesecima';
+                let months = Object.keys(trendData).sort((a,b) => parseInt(a) - parseInt(b));
+                chartTrend = new Chart(ctx1, {
+                    type: 'bar',
+                    data: { labels: months.map(m => m + '. mjesec'), datasets: [{ label: 'Interno', data: months.map(m => trendData[m].Interno), backgroundColor: '#2563eb' }, { label: 'Eksterno', data: months.map(m => trendData[m].Eksterno), backgroundColor: '#f59e0b' }] },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }
+                });
+            }
+
+            chartIntExt = new Chart(document.getElementById('chartIntExt').getContext('2d'), { type: 'doughnut', data: { labels: ['Interno', 'Eksterno'], datasets: [{ data: [intCost, extCost], backgroundColor: ['#2563eb', '#f59e0b'] }] }, options: { maintainAspectRatio: false } });
+
+            let sortedVehicles = Object.entries(byVehicle).sort((a,b) => b[1] - a[1]).slice(0, 10);
+            chartVehicles = new Chart(document.getElementById('chartVehicles').getContext('2d'), {
+                type: 'bar', data: { labels: sortedVehicles.map(v => v[0]), datasets: [{ label: 'Trošak (KM)', data: sortedVehicles.map(v => v[1]), backgroundColor: '#ef4444', borderRadius: 4 }] },
+                options: { indexAxis: 'y', maintainAspectRatio: false, onClick: (e, els, ch) => { if (els.length > 0) openVehicleModal(ch.data.labels[els[0].index]); } }
+            });
+
+            let sortedSegments = Object.entries(bySegment).sort((a,b) => b[1] - a[1]).slice(0, 7);
+            chartSegments = new Chart(document.getElementById('chartSegments').getContext('2d'), {
+                type: 'pie', data: { labels: sortedSegments.map(s => s[0]), datasets: [{ data: sortedSegments.map(s => s[1]), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'] }] },
+                options: { maintainAspectRatio: false, onClick: (e, els, ch) => { if (els.length > 0) setSegmentFilter(ch.data.labels[els[0].index]); } }
+            });
+
+            let sortedSuppliers = Object.entries(bySupplier).sort((a,b) => b[1] - a[1]).slice(0, 7);
+            chartSuppliers = new Chart(document.getElementById('chartSuppliers').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: sortedSuppliers.map(s => s[0]),
+                    datasets: [{ label: 'Ukupan iznos popravki (KM)', data: sortedSuppliers.map(s => s[1]), backgroundColor: '#6366f1', borderRadius: 6 }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
+        // ================= TAB 2 PROCESSOR =================
+        function processTab2(data) {
+            let periodInfo = getDailyCalculationPeriod(data, tab2SelectedYear);
+
+            let dailyDataYear = data.filter(item => {
+                let matchY = item.year === periodInfo.targetYear;
+                let matchM = periodInfo.targetMonth ? item.month === periodInfo.targetMonth : true;
+                return matchY && matchM;
+            });
+
+            let typeAllTotals = {};
+            let totalParts = 0, totalServices = 0;
+            let typeMonthDaily = {};
+            let typeSegmentMap = {};
+            let allSegments = new Set();
+
+            data.forEach(item => {
+                let tip = item.tipMehan;
+                typeAllTotals[tip] = (typeAllTotals[tip] || 0) + item.cost;
+                
+                totalParts += item.costPart;
+                totalServices += item.costService;
+
+                if (!typeMonthDaily[tip]) typeMonthDaily[tip] = { 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0, 12:0 };
+                typeMonthDaily[tip][item.month] += item.cost;
+
+                if (!typeSegmentMap[tip]) typeSegmentMap[tip] = {};
+                typeSegmentMap[tip][item.segment] = (typeSegmentMap[tip][item.segment] || 0) + item.cost;
+                allSegments.add(item.segment);
+            });
+
+            let typeVehicleSets = {};
+            let typeYearTotals = {};
+
+            dailyDataYear.forEach(item => {
+                let tip = item.tipMehan;
+                if (!typeVehicleSets[tip]) typeVehicleSets[tip] = new Set();
+                typeVehicleSets[tip].add(item.reg);
+                typeYearTotals[tip] = (typeYearTotals[tip] || 0) + item.cost;
+            });
+
+            // Fleets i Costs po godinama iz KPI Total
+            let yearKpiFleet = kpiTotalFleetByYear[periodInfo.targetYear] || {};
+            let yearKpiCosts = kpiTotalCostsByYear[periodInfo.targetYear] || {};
+            let yearTotalFleetCount = yearKpiFleet.Total || 964;
+
+            document.getElementById('tab2DailyTitle').innerHTML = `<span>Prosječan Trošak PO JEDINICI (Vozilu) – za ${periodInfo.periodLabel}</span>`;
+            document.getElementById('tab2PeriodSubtitle').innerText = `Detektovano ${periodInfo.monthsCount} mj. / ${periodInfo.daysCount} dana u ${periodInfo.targetYear}. g. (Struktura iz tabele KPI Total)`;
+            document.getElementById('masterFleetCountBadge').innerText = yearTotalFleetCount.toLocaleString('bs-BA');
+
+            const gridContainer = document.getElementById('dailyTypeKpiGrid');
+            let kpiCardsHTML = [];
+            
+            // 5 GLAVNIH TIPOVA IZ TABELE KPI TOTAL
+            let sortedTypes = ['Teretno', 'Putničko', 'Skladišna mehanizacija', 'Priključno', 'Radna mašina'];
+
+            sortedTypes.forEach(tip => {
+                let yearTot = typeYearTotals[tip] !== undefined && typeYearTotals[tip] > 0 ? typeYearTotals[tip] : (yearKpiCosts[tip] || 0);
+                
+                let vehicleCount = 0;
+                if (fleetMode === 'master') {
+                    vehicleCount = yearKpiFleet[tip] !== undefined ? yearKpiFleet[tip] : (typeVehicleSets[tip] ? typeVehicleSets[tip].size : 0);
+                } else {
+                    vehicleCount = typeVehicleSets[tip] ? typeVehicleSets[tip].size : 0;
+                }
+                
+                let dailyPerVehicle = (vehicleCount > 0 && periodInfo.daysCount > 0) ? (yearTot / (vehicleCount * periodInfo.daysCount)) : 0;
+                let monthlyPerVehicle = (vehicleCount > 0 && periodInfo.monthsCount > 0) ? (yearTot / (vehicleCount * periodInfo.monthsCount)) : 0;
+
+                kpiCardsHTML.push(`
+                    <div class="card border-l-4 border-indigo-600 bg-gradient-to-br from-white to-indigo-50/30 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[11px] font-extrabold text-indigo-900 uppercase tracking-wider">${tip}</span>
+                            <span class="text-[11px] font-bold bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">${vehicleCount} vozila</span>
+                        </div>
+                        <h4 class="text-2xl font-black text-slate-900 mt-2">${dailyPerVehicle.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM <span class="text-xs font-semibold text-slate-500">/ dan</span></h4>
+                        <p class="text-xs font-bold text-indigo-700 mt-1">🗓️ ${monthlyPerVehicle.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM <span class="font-normal text-slate-500">/ mjesečno</span></p>
+                        <div class="mt-3 pt-2 border-t border-slate-100 flex justify-between items-center text-[11px]">
+                            <span class="text-slate-500">Trošak u ${periodInfo.targetYear}.:</span>
+                            <span class="font-bold text-slate-800">${yearTot.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</span>
+                        </div>
+                    </div>
+                `);
+            });
+            gridContainer.innerHTML = kpiCardsHTML.join('');
+
+            renderYoyUnitCostMatrix(data);
+            drawChartsTab2(totalParts, totalServices, typeMonthDaily, typeSegmentMap, Array.from(allSegments), sortedTypes, typeVehicleSets);
+        }
+
+        function renderYoyUnitCostMatrix(data) {
+            let availableYears = Array.from(yearsSet).sort((a,b) => a - b);
+            let yoyTableBody = document.getElementById('yoyUnitCostTableBody');
+            
+            let labels = [];
+            let monthlyData = [];
+            let dailyData = [];
+            let rowsHTML = [];
+
+            availableYears.forEach(year => {
+                let yData = data.filter(d => d.year === year);
+                let yTotal = yData.reduce((acc, i) => acc + i.cost, 0);
+                if (yTotal === 0 && kpiTotalCostsByYear[year]) {
+                    yTotal = kpiTotalCostsByYear[year].Total || 0;
+                }
+                
+                let activeMonths = Array.from(new Set(yData.map(d => d.month))).sort((a,b) => a - b);
+                let mCount = Math.max(1, activeMonths.length);
+                let dCount = 0;
+                activeMonths.forEach(m => { dCount += new Date(year, m, 0).getDate(); });
+                if (dCount === 0) dCount = 365;
+
+                let fleetSize = (kpiTotalFleetByYear[year] && kpiTotalFleetByYear[year].Total) ? kpiTotalFleetByYear[year].Total : (new Set(yData.map(i => i.reg)).size || 1);
+
+                let monthlyPerVehicle = yTotal / (fleetSize * mCount);
+                let dailyPerVehicle = yTotal / (fleetSize * dCount);
+
+                labels.push(year.toString());
+                monthlyData.push(monthlyPerVehicle.toFixed(2));
+                dailyData.push(dailyPerVehicle.toFixed(2));
+
+                rowsHTML.push(`
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-2 px-2.5 text-left font-bold text-slate-800">${year}.</td>
+                        <td class="py-2 px-2.5 font-semibold text-slate-600">${fleetSize}</td>
+                        <td class="py-2 px-2.5 font-bold text-blue-700">${monthlyPerVehicle.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM</td>
+                        <td class="py-2 px-2.5 font-bold text-amber-700">${dailyPerVehicle.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM</td>
+                    </tr>
+                `);
+            });
+
+            yoyTableBody.innerHTML = rowsHTML.join('');
+
+            if (chartYoyUnitCost) chartYoyUnitCost.destroy();
+            chartYoyUnitCost = new Chart(document.getElementById('chartYoyUnitCost').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Trošak po vozilu MJESEČNO (KM)', data: monthlyData, backgroundColor: '#2563eb', borderRadius: 4 },
+                        { label: 'Trošak po vozilu DNEVNO (KM)', data: dailyData, backgroundColor: '#f59e0b', borderRadius: 4 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function drawChartsTab2(parts, services, typeMonthDaily, typeSegmentMap, segmentsList, typesList, typeVehicleSets) {
+            if(chartPartsVsServices) chartPartsVsServices.destroy(); 
+            if(chartDailyTrend) chartDailyTrend.destroy(); 
+            if(chartTypeSegmentMatrix) chartTypeSegmentMatrix.destroy();
+
+            chartPartsVsServices = new Chart(document.getElementById('chartPartsVsServices').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Rezervni Dijelovi', 'Usluge / Radni sati'],
+                    datasets: [{ data: [parts, services], backgroundColor: ['#3b82f6', '#f59e0b'] }]
+                },
+                options: { maintainAspectRatio: false }
+            });
+
+            let trendDatasets = [], colors = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+            typesList.slice(0, 5).forEach((tip, idx) => {
+                let mData = [];
+                let latestYear = Math.max(...Object.keys(kpiTotalFleetByYear).map(y => parseInt(y)));
+                let kpiFleet = kpiTotalFleetByYear[latestYear] || {};
+                let vCount = (fleetMode === 'master' && kpiFleet[tip]) ? kpiFleet[tip] : (typeVehicleSets[tip] ? Math.max(1, typeVehicleSets[tip].size) : 1);
+                
+                for(let m=1; m<=12; m++) {
+                    let monthlyTot = typeMonthDaily[tip][m];
+                    let mDays = 30;
+                    let dailyPerVeh = monthlyTot / (vCount * mDays);
+                    mData.push(dailyPerVeh.toFixed(2));
+                }
+                trendDatasets.push({
+                    label: `${tip} (KM/dan/vozilo)`,
+                    data: mData,
+                    borderColor: colors[idx % colors.length],
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    tension: 0.3
+                });
+            });
+
+            chartDailyTrend = new Chart(document.getElementById('chartDailyTrend').getContext('2d'), {
+                type: 'line',
+                data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'], datasets: trendDatasets },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            let topSegs = segmentsList.slice(0, 6);
+            let matrixDatasets = [];
+            topSegs.forEach((seg, idx) => {
+                let segData = typesList.map(tip => (typeSegmentMap[tip] && typeSegmentMap[tip][seg]) ? typeSegmentMap[tip][seg] : 0);
+                matrixDatasets.push({
+                    label: seg,
+                    data: segData,
+                    backgroundColor: colors[idx % colors.length]
+                });
+            });
+
+            chartTypeSegmentMatrix = new Chart(document.getElementById('chartTypeSegmentMatrix').getContext('2d'), {
+                type: 'bar',
+                data: { labels: typesList, datasets: matrixDatasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { x: { stacked: true }, y: { stacked: true } }
+                }
+            });
+        }
+
+        // ================= TAB 3 PROCESSOR =================
+        function processTab3(data) {
+            const availableYears = Array.from(yearsSet).sort((a,b) => a - b);
+            const monthsNames = ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Juni', 'Juli', 'August', 'Septembar', 'Oktobar', 'Novembar', 'Decembar'];
+
+            let matrixData = {};
+            monthsNames.forEach((_, idx) => {
+                matrixData[idx + 1] = {};
+                availableYears.forEach(y => matrixData[idx + 1][y] = 0);
+            });
+
+            data.forEach(item => {
+                if (matrixData[item.month] && matrixData[item.month][item.year] !== undefined) {
+                    matrixData[item.month][item.year] += item.cost;
+                }
+            });
+
+            const headerElem = document.getElementById('matrixTableHeader');
+            let headerHTML = `<tr><th class="py-2.5 px-3 text-left">Mjesec</th>`;
+            availableYears.forEach(y => { headerHTML += `<th class="py-2.5 px-3">${y} (KM)</th>`; });
+            headerHTML += `<th class="py-2.5 px-3 bg-blue-50 text-blue-900">Ukupno</th></tr>`;
+            headerElem.innerHTML = headerHTML;
+
+            const bodyElem = document.getElementById('matrixTableBody');
+            let bodyRows = [];
+            let yearTotals = {};
+            availableYears.forEach(y => yearTotals[y] = 0);
+
+            monthsNames.forEach((mName, mIdx) => {
+                let mNum = mIdx + 1;
+                let rowSum = 0;
+                let rowHTML = `<tr class="hover:bg-slate-50"><td class="py-2 px-3 text-left font-bold text-slate-800">${mName}</td>`;
+                
+                availableYears.forEach(y => {
+                    let val = matrixData[mNum][y] || 0;
+                    rowSum += val;
+                    yearTotals[y] += val;
+                    rowHTML += `<td class="py-2 px-3">${val > 0 ? val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) : '-'}</td>`;
+                });
+
+                rowHTML += `<td class="py-2 px-3 font-bold bg-blue-50/50 text-blue-900">${rowSum.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td></tr>`;
+                bodyRows.push(rowHTML);
+            });
+
+            let grandTotal = 0;
+            let totalRowHTML = `<tr class="bg-slate-100 font-extrabold text-slate-900 border-t-2 border-slate-300"><td class="py-3 px-3 text-left">UKUPNO</td>`;
+            availableYears.forEach(y => {
+                let yTot = yearTotals[y] || 0;
+                grandTotal += yTot;
+                totalRowHTML += `<td class="py-3 px-3">${yTot.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>`;
+            });
+            totalRowHTML += `<td class="py-3 px-3 bg-blue-100 text-blue-950">${grandTotal.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</td></tr>`;
+            bodyRows.push(totalRowHTML);
+
+            bodyElem.innerHTML = bodyRows.join('');
+
+            renderTransactionTable(data);
+        }
+
+        let transactionTableData = [];
+
+        function renderTransactionTable(data) {
+            transactionTableData = data;
+            document.getElementById('tableRecordCount').innerText = `Prikazano ${data.length.toLocaleString('bs-BA')} servisa i transakcija`;
+            filterTransactionTable();
+        }
+
+        function filterTransactionTable() {
+            let term = document.getElementById('tableSearchInput').value.trim().toLowerCase();
+            let filtered = transactionTableData;
+
+            if (term) {
+                filtered = transactionTableData.filter(item => {
+                    return item.reg.toLowerCase().includes(term) ||
+                           item.garazniBroj.toLowerCase().includes(term) ||
+                           item.opisPopravke.toLowerCase().includes(term) ||
+                           item.dobavljacOrig.toLowerCase().includes(term) ||
+                           item.segment.toLowerCase().includes(term);
+                });
+            }
+
+            const tbody = document.getElementById('transactionTableBody');
+            let rowsHTML = [];
+
+            filtered.slice(0, 200).forEach(item => {
+                let dateStr = "-";
+                if(item.datumObj && !isNaN(item.datumObj)) {
+                    dateStr = ("0" + item.datumObj.getDate()).slice(-2) + "." + ("0" + (item.datumObj.getMonth() + 1)).slice(-2) + "." + item.datumObj.getFullYear() + ".";
+                }
+                rowsHTML.push(`
+                    <tr class="hover:bg-blue-50/60 border-b border-slate-100 transition-colors">
+                        <td class="py-2 px-3 whitespace-nowrap text-slate-700 font-medium">${dateStr}</td>
+                        <td class="py-2 px-3 font-bold text-blue-700 cursor-pointer hover:underline" onclick="openVehicleModal('${item.reg}')">${item.reg}</td>
+                        <td class="py-2 px-3 font-mono font-semibold text-slate-600">${item.garazniBroj}</td>
+                        <td class="py-2 px-3 text-slate-600">${item.tipMehan}</td>
+                        <td class="py-2 px-3 text-slate-600">${item.markaVoz}</td>
+                        <td class="py-2 px-3 font-semibold text-slate-700">${item.segment}</td>
+                        <td class="py-2 px-3 text-slate-900 font-semibold break-words max-w-[200px]">${item.opisPopravke}</td>
+                        <td class="py-2 px-3 text-slate-600 text-xs truncate max-w-[140px]" title="${item.dobavljacOrig}">${item.dobavljacOrig}</td>
+                        <td class="py-2 px-3 text-right font-bold text-slate-800">${item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    </tr>
+                `);
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400 font-medium">Nema zapisa koji odgovaraju pretrazi.</td></tr>`;
+            } else {
+                tbody.innerHTML = rowsHTML.join('');
+            }
+        }
+
+        // --- UNIVERZALNA PRETRAGA I KARTON VOZILA ---
+        function handleVehicleSearch() {
+            let inputVal = document.getElementById('modalVehicleInput').value.trim();
+            if(!inputVal) { alert("Molimo unesite registraciju ili garažni broj!"); return; }
+            openVehicleModal(inputVal);
+        }
+
+        function openVehicleModal(searchQuery = null) {
+            let query = searchQuery;
+            if(!query) query = document.getElementById('modalVehicleInput').value.trim();
+            if(!query) { alert("Molimo odaberite ili unesite vozilo!"); return; }
+
+            let cleanQuery = query.split(' [')[0].trim().toLowerCase();
+            let gbQuery = query.includes('GB:') ? query.split('GB:')[1].replace(']', '').trim().toLowerCase() : cleanQuery;
+
+            currentModalVehicleData = globalData.filter(item => {
+                let regMatch = item.reg.toLowerCase() === cleanQuery || item.reg.toLowerCase().includes(cleanQuery);
+                let gbMatch = item.garazniBroj !== '-' && (item.garazniBroj.toLowerCase() === gbQuery || item.garazniBroj.toLowerCase().includes(gbQuery));
+                return regMatch || gbMatch;
+            });
+
+            if (currentModalVehicleData.length === 0) { 
+                alert(`Vozilo sa pojmom "${query}" nije pronađeno u filtriranim podacima.`); 
+                return; 
+            }
+
+            let mainReg = currentModalVehicleData[0].reg;
+            currentModalVehicleData = currentModalVehicleData.filter(i => i.reg === mainReg);
+
+            let vehicleSegments = new Set(currentModalVehicleData.map(item => item.segment));
+            const segFilter = document.getElementById('modalSegmentFilter');
+            let segOptions = ['<option value="all">Svi segmenti</option>'];
+            Array.from(vehicleSegments).sort().forEach(s => { segOptions.push(`<option value="${s}">${s}</option>`); });
+            segFilter.innerHTML = segOptions.join('');
+            segFilter.value = 'all';
+
+            let gb = currentModalVehicleData[0].garazniBroj !== '-' ? currentModalVehicleData[0].garazniBroj : 'N/A';
+            let god = currentModalVehicleData[0].godProizvodnje !== '-' ? currentModalVehicleData[0].godProizvodnje : 'N/A';
+            let marka = currentModalVehicleData[0].markaVoz;
+            let tip = currentModalVehicleData[0].tipMehan;
+
+            document.getElementById('modalTitle').innerText = `KARTON VOZILA: ${mainReg}`; 
+            document.getElementById('modalRegBadge').innerText = `GARAŽNI BROJ: ${gb}`;
+            document.getElementById('modalSubtitle').innerText = `Marka: ${marka}  |  Godište: ${god}  |  Tip: ${tip}`;
+            
+            renderModalContent(currentModalVehicleData);
+            document.getElementById('vehicleModal').classList.remove('hidden');
+        }
+
+        document.getElementById('modalSegmentFilter').addEventListener('change', function() {
+            let filtered = currentModalVehicleData;
+            if(this.value !== 'all') {
+                filtered = currentModalVehicleData.filter(item => item.segment === this.value);
+            }
+            renderModalContent(filtered);
+        });
+
+        function renderModalContent(vehData) {
+            vehData.sort((a,b) => {
+                if(!a.datumObj) return 1; if(!b.datumObj) return -1;
+                return b.datumObj - a.datumObj;
+            });
+
+            let totalCost = 0;
+            let costsByYear = {};
+            let costsByMonth = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0, 12:0};
+            let supplierCounts = {};
+            let tableRowsHTML = [];
+
+            vehData.forEach(item => {
+                totalCost += item.cost;
+                costsByYear[item.year] = (costsByYear[item.year] || 0) + item.cost;
+                if(item.month > 0 && item.month <= 12) costsByMonth[item.month] += item.cost;
+                
+                let sup = item.dobavljacOrig !== '-' ? item.dobavljacOrig : 'Nepoznato';
+                supplierCounts[sup] = (supplierCounts[sup] || 0) + item.cost;
+
+                let dateStr = "-";
+                if(item.datumObj && !isNaN(item.datumObj)) {
+                    dateStr = ("0" + item.datumObj.getDate()).slice(-2) + "." + ("0" + (item.datumObj.getMonth() + 1)).slice(-2) + "." + item.datumObj.getFullYear() + ".";
+                }
+
+                tableRowsHTML.push(`
+                    <tr class="hover:bg-blue-50/60 border-b border-slate-100 transition-colors">
+                        <td class="py-2.5 px-3 whitespace-nowrap text-slate-700 font-medium">${dateStr}</td>
+                        <td class="py-2.5 px-3 text-slate-600 font-semibold">${item.segment}</td>
+                        <td class="py-2.5 px-3 text-slate-900 font-semibold break-words max-w-[220px]">${item.opisPopravke}</td>
+                        <td class="py-2.5 px-3 text-slate-600 text-xs truncate max-w-[140px]" title="${item.dobavljacOrig}">${item.dobavljacOrig}</td>
+                        <td class="py-2.5 px-3 text-right font-bold text-slate-800">${item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    </tr>
+                `);
+            });
+            
+            document.getElementById('modalTableBody').innerHTML = tableRowsHTML.join('');
+            document.getElementById('modalTotalCost').innerText = `Σ ${totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM`;
+            
+            document.getElementById('mKpiTotal').innerText = totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM';
+            document.getElementById('mKpiCount').innerText = vehData.length;
+            let avg = vehData.length > 0 ? (totalCost / vehData.length) : 0;
+            document.getElementById('mKpiAvg').innerText = avg.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM';
+            let topSup = Object.keys(supplierCounts).length > 0 ? Object.keys(supplierCounts).reduce((a, b) => supplierCounts[a] > supplierCounts[b] ? a : b) : '-';
+            document.getElementById('mKpiSupplier').innerText = topSup;
+
+            if(modalYearChartInstance) modalYearChartInstance.destroy(); 
+            const ctxYear = document.getElementById('modalYearChart').getContext('2d'); 
+            let sortedYears = Object.keys(costsByYear).sort();
+            modalYearChartInstance = new Chart(ctxYear, { 
+                type: 'bar', 
+                data: { labels: sortedYears, datasets: [{ label: 'Trošak (KM)', data: sortedYears.map(y => costsByYear[y]), backgroundColor: '#2563eb', borderRadius: 6 }] }, 
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } } 
+            });
+
+            if(modalMonthChartInstance) modalMonthChartInstance.destroy(); 
+            const ctxMonth = document.getElementById('modalMonthChart').getContext('2d'); 
+            modalMonthChartInstance = new Chart(ctxMonth, { 
+                type: 'line', 
+                data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'], datasets: [{ label: 'Trošak (KM)', data: Object.values(costsByMonth), borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.12)', fill: true, tension: 0.3 }] }, 
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } } 
+            });
+        }
+
+        function closeVehicleModal() { document.getElementById('vehicleModal').classList.add('hidden'); }
+        function printVehicleCard() { window.print(); }
+
+        function exportVehicleCardToExcel() {
+            if (!currentModalVehicleData || currentModalVehicleData.length === 0) {
+                alert("Nema podataka o vozilu za izvoz.");
+                return;
+            }
+
+            let reg = currentModalVehicleData[0].reg || 'Vozilo';
+            let gb = currentModalVehicleData[0].garazniBroj || '-';
+
+            let exportRows = currentModalVehicleData.map(item => ({
+                "Datum": item.datumObj ? item.datumObj.toLocaleDateString('bs-BA') : '-',
+                "Registracija": item.reg,
+                "Garažni Broj": item.garazniBroj,
+                "Marka": item.markaVoz,
+                "Godište": item.godProizvodnje,
+                "Tip Vozila": item.tipMehan,
+                "Segment": item.segment,
+                "Opis Opravke / Dio": item.opisPopravke,
+                "Serviser / Dobavljač": item.dobavljacOrig,
+                "Tip Servisa": item.type,
+                "Cijena (KM)": item.cost
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, `Karton ${reg}`);
+            
+            let fileName = `Karton_Vozila_${reg}_GB${gb}_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        window.onclick = function(event) { if (event.target == document.getElementById('vehicleModal')) closeVehicleModal(); }
+
+        function setSegmentFilter(seg) { activeSegment = seg; applyFilters(); }
+        function clearSegmentFilter() { activeSegment = null; applyFilters(); }
+        function resetDrillDown() { activeSegment = null; applyFilters(); }
+
+        function exportFilteredDataToExcel() {
+            if (!currentFilteredData || currentFilteredData.length === 0) {
+                alert("Nema filtriranih podataka za izvoz.");
+                return;
+            }
+
+            let exportRows = currentFilteredData.map(item => ({
+                "Registracija": item.reg,
+                "Garažni Broj": item.garazniBroj,
+                "Godina": item.year,
+                "Mjesec": item.month,
+                "Datum": item.datumObj ? item.datumObj.toLocaleDateString('bs-BA') : '-',
+                "Segment": item.segment,
+                "Tip Vozila": item.tipMehan,
+                "Marka": item.markaVoz,
+                "Godište": item.godProizvodnje,
+                "Opis Opravke": item.opisPopravke,
+                "Serviser / Dobavljač": item.dobavljacOrig,
+                "Tip Servisa": item.type,
+                "Trošak (KM)": item.cost
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Filtrirani Podaci");
+            
+            let fileName = `Analiza_Troskova_Izvoz_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+    </script>
+</body>
+</html>
