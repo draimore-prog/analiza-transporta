@@ -7,6 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <!-- Firebase Web SDK v10 (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
     <style>
         body { background-color: #f8fafc; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1e293b; }
         .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.06); transition: all 0.25s ease; border: 1px solid #e2e8f0; }
@@ -838,14 +843,83 @@
             tbody.innerHTML = rowsHTML.join('');
         }
 
-        // Initialize Auth system immediately on load
-        window.addEventListener('DOMContentLoaded', initAuthSystem);
+        // ================= FIREBASE & FIRESTORE INTEGRATION =================
+        const firebaseConfig = {
+            apiKey: "AIzaSy_analiza_transporta_key",
+            authDomain: "analiza-transporta-flota.firebaseapp.com",
+            projectId: "analiza-transporta-flota",
+            storageBucket: "analiza-transporta-flota.appspot.com",
+            messagingSenderId: "100000000000",
+            appId: "1:100000000000:web:analizatransporta"
+        };
+
+        if (typeof firebase !== 'undefined' && firebase.initializeApp) {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                window.db = firebase.firestore();
+                console.log("Firebase & Firestore initialized successfully");
+            } catch (e) {
+                console.warn("Firebase initialization notice:", e);
+            }
+        }
+
+        async function autoLoadDataset() {
+            try {
+                const res = await fetch('fleet_data.json');
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data && data.records && data.records.length > 0) {
+                    globalData = data.records.map(item => ({
+                        ...item,
+                        datumObj: item.datum ? new Date(item.datum) : null
+                    }));
+                    yearsSet.clear();
+                    globalData.forEach(d => yearsSet.add(d.year));
+
+                    if (data.metadata && data.metadata.fleetByYear) {
+                        kpiTotalFleetByYear = { ...kpiTotalFleetByYear, ...data.metadata.fleetByYear };
+                    }
+
+                    const yearSelect = document.getElementById('filterYear');
+                    const tab2YearSelect = document.getElementById('tab2YearSelect');
+                    
+                    let sortedYearsArr = Array.from(yearsSet).sort((a,b) => b - a);
+                    let yearOptions = ['<option value="all">Sve godine</option>'];
+                    let tab2YearOptions = ['<option value="latest">Tekuća / Najnovija godina</option>', '<option value="all">Sve godine (Zbirno)</option>'];
+
+                    sortedYearsArr.forEach(y => { 
+                        yearOptions.push(`<option value="${y}">${y}</option>`); 
+                        tab2YearOptions.push(`<option value="${y}">${y}. godina</option>`);
+                    });
+                    if (yearSelect) yearSelect.innerHTML = yearOptions.join('');
+                    if (tab2YearSelect) tab2YearSelect.innerHTML = tab2YearOptions.join('');
+
+                    document.getElementById('filter-section').classList.remove('hidden');
+                    document.getElementById('tabs-navigation').classList.remove('hidden');
+                    let latestYear = Math.max(...Object.keys(kpiTotalFleetByYear).map(y => parseInt(y)));
+                    let masterCount = kpiTotalFleetByYear[latestYear] ? kpiTotalFleetByYear[latestYear].Total : 964;
+                    document.getElementById('uploadStatusSubtitle').innerText = `Flota: ${masterCount} vozila | Automatski učitano ${globalData.length.toLocaleString('bs-BA')} servisa`;
+                    
+                    switchTab(1);
+                    resetDrillDown();
+                }
+            } catch (e) {
+                console.log("Auto-load dataset note:", e);
+            }
+        }
+
+        // Initialize Auth system & dataset on load
+        window.addEventListener('DOMContentLoaded', () => {
+            initAuthSystem();
+            autoLoadDataset();
+        });
 
         // ================= GLAVNA LOGIKA DASHBOARDA =================
         let globalData = [];
         let activeTab = 1;
         let fleetMode = 'master'; // 'master' (iz tabele KPI Total) ili 'active' (Servisirana)
         let tab2SelectedYear = 'latest'; 
+
 
         // AUTORITATIVNA STRUKTURA FLOTE I TROŠKOVA DIREKTNO IZ EXCEL SHEET-A "KPI Total"
         let kpiTotalFleetByYear = {
