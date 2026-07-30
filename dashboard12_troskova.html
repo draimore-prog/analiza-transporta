@@ -801,7 +801,8 @@
                                 <th class="py-3 px-3">Registracija</th>
                                 <th class="py-3 px-3">MT / Garažni Br.</th>
                                 <th class="py-3 px-3">Tip Mehanizacije</th>
-                                <th class="py-3 px-3">Marka i Model</th>
+                                <th class="py-3 px-3">Marka</th>
+                                <th class="py-3 px-3">Model</th>
                                 <th class="py-3 px-3">Godina</th>
                                 <th class="py-3 px-3">Broj Šasije (VIN)</th>
                                 <th class="py-3 px-3 text-right">Početno (km/h)</th>
@@ -877,9 +878,15 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Marka i Model Vozila</label>
-                    <input type="text" id="evMarkaVoz" placeholder="npr. Mercedes Benz Actros 1845" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-indigo-500">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Marka Vozila (Proizvođač) <span class="text-red-500">*</span></label>
+                        <input type="text" id="evMarkaVoz" required placeholder="npr. Jungheinrich, Linde, Audi, Mercedes Benz" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Model Vozila</label>
+                        <input type="text" id="evModelVoz" placeholder="npr. EFG115, Q5, H30D, Actros 1845" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-semibold outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                    </div>
                 </div>
 
                 <div>
@@ -2433,6 +2440,21 @@
                     const data = await res.json();
                     if (data && Array.isArray(data) && data.length > 0) {
                         masterFleetData = data;
+                        
+                        // Merge local custom edits if present
+                        let savedEdits = localStorage.getItem('fleet_master_custom_edits_v1');
+                        if (savedEdits) {
+                            try {
+                                let localMap = new Map(JSON.parse(savedEdits).map(v => [v.reg, v]));
+                                masterFleetData = masterFleetData.map(v => localMap.has(v.reg) ? localMap.get(v.reg) : v);
+                                localMap.forEach((v, regKey) => {
+                                    if (!masterFleetData.some(m => m.reg === regKey)) {
+                                        masterFleetData.unshift(v);
+                                    }
+                                });
+                            } catch(err) {}
+                        }
+                        
                         renderMasterFleetTable();
                         return;
                     }
@@ -2459,6 +2481,7 @@
                         garazniBroj: d.garazniBroj || '-',
                         tipMehan: d.tipMehan || 'Ostalo',
                         markaVoz: d.markaVoz || 'Ostalo',
+                        modelVoz: d.markaVoz || 'Ostalo',
                         godProizvodnje: d.godProizvodnje || '-',
                         brojSasije: '-',
                         status: 'Aktivno',
@@ -2485,6 +2508,7 @@
                     matchSearch = (v.reg && v.reg.toLowerCase().includes(searchTerm)) ||
                                   (v.garazniBroj && v.garazniBroj.toLowerCase().includes(searchTerm)) ||
                                   (v.markaVoz && v.markaVoz.toLowerCase().includes(searchTerm)) ||
+                                  (v.modelVoz && v.modelVoz.toLowerCase().includes(searchTerm)) ||
                                   (v.brojSasije && v.brojSasije.toLowerCase().includes(searchTerm));
                 }
                 return matchTip && matchStatus && matchSearch;
@@ -2550,7 +2574,8 @@
                         <td class="py-2.5 px-3 font-black text-slate-900 text-xs tracking-tight">${v.reg}</td>
                         <td class="py-2.5 px-3 font-mono font-bold text-slate-700 text-xs">${v.garazniBroj}</td>
                         <td class="py-2.5 px-3 font-semibold text-slate-700 text-xs">${v.tipMehan}</td>
-                        <td class="py-2.5 px-3 font-semibold text-slate-800 text-xs">${v.markaVoz}</td>
+                        <td class="py-2.5 px-3 font-extrabold text-slate-900 text-xs">${v.markaVoz}</td>
+                        <td class="py-2.5 px-3 font-semibold text-slate-700 text-xs">${v.modelVoz || '-'}</td>
                         <td class="py-2.5 px-3 font-semibold text-slate-600 text-xs">${v.godProizvodnje}</td>
                         <td class="py-2.5 px-3 font-mono text-slate-600 text-[11px]">${v.brojSasije}</td>
                         <td class="py-2.5 px-3 text-right font-bold text-slate-700 text-xs">${v.pocetnaKmRh ? v.pocetnaKmRh.toLocaleString('bs-BA') : '0'}</td>
@@ -2572,7 +2597,7 @@
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="11" class="py-8 text-center text-slate-400 font-medium">Nema vozila u šifrarniku koja odgovaraju pretrazi.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="12" class="py-8 text-center text-slate-400 font-medium">Nema vozila u šifrarniku koja odgovaraju pretrazi.</td></tr>`;
             } else {
                 tbody.innerHTML = rowsHTML.join('');
             }
@@ -2620,6 +2645,7 @@
                 document.getElementById('evTipMehan').value = v.tipMehan;
                 document.getElementById('evGodProizvodnje').value = v.godProizvodnje !== '-' ? v.godProizvodnje : '';
                 document.getElementById('evMarkaVoz').value = v.markaVoz !== '-' ? v.markaVoz : '';
+                document.getElementById('evModelVoz').value = v.modelVoz !== '-' ? v.modelVoz : '';
                 document.getElementById('evBrojSasije').value = v.brojSasije !== '-' ? v.brojSasije : '';
                 document.getElementById('evPocetnaKmRh').value = v.pocetnaKmRh || 0;
                 document.getElementById('evProdajnaKmRh').value = v.prodajnaKmRh || 0;
@@ -2633,6 +2659,7 @@
                 document.getElementById('evTipMehan').value = 'Teretno';
                 document.getElementById('evGodProizvodnje').value = '';
                 document.getElementById('evMarkaVoz').value = '';
+                document.getElementById('evModelVoz').value = '';
                 document.getElementById('evBrojSasije').value = '';
                 document.getElementById('evPocetnaKmRh').value = '0';
                 document.getElementById('evProdajnaKmRh').value = '0';
@@ -2658,6 +2685,7 @@
             let tipMehan = document.getElementById('evTipMehan').value;
             let godProizvodnje = document.getElementById('evGodProizvodnje').value.trim() || '-';
             let markaVoz = document.getElementById('evMarkaVoz').value.trim() || '-';
+            let modelVoz = document.getElementById('evModelVoz').value.trim() || markaVoz;
             let brojSasije = document.getElementById('evBrojSasije').value.trim() || '-';
             let pocetnaKmRh = parseFloat(document.getElementById('evPocetnaKmRh').value) || 0;
             let prodajnaKmRh = parseFloat(document.getElementById('evProdajnaKmRh').value) || 0;
@@ -2668,6 +2696,7 @@
                 garazniBroj,
                 tipMehan,
                 markaVoz,
+                modelVoz,
                 godProizvodnje,
                 brojSasije,
                 pocetnaKmRh,
@@ -2692,15 +2721,22 @@
                 });
             }
 
+            // Persist to local storage
+            try {
+                localStorage.setItem('fleet_master_custom_edits_v1', JSON.stringify(masterFleetData));
+            } catch(err) {}
+
+            // Save to Firestore with sanitized doc key
             if (window.db) {
                 try {
-                    await window.db.collection('fleet_master').doc(reg).set(vehicleObj, { merge: true });
+                    let safeDocId = reg.replace(/[\/\\#\?]/g, '_');
+                    await window.db.collection('fleet_master').doc(safeDocId).set(vehicleObj, { merge: true });
                 } catch(e) { console.warn("Notice saving vehicle to Firestore:", e); }
             }
 
             renderMasterFleetTable();
             closeEditVehicleModal();
-            alert(`✅ Podaci o vozilu ${reg} su uspješno sačuvani u šifrarniku!`);
+            alert(`✅ Podaci i status vozila ${reg} su uspješno sačuvani u šifrarniku!`);
         }
 
         function exportMasterFleetToExcel() {
@@ -2714,7 +2750,8 @@
                 "Registarska Oznaka": v.reg,
                 "MT / Garažni Broj": v.garazniBroj,
                 "Tip Mehanizacije": v.tipMehan,
-                "Marka i Model": v.markaVoz,
+                "Marka": v.markaVoz,
+                "Model": v.modelVoz,
                 "Godina Proizvodnje": v.godProizvodnje,
                 "Broj Šasije (VIN)": v.brojSasije,
                 "Početno stanje (km/h)": v.pocetnaKmRh,
