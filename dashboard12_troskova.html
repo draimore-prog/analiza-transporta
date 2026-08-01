@@ -2922,10 +2922,10 @@
             let kmContainer = document.getElementById('ncKmContainer');
             let hoursContainer = document.getElementById('ncHoursContainer');
 
-            if (tip === 'Putničko' || tip === 'Teretno') {
+            if (tip.includes('Putničko') || tip.includes('Teretno')) {
                 kmContainer.classList.remove('hidden');
                 hoursContainer.classList.add('hidden');
-            } else if (tip === 'Skladišna mehanizacija') {
+            } else if (tip.includes('Skladišn')) {
                 kmContainer.classList.add('hidden');
                 hoursContainer.classList.remove('hidden');
             } else {
@@ -2976,21 +2976,26 @@
                 return;
             }
 
+            let isSelection = inputVal.includes(' [') || inputVal.includes(' (');
             let cleanReg = inputVal.split(' [')[0].split(' (')[0].trim();
             
-            // Traži meč u bazi aktivnih vozila masterFleetData ili u globalData
+            // Traži tačan meč u bazi po registraciji ili garažnom broju
             let match = (masterFleetData && masterFleetData.find(v => {
                 let r = (v.reg || '').toUpperCase();
                 let gb = (v.garazniBroj || '').toString().toUpperCase();
-                return r === cleanReg || (gb && gb !== '-' && gb === cleanReg) || inputVal.includes(r);
+                return r === cleanReg || (gb && gb !== '-' && gb === cleanReg);
             })) || globalData.find(v => {
                 let r = (v.reg || '').toUpperCase();
                 let gb = (v.garazniBroj || '').toString().toUpperCase();
-                return r === cleanReg || (gb && gb !== '-' && gb === cleanReg) || inputVal.includes(r);
+                return r === cleanReg || (gb && gb !== '-' && gb === cleanReg);
             });
 
             if (match) {
-                if (match.reg) document.getElementById('ncReg').value = match.reg;
+                // Ako je korisnik kliknuo na opciju iz padajuće liste, formatiraj unos na čistu registraciju
+                if (isSelection && match.reg) {
+                    document.getElementById('ncReg').value = match.reg;
+                }
+
                 document.getElementById('ncMt').value = (match.garazniBroj && match.garazniBroj !== '-') ? match.garazniBroj : '-';
                 document.getElementById('ncGod').value = (match.godProizvodnje && match.godProizvodnje !== '-') ? match.godProizvodnje : '-';
                 
@@ -3005,6 +3010,12 @@
 
                 // Zaključaj automatski popunjena polja iz šifrarnika
                 ncLockVehicleFields(true);
+            } else {
+                // Ako korisnik još kuca djelomični unos (npr. "O25"), ne diraj polje za kucanje i drži polja otključana
+                document.getElementById('ncMt').value = '';
+                document.getElementById('ncGod').value = '';
+                document.getElementById('ncMarka').value = '';
+                ncLockVehicleFields(false);
             }
         }
 
