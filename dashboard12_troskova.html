@@ -114,14 +114,21 @@
                 <p class="text-xs text-slate-500 mt-1">Transport Analitika & Održavanje Flote</p>
             </div>
 
-            <form onsubmit="handleLogin(event)" class="space-y-4">
+            <form onsubmit="handleLogin(event)" class="space-y-4" autocomplete="on">
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Korisničko ime</label>
-                    <input type="text" id="loginUsername" required placeholder="Unesite korisničko ime..." class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 font-semibold outline-none">
+                    <input type="text" id="loginUsername" name="username" autocomplete="username" required placeholder="Unesite korisničko ime..." class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 font-semibold outline-none">
                 </div>
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Lozinka</label>
-                    <input type="password" id="loginPassword" required placeholder="Unesite lozinku..." class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 font-semibold outline-none">
+                    <input type="password" id="loginPassword" name="password" autocomplete="current-password" required placeholder="Unesite lozinku..." class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 font-semibold outline-none">
+                </div>
+
+                <div class="flex items-center justify-between py-1">
+                    <label class="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer select-none">
+                        <input type="checkbox" id="rememberMe" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                        <span>Zapamti moje podatke za prijavu</span>
+                    </label>
                 </div>
 
                 <div id="loginError" class="hidden p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg font-bold">
@@ -1075,6 +1082,22 @@
                 } catch(e) {}
             }
 
+            // Učitavanje spašenih korisničkih podataka ako je označeno "Zapamti me"
+            let savedCreds = localStorage.getItem('saved_login_creds');
+            if (savedCreds) {
+                try {
+                    let creds = JSON.parse(savedCreds);
+                    if (creds.username && creds.password) {
+                        const uElem = document.getElementById('loginUsername');
+                        const pElem = document.getElementById('loginPassword');
+                        const remElem = document.getElementById('rememberMe');
+                        if (uElem) uElem.value = creds.username;
+                        if (pElem) pElem.value = creds.password;
+                        if (remElem) remElem.checked = true;
+                    }
+                } catch(e) {}
+            }
+
             updateAuthUI();
         }
 
@@ -1126,12 +1149,20 @@
             e.preventDefault();
             const uInput = document.getElementById('loginUsername').value.trim();
             const pInput = document.getElementById('loginPassword').value.trim();
+            const rememberMe = document.getElementById('rememberMe')?.checked;
             const errDiv = document.getElementById('loginError');
 
             let found = usersDB.find(u => u.username.toLowerCase() === uInput.toLowerCase() && u.password === pInput);
             if (found) {
                 activeUser = found;
-                sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+                if (rememberMe) {
+                    localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+                    localStorage.setItem('saved_login_creds', JSON.stringify({ username: uInput, password: pInput }));
+                } else {
+                    sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+                    localStorage.removeItem(SESSION_ACTIVE_USER_KEY);
+                    localStorage.removeItem('saved_login_creds');
+                }
                 errDiv.classList.add('hidden');
                 updateAuthUI();
             } else {
