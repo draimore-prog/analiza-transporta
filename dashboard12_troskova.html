@@ -2123,12 +2123,47 @@
                     costsBySupplier[sup] = (costsBySupplier[sup] || 0) + item.cost;
                 }
 
-                if(isAllYears) {
-                    if(!trendData[item.year]) trendData[item.year] = { 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0, 12:0 };
+            const selectedMonth = document.getElementById('filterMonth').value;
+            const isAllMonths = selectedMonth === 'all';
+
+            let trendMode = 'yoy'; 
+            if (isAllYears && isAllMonths) trendMode = 'yoy';
+            else if (!isAllYears && isAllMonths) trendMode = 'monthly';
+            else if (!isAllYears && !isAllMonths) trendMode = 'daily';
+            else if (isAllYears && !isAllMonths) trendMode = 'sameMonthYoY';
+
+            let trendData = {};
+
+            data.forEach(item => {
+                totalCost += item.cost;
+                if (item.type === 'Interno') internalCost += item.cost; else externalCost += item.cost;
+                costsByVehicle[item.reg] = (costsByVehicle[item.reg] || 0) + item.cost;
+                costsBySegment[item.segment] = (costsBySegment[item.segment] || 0) + item.cost;
+
+                let isInt = item.type === 'Interno' || (item.dobavljacOrig && item.dobavljacOrig.toLowerCase().includes('intern'));
+                let isMatchSupplierMode = false;
+                if (supplierMode === 'external' && !isInt) isMatchSupplierMode = true;
+                else if (supplierMode === 'internal' && isInt) isMatchSupplierMode = true;
+                else if (supplierMode === 'all') isMatchSupplierMode = true;
+
+                if (isMatchSupplierMode) {
+                    let sup = item.dobavljacOrig && item.dobavljacOrig !== '-' ? item.dobavljacOrig : (isInt ? 'Vlastita Radionica / Magacin' : 'Ostali Eksterni');
+                    costsBySupplier[sup] = (costsBySupplier[sup] || 0) + item.cost;
+                }
+
+                if (trendMode === 'yoy') {
+                    if (!trendData[item.year]) trendData[item.year] = { 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0, 12:0 };
                     trendData[item.year][item.month] += item.cost;
-                } else {
-                    if(!trendData[item.month]) trendData[item.month] = { Interno: 0, Eksterno: 0 };
+                } else if (trendMode === 'monthly') {
+                    if (!trendData[item.month]) trendData[item.month] = { Interno: 0, Eksterno: 0 };
                     trendData[item.month][item.type] += item.cost;
+                } else if (trendMode === 'daily') {
+                    let dayNum = item.datumObj ? item.datumObj.getDate() : 1;
+                    if (!trendData[dayNum]) trendData[dayNum] = { Interno: 0, Eksterno: 0 };
+                    trendData[dayNum][item.type] += item.cost;
+                } else if (trendMode === 'sameMonthYoY') {
+                    if (!trendData[item.year]) trendData[item.year] = { Interno: 0, Eksterno: 0 };
+                    trendData[item.year][item.type] += item.cost;
                 }
             });
 
@@ -2156,15 +2191,15 @@
             let avgCost = totalCost / data.length;
             document.getElementById('kpi-avg-cost').innerText = avgCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM';
 
-            drawChartsTab1(trendData, internalCost, externalCost, costsByVehicle, costsBySegment, costsBySupplier, isAllYears);
+            drawChartsTab1(trendData, internalCost, externalCost, costsByVehicle, costsBySegment, costsBySupplier, isAllYears, trendMode, selectedYear, selectedMonth);
         }
 
-        function drawChartsTab1(trendData, intCost, extCost, byVehicle, bySegment, bySupplier, isAllYears) {
+        function drawChartsTab1(trendData, intCost, extCost, byVehicle, bySegment, bySupplier, isAllYears, trendMode, selectedYear, selectedMonth) {
             if(chartTrend) chartTrend.destroy(); if(chartIntExt) chartIntExt.destroy(); if(chartVehicles) chartVehicles.destroy(); if(chartSegments) chartSegments.destroy(); if(chartSuppliers) chartSuppliers.destroy();
 
             const ctx1 = document.getElementById('chartTrend').getContext('2d');
-            if (isAllYears) {
-                document.getElementById('title-trend').innerText = 'Poređenje godina po mjesecima (YoY)';
+            if (trendMode === 'yoy') {
+                document.getElementById('title-trend').innerText = 'Poređenje svih godina po mjesecima (YoY Trend)';
                 let datasets = [], colors = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'], colorIdx = 0;
                 Object.keys(trendData).sort().forEach(year => {
                     let monthData = []; for(let i=1; i<=12; i++) monthData.push(trendData[year][i]);
@@ -2172,13 +2207,62 @@
                     colorIdx++;
                 });
                 chartTrend = new Chart(ctx1, { type: 'line', data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'], datasets: datasets }, options: { responsive: true, maintainAspectRatio: false } });
-            } else {
-                document.getElementById('title-trend').innerText = 'Interno vs Eksterno po mjesecima';
+            
+            } else if (trendMode === 'monthly') {
+                document.getElementById('title-trend').innerText = `Interno vs Eksterno troškovi po mjesecima (${selectedYear}. godina)`;
                 let months = Object.keys(trendData).sort((a,b) => parseInt(a) - parseInt(b));
                 chartTrend = new Chart(ctx1, {
                     type: 'bar',
                     data: { labels: months.map(m => m + '. mjesec'), datasets: [{ label: 'Interno', data: months.map(m => trendData[m].Interno), backgroundColor: '#2563eb' }, { label: 'Eksterno', data: months.map(m => trendData[m].Eksterno), backgroundColor: '#f59e0b' }] },
                     options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }
+                });
+
+            } else if (trendMode === 'daily') {
+                let targetYear = parseInt(selectedYear);
+                let targetMonth = parseInt(selectedMonth);
+                let daysCount = new Date(targetYear, targetMonth, 0).getDate();
+                document.getElementById('title-trend').innerText = `Dnevna dinamika i trend po danima (${selectedMonth}.${selectedYear}. | 1 - ${daysCount}. dan)`;
+                
+                let dayLabels = [], intArr = [], extArr = [];
+                for (let d = 1; d <= daysCount; d++) {
+                    dayLabels.push(`${d}.${selectedMonth}.`);
+                    intArr.push(trendData[d] ? trendData[d].Interno : 0);
+                    extArr.push(trendData[d] ? trendData[d].Eksterno : 0);
+                }
+
+                chartTrend = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: dayLabels,
+                        datasets: [
+                            { label: 'Interno', data: intArr, backgroundColor: '#2563eb' },
+                            { label: 'Eksterno', data: extArr, backgroundColor: '#f59e0b' }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { x: { stacked: true }, y: { stacked: true } }
+                    }
+                });
+
+            } else if (trendMode === 'sameMonthYoY') {
+                document.getElementById('title-trend').innerText = `Poređenje ${selectedMonth}. mjeseca kroz sve godine (2021 - 2026)`;
+                let years = Object.keys(trendData).sort((a,b) => parseInt(a) - parseInt(b));
+                chartTrend = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: years.map(y => y + '. godina'),
+                        datasets: [
+                            { label: 'Interno', data: years.map(y => trendData[y].Interno), backgroundColor: '#2563eb' },
+                            { label: 'Eksterno', data: years.map(y => trendData[y].Eksterno), backgroundColor: '#f59e0b' }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { x: { stacked: true }, y: { stacked: true } }
+                    }
                 });
             }
 
