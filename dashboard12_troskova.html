@@ -1132,10 +1132,6 @@
                         <button id="supTabMonthlyBtn" onclick="switchSupplierTab('monthly')" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 font-bold transition-all text-xs cursor-pointer">
                             📅 Mjesečna Rekapitulacija
                         </button>
-                        <button id="supTabPonjaveBtn" onclick="switchSupplierTab('ponjave')" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 font-bold transition-all text-xs cursor-pointer flex items-center gap-1.5">
-                            <span>🚚 Ponjave & Cerade / Servisi</span>
-                            <span id="supPonjaveBadge" class="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.2 rounded-full font-black">0</span>
-                        </button>
                     </div>
 
                     <!-- Search & Filter Controls -->
@@ -1187,20 +1183,6 @@
                                 <!-- Popunjava se dinamički -->
                             </tbody>
                         </table>
-                    </div>
-                </div>
-
-                <!-- TAB 3: PONJAVE & CERADE / INTERNI SERVISI -->
-                <div id="supViewPonjave" class="hidden space-y-4">
-                    <div class="bg-indigo-50 border border-indigo-100 p-3.5 rounded-xl text-indigo-900 flex items-start gap-3">
-                        <span class="text-xl">🚚</span>
-                        <div>
-                            <h4 class="font-bold text-xs">Rekapitulacija Intervencija na Ponjavama, Ceradama i Internom Održavanju</h4>
-                            <p class="text-[11px] text-indigo-700 mt-0.5">Pregled konkretnih vozila na kojima su rađene popravke, zamjene ili krpljenje ponjava/cerada i ostali radovi.</p>
-                        </div>
-                    </div>
-                    <div id="supPonjaveContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[52vh] overflow-y-auto pr-1">
-                        <!-- Popunjava se dinamički -->
                     </div>
                 </div>
             </div>
@@ -2099,12 +2081,13 @@
                                     let year = parseInt(row['Year']) || parseInt(row['Godina']) || 0;
                                     let month = parseInt(row['Month']) || parseInt(row['Mjesec']) || 0;
                                     
-                                    let segment = ocistiSegment(row['Segment'] || row['Kategorija']);
-                                    let tipMehan = ocistiTip(row['TipMehan'] || row['Tip']);
-                                    let markaVoz = ocistiMarku(row['MarkaVoz'] || row['Marka']);
-                                    
                                     let dobavljacOrig = ocistiDobavljaca(row['dobavljacOrig'] || row['dobavljac'] || row['Dobavljac'] || row['Serviser'] || row['Izvođač'] || '-');
                                     let isInternal = dobavljacOrig.toLowerCase().includes('intern'); 
+                                    
+                                    let segment = ocistiSegment(row['Segment'] || row['Kategorija']);
+                                    if (dobavljacOrig.toLowerCase().includes('pgl')) {
+                                        segment = 'Gume';
+                                    } 
                                     
                                     let rezDio = (row['RezDio'] || row['rezervni dio'] || '-').toString();
                                     let vrstaTroska = (row['VrstaTroska'] || row['Opis'] || '-').toString();
@@ -3989,7 +3972,7 @@
             let avgCost = invoiceCount > 0 ? (totalCost / invoiceCount) : 0;
 
             document.getElementById('supModalTitle').innerText = isBingoOrInternal ? `🛠️ ${supplierName}` : `🏢 ${supplierName}`;
-            document.getElementById('supModalSubtitle').innerText = isBingoOrInternal ? `Analiza internih naloga, radionice, servisa i ponjava po vozilima` : `Detaljna analiza faktura, popravki i intervencija po vozilima`;
+            document.getElementById('supModalSubtitle').innerText = isBingoOrInternal ? `Analiza internih naloga, radionice i servisa по vozilima` : `Detaljna analiza faktura, popravki i intervencija po vozilima`;
             document.getElementById('supModalBadge').innerText = isBingoOrInternal ? 'Interno / Bingo' : 'Eksterni Dobavljač';
             document.getElementById('supModalBadge').className = isBingoOrInternal ? 'bg-amber-500/30 border border-amber-300 text-amber-200 text-[11px] px-2.5 py-0.5 rounded-full font-bold' : 'bg-indigo-500/30 border border-indigo-300 text-white text-[11px] px-2.5 py-0.5 rounded-full font-bold';
             document.getElementById('supModalIcon').innerText = isBingoOrInternal ? '🛠️' : '🏢';
@@ -4006,18 +3989,9 @@
             Array.from(segSet).sort().forEach(s => segOptions.push(`<option value="${s}">${s}</option>`));
             document.getElementById('supModalSegmentFilter').innerHTML = segOptions.join('');
 
-            // Prebrojavanje Ponjava / Cerada i internih radova
-            let ponjaveData = activeSupplierData.filter(i => {
-                let seg = (i.segment || '').toLowerCase();
-                let opis = (i.opisPopravke || '').toLowerCase();
-                return seg.includes('ponjav') || seg.includes('cerad') || opis.includes('ponjav') || opis.includes('cerad') || isBingoOrInternal;
-            });
-            document.getElementById('supPonjaveBadge').innerText = ponjaveData.length;
-
             activeSupplierFilteredData = [...activeSupplierData];
             renderSupplierTable();
             renderSupplierMonthly();
-            renderSupplierPonjave();
 
             switchSupplierTab(isBingoOrInternal ? 'monthly' : 'invoices');
 
@@ -4033,13 +4007,11 @@
             activeSupplierTab = tabName;
             const invBtn = document.getElementById('supTabInvoicesBtn');
             const monBtn = document.getElementById('supTabMonthlyBtn');
-            const ponBtn = document.getElementById('supTabPonjaveBtn');
 
             const invView = document.getElementById('supViewInvoices');
             const monView = document.getElementById('supViewMonthly');
-            const ponView = document.getElementById('supViewPonjave');
 
-            [invBtn, monBtn, ponBtn].forEach(b => {
+            [invBtn, monBtn].forEach(b => {
                 if (b) b.className = "px-3.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 font-bold transition-all text-xs cursor-pointer";
             });
 
@@ -4047,17 +4019,10 @@
                 if (invBtn) invBtn.className = "px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white font-bold transition-all text-xs cursor-pointer shadow-sm";
                 if (invView) invView.classList.remove('hidden');
                 if (monView) monView.classList.add('hidden');
-                if (ponView) ponView.classList.add('hidden');
             } else if (tabName === 'monthly') {
                 if (monBtn) monBtn.className = "px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white font-bold transition-all text-xs cursor-pointer shadow-sm";
                 if (invView) invView.classList.add('hidden');
                 if (monView) monView.classList.remove('hidden');
-                if (ponView) ponView.classList.add('hidden');
-            } else if (tabName === 'ponjave') {
-                if (ponBtn) ponBtn.className = "px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white font-bold transition-all text-xs cursor-pointer shadow-sm";
-                if (invView) invView.classList.add('hidden');
-                if (monView) monView.classList.add('hidden');
-                if (ponView) ponView.classList.remove('hidden');
             }
         }
 
@@ -4149,68 +4114,6 @@
             }).join('');
 
             tbody.innerHTML = html;
-        }
-
-        function renderSupplierPonjave() {
-            const container = document.getElementById('supPonjaveContainer');
-            if (!container) return;
-
-            let sLower = activeSupplierName.toLowerCase();
-            let isBingoOrInternal = sLower.includes('bingo') || sLower.includes('vlastita') || sLower.includes('intern');
-
-            let ponjaveData = activeSupplierData.filter(i => {
-                let seg = (i.segment || '').toLowerCase();
-                let opis = (i.opisPopravke || '').toLowerCase();
-                return seg.includes('ponjav') || seg.includes('cerad') || opis.includes('ponjav') || opis.includes('cerad') || isBingoOrInternal;
-            });
-
-            if (ponjaveData.length === 0) {
-                container.innerHTML = `<div class="col-span-2 text-center py-8 bg-white rounded-xl border border-slate-200 text-slate-400 italic">Nema evidentiranih radova na ponjavama ili ceradama kod ovog dobavljača.</div>`;
-                return;
-            }
-
-            let vehMap = {};
-            ponjaveData.forEach(item => {
-                let reg = item.reg || 'Nepoznato';
-                if (!vehMap[reg]) {
-                    vehMap[reg] = { reg: reg, garazniBroj: item.garazniBroj, marka: item.markaVoz, tip: item.tipMehan, totalCost: 0, items: [] };
-                }
-                vehMap[reg].totalCost += item.cost;
-                vehMap[reg].items.push(item);
-            });
-
-            let sortedVehicles = Object.values(vehMap).sort((a,b) => b.totalCost - a.totalCost);
-
-            let html = sortedVehicles.map(v => {
-                let itemsHtml = v.items.sort((a,b) => (b.datumObj||0)-(a.datumObj||0)).map(it => {
-                    let dStr = it.datumObj ? `${String(it.datumObj.getDate()).padStart(2,'0')}.${String(it.datumObj.getMonth()+1).padStart(2,'0')}.${it.datumObj.getFullYear()}.` : `${it.month}/${it.year}`;
-                    return `<div class="flex justify-between items-center text-[11px] py-1 border-b border-slate-100 last:border-0">
-                        <div class="truncate max-w-[240px]" title="${it.opisPopravke}">
-                            <span class="text-slate-400 font-mono text-[10px] mr-1">${dStr}</span>
-                            <span class="text-slate-800 font-medium">${it.opisPopravke}</span>
-                        </div>
-                        <span class="font-bold text-slate-900 whitespace-nowrap">${it.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM</span>
-                    </div>`;
-                }).join('');
-
-                return `<div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-200">
-                            <div class="flex items-center gap-2">
-                                <button onclick="closeSupplierModal(); openVehicleModal('${v.reg}')" class="font-black text-indigo-700 text-sm hover:underline">${v.reg}</button>
-                                ${v.garazniBroj ? `<span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold">GB: ${v.garazniBroj}</span>` : ''}
-                            </div>
-                            <span class="font-black text-emerald-600 text-sm">${v.totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</span>
-                        </div>
-                        <div class="text-[11px] text-slate-500 mb-2 font-medium">${v.marka || ''} ${v.tip || ''} (${v.items.length} zahvata)</div>
-                        <div class="space-y-1 max-h-40 overflow-y-auto pr-1">
-                            ${itemsHtml}
-                        </div>
-                    </div>
-                </div>`;
-            }).join('');
-
-            container.innerHTML = html;
         }
 
         function exportSupplierModalToExcel() {
