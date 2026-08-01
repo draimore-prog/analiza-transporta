@@ -921,8 +921,6 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Broj Šasije (VIN)</label>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Broj Šasije (VIN)</label>
@@ -2762,75 +2760,88 @@
         }
 
         async function handleSaveVehicleMaster(event) {
-            event.preventDefault();
-            if (!activeUser) {
-                alert("Pristup odbijen! Morate biti prijavljeni na sistem za dodavanje i uređivanje vozila.");
-                return;
-            }
-
-            let origReg = document.getElementById('evOriginalReg').value;
-            let reg = document.getElementById('evReg').value.trim().toUpperCase();
-            if (!reg) { alert("Registarska oznaka je obavezna!"); return; }
-
-            let garazniBroj = document.getElementById('evGarazniBroj').value.trim() || '-';
-            let tipMehan = ocistiTip(document.getElementById('evTipMehan').value);
-            let godProizvodnje = document.getElementById('evGodProizvodnje').value.trim() || '-';
-            let markaVoz = ocistiMarku(document.getElementById('evMarkaVoz').value.trim());
-            let modelVoz = document.getElementById('evModelVoz').value.trim() || markaVoz;
-            let brojSasije = document.getElementById('evBrojSasije').value.trim() || '-';
-            let status = document.getElementById('evStatus').value;
-
-            let vehicleObj = {
-                reg,
-                garazniBroj,
-                tipMehan,
-                markaVoz,
-                modelVoz,
-                godProizvodnje,
-                brojSasije,
-                status
-            };
-
-            if (origReg) {
-                let idx = masterFleetData.findIndex(v => v.reg === origReg);
-                if (idx !== -1) {
-                    masterFleetData[idx] = { ...masterFleetData[idx], ...vehicleObj };
-                } else {
-                    masterFleetData.unshift({ rb: masterFleetData.length + 1, ...vehicleObj });
-                }
-            } else {
-                let existingIdx = masterFleetData.findIndex(v => v.reg === reg);
-                if (existingIdx !== -1) {
-                    masterFleetData[existingIdx] = { ...masterFleetData[existingIdx], ...vehicleObj };
-                } else {
-                    masterFleetData.unshift({
-                        rb: masterFleetData.length + 1,
-                        ...vehicleObj
-                    });
-                }
-            }
-
-            // Persist to local storage
+            if (event) event.preventDefault();
+            
             try {
-                localStorage.setItem('fleet_master_custom_edits_v1', JSON.stringify(masterFleetData));
-            } catch(err) {}
+                let origReg = document.getElementById('evOriginalReg')?.value || '';
+                let regInput = document.getElementById('evReg')?.value || '';
+                let reg = regInput.trim().toUpperCase();
+                if (!reg) { 
+                    alert("Registarska oznaka je obavezna!"); 
+                    return; 
+                }
 
-            // Save to Firestore if available
-            if (window.db) {
+                let garazniBroj = document.getElementById('evGarazniBroj')?.value.trim() || '-';
+                let tipMehanRaw = document.getElementById('evTipMehan')?.value || 'Teretna vozila';
+                let tipMehan = ocistiTip(tipMehanRaw);
+                let godProizvodnje = document.getElementById('evGodProizvodnje')?.value.trim() || '-';
+                let markaVozRaw = document.getElementById('evMarkaVoz')?.value.trim() || '-';
+                let markaVoz = ocistiMarku(markaVozRaw);
+                let modelVoz = document.getElementById('evModelVoz')?.value.trim() || markaVoz;
+                let brojSasije = document.getElementById('evBrojSasije')?.value.trim() || '-';
+                let status = document.getElementById('evStatus')?.value || 'Aktivno';
+
+                let vehicleObj = {
+                    reg,
+                    garazniBroj,
+                    tipMehan,
+                    markaVoz,
+                    modelVoz,
+                    godProizvodnje,
+                    brojSasije,
+                    status
+                };
+
+                // 1. Ažuriraj u lokalnoj memoriji masterFleetData
+                if (origReg) {
+                    let idx = masterFleetData.findIndex(v => v.reg === origReg);
+                    if (idx !== -1) {
+                        masterFleetData[idx] = { ...masterFleetData[idx], ...vehicleObj };
+                    } else {
+                        masterFleetData.unshift({ rb: masterFleetData.length + 1, ...vehicleObj });
+                    }
+                } else {
+                    let existingIdx = masterFleetData.findIndex(v => v.reg === reg);
+                    if (existingIdx !== -1) {
+                        masterFleetData[existingIdx] = { ...masterFleetData[existingIdx], ...vehicleObj };
+                    } else {
+                        masterFleetData.unshift({
+                            rb: masterFleetData.length + 1,
+                            ...vehicleObj
+                        });
+                    }
+                }
+
+                // 2. Trajno spasi u localStorage
                 try {
-                    let safeDocId = reg.replace(/[\/\\#\?]/g, '_');
-                    await window.db.collection('fleet_master').doc(safeDocId).set(vehicleObj, { merge: true });
-                } catch(e) { console.warn("Notice saving vehicle to Firestore:", e); }
-            }
+                    localStorage.setItem('fleet_master_custom_edits_v1', JSON.stringify(masterFleetData));
+                } catch(err) {}
 
-            // Ako je status promijenjen (npr. u Neaktivno/Rashodovano/Prodato), prilagodi filter da se vozilo odjednom vidi u tabeli
-            const statusFilterElem = document.getElementById('masterFleetStatusFilter');
-            if (statusFilterElem && statusFilterElem.value !== 'all' && statusFilterElem.value !== status) {
-                statusFilterElem.value = 'all';
-            }
+                // 3. Ako je status promijenjen (npr. u Neaktivno/Rashodovano/Prodato), podesi filter da vozilo ostane vidljivo
+                const statusFilterElem = document.getElementById('masterFleetStatusFilter');
+                if (statusFilterElem && statusFilterElem.value !== 'all' && statusFilterElem.value !== status) {
+                    statusFilterElem.value = 'all';
+                }
 
-            renderMasterFleetTable();
-            closeEditVehicleModal();
+                // 4. ODMAH ZATVORI MODAL I APDEJTUJ UI TABELU SINHRONO
+                closeEditVehicleModal();
+                renderMasterFleetTable();
+
+                // 5. Asinhrono spasi u Firestore u pozadini
+                if (window.db) {
+                    (async () => {
+                        try {
+                            let safeDocId = reg.replace(/[\/\\#\?]/g, '_');
+                            await window.db.collection('fleet_master').doc(safeDocId).set(vehicleObj, { merge: true });
+                        } catch(e) { console.warn("Notice saving vehicle to Firestore:", e); }
+                    })();
+                }
+
+            } catch (err) {
+                console.error("Greska pri spasavanju vozila:", err);
+                closeEditVehicleModal();
+                renderMasterFleetTable();
+            }
         }
 
         function exportMasterFleetToExcel() {
