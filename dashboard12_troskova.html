@@ -1618,6 +1618,89 @@
             return m.charAt(0).toUpperCase() + m.slice(1);
         }
 
+        function ocistiDobavljaca(dob) {
+            if (!dob) return 'Servis motornih vozila';
+            let d = dob.toString().trim();
+            if (d === '/' || d === '-' || d === 'Nepoznato' || d === 'nepoznato' || d === '' || d === 'Ostalo' || d.toLowerCase() === 'servis motornih vozila') return 'Servis motornih vozila';
+            let dL = d.toLowerCase();
+            if (dL.includes('pgl')) return 'PGL Protekt';
+            if (dL === 'a.c.i' || dL === 'a.c.i.' || dL === 'aci' || dL === 'aci doo') return 'ACI';
+            if (dL.includes('hozić') || dL.includes('hozic')) return 'AC Hozić';
+            if (dL.includes('školjić') || dL.includes('skoljic')) return 'AC Školjić';
+            if (dL.includes('agromehanika') || dL.includes('agro mehanika')) return 'Agromehanika';
+            if (dL.includes('agrošped') || dL.includes('agrosped')) return 'Agrošped';
+            if (dL.includes('amk spu') || dL.includes('auto moto klub sp')) return 'AMK SPU';
+            if (dL.includes('as auto centar')) return 'AS Auto Centar';
+            if (dL.includes('auto centar mx')) return 'Auto Centar MX';
+            if (dL.includes('auto nuić') || dL.includes('auto nuic') || dL.includes('nuić auto')) return 'Auto Nuić';
+            if (dL.includes('auto vox')) return 'Auto Vox';
+            if (dL.includes('lijanovi')) return 'Auto Lijanović';
+            if (dL.includes('autobat')) return 'Autobat';
+            if (dL.includes('almin')) return 'Automehaničar Almin';
+            if (dL.includes('autopraona bingo') || dL.includes('bingo plus')) return 'Autopraona Bingo Plus';
+            if (dL.includes('đuđa') || dL.includes('đuda') || dL.includes('duda') || dL.includes('dudja')) return 'OAR Auto Đuđa';
+            if (dL.includes('ferhatovi')) return 'Auto Servis Ferhatović';
+            if (dL.includes('bingo') && (dL.includes('interna') || dL.includes('faktura'))) return 'Bingo Interna faktura';
+            if (dL.includes('europart') || dL.includes('euro part')) return 'BH Europart';
+            if (dL.includes('bodena')) return 'Bodena';
+            if (dL.includes('berlina')) return 'Berlina';
+            if (dL.includes('bunjo')) return 'Bunjo';
+            if (dL.includes('ciak')) return 'Ciak Auto';
+            if (dL.includes('check system')) return 'Check System';
+            if (dL.includes('cosmos')) return 'Cosmos Commerce';
+            if (dL.includes('del-co') || dL.includes('delco')) return 'Del-Co';
+            if (dL.includes('denix')) return 'Denix';
+            if (dL.includes('euro dam') || dL.includes('eurodamjas')) return 'Euro Dam-Jas';
+            if (dL.includes('euro hlađenje') || dL.includes('euro hladjenje')) return 'Euro Hlađenje';
+            if (dL.includes('expo auto')) return 'Expo Auto';
+            if (dL.includes('hansa flex') || dL.includes('hansa-flex')) return 'Hansa-Flex';
+            if (dL.includes('hercegovina promet') || dL.includes('hercegovinapromet')) return 'Hercegovina Promet';
+            if (dL.includes('hp fluid') || dL.includes('hp-fluid')) return 'HP Fluid';
+            if (dL.includes('hm musi')) return 'HM Musić';
+            if (dL === 'ibc' || dL === 'ibc doo') return 'IBC';
+            if (dL.includes('inter cars') || dL.includes('intercars')) return 'Inter Cars';
+            if (dL.includes('jasmin m') || dL.includes('jasminm')) return 'Jasmin M';
+            if (dL.includes('kam i bus') || dL.includes('kam-i-bus')) return 'Kam i Bus';
+            if (dL.includes('lašva') || dL.includes('lasva')) return 'Lašva Komerc';
+            if (dL.includes('m.b.e.')) return 'M.B.E. Service';
+            if (dL.includes('mix maestro') || dL.includes('mix-maestro')) return 'Mix Maestro';
+            if (dL.includes('nipex')) return 'Nipex';
+            if (dL.includes('neškovi') || dL.includes('neskovi')) return 'AC Nešković';
+            if (dL === 'pepi' || dL === 'pepi doo') return 'Pepi';
+            if (dL.includes('porsche')) return 'Porsche BH';
+            if (dL.includes('fix')) return 'Pokretni servis FIX';
+            if (dL.includes('ral parts')) return 'Ral Parts';
+            if (dL.includes('rapidex')) return 'Rapidex';
+            if (dL.includes('remex')) return 'Remex';
+            if (dL.includes('scania')) return 'Scania BH';
+            if (dL.includes('sim impex')) return 'Sim Impex';
+            if (dL.includes('sladaboni') || dL.includes('sladoboni')) return 'Sladaboni';
+            if (dL.includes('star centar') || dL.includes('star-centar')) return 'Star Centar';
+            if (dL.includes('starline') || dL.includes('star line')) return 'Star Line';
+            if (dL.includes('stil electronic') || dL.includes('stil-electronic') || dL.includes('stil elektroni')) return 'Stil Electronic';
+            if (dL.includes('ssam')) return 'SSAM Plast';
+            if (dL.includes('stuhli')) return 'Stuhli Auto';
+            if (dL.includes('tbs')) return 'TBS Trade';
+            if (dL === 'tds' || dL === 'tds doo') return 'TDS';
+            if (dL.includes('total trade')) return 'Total Trade';
+            if (dL.includes('enko')) return 'TR-Enko';
+            if (dL.includes('transkop')) return 'Transkop';
+            if (dL.includes('truck shop')) return 'Truck Shop';
+            if (dL.includes('euroguma')) return 'TSP Euroguma';
+            if (dL.includes('turboactiv') || dL.includes('turbo activ') || dL.includes('turboexperts') || dL.includes('turboxperts')) return 'Turboactiv';
+            if (dL.includes('tahograf')) return 'Tz-Tahograf';
+            if (dL.includes('uniflex')) return 'Uniflex';
+            if (dL.includes('unitrade') || dL.includes('uni trade')) return 'Unitrade';
+            if (dL.includes('vatan')) return 'Vatan-Oil';
+            if (dL.includes('verano')) return 'Verano Motors';
+            if (dL === 'volvo' || dL === 'volvo doo') return 'Volvo';
+            if (dL.includes('muki')) return 'Vulkanizer Muki';
+            if (dL.includes('zeka')) return 'Zeka-Comerc';
+            if (dL.includes('zep-ing') || dL.includes('zeping')) return 'Zep-Ing';
+            if (dL.includes('šehić') || dL.includes('sehic')) return 'Šehić Company';
+            return d.split(' ').map(w => w.length > 0 ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : '').join(' ');
+        }
+
         function ocistiSegment(segment) {
             if (!segment) return 'Ostalo';
             let s = segment.toString().trim();
@@ -1801,7 +1884,7 @@
                                     let tipMehan = ocistiTip(row['TipMehan'] || row['Tip']);
                                     let markaVoz = ocistiMarku(row['MarkaVoz'] || row['Marka']);
                                     
-                                    let dobavljacOrig = (row['dobavljac'] || row['Dobavljac'] || row['Serviser'] || row['Izvođač'] || '-').toString().trim();
+                                    let dobavljacOrig = ocistiDobavljaca(row['dobavljacOrig'] || row['dobavljac'] || row['Dobavljac'] || row['Serviser'] || row['Izvođač'] || '-');
                                     let isInternal = dobavljacOrig.toLowerCase().includes('intern'); 
                                     
                                     let rezDio = (row['RezDio'] || row['rezervni dio'] || '-').toString();
