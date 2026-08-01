@@ -819,13 +819,35 @@
 
             <!-- Detaljna Tabela Transakcija -->
             <div class="card">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
                     <div>
-                        <h3 class="text-base font-bold text-slate-800">📋 Tabela filtriranih servisa i transakcija</h3>
+                        <h3 class="text-base font-extrabold text-slate-800">📋 Tabela filtriranih servisa i transakcija</h3>
                         <p class="text-xs text-slate-500 mt-0.5" id="tableRecordCount">Prikazano 0 zapisa</p>
                     </div>
-                    <div class="flex items-center gap-3 w-full md:w-auto">
-                        <input type="text" id="tableSearchInput" onkeyup="filterTransactionTable()" placeholder="Pretraži opis, reg ili servisera..." class="text-xs border border-slate-300 rounded-lg p-2 w-full md:w-64 focus:ring-2 focus:ring-blue-500 font-medium">
+                    <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+                        <!-- Filter Godine -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Godina</label>
+                            <select id="tableYearFilter" onchange="filterTransactionTable()" class="text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white font-bold text-slate-700">
+                                <option value="all">Sve godine</option>
+                            </select>
+                        </div>
+                        <!-- Sortiranje po datumu/iznosu -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Sortiranje / Novi unosi</label>
+                            <select id="tableSortFilter" onchange="filterTransactionTable()" class="text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white font-bold text-slate-700">
+                                <option value="new-first">🆕 Novi unosi na vrhu + Datum (Najnovije)</option>
+                                <option value="date-desc">📅 Datum (Najnovije prvo)</option>
+                                <option value="date-asc">📅 Datum (Najstarije prvo)</option>
+                                <option value="cost-desc">💰 Trošak (Najveći prvo)</option>
+                                <option value="cost-asc">💰 Trošak (Najmanji prvo)</option>
+                            </select>
+                        </div>
+                        <!-- Pretraga -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Pretraga</label>
+                            <input type="text" id="tableSearchInput" onkeyup="filterTransactionTable()" placeholder="🔍 Pretraži reg, opis ili servisera..." class="text-xs border border-slate-300 rounded-lg px-3 py-1.5 w-full sm:w-56 focus:ring-2 focus:ring-blue-500 font-medium bg-white">
+                        </div>
                     </div>
                 </div>
 
@@ -3330,45 +3352,80 @@
 
         function renderTransactionTable(data) {
             transactionTableData = data;
-            document.getElementById('tableRecordCount').innerText = `Prikazano ${data.length.toLocaleString('bs-BA')} servisa i transakcija`;
+
+            const yearSelect = document.getElementById('tableYearFilter');
+            if (yearSelect) {
+                let currentVal = yearSelect.value || 'all';
+                let yearsArr = Array.from(new Set(transactionTableData.map(i => i.year))).sort((a,b) => b - a);
+                let options = ['<option value="all">Sve godine</option>'];
+                yearsArr.forEach(y => {
+                    let sel = (y.toString() === currentVal) ? 'selected' : '';
+                    options.push(`<option value="${y}" ${sel}>${y}. godina</option>`);
+                });
+                yearSelect.innerHTML = options.join('');
+            }
+
             filterTransactionTable();
         }
 
         function filterTransactionTable() {
-            let term = document.getElementById('tableSearchInput').value.trim().toLowerCase();
-            let filtered = transactionTableData;
+            let term = (document.getElementById('tableSearchInput').value || '').trim().toLowerCase();
+            let selectedYear = document.getElementById('tableYearFilter') ? document.getElementById('tableYearFilter').value : 'all';
+            let sortMode = document.getElementById('tableSortFilter') ? document.getElementById('tableSortFilter').value : 'new-first';
 
-            if (term) {
-                filtered = transactionTableData.filter(item => {
-                    return item.reg.toLowerCase().includes(term) ||
-                           item.garazniBroj.toLowerCase().includes(term) ||
-                           item.opisPopravke.toLowerCase().includes(term) ||
-                           item.dobavljacOrig.toLowerCase().includes(term) ||
-                           item.segment.toLowerCase().includes(term);
+            let filtered = transactionTableData.filter(item => {
+                let matchYear = selectedYear === 'all' || item.year === parseInt(selectedYear);
+                let matchTerm = !term ||
+                    (item.reg && item.reg.toLowerCase().includes(term)) ||
+                    (item.garazniBroj && item.garazniBroj.toLowerCase().includes(term)) ||
+                    (item.opisPopravke && item.opisPopravke.toLowerCase().includes(term)) ||
+                    (item.dobavljacOrig && item.dobavljacOrig.toLowerCase().includes(term)) ||
+                    (item.segment && item.segment.toLowerCase().includes(term));
+                return matchYear && matchTerm;
+            });
+
+            if (sortMode === 'new-first') {
+                filtered.sort((a, b) => {
+                    if (a.isNewCustom && !b.isNewCustom) return -1;
+                    if (!a.isNewCustom && b.isNewCustom) return 1;
+                    return (b.datumObj || 0) - (a.datumObj || 0);
                 });
+            } else if (sortMode === 'date-desc') {
+                filtered.sort((a, b) => (b.datumObj || 0) - (a.datumObj || 0));
+            } else if (sortMode === 'date-asc') {
+                filtered.sort((a, b) => (a.datumObj || 0) - (b.datumObj || 0));
+            } else if (sortMode === 'cost-desc') {
+                filtered.sort((a, b) => b.cost - a.cost);
+            } else if (sortMode === 'cost-asc') {
+                filtered.sort((a, b) => a.cost - b.cost);
             }
+
+            document.getElementById('tableRecordCount').innerText = `Prikazano ${filtered.length.toLocaleString('bs-BA')} servisa i transakcija`;
 
             const tbody = document.getElementById('transactionTableBody');
             let rowsHTML = [];
 
-            filtered.slice(0, 200).forEach(item => {
+            filtered.slice(0, 250).forEach(item => {
                 let dateStr = "-";
                 if(item.datumObj && !isNaN(item.datumObj)) {
                     dateStr = ("0" + item.datumObj.getDate()).slice(-2) + "." + ("0" + (item.datumObj.getMonth() + 1)).slice(-2) + "." + item.datumObj.getFullYear() + ".";
                 }
+
+                let newBadge = item.isNewCustom ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-1.5 py-0.5 rounded font-extrabold ml-1">🆕 Novo</span>` : '';
+
                 rowsHTML.push(`
-                    <tr class="hover:bg-blue-50/60 border-b border-slate-100 transition-colors">
-                        <td class="py-2 px-3 whitespace-nowrap text-slate-700 font-medium">${dateStr}</td>
+                    <tr class="hover:bg-blue-50/60 border-b border-slate-100 transition-colors ${item.isNewCustom ? 'bg-emerald-50/30 font-medium' : ''}">
+                        <td class="py-2 px-3 whitespace-nowrap text-slate-700 font-medium">${dateStr} ${newBadge}</td>
                         <td class="py-2 px-3 font-bold text-blue-700 cursor-pointer hover:underline" onclick="openVehicleModal('${item.reg}')">${item.reg}</td>
-                        <td class="py-2 px-3 font-mono font-semibold text-slate-600">${item.garazniBroj}</td>
-                        <td class="py-2 px-3 text-slate-600">${item.tipMehan}</td>
-                        <td class="py-2 px-3 text-slate-600">${item.markaVoz}</td>
-                        <td class="py-2 px-3 font-semibold text-slate-700">${item.segment}</td>
-                        <td class="py-2 px-3 text-slate-900 font-semibold break-words max-w-[200px]">${item.opisPopravke}</td>
-                        <td class="py-2 px-3 text-slate-600 text-xs truncate max-w-[140px]" title="${item.dobavljacOrig}">${item.dobavljacOrig}</td>
+                        <td class="py-2 px-3 font-mono font-semibold text-slate-600">${item.garazniBroj || '-'}</td>
+                        <td class="py-2 px-3 text-slate-600">${item.tipMehan || '-'}</td>
+                        <td class="py-2 px-3 text-slate-600">${item.markaVoz || '-'}</td>
+                        <td class="py-2 px-3 font-semibold text-slate-700">${item.segment || '-'}</td>
+                        <td class="py-2 px-3 text-slate-900 font-semibold break-words max-w-[200px]">${item.opisPopravke || '-'}</td>
+                        <td class="py-2 px-3 text-slate-600 text-xs truncate max-w-[140px]" title="${item.dobavljacOrig}">${item.dobavljacOrig || '-'}</td>
                         <td class="py-2 px-3 text-right font-bold text-slate-800">
                             <div class="flex items-center justify-end gap-1.5">
-                                <span>${item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                <span>${item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM</span>
                                 ${(item.isNewCustom === true && activeUser && (activeUser.role === 'superadmin' || activeUser.role === 'editor' || activeUser.role === 'admin')) ? `<button onclick="deleteCostRecord('${item.id}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded font-bold text-xs no-print transition-all" title="Obriši ovaj ručno uneseni trošak">🗑️</button>` : ''}
                             </div>
                         </td>
@@ -3377,7 +3434,7 @@
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400 font-medium">Nema zapisa koji odgovaraju pretrazi.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400 font-medium italic">Nema zapisa koji odgovaraju odabranim filterima.</td></tr>`;
             } else {
                 tbody.innerHTML = rowsHTML.join('');
             }
