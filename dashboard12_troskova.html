@@ -2679,50 +2679,65 @@
 
             let sortedSegments = Object.entries(bySegment).sort((a,b) => b[1] - a[1]).slice(0, 7);
             chartSegments = new Chart(document.getElementById('chartSegments').getContext('2d'), {
-                type: 'pie',
+                type: 'doughnut',
                 data: {
                     labels: sortedSegments.map(s => s[0]),
-                    datasets: [{ data: sortedSegments.map(s => s[1]), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'] }]
+                    datasets: [{
+                        data: sortedSegments.map(s => s[1]),
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
                 },
                 options: {
                     maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                font: { weight: 'bold', size: 11 },
+                                padding: 10,
+                                generateLabels: (chart) => {
+                                    const data = chart.data;
+                                    if (data.labels.length && data.datasets.length) {
+                                        const dataset = data.datasets[0];
+                                        const total = dataset.data.reduce((a, b) => a + b, 0);
+                                        return data.labels.map((label, i) => {
+                                            const val = dataset.data[i];
+                                            const perc = total > 0 ? ((val / total) * 100).toFixed(1) : '0';
+                                            const fillStyle = dataset.backgroundColor[i];
+                                            return {
+                                                text: `${label} (${perc}%)`,
+                                                fillStyle: fillStyle,
+                                                strokeStyle: fillStyle,
+                                                lineWidth: 0,
+                                                hidden: isNaN(dataset.data[i]) || chart.getDatasetMeta(0).data[i].hidden,
+                                                index: i
+                                            };
+                                        });
+                                    }
+                                    return [];
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let val = context.raw || 0;
+                                    let total = context.dataset.data.reduce((a,b) => a + b, 0);
+                                    let perc = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                    return ` ${context.label}: ${val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM (${perc}%)`;
+                                }
+                            }
+                        }
+                    },
                     onClick: (e, els, ch) => {
                         if (els.length > 0) {
                             let segmentName = ch.data.labels[els[0].index];
                             openSegmentDetailModal(segmentName);
                         }
                     }
-                },
-                plugins: [{
-                    id: 'pieSlicePercents',
-                    afterDraw: (chart) => {
-                        const { ctx } = chart;
-                        ctx.save();
-                        ctx.font = 'bold 11px Inter, sans-serif';
-                        ctx.fillStyle = '#ffffff';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-
-                        const totalVal = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                        const meta = chart.getDatasetMeta(0);
-                        if (meta && meta.data) {
-                            meta.data.forEach((element, i) => {
-                                const val = chart.data.datasets[0].data[i];
-                                if (val > 0 && totalVal > 0) {
-                                    const perc = (val / totalVal) * 100;
-                                    if (perc >= 2.5) {
-                                        const percStr = perc.toFixed(1) + '%';
-                                        const pos = element.tooltipPosition();
-                                        ctx.shadowColor = 'rgba(0,0,0,0.7)';
-                                        ctx.shadowBlur = 4;
-                                        ctx.fillText(percStr, pos.x, pos.y);
-                                    }
-                                }
-                            });
-                        }
-                        ctx.restore();
-                    }
-                }]
+                }
             });
 
             let sortedSuppliers = Object.entries(bySupplier).sort((a,b) => b[1] - a[1]).slice(0, 7);
