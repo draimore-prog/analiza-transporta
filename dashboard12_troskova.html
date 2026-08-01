@@ -820,8 +820,6 @@
                                 <th class="py-3 px-3">Model</th>
                                 <th class="py-3 px-3">Godina</th>
                                 <th class="py-3 px-3">Broj Šasije (VIN)</th>
-                                <th class="py-3 px-3 text-right">Početno (km/h)</th>
-                                <th class="py-3 px-3 text-right">Prodajno (km/h)</th>
                                 <th class="py-3 px-3 text-center">Status</th>
                                 <th class="py-3 px-3 text-right">Akcije</th>
                             </tr>
@@ -897,24 +895,18 @@
 
                 <div>
                     <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Broj Šasije (VIN)</label>
-                    <input type="text" id="evBrojSasije" placeholder="npr. WDB9066371S796277" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-mono font-bold outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Početno (km/h)</label>
-                        <input type="number" id="evPocetnaKmRh" placeholder="0" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Prodajno (km/h)</label>
-                        <input type="number" id="evProdajnaKmRh" placeholder="0" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                        <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Broj Šasije (VIN)</label>
+                        <input type="text" id="evBrojSasije" placeholder="npr. WDB9066371S796277" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-mono font-bold outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                     <div>
                         <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Status Vozila <span class="text-red-500">*</span></label>
                         <select id="evStatus" required class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-                            <option value="Aktivno">Aktivno</option>
-                            <option value="Neaktivno - Prodano">Neaktivno - Prodano</option>
-                            <option value="Rashodovano">Rashodovano</option>
+                            <option value="Aktivno">🟢 Aktivno (Dostupno za unos troškova)</option>
+                            <option value="Neaktivno">🟡 Neaktivno</option>
+                            <option value="Rashodovano">🔴 Rashodovano</option>
+                            <option value="Prodato">🟣 Prodato</option>
                         </select>
                     </div>
                 </div>
@@ -2622,8 +2614,6 @@
                         <td class="py-2.5 px-3 font-semibold text-slate-700 text-xs">${v.modelVoz || '-'}</td>
                         <td class="py-2.5 px-3 font-semibold text-slate-600 text-xs">${v.godProizvodnje}</td>
                         <td class="py-2.5 px-3 font-mono text-slate-600 text-[11px]">${v.brojSasije}</td>
-                        <td class="py-2.5 px-3 text-right font-bold text-slate-700 text-xs">${v.pocetnaKmRh ? v.pocetnaKmRh.toLocaleString('bs-BA') : '0'}</td>
-                        <td class="py-2.5 px-3 text-right font-bold text-slate-700 text-xs">${v.prodajnaKmRh ? v.prodajnaKmRh.toLocaleString('bs-BA') : '0'}</td>
                         <td class="py-2.5 px-3 text-center">
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${badgeClass}">
                                 ${v.status || 'Aktivno'}
@@ -2641,7 +2631,7 @@
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="12" class="py-8 text-center text-slate-400 font-medium">Nema vozila u šifrarniku koja odgovaraju pretrazi.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" class="py-8 text-center text-slate-400 font-medium">Nema vozila u šifrarniku koja odgovaraju pretrazi.</td></tr>`;
             } else {
                 tbody.innerHTML = rowsHTML.join('');
             }
@@ -2692,8 +2682,6 @@
                 document.getElementById('evMarkaVoz').value = v.markaVoz !== '-' ? v.markaVoz : '';
                 document.getElementById('evModelVoz').value = v.modelVoz !== '-' ? v.modelVoz : '';
                 document.getElementById('evBrojSasije').value = v.brojSasije !== '-' ? v.brojSasije : '';
-                document.getElementById('evPocetnaKmRh').value = v.pocetnaKmRh || 0;
-                document.getElementById('evProdajnaKmRh').value = v.prodajnaKmRh || 0;
                 document.getElementById('evStatus').value = v.status || 'Aktivno';
             } else {
                 titleElem.innerText = `➕ Dodavanje Novog Vozila u Šifrarnik (Nova Nabavka)`;
@@ -2701,13 +2689,11 @@
 
                 document.getElementById('evReg').value = '';
                 document.getElementById('evGarazniBroj').value = '';
-                document.getElementById('evTipMehan').value = 'Teretno';
+                document.getElementById('evTipMehan').value = 'Teretno vozilo';
                 document.getElementById('evGodProizvodnje').value = '';
                 document.getElementById('evMarkaVoz').value = '';
                 document.getElementById('evModelVoz').value = '';
                 document.getElementById('evBrojSasije').value = '';
-                document.getElementById('evPocetnaKmRh').value = '0';
-                document.getElementById('evProdajnaKmRh').value = '0';
                 document.getElementById('evStatus').value = 'Aktivno';
             }
 
@@ -2732,8 +2718,6 @@
             let markaVoz = document.getElementById('evMarkaVoz').value.trim() || '-';
             let modelVoz = document.getElementById('evModelVoz').value.trim() || markaVoz;
             let brojSasije = document.getElementById('evBrojSasije').value.trim() || '-';
-            let pocetnaKmRh = parseFloat(document.getElementById('evPocetnaKmRh').value) || 0;
-            let prodajnaKmRh = parseFloat(document.getElementById('evProdajnaKmRh').value) || 0;
             let status = document.getElementById('evStatus').value;
 
             let vehicleObj = {
@@ -2744,8 +2728,6 @@
                 modelVoz,
                 godProizvodnje,
                 brojSasije,
-                pocetnaKmRh,
-                prodajnaKmRh,
                 status
             };
 
