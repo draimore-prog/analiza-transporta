@@ -1873,7 +1873,7 @@
                 if (!res.ok) return;
                 const data = await res.json();
                 if (data && data.records && data.records.length > 0) {
-                    globalData = data.records.map(item => {
+                    globalData = data.records.map((item, idx) => {
                         let dob = (item.dobavljacOrig || item.dobavljac || '').toLowerCase();
                         let seg = item.segment;
                         if (dob.includes('pgl')) {
@@ -1881,10 +1881,28 @@
                         }
                         return {
                             ...item,
+                            id: item.id || `rec_${idx}_${item.reg}_${item.cost}`,
                             segment: seg,
                             datumObj: item.datum ? new Date(item.datum) : null
                         };
                     });
+
+                    try {
+                        let customEdits = JSON.parse(localStorage.getItem('fleet_custom_cost_edits_v1') || '[]');
+                        customEdits.forEach(c => {
+                            if (c.datum) c.datumObj = new Date(c.datum);
+                            if (!c.id) c.id = 'cost_' + Date.now() + '_' + Math.floor(Math.random()*10000);
+                            globalData.unshift(c);
+                        });
+                    } catch(e) {}
+
+                    try {
+                        let deletedIds = new Set(JSON.parse(localStorage.getItem('fleet_deleted_cost_ids_v1') || '[]'));
+                        if (deletedIds.size > 0) {
+                            globalData = globalData.filter(i => !deletedIds.has(i.id));
+                        }
+                    } catch(e) {}
+
                     yearsSet.clear();
                     globalData.forEach(d => yearsSet.add(d.year));
 
@@ -3348,7 +3366,12 @@
                         <td class="py-2 px-3 font-semibold text-slate-700">${item.segment}</td>
                         <td class="py-2 px-3 text-slate-900 font-semibold break-words max-w-[200px]">${item.opisPopravke}</td>
                         <td class="py-2 px-3 text-slate-600 text-xs truncate max-w-[140px]" title="${item.dobavljacOrig}">${item.dobavljacOrig}</td>
-                        <td class="py-2 px-3 text-right font-bold text-slate-800">${item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td class="py-2 px-3 text-right font-bold text-slate-800">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <span>${item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                ${(activeUser && (activeUser.role === 'superadmin' || activeUser.role === 'editor' || activeUser.role === 'admin')) ? `<button onclick="deleteCostRecord('${item.id}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded font-bold text-xs no-print transition-all" title="Obriši ovaj unos">🗑️</button>` : ''}
+                            </div>
+                        </td>
                     </tr>
                 `);
             });
@@ -4174,11 +4197,13 @@
             let radniSati = (tipMehan === 'Skladišna mehanizacija') ? (parseFloat(document.getElementById('ncRadniSati').value) || null) : null;
 
             let newItem = {
+                id: 'cost_' + Date.now() + '_' + Math.floor(Math.random()*10000),
                 reg,
                 garazniBroj,
                 year,
                 month,
                 datumObj: dateObj,
+                datum: dateObj.toISOString(),
                 segment,
                 type: isInternal ? 'Interno' : 'Eksterno',
                 dobavljacOrig,
@@ -4197,16 +4222,24 @@
             // Čuvanje u Cloud Bazu (Firestore)
             if (window.db) {
                 try {
-                    await window.db.collection('fleet_costs').add({
+                    let docRef = await window.db.collection('fleet_costs').add({
                         ...newItem,
                         datum: dateObj.toISOString(),
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    console.log("Dodano u Firestore");
+                    newItem._firestoreId = docRef.id;
+                    console.log("Dodano u Firestore:", docRef.id);
                 } catch (e) {
                     console.warn("Notice saving to Firestore:", e);
                 }
             }
+
+            // Čuvanje u lokalni keš pretraživača
+            try {
+                let customEdits = JSON.parse(localStorage.getItem('fleet_custom_cost_edits_v1') || '[]');
+                customEdits.unshift(newItem);
+                localStorage.setItem('fleet_custom_cost_edits_v1', JSON.stringify(customEdits));
+            } catch(e) {}
 
             // Ako vozilo još ne postoji u bazi aktivnih vozila 2026, dodaj ga automatski kao novo aktivno vozilo!
             let activeVeh = masterFleetData.find(v => v.reg === reg);
@@ -4244,6 +4277,59 @@
             closeNewCostModal();
 
             alert(`✅ Trošak za vozilo ${reg} od ${totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 2})} KM je uspješno sačuvan u bazu!`);
+        }
+
+        function deleteCostRecord(costId) {
+            if (!activeUser || (activeUser.role !== 'superadmin' && activeUser.role !== 'editor' && activeUser.role !== 'admin')) {
+                alert("Pristup odbijen! Samo autorizovani administratori i korisnici sa pravom unosa mogu brisati unose.");
+                return;
+            }
+
+            let targetIdx = globalData.findIndex(item => item.id === costId || (item._id && item._id === costId));
+            if (targetIdx === -1) {
+                alert("Nije moguće pronaći zapis za brisanje.");
+                return;
+            }
+
+            let item = globalData[targetIdx];
+            let reg = item.reg;
+            let costStr = item.cost ? item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' KM' : '';
+
+            if (confirm(`Da li ste sigurni da želite trajno obrisati trošak za vozilo "${reg}" (${costStr})?`)) {
+                globalData.splice(targetIdx, 1);
+
+                try {
+                    let deletedIds = JSON.parse(localStorage.getItem('fleet_deleted_cost_ids_v1') || '[]');
+                    deletedIds.push(costId);
+                    localStorage.setItem('fleet_deleted_cost_ids_v1', JSON.stringify(deletedIds));
+                } catch(e) {}
+
+                try {
+                    let customEdits = JSON.parse(localStorage.getItem('fleet_custom_cost_edits_v1') || '[]');
+                    customEdits = customEdits.filter(c => c.id !== costId);
+                    localStorage.setItem('fleet_custom_cost_edits_v1', JSON.stringify(customEdits));
+                } catch(e) {}
+
+                if (window.db && item._firestoreId) {
+                    try {
+                        window.db.collection('fleet_costs').doc(item._firestoreId).delete();
+                    } catch(e) {}
+                }
+
+                applyFilters();
+
+                if (document.getElementById('vehicleModal') && !document.getElementById('vehicleModal').classList.contains('hidden')) {
+                    openVehicleModal(reg);
+                }
+                if (document.getElementById('supplierDetailModal') && !document.getElementById('supplierDetailModal').classList.contains('hidden')) {
+                    renderSupplierTable();
+                }
+                if (document.getElementById('segmentDetailModal') && !document.getElementById('segmentDetailModal').classList.contains('hidden')) {
+                    renderSegmentTable();
+                }
+
+                alert("Zapis je uspješno obrisan!");
+            }
         }
 
         // ================= FUNKCIJE ZA MODOVE DOBVALJAČA / IZVOĐAČA =================
