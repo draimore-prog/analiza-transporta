@@ -779,10 +779,10 @@
 
         <!-- ================= TAB 3: MATRICA & FILTRIRANA TABELA ================= -->
         <div id="tabContent3" class="tab-content hidden">
-            <!-- Višegodišnja Matrica (YoY Grid) -->
-            <div class="card mb-8">
-                <h3 class="text-base font-bold text-slate-800 mb-2">Višegodišnja Mjesečna Matrica Troškova (YoY Matrix)</h3>
-                <p class="text-xs text-slate-500 mb-4">Poređenje ukupnih troškova održavanja po mjesecima i godinama</p>
+            <!-- Višegodišnja Matrica (YoY Grid - Nominalni Iznosi) -->
+            <div class="card mb-6">
+                <h3 class="text-base font-bold text-slate-800 mb-1">📊 Višegodišnja Mjesečna Matrica Troškova (Nominalni Iznosi u KM)</h3>
+                <p class="text-xs text-slate-500 mb-4">Poređenje ukupnih troškova održavanja po mjesecima i godinama (KM)</p>
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-xs text-center border-collapse">
                         <thead id="matrixTableHeader" class="bg-slate-100 font-bold text-slate-700 border-b border-slate-200">
@@ -790,6 +790,28 @@
                         </thead>
                         <tbody id="matrixTableBody" class="divide-y divide-slate-100 bg-white">
                             <!-- Pune se redovi -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Višegodišnja Matrica Postotnih Razlika (YoY % Rast / Pad) -->
+            <div class="card mb-8">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <span>📈 Višegodišnja Matrica Postotnih Razlika (YoY % Rast / Pad)</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Postotne izmjene u odnosu na prethodnu godinu (<span class="text-emerald-600 font-bold">Zeleno = Smanjenje troškova / Ušteda 📉</span> | <span class="text-red-600 font-bold">Crveno = Povećanje troškova 📈</span>)</p>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-xs text-center border-collapse">
+                        <thead id="matrixPercTableHeader" class="bg-slate-100 font-bold text-slate-700 border-b border-slate-200">
+                            <!-- Pune se kolone za procente -->
+                        </thead>
+                        <tbody id="matrixPercTableBody" class="divide-y divide-slate-100 bg-white">
+                            <!-- Pune se redovi za procente -->
                         </tbody>
                     </table>
                 </div>
@@ -3163,6 +3185,125 @@
             bodyRows.push(totalRowHTML);
 
             bodyElem.innerHTML = bodyRows.join('');
+
+            // ================= GRADIVNA MATRICA POSTOTNIH RAZLIKA (YoY % RAST / PAD) =================
+            const percHeaderElem = document.getElementById('matrixPercTableHeader');
+            let percHeaderHTML = `<tr><th class="py-2.5 px-3 text-left">Mjesec</th>`;
+            availableYears.forEach((y, idx) => {
+                if (idx === 0) {
+                    percHeaderHTML += `<th class="py-2.5 px-3">${y} (Baza)</th>`;
+                } else {
+                    let prevY = availableYears[idx - 1];
+                    percHeaderHTML += `<th class="py-2.5 px-3">${y} vs ${prevY}</th>`;
+                }
+            });
+            percHeaderHTML += `<th class="py-2.5 px-3 bg-indigo-50 text-indigo-900">Prosječni YoY Trend</th></tr>`;
+            if (percHeaderElem) percHeaderElem.innerHTML = percHeaderHTML;
+
+            const percBodyElem = document.getElementById('matrixPercTableBody');
+            let percBodyRows = [];
+
+            monthsNames.forEach((mName, mIdx) => {
+                let mNum = mIdx + 1;
+                let rowHTML = `<tr class="hover:bg-slate-50"><td class="py-2 px-3 text-left font-bold text-slate-800">${mName}</td>`;
+                let validPercSums = 0;
+                let validPercCount = 0;
+
+                availableYears.forEach((y, idx) => {
+                    let val = matrixData[mNum][y] || 0;
+                    if (idx === 0) {
+                        let displayVal = val > 0 ? val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-';
+                        rowHTML += `<td class="py-2 px-3 text-slate-600 font-semibold">${displayVal}</td>`;
+                    } else {
+                        let prevY = availableYears[idx - 1];
+                        let prevVal = matrixData[mNum][prevY] || 0;
+
+                        if (prevVal > 0 && val > 0) {
+                            let diffPerc = ((val - prevVal) / prevVal) * 100;
+                            validPercSums += diffPerc;
+                            validPercCount++;
+
+                            let badgeHTML = '';
+                            if (diffPerc > 0) {
+                                badgeHTML = `<span class="inline-block px-2 py-0.5 rounded text-[11px] font-extrabold bg-red-100 text-red-700 border border-red-200">+${diffPerc.toFixed(1)}% 📈</span>`;
+                            } else if (diffPerc < 0) {
+                                badgeHTML = `<span class="inline-block px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">${diffPerc.toFixed(1)}% 📉</span>`;
+                            } else {
+                                badgeHTML = `<span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-600">0.0%</span>`;
+                            }
+
+                            rowHTML += `<td class="py-2 px-3">
+                                <div class="font-bold text-slate-800 text-[11px]">${val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
+                                <div>${badgeHTML}</div>
+                            </td>`;
+                        } else if (prevVal === 0 && val > 0) {
+                            rowHTML += `<td class="py-2 px-3">
+                                <div class="font-bold text-slate-800 text-[11px]">${val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
+                                <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">Novo 🆕</span>
+                            </td>`;
+                        } else {
+                            rowHTML += `<td class="py-2 px-3 text-slate-400">-</td>`;
+                        }
+                    }
+                });
+
+                let avgTrendBadge = '<span class="text-slate-400">-</span>';
+                if (validPercCount > 0) {
+                    let avgP = validPercSums / validPercCount;
+                    if (avgP > 0) {
+                        avgTrendBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-red-100 text-red-800 border border-red-200">+${avgP.toFixed(1)}%/god 📈</span>`;
+                    } else if (avgP < 0) {
+                        avgTrendBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">${avgP.toFixed(1)}%/god 📉</span>`;
+                    } else {
+                        avgTrendBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-600">0.0%/god</span>`;
+                    }
+                }
+                rowHTML += `<td class="py-2 px-3 font-bold bg-indigo-50/40">${avgTrendBadge}</td></tr>`;
+                percBodyRows.push(rowHTML);
+            });
+
+            // UKUPNO red za postotnu matricu
+            let totalPercRowHTML = `<tr class="bg-slate-100 font-extrabold text-slate-900 border-t-2 border-slate-300"><td class="py-3 px-3 text-left">UKUPNO YOY RAST / PAD</td>`;
+            let totalValidSums = 0, totalValidCount = 0;
+
+            availableYears.forEach((y, idx) => {
+                let yTot = yearTotals[y] || 0;
+                if (idx === 0) {
+                    totalPercRowHTML += `<td class="py-3 px-3 text-slate-700 font-bold">${yTot.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</td>`;
+                } else {
+                    let prevY = availableYears[idx - 1];
+                    let prevYTot = yearTotals[prevY] || 0;
+                    if (prevYTot > 0 && yTot > 0) {
+                        let diffP = ((yTot - prevYTot) / prevYTot) * 100;
+                        totalValidSums += diffP;
+                        totalValidCount++;
+
+                        let badgeClass = diffP > 0 ? 'bg-red-100 text-red-800 border border-red-300' : (diffP < 0 ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-slate-200 text-slate-700');
+                        let sign = diffP > 0 ? '+' : '';
+                        let arrow = diffP > 0 ? '📈' : (diffP < 0 ? '📉' : '');
+
+                        totalPercRowHTML += `<td class="py-3 px-3">
+                            <div class="font-black text-slate-900 text-[11px]">${yTot.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
+                            <span class="inline-block mt-0.5 px-2 py-0.5 rounded text-[11px] font-black ${badgeClass}">${sign}${diffP.toFixed(1)}% ${arrow}</span>
+                        </td>`;
+                    } else {
+                        totalPercRowHTML += `<td class="py-3 px-3 text-slate-400">-</td>`;
+                    }
+                }
+            });
+
+            let grandAvgBadge = '<span class="text-slate-400">-</span>';
+            if (totalValidCount > 0) {
+                let grandAvg = totalValidSums / totalValidCount;
+                let badgeC = grandAvg > 0 ? 'bg-red-100 text-red-900 border border-red-300' : 'bg-emerald-100 text-emerald-900 border border-emerald-300';
+                let sign = grandAvg > 0 ? '+' : '';
+                let arrow = grandAvg > 0 ? '📈' : '📉';
+                grandAvgBadge = `<span class="px-2.5 py-1 rounded-lg text-xs font-black ${badgeC}">${sign}${grandAvg.toFixed(1)}%/god ${arrow}</span>`;
+            }
+            totalPercRowHTML += `<td class="py-3 px-3 bg-indigo-100 text-indigo-950">${grandAvgBadge}</td></tr>`;
+            percBodyRows.push(totalPercRowHTML);
+
+            if (percBodyElem) percBodyElem.innerHTML = percBodyRows.join('');
 
             renderTransactionTable(data);
         }
