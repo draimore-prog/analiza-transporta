@@ -3369,7 +3369,7 @@
                         <td class="py-2 px-3 text-right font-bold text-slate-800">
                             <div class="flex items-center justify-end gap-1.5">
                                 <span>${item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                                ${(activeUser && (activeUser.role === 'superadmin' || activeUser.role === 'editor' || activeUser.role === 'admin')) ? `<button onclick="deleteCostRecord('${item.id}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded font-bold text-xs no-print transition-all" title="Obriši ovaj unos">🗑️</button>` : ''}
+                                ${(item.isNewCustom === true && activeUser && (activeUser.role === 'superadmin' || activeUser.role === 'editor' || activeUser.role === 'admin')) ? `<button onclick="deleteCostRecord('${item.id}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded font-bold text-xs no-print transition-all" title="Obriši ovaj ručno uneseni trošak">🗑️</button>` : ''}
                             </div>
                         </td>
                     </tr>
@@ -3470,8 +3470,12 @@
                         <td class="py-2.5 px-3 whitespace-nowrap text-slate-700 font-medium">${dateStr}</td>
                         <td class="py-2.5 px-3 text-slate-600 font-semibold">${item.segment}</td>
                         <td class="py-2.5 px-3 text-slate-900 font-semibold break-words max-w-[220px]">${item.opisPopravke}</td>
-                        <td class="py-2.5 px-3 text-slate-600 text-xs truncate max-w-[140px]" title="${item.dobavljacOrig}">${item.dobavljacOrig}</td>
-                        <td class="py-2.5 px-3 text-right font-bold text-slate-800">${item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td class="py-2.5 px-3 text-right font-bold text-slate-800">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <span>${item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM</span>
+                                ${(item.isNewCustom === true && activeUser && (activeUser.role === 'superadmin' || activeUser.role === 'editor' || activeUser.role === 'admin')) ? `<button onclick="deleteCostRecord('${item.id}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded font-bold text-xs no-print transition-all" title="Obriši ovaj ručno uneseni trošak">🗑️</button>` : ''}
+                            </div>
+                        </td>
                     </tr>
                 `);
             });
@@ -4292,6 +4296,11 @@
             }
 
             let item = globalData[targetIdx];
+            if (!item.isNewCustom) {
+                alert("🔒 ZAKLJUČANO: Postojeći zapisi iz bazne baze su zaključani i ne mogu se brisati. Mogu se brisati samo novi ručno uneseni troškovi!");
+                return;
+            }
+
             let reg = item.reg;
             let costStr = item.cost ? item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' KM' : '';
 
@@ -4633,7 +4642,12 @@
                     <td class="py-2.5 px-3 font-semibold text-slate-500">${item.garazniBroj || '-'}</td>
                     <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">${item.segment || 'Ostalo'}</span></td>
                     <td class="py-2.5 px-3 text-slate-800 font-medium" title="${item.opisPopravke}">${item.opisPopravke || '-'}</td>
-                    <td class="py-2.5 px-3 text-right font-black text-slate-900 whitespace-nowrap">${item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM</td>
+                    <td class="py-2.5 px-3 text-right font-black text-slate-900 whitespace-nowrap">
+                        <div class="flex items-center justify-end gap-1.5">
+                            <span>${item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM</span>
+                            ${(item.isNewCustom === true && activeUser && (activeUser.role === 'superadmin' || activeUser.role === 'editor' || activeUser.role === 'admin')) ? `<button onclick="deleteCostRecord('${item.id}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded font-bold text-xs no-print transition-all" title="Obriši ovaj ručno uneseni trošak">🗑️</button>` : ''}
+                        </div>
+                    </td>
                 </tr>`;
             }).join('');
 
@@ -4816,7 +4830,12 @@
                     <td class="py-2.5 px-3 font-semibold text-slate-500">${item.garazniBroj || '-'}</td>
                     <td class="py-2.5 px-3 font-medium text-slate-800">${item.dobavljacOrig || '-'}</td>
                     <td class="py-2.5 px-3 text-slate-800 font-medium" title="${item.opisPopravke}">${item.opisPopravke || '-'}</td>
-                    <td class="py-2.5 px-3 text-right font-black text-slate-900 whitespace-nowrap">${item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM</td>
+                    <td class="py-2.5 px-3 text-right font-black text-slate-900 whitespace-nowrap">
+                        <div class="flex items-center justify-end gap-1.5">
+                            <span>${item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM</span>
+                            ${(item.isNewCustom === true && activeUser && (activeUser.role === 'superadmin' || activeUser.role === 'editor' || activeUser.role === 'admin')) ? `<button onclick="deleteCostRecord('${item.id}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded font-bold text-xs no-print transition-all" title="Obriši ovaj ručno uneseni trošak">🗑️</button>` : ''}
+                        </div>
+                    </td>
                 </tr>`;
             }).join('');
 
