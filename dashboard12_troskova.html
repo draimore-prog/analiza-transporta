@@ -212,6 +212,19 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- SEKCIJA ZA REGISTRACIJU NOVOG VOZILA U BAZU (SAMO ZA ADMINE) -->
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                            <span>🚛 Baza Aktivnih Vozila 2026</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Autorizovani unos i registracija novog aktivnog vozila u centralnu bazu flote</p>
+                    </div>
+                    <button onclick="openEditVehicleModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-4 py-2.5 rounded-xl shadow text-xs flex items-center gap-2 transition-all">
+                        <span>➕ Registruj Novo Vozilo u Bazu</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -2960,6 +2973,13 @@
             let rawReg = document.getElementById('ncReg').value.trim().toUpperCase();
             let reg = rawReg.split(' [')[0].trim();
             if (!reg) { alert("Molimo unesite registarsku oznaku!"); return; }
+
+            // Provjera da li vozilo postoji u bazi aktivnih vozila 2026
+            let activeVehCheck = masterFleetData.find(v => v.reg === reg);
+            if (!activeVehCheck && masterFleetData.length > 0) {
+                alert(`⚠️ Vozilo sa registracijom "${reg}" ne postoji u bazi aktivnih vozila za 2026. godinu!\n\nUnos troškova je dozvoljen samo za zvanično registrovana aktivna vozila. Obratite se administratoru za registraciju novog vozila u bazu.`);
+                return;
+            }
 
             let dateVal = document.getElementById('ncDatum').value;
             let dateObj = dateVal ? new Date(dateVal) : new Date();
