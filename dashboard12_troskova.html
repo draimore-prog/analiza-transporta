@@ -283,12 +283,12 @@
                                 <span class="text-[9px] text-slate-400 font-normal">🔒 Šifrarnik</span>
                             </label>
                             <select id="ncTip" required onchange="ncOnTipChange()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none bg-white">
-                                <option value="Teretno vozilo">Teretno vozilo</option>
-                                <option value="Putničko vozilo">Putničko vozilo</option>
+                                <option value="Teretna vozila">Teretna vozila</option>
+                                <option value="Putnička vozila">Putnička vozila</option>
                                 <option value="Skladišna mehanizacija">Skladišna mehanizacija</option>
-                                <option value="Priključno vozilo">Priključno vozilo</option>
+                                <option value="Priključna vozila">Priključna vozila</option>
                                 <option value="Radna mašina">Radna mašina</option>
-                                <option value="Ostalo">Ostalo</option>
+                                <option value="Servis motornih vozila">Servis motornih vozila</option>
                             </select>
                         </div>
                     </div>
@@ -804,12 +804,12 @@
                         <label class="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">Filter po Tipu Mehanizacije</label>
                         <select id="masterFleetTipFilter" onchange="filterMasterFleetTable()" class="w-full text-xs bg-slate-800/90 text-white border border-slate-700 rounded-lg p-2.5 font-semibold outline-none focus:ring-2 focus:ring-indigo-500">
                             <option value="all">Svi tipovi mehanizacije</option>
-                            <option value="Teretno vozilo">Teretno vozilo</option>
-                            <option value="Putničko vozilo">Putničko vozilo</option>
+                            <option value="Teretna vozila">Teretna vozila</option>
+                            <option value="Putnička vozila">Putnička vozila</option>
                             <option value="Skladišna mehanizacija">Skladišna mehanizacija</option>
-                            <option value="Priključno vozilo">Priključno vozilo</option>
+                            <option value="Priključna vozila">Priključna vozila</option>
                             <option value="Radna mašina">Radna mašina</option>
-                            <option value="Ostalo">Ostalo</option>
+                            <option value="Servis motornih vozila">Servis motornih vozila</option>
                         </select>
                     </div>
                     <div>
@@ -896,6 +896,15 @@
                     <div>
                         <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Tip Mehanizacije <span class="text-red-500">*</span></label>
                         <select id="evTipMehan" required class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                            <option value="Teretna vozila">Teretna vozila</option>
+                            <option value="Putnička vozila">Putnička vozila</option>
+                            <option value="Skladišna mehanizacija">Skladišna mehanizacija</option>
+                            <option value="Priključna vozila">Priključna vozila</option>
+                            <option value="Radna mašina">Radna mašina</option>
+                            <option value="Servis motornih vozila">Servis motornih vozila</option>
+                        </select>
+                    </div>
+                    <div>
                         <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Godina Proizvodnje</label>
                         <input type="text" id="evGodProizvodnje" placeholder="npr. 2021" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-semibold outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
@@ -1366,21 +1375,21 @@
 
         // AUTORITATIVNA STRUKTURA FLOTE I TROŠKOVA DIREKTNO IZ EXCEL SHEET-A "KPI Total"
         let kpiTotalFleetByYear = {
-            2021: { Total: 661, 'Priključno vozilo': 37, 'Putničko vozilo': 107, 'Radna mašina': 10, 'Skladišna mehanizacija': 312, 'Teretno vozilo': 195 },
-            2022: { Total: 623, 'Priključno vozilo': 37, 'Putničko vozilo': 103, 'Radna mašina': 5, 'Skladišna mehanizacija': 291, 'Teretno vozilo': 187 },
-            2023: { Total: 652, 'Priključno vozilo': 38, 'Putničko vozilo': 103, 'Radna mašina': 5, 'Skladišna mehanizacija': 352, 'Teretno vozilo': 154 },
-            2024: { Total: 747, 'Priključno vozilo': 46, 'Putničko vozilo': 125, 'Radna mašina': 8, 'Skladišna mehanizacija': 419, 'Teretno vozilo': 149 },
-            2025: { Total: 939, 'Priključno vozilo': 45, 'Putničko vozilo': 124, 'Radna mašina': 8, 'Skladišna mehanizacija': 595, 'Teretno vozilo': 167 },
-            2026: { Total: 964, 'Priključno vozilo': 51, 'Putničko vozilo': 124, 'Radna mašina': 8, 'Skladišna mehanizacija': 608, 'Teretno vozilo': 173 }
+            2021: { Total: 661, 'Priključna vozila': 37, 'Putnička vozila': 107, 'Radna mašina': 10, 'Skladišna mehanizacija': 312, 'Teretna vozila': 195, 'Servis motornih vozila': 0 },
+            2022: { Total: 623, 'Priključna vozila': 37, 'Putnička vozila': 103, 'Radna mašina': 5, 'Skladišna mehanizacija': 291, 'Teretna vozila': 187, 'Servis motornih vozila': 0 },
+            2023: { Total: 652, 'Priključna vozila': 38, 'Putnička vozila': 103, 'Radna mašina': 5, 'Skladišna mehanizacija': 352, 'Teretna vozila': 154, 'Servis motornih vozila': 0 },
+            2024: { Total: 747, 'Priključna vozila': 46, 'Putnička vozila': 125, 'Radna mašina': 8, 'Skladišna mehanizacija': 419, 'Teretna vozila': 149, 'Servis motornih vozila': 0 },
+            2025: { Total: 939, 'Priključna vozila': 45, 'Putnička vozila': 124, 'Radna mašina': 8, 'Skladišna mehanizacija': 595, 'Teretna vozila': 167, 'Servis motornih vozila': 0 },
+            2026: { Total: 964, 'Priključna vozila': 51, 'Putnička vozila': 124, 'Radna mašina': 8, 'Skladišna mehanizacija': 608, 'Teretna vozila': 173, 'Servis motornih vozila': 0 }
         };
 
         let kpiTotalCostsByYear = {
-            2021: { Total: 863648, 'Priključno vozilo': 59951, 'Putničko vozilo': 120143, 'Radna mašina': 39347, 'Skladišna mehanizacija': 154418, 'Teretno vozilo': 488188 },
-            2022: { Total: 1088803, 'Priključno vozilo': 106260, 'Putničko vozilo': 153293, 'Radna mašina': 26708, 'Skladišna mehanizacija': 235373, 'Teretno vozilo': 564491 },
-            2023: { Total: 1285971, 'Priključno vozilo': 121657, 'Putničko vozilo': 150136, 'Radna mašina': 22241, 'Skladišna mehanizacija': 346204, 'Teretno vozilo': 645022 },
-            2024: { Total: 1377411, 'Priključno vozilo': 139402, 'Putničko vozilo': 176374, 'Radna mašina': 17495, 'Skladišna mehanizacija': 349736, 'Teretno vozilo': 740553 },
-            2025: { Total: 1692956, 'Priključno vozilo': 192401, 'Putničko vozilo': 195374, 'Radna mašina': 32042, 'Skladišna mehanizacija': 344124, 'Teretno vozilo': 923258 },
-            2026: { Total: 761304, 'Priključno vozilo': 88970, 'Putničko vozilo': 95228, 'Radna mašina': 8055, 'Skladišna mehanizacija': 137748, 'Teretno vozilo': 419095 }
+            2021: { Total: 863648, 'Priključna vozila': 59951, 'Putnička vozila': 120143, 'Radna mašina': 39347, 'Skladišna mehanizacija': 154418, 'Teretna vozila': 488188, 'Servis motornih vozila': 0 },
+            2022: { Total: 1088803, 'Priključna vozila': 106260, 'Putnička vozila': 153293, 'Radna mašina': 26708, 'Skladišna mehanizacija': 235373, 'Teretna vozila': 564491, 'Servis motornih vozila': 0 },
+            2023: { Total: 1285971, 'Priključna vozila': 121657, 'Putnička vozila': 150136, 'Radna mašina': 22241, 'Skladišna mehanizacija': 346204, 'Teretna vozila': 645022, 'Servis motornih vozila': 0 },
+            2024: { Total: 1377411, 'Priključna vozila': 139402, 'Putnička vozila': 176374, 'Radna mašina': 17495, 'Skladišna mehanizacija': 349736, 'Teretna vozila': 740553, 'Servis motornih vozila': 0 },
+            2025: { Total: 1692956, 'Priključna vozila': 192401, 'Putnička vozila': 195374, 'Radna mašina': 32042, 'Skladišna mehanizacija': 344124, 'Teretna vozila': 923258, 'Servis motornih vozila': 0 },
+            2026: { Total: 761304, 'Priključna vozila': 88970, 'Putnička vozila': 95228, 'Radna mašina': 8055, 'Skladišna mehanizacija': 137748, 'Teretna vozila': 419095, 'Servis motornih vozila': 0 }
         };
 
         // Instanca Grafikona
@@ -1470,16 +1479,15 @@
         });
 
         function ocistiTip(tip) {
-            if (!tip) return 'Ostalo';
+            if (!tip) return 'Servis motornih vozila';
             let t = tip.toString().trim().toLowerCase();
-            if (t.includes('putni')) return 'Putničko vozilo';
-            if (t.includes('teretn')) return 'Teretno vozilo';
+            if (t === '/' || t === '-' || t === 'nepoznato' || t === 'ostalo' || t === '' || t.includes('servis motor') || t.includes('kosa crta')) return 'Servis motornih vozila';
+            if (t.includes('putni')) return 'Putnička vozila';
+            if (t.includes('teretn')) return 'Teretna vozila';
             if (t.includes('skladis') || t.includes('skladiš') || t.includes('viljušk') || t.includes('viljusk') || t.includes('paletar') || t.includes('staker') || t.includes('regalni')) return 'Skladišna mehanizacija';
-            if (t.includes('priklju')) return 'Priključno vozilo';
+            if (t.includes('priklju')) return 'Priključna vozila';
             if (t.includes('radna ma') || t.includes('radna')) return 'Radna mašina';
-            if (t.includes('servis motor')) return 'Servis motornih vozila';
-            if (t === '/' || t === '') return 'Ostalo';
-            return t.charAt(0).toUpperCase() + t.slice(1);
+            return 'Servis motornih vozila';
         }
 
         function ocistiMarku(marka) {
@@ -1761,6 +1769,9 @@
             let validMarkas = new Set();
 
             globalData.forEach(item => {
+                let cleanT = ocistiTip(item.tipMehan);
+                item.tipMehan = cleanT;
+
                 let matchYear = selectedYear === 'all' || item.year.toString() === selectedYear;
                 let matchMonth = selectedMonth === 'all' || item.month.toString() === selectedMonth;
 
@@ -1768,7 +1779,7 @@
                     let matchTip = currentTip === 'all' || item.tipMehan === currentTip;
                     let matchMarka = currentMarka === 'all' || item.markaVoz === currentMarka;
 
-                    if (matchMarka && item.tipMehan !== 'Nepoznato' && item.tipMehan !== 'Ostalo') validTips.add(item.tipMehan);
+                    if (matchMarka) validTips.add(item.tipMehan);
                     if (matchTip && item.markaVoz !== 'Nepoznato' && item.markaVoz !== 'Ostalo') validMarkas.add(item.markaVoz);
                 }
             });
@@ -2044,8 +2055,8 @@
             const gridContainer = document.getElementById('dailyTypeKpiGrid');
             let kpiCardsHTML = [];
             
-            // 5 GLAVNIH TIPOVA IZ TABELE KPI TOTAL
-            let sortedTypes = ['Teretno', 'Putničko', 'Skladišna mehanizacija', 'Priključno', 'Radna mašina'];
+            // 6 GLAVNIH TIPOVA IZ TABELE KPI TOTAL
+            let sortedTypes = ['Teretna vozila', 'Putnička vozila', 'Skladišna mehanizacija', 'Priključna vozila', 'Radna mašina', 'Servis motornih vozila'];
 
             sortedTypes.forEach(tip => {
                 let yearTot = typeYearTotals[tip] !== undefined && typeYearTotals[tip] > 0 ? typeYearTotals[tip] : (yearKpiCosts[tip] || 0);
@@ -2515,7 +2526,10 @@
                 if (res.ok) {
                     const data = await res.json();
                     if (data && Array.isArray(data) && data.length > 0) {
-                        masterFleetData = data;
+                        masterFleetData = data.map(v => ({
+                            ...v,
+                            tipMehan: ocistiTip(v.tipMehan)
+                        }));
                         
                         // Merge local custom edits if present
                         let savedEdits = localStorage.getItem('fleet_master_custom_edits_v1');
