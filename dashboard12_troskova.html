@@ -137,37 +137,7 @@
 
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 px-4 rounded-xl shadow-lg transition-all hover:shadow-xl flex items-center justify-center gap-2">
                     <span>Prijavi se</span>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </button>
-
-                <!-- BRZI ODABIR KORISNIKA & FAHRICKI RESET -->
-                <div class="pt-4 border-t border-slate-100 space-y-2 text-center">
-                    <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Brzi odabir i pregled naloga:</div>
-                    <div class="grid grid-cols-2 gap-1.5 text-left">
-                        <button type="button" onclick="fillLoginCredentials('emir.durakovic', 'Emir1235')" class="p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 transition-all text-xs">
-                            <div class="font-bold text-slate-800 text-[11px]">👑 Emir Duraković</div>
-                            <div class="text-[10px] text-slate-500">Šifra: <span class="font-mono font-bold text-blue-600">Emir1235</span></div>
-                        </button>
-                        <button type="button" onclick="fillLoginCredentials('anisa.bosnjic', 'Anisa1')" class="p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 transition-all text-xs">
-                            <div class="font-bold text-slate-800 text-[11px]">✍️ Anisa Bošnjak</div>
-                            <div class="text-[10px] text-slate-500">Šifra: <span class="font-mono font-bold text-blue-600">Anisa1</span></div>
-                        </button>
-                        <button type="button" onclick="fillLoginCredentials('selma.durakovic', 'Selma1')" class="p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 transition-all text-xs">
-                            <div class="font-bold text-slate-800 text-[11px]">✍️ Selma Duraković</div>
-                            <div class="text-[10px] text-slate-500">Šifra: <span class="font-mono font-bold text-blue-600">Selma1</span></div>
-                        </button>
-                        <button type="button" onclick="fillLoginCredentials('nedim.kisic', 'Nedim1')" class="p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 transition-all text-xs">
-                            <div class="font-bold text-slate-800 text-[11px]">📊 Nedim Kisić</div>
-                            <div class="text-[10px] text-slate-500">Šifra: <span class="font-mono font-bold text-blue-600">Nedim1</span></div>
-                        </button>
-                    </div>
-
-                    <div class="pt-2 flex justify-center">
-                        <button type="button" onclick="resetAuthCredentials(true)" class="text-xs text-indigo-600 hover:text-indigo-800 font-bold hover:underline transition-all flex items-center gap-1">
-                            <span>🔄 Resetuj sve lozinke na fabričke</span>
-                        </button>
-                    </div>
-                </div>
             </form>
         </div>
     </div>
@@ -258,6 +228,49 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL ZA UREĐIVANJE KORISNIKA ================= -->
+    <div id="editUserModal" class="fixed inset-0 bg-slate-900/75 hidden flex justify-center items-center z-[60] backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 p-6">
+            <div class="flex justify-between items-center pb-3 mb-4 border-b border-slate-100">
+                <h3 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                    <span>✏️ Uređivanje Korisničkog Naloga</span>
+                </h3>
+                <button onclick="closeEditUserModal()" class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
+            </div>
+            <form onsubmit="handleSaveEditedUser(event)" class="space-y-3.5 text-xs">
+                <input type="hidden" id="editOriginalUsername">
+                <div>
+                    <label class="block font-bold uppercase text-slate-500 mb-1">Korisničko Ime</label>
+                    <input type="text" id="editUsername" required class="w-full border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-500 mb-1">Ime i Prezime</label>
+                    <input type="text" id="editFullname" required class="w-full border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-500 mb-1">Lozinka</label>
+                    <input type="text" id="editPassword" required class="w-full border border-slate-300 rounded-lg p-2.5 font-mono font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-500 mb-1">Uloga / Prava Pristupa</label>
+                    <select id="editRole" class="w-full border border-slate-300 rounded-lg p-2.5 font-bold bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="editor">Admin - Unos faktura</option>
+                        <option value="viewer">Analitičar (Samo pregled)</option>
+                        <option value="superadmin">Super Administrator</option>
+                    </select>
+                </div>
+                <div class="pt-3 flex justify-end gap-2 border-t border-slate-100 mt-4">
+                    <button type="button" onclick="closeEditUserModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all">
+                        Odustani
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow transition-all">
+                        💾 Sačuvaj Izmjene
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -467,6 +480,9 @@
                         </button>
                         <button id="adminPanelBtn" onclick="openAdminPanel()" class="hidden bg-blue-600 hover:bg-blue-500 text-white font-bold px-2.5 py-1.5 rounded-md transition-colors text-[11px]">
                             ⚙️ Admin Panel
+                        </button>
+                        <button onclick="promptChangeMyPassword()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-2.5 py-1.5 rounded-md transition-colors text-[11px]" title="Promijeni moju lozinku">
+                            🔑 Šifra
                         </button>
                         <button onclick="handleLogout()" class="bg-red-600/80 hover:bg-red-600 text-white font-bold px-2.5 py-1.5 rounded-md transition-colors text-[11px]" title="Odjavi se sa sistema">
                             🚪 Odjava
@@ -1471,12 +1487,6 @@
                     let existingIdx = usersDB.findIndex(u => u.username.toLowerCase() === defU.username.toLowerCase());
                     if (existingIdx === -1) {
                         usersDB.push(defU);
-                    } else {
-                        usersDB[existingIdx].fullname = defU.fullname;
-                        usersDB[existingIdx].role = defU.role;
-                        if (!usersDB[existingIdx].password) {
-                            usersDB[existingIdx].password = defU.password;
-                        }
                     }
                 });
                 saveUsersDB();
@@ -1680,6 +1690,91 @@
             }
         }
 
+        function promptChangeMyPassword() {
+            if (!activeUser) return;
+            let oldP = prompt("Unesite Vašu TRENUTNU lozinku:");
+            if (!oldP) return;
+            if (oldP.trim() !== activeUser.password && oldP.trim().toLowerCase() !== activeUser.password.toLowerCase()) {
+                alert("Neispravna trenutna lozinka!");
+                return;
+            }
+            let newP = prompt("Unesite Vašu NOVU lozinku:");
+            if (!newP || !newP.trim()) {
+                alert("Lozinka ne može biti prazna.");
+                return;
+            }
+            let confirmP = prompt("Potvrdite NOVU lozinku:");
+            if (newP.trim() !== confirmP.trim()) {
+                alert("Nove lozinke se ne poklapaju!");
+                return;
+            }
+            
+            let uIdx = usersDB.findIndex(u => u.username.toLowerCase() === activeUser.username.toLowerCase());
+            if (uIdx !== -1) {
+                usersDB[uIdx].password = newP.trim();
+                saveUsersDB();
+            }
+            activeUser.password = newP.trim();
+            sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+            localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+            alert("Vaša lozinka je uspješno izmijenjena! Zapamtite je za naredne prijave.");
+        }
+
+        function openEditUserModal(uname) {
+            let u = usersDB.find(x => x.username.toLowerCase() === uname.toLowerCase());
+            if (!u) return;
+
+            document.getElementById('editOriginalUsername').value = u.username;
+            document.getElementById('editUsername').value = u.username;
+            document.getElementById('editFullname').value = u.fullname || '';
+            document.getElementById('editPassword').value = u.password || '';
+            document.getElementById('editRole').value = u.role || 'editor';
+
+            document.getElementById('editUserModal').classList.remove('hidden');
+        }
+
+        function closeEditUserModal() {
+            document.getElementById('editUserModal').classList.add('hidden');
+        }
+
+        function handleSaveEditedUser(e) {
+            e.preventDefault();
+            if (!activeUser || (activeUser.username.toLowerCase() !== 'emir.durakovic' && activeUser.role !== 'superadmin')) return;
+
+            let origUname = document.getElementById('editOriginalUsername').value;
+            let newUname = document.getElementById('editUsername').value.trim().toLowerCase();
+            let newFname = document.getElementById('editFullname').value.trim();
+            let newPass = document.getElementById('editPassword').value.trim();
+            let newRole = document.getElementById('editRole').value;
+
+            let targetIdx = usersDB.findIndex(u => u.username.toLowerCase() === origUname.toLowerCase());
+            if (targetIdx === -1) return;
+
+            if (newUname !== origUname.toLowerCase()) {
+                if (usersDB.some(u => u.username.toLowerCase() === newUname)) {
+                    alert(`Korisničko ime "${newUname}" već postoji kod drugog naloga!`);
+                    return;
+                }
+            }
+
+            usersDB[targetIdx].username = newUname;
+            usersDB[targetIdx].fullname = newFname;
+            usersDB[targetIdx].password = newPass;
+            usersDB[targetIdx].role = newRole;
+
+            if (origUname.toLowerCase() === activeUser.username.toLowerCase()) {
+                activeUser = { ...usersDB[targetIdx] };
+                sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+                localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+                updateAuthUI();
+            }
+
+            saveUsersDB();
+            renderUserTable();
+            closeEditUserModal();
+            alert(`Nalog "${newUname}" je uspješno ažuriran!`);
+        }
+
         function changeUserPassword(uname) {
             let newPass = prompt(`Unesite novu lozinku za korisnika "${uname}":`);
             if (newPass && newPass.trim() !== '') {
@@ -1718,7 +1813,8 @@
                         </td>
                         <td class="py-2.5 px-3 text-slate-500 text-[11px]">${user.createdAt || '-'}</td>
                         <td class="py-2.5 px-3 text-right font-medium">
-                            <button onclick="changeUserPassword('${user.username}')" class="text-blue-600 hover:text-blue-800 font-bold mr-2 text-[11px]">🔑 Mijenjaj lozinku</button>
+                            <button onclick="openEditUserModal('${user.username}')" class="text-indigo-600 hover:text-indigo-800 font-bold mr-2 text-[11px]">✏️ Uredi</button>
+                            <button onclick="changeUserPassword('${user.username}')" class="text-blue-600 hover:text-blue-800 font-bold mr-2 text-[11px]">🔑 Šifra</button>
                             ${!isSuper && user.username !== activeUser.username ? `
                                 <button onclick="deleteUser('${user.username}')" class="text-red-600 hover:text-red-800 font-bold text-[11px]">🗑️ Obriši</button>
                             ` : '<span class="text-slate-300 text-[11px]">-</span>'}
@@ -2454,7 +2550,7 @@
             }
 
             let totalCost = 0, internalCost = 0, externalCost = 0;
-            let costsByVehicle = {}, costsBySegment = {}, trendData = {}, costsBySupplier = {};
+            let costsByVehicle = {}, costsBySegment = {}, trendData = {}, costsBySupplier = {}, internalCostByYear = {};
 
             const selectedMonth = document.getElementById('filterMonth').value;
             const isAllMonths = selectedMonth === 'all';
@@ -2467,11 +2563,17 @@
 
             data.forEach(item => {
                 totalCost += item.cost;
-                if (item.type === 'Interno') internalCost += item.cost; else externalCost += item.cost;
+                let isInt = item.type === 'Interno' || (item.dobavljacOrig && item.dobavljacOrig.toLowerCase().includes('intern')) || (item.dobavljacOrig && item.dobavljacOrig.toLowerCase().includes('bingo'));
+                if (isInt) {
+                    internalCost += item.cost;
+                    internalCostByYear[item.year] = (internalCostByYear[item.year] || 0) + item.cost;
+                } else {
+                    externalCost += item.cost;
+                }
+
                 costsByVehicle[item.reg] = (costsByVehicle[item.reg] || 0) + item.cost;
                 costsBySegment[item.segment] = (costsBySegment[item.segment] || 0) + item.cost;
 
-                let isInt = item.type === 'Interno' || (item.dobavljacOrig && item.dobavljacOrig.toLowerCase().includes('intern'));
                 let isMatchSupplierMode = false;
                 if (supplierMode === 'external' && !isInt) isMatchSupplierMode = true;
                 else if (supplierMode === 'internal' && isInt) isMatchSupplierMode = true;
@@ -2522,10 +2624,10 @@
             let avgCost = totalCost / data.length;
             document.getElementById('kpi-avg-cost').innerText = avgCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM';
 
-            drawChartsTab1(trendData, internalCost, externalCost, costsByVehicle, costsBySegment, costsBySupplier, isAllYears, trendMode, selectedYear, selectedMonth);
+            drawChartsTab1(trendData, internalCost, externalCost, costsByVehicle, costsBySegment, costsBySupplier, isAllYears, trendMode, selectedYear, selectedMonth, internalCostByYear);
         }
 
-        function drawChartsTab1(trendData, intCost, extCost, byVehicle, bySegment, bySupplier, isAllYears, trendMode, selectedYear, selectedMonth) {
+        function drawChartsTab1(trendData, intCost, extCost, byVehicle, bySegment, bySupplier, isAllYears, trendMode, selectedYear, selectedMonth, internalCostByYear = {}) {
             if(chartTrend) chartTrend.destroy(); if(chartIntExt) chartIntExt.destroy(); if(chartVehicles) chartVehicles.destroy(); if(chartSegments) chartSegments.destroy(); if(chartSuppliers) chartSuppliers.destroy();
 
             const ctx1 = document.getElementById('chartTrend').getContext('2d');
@@ -2740,24 +2842,58 @@
                 }
             });
 
-            let sortedSuppliers = Object.entries(bySupplier).sort((a,b) => b[1] - a[1]).slice(0, 7);
-            chartSuppliers = new Chart(document.getElementById('chartSuppliers').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: sortedSuppliers.map(s => s[0]),
-                    datasets: [{ label: 'Ukupan iznos popravki (KM)', data: sortedSuppliers.map(s => s[1]), backgroundColor: '#6366f1', borderRadius: 6 }]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    onClick: (e, els, ch) => {
-                        if (els.length > 0) {
-                            let supplierName = ch.data.labels[els[0].index];
-                            openSupplierDetailModal(supplierName);
+            if (supplierMode === 'internal') {
+                let years = Object.keys(internalCostByYear).sort((a,b) => parseInt(a) - parseInt(b));
+                if (years.length === 0) years = ['2021', '2022', '2023', '2024', '2025', '2026'];
+                chartSuppliers = new Chart(document.getElementById('chartSuppliers').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: years.map(y => y + '. god.'),
+                        datasets: [{
+                            label: 'Bingo / Interno Održavanje (KM)',
+                            data: years.map(y => internalCostByYear[y] || 0),
+                            backgroundColor: '#2563eb',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let val = context.raw || 0;
+                                        return ` Bingo Interno (${context.label}): ${val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM`;
+                                    }
+                                }
+                            }
+                        },
+                        onClick: (e, els, ch) => {
+                            openIntExtRecapModal('Interno');
                         }
                     }
-                }
-            });
+                });
+            } else {
+                let sortedSuppliers = Object.entries(bySupplier).sort((a,b) => b[1] - a[1]).slice(0, 7);
+                chartSuppliers = new Chart(document.getElementById('chartSuppliers').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: sortedSuppliers.map(s => s[0]),
+                        datasets: [{ label: 'Ukupan iznos popravki (KM)', data: sortedSuppliers.map(s => s[1]), backgroundColor: '#6366f1', borderRadius: 6 }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        onClick: (e, els, ch) => {
+                            if (els.length > 0) {
+                                let supplierName = ch.data.labels[els[0].index];
+                                openSupplierDetailModal(supplierName);
+                            }
+                        }
+                    }
+                });
+            }
         }
 
         // ================= TAB 2 PROCESSOR =================
@@ -3990,8 +4126,8 @@
                 if (subElem) subElem.innerText = "Pregled vanjskih servisa i partnera sa najvećim obimom održavanja flote";
             } else if (mode === 'internal') {
                 if (intBtn) intBtn.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition-all font-bold cursor-pointer";
-                if (titleElem) titleElem.innerText = "Interno Održavanje & Vlastite Radionice";
-                if (subElem) subElem.innerText = "Pregled vlastitih radionica, magacina i internih naloga po obimu";
+                if (titleElem) titleElem.innerText = "Bingo / Interno Održavanje (Pregled po Godinama)";
+                if (subElem) subElem.innerText = "Godišnji pregled vlastitih radionica, magacina i internih naloga za Bingo";
             } else {
                 if (allBtn) allBtn.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition-all font-bold cursor-pointer";
                 if (titleElem) titleElem.innerText = "Top 7 Svih Dobavljača & Servisera (Zbirno)";
@@ -4493,6 +4629,7 @@
             if (event.target == document.getElementById('intExtRecapModal')) closeIntExtRecapModal();
             if (event.target == document.getElementById('supplierDetailModal')) closeSupplierModal();
             if (event.target == document.getElementById('segmentDetailModal')) closeSegmentModal();
+            if (event.target == document.getElementById('editUserModal')) closeEditUserModal();
         };
 
         window.addEventListener('DOMContentLoaded', function() {
