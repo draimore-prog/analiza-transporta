@@ -32,8 +32,8 @@
         @media print {
             @page { size: A4 portrait; margin: 10mm; }
             body * { visibility: hidden; }
-            #vehicleModal, #vehicleModal * { visibility: visible; }
-            #vehicleModal { 
+            #vehicleModal, #vehicleModal *, #segmentDetailModal, #segmentDetailModal * { visibility: visible; }
+            #vehicleModal, #segmentDetailModal { 
                 position: absolute; 
                 left: 0; 
                 top: 0; 
@@ -638,10 +638,12 @@
                     </div>
                     <div class="h-[280px] relative"><canvas id="chartVehicles"></canvas></div>
                 </div>
-                <div class="card clickable-chart" title="Klikni na segment za filtriranje">
+                <div class="card clickable-chart" title="Klikni na segment za detaljan spisak i izvoz">
                     <div class="flex justify-between items-center mb-1">
-                        <h3 class="text-base font-bold text-slate-800">Struktura po Segmentu</h3>
-                        <span class="text-xs text-slate-400">💡 Klikni krišku</span>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-base font-bold text-slate-800">Struktura po Segmentu</h3>
+                            <span class="text-[11px] bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold px-2 py-0.5 rounded-full shadow-xs">💡 Klikni za spisak i izvoz</span>
+                        </div>
                     </div>
                     <div class="h-[280px] relative flex items-center justify-center"><canvas id="chartSegments"></canvas></div>
                 </div>
@@ -1193,6 +1195,141 @@
                     <span>📥 Izvezi Podatke u Excel</span>
                 </button>
                 <button onclick="closeSupplierModal()" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition-all">
+                    Zatvori
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL ZA DETALJE SEGMENTA (GUME, MEHANIKA, ELEKTRONIKA...) ================= -->
+    <div id="segmentDetailModal" class="fixed inset-0 bg-slate-900/75 hidden flex justify-center items-center z-50 backdrop-blur-sm p-3 sm:p-5 print-full-width">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[94vh] flex flex-col overflow-hidden border border-slate-100">
+            <!-- Header -->
+            <div class="flex justify-between items-center p-5 bg-gradient-to-r from-slate-900 via-emerald-900 to-slate-900 text-white modal-header-print">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-white/10 rounded-xl backdrop-blur-md text-2xl" id="segModalIcon">
+                        🏬
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-lg sm:text-xl font-black tracking-tight" id="segModalTitle">
+                                Segment: -
+                            </h2>
+                            <span id="segModalBadge" class="bg-emerald-500/30 border border-emerald-300 text-white text-[11px] px-2.5 py-0.5 rounded-full font-bold">
+                                Kategorija Održavanja
+                            </span>
+                        </div>
+                        <p class="text-xs text-emerald-200 mt-0.5" id="segModalSubtitle">Kompletan spisak svih faktura, servisa i troškova u ovom segmentu</p>
+                    </div>
+                </div>
+                <button onclick="closeSegmentModal()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-lg w-9 h-9 flex items-center justify-center text-2xl font-light transition-colors no-print">&times;</button>
+            </div>
+
+            <!-- Body Content -->
+            <div class="p-5 overflow-y-auto space-y-5 bg-slate-50 text-xs">
+                <!-- KPI Summary Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 print-kpi-grid">
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[10px] font-extrabold uppercase text-slate-400">Ukupan Trošak Segmenta</span>
+                        <h3 class="text-lg font-black text-emerald-900 mt-1" id="segTotalCost">0 KM</h3>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[10px] font-extrabold uppercase text-slate-400">Ukupno Intervencija</span>
+                        <h3 class="text-lg font-black text-indigo-600 mt-1" id="segInvoiceCount">0</h3>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[10px] font-extrabold uppercase text-slate-400">Obrađeno Vozila</span>
+                        <h3 class="text-lg font-black text-slate-800 mt-1" id="segVehicleCount">0</h3>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[10px] font-extrabold uppercase text-slate-400">Prosjek po Intervenciji</span>
+                        <h3 class="text-lg font-black text-amber-600 mt-1" id="segAvgCost">0 KM</h3>
+                    </div>
+                </div>
+
+                <!-- Filter Controls Bar -->
+                <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm no-print">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Year Filter -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Godina</label>
+                            <select id="segModalYearFilter" onchange="filterSegmentModalTable()" class="text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 font-bold text-slate-700">
+                                <option value="all">Sve godine</option>
+                            </select>
+                        </div>
+                        <!-- Month Filter -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Mjesec</label>
+                            <select id="segModalMonthFilter" onchange="filterSegmentModalTable()" class="text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 font-bold text-slate-700">
+                                <option value="all">Svi mjeseci</option>
+                                <option value="1">Januar</option>
+                                <option value="2">Februar</option>
+                                <option value="3">Mart</option>
+                                <option value="4">April</option>
+                                <option value="5">Maj</option>
+                                <option value="6">Juni</option>
+                                <option value="7">Juli</option>
+                                <option value="8">August</option>
+                                <option value="9">Septembar</option>
+                                <option value="10">Oktobar</option>
+                                <option value="11">Novembar</option>
+                                <option value="12">Decembar</option>
+                            </select>
+                        </div>
+                        <!-- Sort Filter -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Sortiranje / Iznos</label>
+                            <select id="segModalSortFilter" onchange="filterSegmentModalTable()" class="text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50 font-bold text-slate-700">
+                                <option value="date-desc">Datum (Najnovije prvo)</option>
+                                <option value="date-asc">Datum (Najstarije prvo)</option>
+                                <option value="cost-desc">Trošak (Najveći prvo)</option>
+                                <option value="cost-asc">Trošak (Najmanji prvo)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Pretraga</label>
+                            <input type="text" id="segModalSearch" oninput="filterSegmentModalTable()" placeholder="🔍 Pretraži reg, GB, dobavljača ili radove..." class="w-full sm:w-64 text-xs border border-slate-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-50">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table View -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto max-h-[52vh]">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-100 sticky top-0 font-bold text-slate-700 border-b border-slate-200 text-[11px] uppercase tracking-wider">
+                                <tr>
+                                    <th class="py-2.5 px-3">Datum</th>
+                                    <th class="py-2.5 px-3">Vozilo / Reg.</th>
+                                    <th class="py-2.5 px-3">GB</th>
+                                    <th class="py-2.5 px-3">Serviser / Dobavljač</th>
+                                    <th class="py-2.5 px-3">Opis popravke / Rezervni dio</th>
+                                    <th class="py-2.5 px-3 text-right">Iznos (KM)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="segTableBody" class="divide-y divide-slate-100 text-slate-600 text-xs">
+                                <!-- Popunjava se dinamički -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-4 bg-white border-t border-slate-200 flex justify-between items-center no-print">
+                <div class="flex items-center gap-2">
+                    <button onclick="exportSegmentModalToExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center gap-2">
+                        <span>📥 Izvezi u Excel</span>
+                    </button>
+                    <button onclick="window.print()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center gap-2">
+                        <span>🖨️ Štampaj / Sačuvaj u PDF</span>
+                    </button>
+                </div>
+                <button onclick="closeSegmentModal()" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition-all">
                     Zatvori
                 </button>
             </div>
@@ -2542,8 +2679,50 @@
 
             let sortedSegments = Object.entries(bySegment).sort((a,b) => b[1] - a[1]).slice(0, 7);
             chartSegments = new Chart(document.getElementById('chartSegments').getContext('2d'), {
-                type: 'pie', data: { labels: sortedSegments.map(s => s[0]), datasets: [{ data: sortedSegments.map(s => s[1]), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'] }] },
-                options: { maintainAspectRatio: false, onClick: (e, els, ch) => { if (els.length > 0) setSegmentFilter(ch.data.labels[els[0].index]); } }
+                type: 'pie',
+                data: {
+                    labels: sortedSegments.map(s => s[0]),
+                    datasets: [{ data: sortedSegments.map(s => s[1]), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'] }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    onClick: (e, els, ch) => {
+                        if (els.length > 0) {
+                            let segmentName = ch.data.labels[els[0].index];
+                            openSegmentDetailModal(segmentName);
+                        }
+                    }
+                },
+                plugins: [{
+                    id: 'pieSlicePercents',
+                    afterDraw: (chart) => {
+                        const { ctx } = chart;
+                        ctx.save();
+                        ctx.font = 'bold 11px Inter, sans-serif';
+                        ctx.fillStyle = '#ffffff';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+
+                        const totalVal = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        const meta = chart.getDatasetMeta(0);
+                        if (meta && meta.data) {
+                            meta.data.forEach((element, i) => {
+                                const val = chart.data.datasets[0].data[i];
+                                if (val > 0 && totalVal > 0) {
+                                    const perc = (val / totalVal) * 100;
+                                    if (perc >= 2.5) {
+                                        const percStr = perc.toFixed(1) + '%';
+                                        const pos = element.tooltipPosition();
+                                        ctx.shadowColor = 'rgba(0,0,0,0.7)';
+                                        ctx.shadowBlur = 4;
+                                        ctx.fillText(percStr, pos.x, pos.y);
+                                    }
+                                }
+                            });
+                        }
+                        ctx.restore();
+                    }
+                }]
             });
 
             let sortedSuppliers = Object.entries(bySupplier).sort((a,b) => b[1] - a[1]).slice(0, 7);
@@ -4152,6 +4331,145 @@
             XLSX.writeFile(wb, `Dobavljac_${safeName}_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
+        // ================= LOGIKA ZA DETALJNI PREGLED SEGMENTA =================
+        let activeSegmentData = [];
+        let activeSegmentFilteredData = [];
+        let activeSegmentName = '';
+
+        function openSegmentDetailModal(segmentName) {
+            activeSegmentName = segmentName;
+            const modal = document.getElementById('segmentDetailModal');
+            if (!modal) return;
+
+            let sourceData = currentFilteredData && currentFilteredData.length > 0 ? currentFilteredData : globalData;
+            activeSegmentData = sourceData.filter(item => item.segment === segmentName);
+
+            let totalCost = activeSegmentData.reduce((acc, i) => acc + i.cost, 0);
+            let invoiceCount = activeSegmentData.length;
+            let vehicleCount = new Set(activeSegmentData.map(i => i.reg)).size;
+            let avgCost = invoiceCount > 0 ? (totalCost / invoiceCount) : 0;
+
+            let iconMap = {
+                'Guma': '🛞',
+                'Mehanika': '🔧',
+                'Elektronika': '⚡',
+                'Signalizacija': '💡',
+                'Redovan servis': '🛢️',
+                'Hidraulika': '⚙️',
+                'Tečnost': '🧪',
+                'Ostalo': '📦'
+            };
+
+            document.getElementById('segModalIcon').innerText = iconMap[segmentName] || '🏬';
+            document.getElementById('segModalTitle').innerText = `Segment: ${segmentName}`;
+            document.getElementById('segModalSubtitle').innerText = `Kompletan spisak svih faktura, servisa i troškova u kategoriji "${segmentName}"`;
+
+            document.getElementById('segTotalCost').innerText = totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM';
+            document.getElementById('segInvoiceCount').innerText = invoiceCount.toLocaleString('bs-BA');
+            document.getElementById('segVehicleCount').innerText = vehicleCount.toLocaleString('bs-BA');
+            document.getElementById('segAvgCost').innerText = avgCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM';
+
+            let yearsArr = Array.from(new Set(activeSegmentData.map(i => i.year))).sort((a,b) => b - a);
+            let yearOptions = ['<option value="all">Sve godine</option>'];
+            yearsArr.forEach(y => yearOptions.push(`<option value="${y}">${y}. godina</option>`));
+            document.getElementById('segModalYearFilter').innerHTML = yearOptions.join('');
+
+            document.getElementById('segModalMonthFilter').value = 'all';
+            document.getElementById('segModalSortFilter').value = 'date-desc';
+            document.getElementById('segModalSearch').value = '';
+
+            activeSegmentFilteredData = [...activeSegmentData];
+            renderSegmentTable();
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeSegmentModal() {
+            const modal = document.getElementById('segmentDetailModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function filterSegmentModalTable() {
+            let year = document.getElementById('segModalYearFilter').value;
+            let month = document.getElementById('segModalMonthFilter').value;
+            let sort = document.getElementById('segModalSortFilter').value;
+            let term = (document.getElementById('segModalSearch').value || '').toLowerCase().trim();
+
+            activeSegmentFilteredData = activeSegmentData.filter(item => {
+                let matchYear = year === 'all' || item.year === parseInt(year);
+                let matchMonth = month === 'all' || item.month === parseInt(month);
+                let matchTerm = !term ||
+                    (item.reg && item.reg.toLowerCase().includes(term)) ||
+                    (item.garazniBroj && item.garazniBroj.toLowerCase().includes(term)) ||
+                    (item.dobavljacOrig && item.dobavljacOrig.toLowerCase().includes(term)) ||
+                    (item.opisPopravke && item.opisPopravke.toLowerCase().includes(term));
+                return matchYear && matchMonth && matchTerm;
+            });
+
+            if (sort === 'date-desc') {
+                activeSegmentFilteredData.sort((a,b) => (b.datumObj || 0) - (a.datumObj || 0));
+            } else if (sort === 'date-asc') {
+                activeSegmentFilteredData.sort((a,b) => (a.datumObj || 0) - (b.datumObj || 0));
+            } else if (sort === 'cost-desc') {
+                activeSegmentFilteredData.sort((a,b) => b.cost - a.cost);
+            } else if (sort === 'cost-asc') {
+                activeSegmentFilteredData.sort((a,b) => a.cost - b.cost);
+            }
+
+            renderSegmentTable();
+        }
+
+        function renderSegmentTable() {
+            const tbody = document.getElementById('segTableBody');
+            if (!tbody) return;
+
+            if (activeSegmentFilteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400 italic">Nema pronađenih servisa/faktura u ovom segmentu za odabrane filtere.</td></tr>`;
+                return;
+            }
+
+            let html = activeSegmentFilteredData.map(item => {
+                let dateStr = item.datumObj ? `${String(item.datumObj.getDate()).padStart(2,'0')}.${String(item.datumObj.getMonth()+1).padStart(2,'0')}.${item.datumObj.getFullYear()}.` : `${item.month}/${item.year}`;
+                let regDisplay = item.reg !== '-' ? `<button onclick="closeSegmentModal(); openVehicleModal('${item.reg}')" class="text-indigo-600 hover:text-indigo-900 font-bold hover:underline">${item.reg}</button>` : '<span class="text-slate-400">-</span>';
+
+                return `<tr class="hover:bg-slate-50 transition-colors">
+                    <td class="py-2.5 px-3 font-semibold text-slate-700 whitespace-nowrap">${dateStr}</td>
+                    <td class="py-2.5 px-3 font-bold whitespace-nowrap">${regDisplay}</td>
+                    <td class="py-2.5 px-3 font-semibold text-slate-500">${item.garazniBroj || '-'}</td>
+                    <td class="py-2.5 px-3 font-medium text-slate-800">${item.dobavljacOrig || '-'}</td>
+                    <td class="py-2.5 px-3 text-slate-800 font-medium" title="${item.opisPopravke}">${item.opisPopravke || '-'}</td>
+                    <td class="py-2.5 px-3 text-right font-black text-slate-900 whitespace-nowrap">${item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM</td>
+                </tr>`;
+            }).join('');
+
+            tbody.innerHTML = html;
+        }
+
+        function exportSegmentModalToExcel() {
+            if (!activeSegmentFilteredData || activeSegmentFilteredData.length === 0) {
+                alert("Nema podataka za izvoz.");
+                return;
+            }
+
+            let exportRows = activeSegmentFilteredData.map(item => ({
+                "Segment": item.segment,
+                "Datum": item.datumObj ? `${String(item.datumObj.getDate()).padStart(2,'0')}.${String(item.datumObj.getMonth()+1).padStart(2,'0')}.${item.datumObj.getFullYear()}.` : `${item.month}/${item.year}`,
+                "Registracija": item.reg,
+                "Garažni Broj": item.garazniBroj,
+                "Marka / Tip": `${item.markaVoz || ''} ${item.tipMehan || ''}`,
+                "Serviser / Dobavljač": item.dobavljacOrig,
+                "Opis popravke / Dio": item.opisPopravke,
+                "Trošak (KM)": item.cost,
+                "Tip Održavanja": item.type
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportRows);
+            const wb = XLSX.utils.book_new();
+            let safeName = activeSegmentName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 25);
+            XLSX.utils.book_append_sheet(wb, ws, "Segment_Spisak");
+            XLSX.writeFile(wb, `Segment_${safeName}_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
         window.onclick = function(event) {
             if (event.target == document.getElementById('vehicleModal')) closeVehicleModal();
             if (event.target == document.getElementById('newCostModal')) closeNewCostModal();
@@ -4159,6 +4477,7 @@
             if (event.target == document.getElementById('editVehicleMasterModal')) closeEditVehicleModal();
             if (event.target == document.getElementById('intExtRecapModal')) closeIntExtRecapModal();
             if (event.target == document.getElementById('supplierDetailModal')) closeSupplierModal();
+            if (event.target == document.getElementById('segmentDetailModal')) closeSegmentModal();
         };
 
         window.addEventListener('DOMContentLoaded', function() {
