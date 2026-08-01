@@ -1618,10 +1618,18 @@
                 if (!res.ok) return;
                 const data = await res.json();
                 if (data && data.records && data.records.length > 0) {
-                    globalData = data.records.map(item => ({
-                        ...item,
-                        datumObj: item.datum ? new Date(item.datum) : null
-                    }));
+                    globalData = data.records.map(item => {
+                        let dob = (item.dobavljacOrig || item.dobavljac || '').toLowerCase();
+                        let seg = item.segment;
+                        if (dob.includes('pgl')) {
+                            seg = 'Guma';
+                        }
+                        return {
+                            ...item,
+                            segment: seg,
+                            datumObj: item.datum ? new Date(item.datum) : null
+                        };
+                    });
                     yearsSet.clear();
                     globalData.forEach(d => yearsSet.add(d.year));
 
@@ -1902,11 +1910,14 @@
             return d.split(' ').map(w => w.length > 0 ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : '').join(' ');
         }
 
-        function ocistiSegment(segment) {
+        function ocistiSegment(segment, dobavljac) {
+            if (dobavljac && dobavljac.toString().toLowerCase().includes('pgl')) return 'Guma';
             if (!segment) return 'Ostalo';
             let s = segment.toString().trim();
             if (s === '/' || s === '') return 'Ostalo';
-            return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+            let clean = s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+            if (clean === 'Gume' || clean === 'gume') return 'Guma';
+            return clean;
         }
 
         function parseExcelDate(rawDate, yearVal, monthVal) {
