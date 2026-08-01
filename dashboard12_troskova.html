@@ -538,7 +538,7 @@
             <button id="tabBtn3" onclick="switchTab(3)" class="px-5 py-3 rounded-t-xl bg-slate-100 text-slate-600 hover:bg-slate-200 border-t border-x border-slate-200 flex items-center gap-2 transition-all">
                 <span>📋 Tab 3: Matrica & Filtrirana Tabela</span>
             </button>
-            <button id="tabBtn4" onclick="switchTab(4)" class="hidden px-5 py-3 rounded-t-xl bg-slate-100 text-slate-600 hover:bg-slate-200 border-t border-x border-slate-200 items-center gap-2 transition-all">
+            <button id="tabBtn4" onclick="switchTab(4)" class="px-5 py-3 rounded-t-xl bg-slate-100 text-slate-600 hover:bg-slate-200 border-t border-x border-slate-200 flex items-center gap-2 transition-all">
                 <span>🏢 Tab 4: Šifrarnik Vozila (Master Registar)</span>
             </button>
         </div>
@@ -785,10 +785,10 @@
                         <label class="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">Filter po Tipu Mehanizacije</label>
                         <select id="masterFleetTipFilter" onchange="filterMasterFleetTable()" class="w-full text-xs bg-slate-800/90 text-white border border-slate-700 rounded-lg p-2.5 font-semibold outline-none focus:ring-2 focus:ring-indigo-500">
                             <option value="all">Svi tipovi mehanizacije</option>
-                            <option value="Teretno">Teretno</option>
-                            <option value="Putničko">Putničko</option>
+                            <option value="Teretno vozilo">Teretno vozilo</option>
+                            <option value="Putničko vozilo">Putničko vozilo</option>
                             <option value="Skladišna mehanizacija">Skladišna mehanizacija</option>
-                            <option value="Priključno">Priključno</option>
+                            <option value="Priključno vozilo">Priključno vozilo</option>
                             <option value="Radna mašina">Radna mašina</option>
                             <option value="Ostalo">Ostalo</option>
                         </select>
@@ -796,9 +796,11 @@
                     <div>
                         <label class="block text-[10px] font-extrabold uppercase text-slate-400 mb-1">Filter po Statusu</label>
                         <select id="masterFleetStatusFilter" onchange="filterMasterFleetTable()" class="w-full text-xs bg-slate-800/90 text-white border border-slate-700 rounded-lg p-2.5 font-semibold outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="all">Svi statusi (Aktivna + Prodana)</option>
-                            <option value="Aktivno" selected>Samo Aktivna Vozila</option>
-                            <option value="Neaktivno">Prodana / Rashodovana Vozila</option>
+                            <option value="all">Svi statusi (Sva vozila)</option>
+                            <option value="Aktivno" selected>🟢 Samo Aktivna Vozila</option>
+                            <option value="Neaktivno">🟡 Neaktivna Vozila</option>
+                            <option value="Rashodovano">🔴 Rashodovana Vozila</option>
+                            <option value="Prodato">🟣 Prodata Vozila</option>
                         </select>
                     </div>
                 </div>
@@ -877,15 +879,6 @@
                     <div>
                         <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Tip Mehanizacije <span class="text-red-500">*</span></label>
                         <select id="evTipMehan" required class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-                            <option value="Teretno">Teretno</option>
-                            <option value="Putničko">Putničko</option>
-                            <option value="Skladišna mehanizacija">Skladišna mehanizacija</option>
-                            <option value="Priključno">Priključno</option>
-                            <option value="Radna mašina">Radna mašina</option>
-                            <option value="Ostalo">Ostalo</option>
-                        </select>
-                    </div>
-                    <div>
                         <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Godina Proizvodnje</label>
                         <input type="text" id="evGodProizvodnje" placeholder="npr. 2021" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-semibold outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
@@ -1366,7 +1359,6 @@
         let currentFilteredData = [];
 
         function switchTab(tabId) {
-            if (tabId === 4) tabId = 1; // Šifrarnik tab skriven sa portala po zahtjevu
             activeTab = tabId;
             [1, 2, 3, 4].forEach(id => {
                 const btn = document.getElementById(`tabBtn${id}`);
@@ -1382,7 +1374,9 @@
                 }
             });
 
-            if (currentFilteredData.length > 0) {
+            if (tabId === 4) {
+                renderMasterFleetTable();
+            } else if (currentFilteredData.length > 0) {
                 renderActiveTabContent();
             }
         }
@@ -2566,7 +2560,7 @@
             const tbody = document.getElementById('masterFleetTableBody');
             if (!tbody) return;
 
-            let isSuperAdmin = activeUser && (activeUser.username.toLowerCase() === 'emir.durakovic' || activeUser.role === 'superadmin');
+            let isSuperAdmin = activeUser && (activeUser.username.toLowerCase() === 'emir.durakovic' || activeUser.role === 'superadmin' || activeUser.role === 'editor');
 
             const addBtn = document.getElementById('addVehicleMasterBtn');
             if (addBtn) {
@@ -2608,12 +2602,15 @@
 
             let rowsHTML = [];
             pageData.forEach((v, idx) => {
-                let isInactive = v.status && v.status.toLowerCase().includes('neaktivno');
-                let isRashod = v.status && v.status.toLowerCase().includes('rashod');
+                let stLower = (v.status || 'Aktivno').toLowerCase();
+                let isInactive = stLower.includes('neaktivno');
+                let isRashod = stLower.includes('rashod');
+                let isProdato = stLower.includes('prodat');
                 
                 let badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300';
                 if (isInactive) badgeClass = 'bg-amber-100 text-amber-900 border-amber-300';
                 if (isRashod) badgeClass = 'bg-red-100 text-red-900 border-red-300';
+                if (isProdato) badgeClass = 'bg-purple-100 text-purple-900 border-purple-300';
 
                 rowsHTML.push(`
                     <tr class="hover:bg-slate-50 border-b border-slate-100 transition-colors">
@@ -2629,7 +2626,7 @@
                         <td class="py-2.5 px-3 text-right font-bold text-slate-700 text-xs">${v.prodajnaKmRh ? v.prodajnaKmRh.toLocaleString('bs-BA') : '0'}</td>
                         <td class="py-2.5 px-3 text-center">
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${badgeClass}">
-                                ${v.status}
+                                ${v.status || 'Aktivno'}
                             </span>
                         </td>
                         <td class="py-2.5 px-3 text-right font-medium">
@@ -2672,8 +2669,9 @@
         }
 
         function openEditVehicleModal(regToEdit = null) {
-            if (!activeUser || (activeUser.username.toLowerCase() !== 'emir.durakovic' && activeUser.role !== 'superadmin')) {
-                alert("Pristup odbijen! Samo Emir Duraković (Super Administrator) može dodavati i uređivati matični šifrarnik vozila.");
+            if (!activeUser) {
+                alert("Pristup odbijen! Morate biti prijavljeni na sistem za dodavanje i uređivanje vozila.");
+                document.getElementById('loginModal').classList.remove('hidden');
                 return;
             }
 
@@ -3086,6 +3084,7 @@
             if (event.target == document.getElementById('vehicleModal')) closeVehicleModal();
             if (event.target == document.getElementById('newCostModal')) closeNewCostModal();
             if (event.target == document.getElementById('adminPanelModal')) closeAdminPanel();
+            if (event.target == document.getElementById('editVehicleMasterModal')) closeEditVehicleModal();
         };
 
         window.addEventListener('DOMContentLoaded', function() {
