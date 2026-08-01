@@ -621,8 +621,17 @@
                     <div class="h-[280px] relative flex items-center justify-center"><canvas id="chartSegments"></canvas></div>
                 </div>
                 <div class="card lg:col-span-3">
-                    <h3 class="text-base font-bold text-slate-800 mb-2">Top 7 Servisera / Dobavljača po vrijednosti popravki</h3>
-                    <p class="text-xs text-slate-500 mb-4">Pregled dobavljača i servisa koji ostvaruju najveći obim održavanja</p>
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800" id="title-suppliers">Top 7 Eksternih Dobavljača & Partnera</h3>
+                            <p class="text-xs text-slate-500 mt-0.5" id="sub-suppliers">Pregled vanjskih servisa i partnera sa najvećim obimom održavanja flote</p>
+                        </div>
+                        <div class="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold gap-1">
+                            <button id="supplierModeExtBtn" onclick="setSupplierMode('external')" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition-all font-bold cursor-pointer">🏢 Samo Eksterni</button>
+                            <button id="supplierModeAllBtn" onclick="setSupplierMode('all')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-all font-bold cursor-pointer">🌐 Svi Dobavljači</button>
+                            <button id="supplierModeIntBtn" onclick="setSupplierMode('internal')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-all font-bold cursor-pointer">🛠️ Samo Interno</button>
+                        </div>
+                    </div>
                     <div class="h-[260px] relative"><canvas id="chartSuppliers"></canvas></div>
                 </div>
             </div>
@@ -2020,8 +2029,16 @@
                 costsByVehicle[item.reg] = (costsByVehicle[item.reg] || 0) + item.cost;
                 costsBySegment[item.segment] = (costsBySegment[item.segment] || 0) + item.cost;
 
-                let sup = item.dobavljacOrig !== '-' ? item.dobavljacOrig : 'Nepoznato';
-                costsBySupplier[sup] = (costsBySupplier[sup] || 0) + item.cost;
+                let isInt = item.type === 'Interno' || (item.dobavljacOrig && item.dobavljacOrig.toLowerCase().includes('intern'));
+                let isMatchSupplierMode = false;
+                if (supplierMode === 'external' && !isInt) isMatchSupplierMode = true;
+                else if (supplierMode === 'internal' && isInt) isMatchSupplierMode = true;
+                else if (supplierMode === 'all') isMatchSupplierMode = true;
+
+                if (isMatchSupplierMode) {
+                    let sup = item.dobavljacOrig && item.dobavljacOrig !== '-' ? item.dobavljacOrig : (isInt ? 'Vlastita Radionica / Magacin' : 'Ostali Eksterni');
+                    costsBySupplier[sup] = (costsBySupplier[sup] || 0) + item.cost;
+                }
 
                 if(isAllYears) {
                     if(!trendData[item.year]) trendData[item.year] = { 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0, 12:0 };
@@ -3388,7 +3405,41 @@
             alert(`✅ Trošak za vozilo ${reg} od ${totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 2})} KM je uspješno sačuvan u bazu!`);
         }
 
-        // ================= FUNKCIJE ZA REKAPITULACIJU INTERNIH / EKSTERNIH TROŠKOVA =================
+        // ================= FUNKCIJE ZA MODOVE DOBVALJAČA / IZVOĐAČA =================
+        let supplierMode = 'external';
+
+        function setSupplierMode(mode) {
+            supplierMode = mode;
+            const extBtn = document.getElementById('supplierModeExtBtn');
+            const allBtn = document.getElementById('supplierModeAllBtn');
+            const intBtn = document.getElementById('supplierModeIntBtn');
+            const titleElem = document.getElementById('title-suppliers');
+            const subElem = document.getElementById('sub-suppliers');
+
+            [extBtn, allBtn, intBtn].forEach(btn => {
+                if (btn) btn.className = "px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-all font-bold cursor-pointer";
+            });
+
+            if (mode === 'external') {
+                if (extBtn) extBtn.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition-all font-bold cursor-pointer";
+                if (titleElem) titleElem.innerText = "Top 7 Eksternih Dobavljača & Partnera";
+                if (subElem) subElem.innerText = "Pregled vanjskih servisa i partnera sa najvećim obimom održavanja flote";
+            } else if (mode === 'internal') {
+                if (intBtn) intBtn.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition-all font-bold cursor-pointer";
+                if (titleElem) titleElem.innerText = "Interno Održavanje & Vlastite Radionice";
+                if (subElem) subElem.innerText = "Pregled vlastitih radionica, magacina i internih naloga po obimu";
+            } else {
+                if (allBtn) allBtn.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition-all font-bold cursor-pointer";
+                if (titleElem) titleElem.innerText = "Top 7 Svih Dobavljača & Servisera (Zbirno)";
+                if (subElem) subElem.innerText = "Zbirni pregled internih radionica i vanjskih servisa u održavanju flote";
+            }
+
+            if (currentFilteredData && currentFilteredData.length > 0) {
+                processTab1(currentFilteredData);
+            } else if (globalData && globalData.length > 0) {
+                processTab1(globalData);
+            }
+        }
         let currentIntExtType = 'Interno';
 
         function openIntExtRecapModal(typeStr) {
