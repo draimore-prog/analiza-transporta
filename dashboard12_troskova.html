@@ -4358,15 +4358,38 @@
                     localStorage.setItem('fleet_custom_cost_edits_v1', JSON.stringify(customEdits));
                 } catch(e) {}
 
-                // Ažuriranje in-memory niza podataka i ponovno primjenjivanje filtera
+                // Ažuriranje in-memory niza podataka
                 globalData.unshift(newItem);
                 yearsSet.add(year);
 
+                // Automatski podesi glavne filtere na godinu novog unosa tako da se novouneseni trošak ODMAH vidi!
+                const filterYearElem = document.getElementById('filterYear');
+                if (filterYearElem) {
+                    if (!Array.from(filterYearElem.options).some(opt => opt.value === year.toString())) {
+                        let opt = document.createElement('option');
+                        opt.value = year.toString();
+                        opt.text = year.toString();
+                        filterYearElem.appendChild(opt);
+                    }
+                    filterYearElem.value = year.toString();
+                }
+
+                const filterMonthElem = document.getElementById('filterMonth');
+                if (filterMonthElem) filterMonthElem.value = 'all';
+
+                const filterTipElem = document.getElementById('filterTip');
+                if (filterTipElem) filterTipElem.value = 'all';
+
+                const filterMarkaElem = document.getElementById('filterMarka');
+                if (filterMarkaElem) filterMarkaElem.value = 'all';
+
+                activeSegment = null;
+
                 applyFilters();
-                renderTransactionTable(globalData);
+                switchTab(3);
                 closeNewCostModal();
 
-                alert(`✅ Trošak za vozilo ${reg} od ${totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 2})} KM je uspješno sačuvan u bazu!`);
+                alert(`✅ Trošak za vozilo "${reg}" od ${totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM je uspješno sačuvan! Automatski ste prebačeni na Tab 3 gdje se unos nalazi na samom vrhu tabele.`);
             } catch(err) {
                 console.error("Greška pri unosu troška:", err);
                 alert("Greška pri spašavanju: " + err.message);
