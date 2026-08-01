@@ -298,7 +298,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
                             <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Reg. Oznaka <span class="text-red-500">*</span></label>
-                            <input type="text" id="ncReg" required list="ncVehicleList" placeholder="Ukucajte reg. ili garažni br..." onchange="ncOnVehicleSelect()" oninput="ncOnVehicleSelect()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-black uppercase outline-none focus:ring-2 focus:ring-emerald-500 bg-emerald-50/40 shadow-sm">
+                            <input type="text" id="ncReg" list="ncVehicleList" placeholder="Ukucajte reg. ili garažni br..." onchange="ncOnVehicleSelect()" oninput="ncOnVehicleSelect()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-black uppercase outline-none focus:ring-2 focus:ring-emerald-500 bg-emerald-50/40 shadow-sm">
                             <datalist id="ncVehicleList"></datalist>
                         </div>
                         <div>
@@ -320,7 +320,7 @@
                                 <span>Tip Mehanizacije</span>
                                 <span class="text-[9px] text-slate-400 font-normal">🔒 Šifrarnik</span>
                             </label>
-                            <select id="ncTip" required onchange="ncOnTipChange()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none bg-white">
+                            <select id="ncTip" onchange="ncOnTipChange()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none bg-white">
                                 <option value="Teretna vozila">Teretna vozila</option>
                                 <option value="Putnička vozila">Putnička vozila</option>
                                 <option value="Skladišna mehanizacija">Skladišna mehanizacija</option>
@@ -363,7 +363,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Datum <span class="text-red-500">*</span></label>
-                            <input type="date" id="ncDatum" required class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                            <input type="date" id="ncDatum" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500">
                         </div>
                         <div>
                             <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Broj Računa / RN</label>
@@ -378,7 +378,7 @@
 
                     <div>
                         <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Opis Kvara / Servisnih Radova <span class="text-red-500">*</span></label>
-                        <textarea id="ncOpis" required rows="2" placeholder="Unesite detaljan opis zamijenjenih dijelova ili izvršenih usluga..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                        <textarea id="ncOpis" rows="2" placeholder="Unesite detaljan opis zamijenjenih dijelova ili izvršenih usluga..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
                     </div>
                 </div>
 
@@ -391,7 +391,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Segment <span class="text-red-500">*</span></label>
-                            <select id="ncSegment" required class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                            <select id="ncSegment" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
                                 <!-- Pune se dinamički iz postojeće baze -->
                             </select>
                         </div>
@@ -433,7 +433,7 @@
                         </div>
                         <div>
                             <label class="block text-[11px] font-black uppercase text-emerald-900 mb-1">Total Trošak (KM) <span class="text-red-500">*</span></label>
-                            <input type="number" step="0.01" min="0.01" id="ncTotalTrosak" required placeholder="0.00" class="w-full text-sm border-2 border-emerald-500 rounded-lg p-2 font-black text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-inner">
+                            <input type="number" step="0.01" min="0" id="ncTotalTrosak" placeholder="0.00" class="w-full text-sm border-2 border-emerald-500 rounded-lg p-2 font-black text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-inner">
                         </div>
                     </div>
                 </div>
@@ -443,7 +443,7 @@
                     <button type="button" onclick="closeNewCostModal()" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-xs hover:bg-slate-100 transition-colors">
                         Odustani
                     </button>
-                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-6 py-2.5 rounded-xl shadow-lg transition-all text-xs flex items-center gap-2">
+                    <button type="button" onclick="handleCreateNewCost(event)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-6 py-2.5 rounded-xl shadow-lg transition-all text-xs flex items-center gap-2 cursor-pointer">
                         <span>💾 Sačuvaj Trošak u Bazu</span>
                     </button>
                 </div>
@@ -4223,9 +4223,14 @@
             if (event) event.preventDefault();
 
             try {
-                let rawReg = (document.getElementById('ncReg').value || '').trim().toUpperCase();
+                let regInput = document.getElementById('ncReg');
+                let rawReg = (regInput ? regInput.value : '').trim().toUpperCase();
                 let reg = rawReg.split(' [')[0].split(' (')[0].trim();
-                if (!reg) { alert("Molimo unesite registarsku oznaku ili garažni broj!"); return; }
+                if (!reg) {
+                    alert("⚠️ Molimo unesite registarsku oznaku ili garažni broj vozila!");
+                    if (regInput) regInput.focus();
+                    return;
+                }
 
                 let dateVal = document.getElementById('ncDatum').value;
                 let dateObj = dateVal ? new Date(dateVal) : new Date();
@@ -4234,17 +4239,23 @@
 
                 let costPart = parseFloat(document.getElementById('ncCijenaDijela').value) || 0;
                 let costService = parseFloat(document.getElementById('ncCijenaUsluge').value) || 0;
-                let totalCost = parseFloat(document.getElementById('ncTotalTrosak').value) || (costPart + costService);
+                let totalCostInput = parseFloat(document.getElementById('ncTotalTrosak').value) || 0;
+                let totalCost = totalCostInput > 0 ? totalCostInput : (costPart + costService);
 
                 if (!totalCost || totalCost <= 0) {
-                    alert("Molimo unesite ispravan iznos troška!");
+                    alert("⚠️ Molimo unesite ukupan iznos troška u polje 'Total Trošak' ili pošaljite cijenu dijela / usluge!");
+                    let totalElem = document.getElementById('ncTotalTrosak');
+                    if (totalElem) totalElem.focus();
                     return;
                 }
 
+                // Postavi izračunatu vrijednost u polje
+                document.getElementById('ncTotalTrosak').value = totalCost.toFixed(2);
+
+                let opis = (document.getElementById('ncOpis').value || '').trim() || 'Servis / Popravka';
                 let segment = document.getElementById('ncSegment').value || 'Ostalo';
                 let tipMehan = document.getElementById('ncTip').value || 'Teretna vozila';
                 let dobavljacOrig = (document.getElementById('ncServiser').value || '').trim() || 'Nepoznato';
-                let opisPopravke = (document.getElementById('ncOpis').value || '').trim() || 'Servis / Popravka';
                 let garazniBroj = (document.getElementById('ncMt').value || '').trim() || '-';
                 let godProizvodnje = (document.getElementById('ncGod').value || '').trim() || '-';
                 let markaVoz = (document.getElementById('ncMarka').value || '').trim() || 'Nepoznato';
@@ -4252,8 +4263,8 @@
                 let vrstaTroska = document.getElementById('ncVrstaTroska') ? document.getElementById('ncVrstaTroska').value : 'Eksterno';
                 let isInternal = dobavljacOrig.toLowerCase().includes('intern') || vrstaTroska === 'Interno';
 
-                let kilometraza = (tipMehan.includes('Putničk') || tipMehan.includes('Teretn')) ? (parseFloat(document.getElementById('ncKilometraza').value) || null) : null;
-                let radniSati = (tipMehan.includes('Skladišn')) ? (parseFloat(document.getElementById('ncRadniSati').value) || null) : null;
+                let kilometraza = parseFloat(document.getElementById('ncKilometraza').value) || null;
+                let radniSati = parseFloat(document.getElementById('ncRadniSati').value) || null;
 
                 let newItem = {
                     id: 'cost_' + Date.now() + '_' + Math.floor(Math.random()*10000),
@@ -4267,7 +4278,7 @@
                     segment,
                     type: isInternal ? 'Interno' : 'Eksterno',
                     dobavljacOrig,
-                    opisPopravke,
+                    opisPopravke: opis,
                     tipMehan,
                     markaVoz,
                     godProizvodnje,
