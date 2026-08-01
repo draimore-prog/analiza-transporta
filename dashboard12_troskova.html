@@ -2181,23 +2181,6 @@
             let totalCost = 0, internalCost = 0, externalCost = 0;
             let costsByVehicle = {}, costsBySegment = {}, trendData = {}, costsBySupplier = {};
 
-            data.forEach(item => {
-                totalCost += item.cost;
-                if (item.type === 'Interno') internalCost += item.cost; else externalCost += item.cost;
-                costsByVehicle[item.reg] = (costsByVehicle[item.reg] || 0) + item.cost;
-                costsBySegment[item.segment] = (costsBySegment[item.segment] || 0) + item.cost;
-
-                let isInt = item.type === 'Interno' || (item.dobavljacOrig && item.dobavljacOrig.toLowerCase().includes('intern'));
-                let isMatchSupplierMode = false;
-                if (supplierMode === 'external' && !isInt) isMatchSupplierMode = true;
-                else if (supplierMode === 'internal' && isInt) isMatchSupplierMode = true;
-                else if (supplierMode === 'all') isMatchSupplierMode = true;
-
-                if (isMatchSupplierMode) {
-                    let sup = item.dobavljacOrig && item.dobavljacOrig !== '-' ? item.dobavljacOrig : (isInt ? 'Vlastita Radionica / Magacin' : 'Ostali Eksterni');
-                    costsBySupplier[sup] = (costsBySupplier[sup] || 0) + item.cost;
-                }
-
             const selectedMonth = document.getElementById('filterMonth').value;
             const isAllMonths = selectedMonth === 'all';
 
@@ -2206,8 +2189,6 @@
             else if (!isAllYears && isAllMonths) trendMode = 'monthly';
             else if (!isAllYears && !isAllMonths) trendMode = 'daily';
             else if (isAllYears && !isAllMonths) trendMode = 'sameMonthYoY';
-
-            let trendData = {};
 
             data.forEach(item => {
                 totalCost += item.cost;
