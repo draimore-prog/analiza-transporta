@@ -599,8 +599,11 @@
                     <h3 class="text-base font-bold text-slate-800 mb-3" id="title-trend">Vremenski trend</h3>
                     <div class="h-[280px] relative"><canvas id="chartTrend"></canvas></div>
                 </div>
-                <div class="card">
-                    <h3 class="text-base font-bold text-slate-800 mb-3">Interno vs Eksterno</h3>
+                <div class="card clickable-chart" title="Klikni na Interno ili Eksterno za detaljnu rekapitulaciju">
+                    <div class="flex justify-between items-center mb-1">
+                        <h3 class="text-base font-bold text-slate-800">Interno vs Eksterno</h3>
+                        <span class="text-xs font-semibold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded">💡 Klikni krišku za rekapitulaciju</span>
+                    </div>
                     <div class="h-[280px] relative flex items-center justify-center"><canvas id="chartIntExt"></canvas></div>
                 </div>
                 <div class="card lg:col-span-2 clickable-chart" title="Klikni na vozilo za otvaranje kartice">
@@ -946,6 +949,93 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL ZA REKAPITULACIJU INTERNIH / EKSTERNIH TROŠKOVA ================= -->
+    <div id="intExtRecapModal" class="fixed inset-0 bg-slate-900/75 hidden flex justify-center items-center z-50 backdrop-blur-sm p-3 sm:p-5">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-100">
+            <!-- Header -->
+            <div class="flex justify-between items-center p-5 bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 text-white">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-white/10 rounded-xl backdrop-blur-md text-2xl" id="intExtModalIcon">
+                        📊
+                    </div>
+                    <div>
+                        <h2 class="text-lg sm:text-xl font-black tracking-tight flex items-center gap-2" id="intExtModalTitle">
+                            Rekapitulacija Internih Servisa
+                        </h2>
+                        <p class="text-xs text-indigo-200 mt-0.5" id="intExtModalSubtitle">Detaljna analiza troškova, intervencija, tipova vozila i segmentacije</p>
+                    </div>
+                </div>
+                <button onclick="closeIntExtRecapModal()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-lg w-9 h-9 flex items-center justify-center text-2xl font-light transition-colors">&times;</button>
+            </div>
+
+            <!-- Body Content -->
+            <div class="p-6 overflow-y-auto space-y-6 bg-slate-50 text-xs">
+                <!-- Top Summary Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[10px] font-extrabold uppercase text-slate-400">Ukupan Trošak</span>
+                        <h3 class="text-lg font-black text-indigo-900 mt-1" id="intExtTotalCost">0 KM</h3>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[10px] font-extrabold uppercase text-slate-400">Udio u Ukupnom Trošku</span>
+                        <h3 class="text-lg font-black text-emerald-600 mt-1" id="intExtPerc">0%</h3>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[10px] font-extrabold uppercase text-slate-400">Broj Intervencija</span>
+                        <h3 class="text-lg font-black text-slate-800 mt-1" id="intExtInvoiceCount">0</h3>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[10px] font-extrabold uppercase text-slate-400">Prosjek po Servisu</span>
+                        <h3 class="text-lg font-black text-amber-600 mt-1" id="intExtAvgCost">0 KM</h3>
+                    </div>
+                </div>
+
+                <!-- Grid po Tipu Vozila i Segmentu -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <!-- Podjela po Tipu Vozila -->
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="font-extrabold text-slate-800 text-sm mb-3 flex items-center justify-between">
+                            <span>🚗 Podjela po Tipu Vozila</span>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Trošak | Intervencije</span>
+                        </h4>
+                        <div id="intExtTypeBreakdown" class="space-y-3">
+                            <!-- Popunjava se dinamički -->
+                        </div>
+                    </div>
+
+                    <!-- Podjela po Segmentu -->
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="font-extrabold text-slate-800 text-sm mb-3 flex items-center justify-between">
+                            <span>🏬 Podjela po Segmentu</span>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Trošak | Udio</span>
+                        </h4>
+                        <div id="intExtSegmentBreakdown" class="space-y-3">
+                            <!-- Popunjava se dinamički -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Serviseri / Dobavljači -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <h4 class="font-extrabold text-slate-800 text-sm mb-3">🔧 Najveći Izvođači / Dobavljači</h4>
+                    <div id="intExtSupplierBreakdown" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                        <!-- Popunjava se dinamički -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-4 bg-white border-t border-slate-200 flex justify-between items-center">
+                <button onclick="exportIntExtRecapToExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center gap-2">
+                    <span>📥 Izvezi Rekapitulaciju u Excel</span>
+                </button>
+                <button onclick="closeIntExtRecapModal()" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition-all">
+                    Zatvori
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1992,7 +2082,79 @@
                 });
             }
 
-            chartIntExt = new Chart(document.getElementById('chartIntExt').getContext('2d'), { type: 'doughnut', data: { labels: ['Interno', 'Eksterno'], datasets: [{ data: [intCost, extCost], backgroundColor: ['#2563eb', '#f59e0b'] }] }, options: { maintainAspectRatio: false } });
+            let totalIntExt = intCost + extCost;
+            let intPerc = totalIntExt > 0 ? ((intCost / totalIntExt) * 100).toFixed(1) : '0';
+            let extPerc = totalIntExt > 0 ? ((extCost / totalIntExt) * 100).toFixed(1) : '0';
+
+            chartIntExt = new Chart(document.getElementById('chartIntExt').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: [
+                        `Interno (${intPerc}% - ${intCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)`,
+                        `Eksterno (${extPerc}% - ${extCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)`
+                    ],
+                    datasets: [{
+                        data: [intCost, extCost],
+                        backgroundColor: ['#2563eb', '#f59e0b'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { weight: 'bold', size: 10 },
+                                padding: 10
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let val = context.raw || 0;
+                                    let perc = totalIntExt > 0 ? ((val / totalIntExt) * 100).toFixed(1) : 0;
+                                    return ` ${context.label.split(' (')[0]}: ${val.toLocaleString('bs-BA')} KM (${perc}%)`;
+                                }
+                            }
+                        }
+                    },
+                    onClick: (evt, elements, chart) => {
+                        if (elements.length > 0) {
+                            let idx = elements[0].index;
+                            let targetType = idx === 0 ? 'Interno' : 'Eksterno';
+                            openIntExtRecapModal(targetType);
+                        }
+                    }
+                },
+                plugins: [{
+                    id: 'doughnutSlicePercents',
+                    afterDraw: (chart) => {
+                        const { ctx } = chart;
+                        ctx.save();
+                        ctx.font = 'bold 12px Inter, sans-serif';
+                        ctx.fillStyle = '#ffffff';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+
+                        const meta = chart.getDatasetMeta(0);
+                        if (meta && meta.data) {
+                            meta.data.forEach((element, i) => {
+                                const val = chart.data.datasets[0].data[i];
+                                if (val > 0 && totalIntExt > 0) {
+                                    const percStr = ((val / totalIntExt) * 100).toFixed(1) + '%';
+                                    const pos = element.tooltipPosition();
+                                    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                                    ctx.shadowBlur = 4;
+                                    ctx.fillText(percStr, pos.x, pos.y);
+                                }
+                            });
+                        }
+                        ctx.restore();
+                    }
+                }]
+            });
 
             let sortedVehicles = Object.entries(byVehicle).sort((a,b) => b[1] - a[1]).slice(0, 10);
             chartVehicles = new Chart(document.getElementById('chartVehicles').getContext('2d'), {
@@ -3226,11 +3388,152 @@
             alert(`✅ Trošak za vozilo ${reg} od ${totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 2})} KM je uspješno sačuvan u bazu!`);
         }
 
+        // ================= FUNKCIJE ZA REKAPITULACIJU INTERNIH / EKSTERNIH TROŠKOVA =================
+        let currentIntExtType = 'Interno';
+
+        function openIntExtRecapModal(typeStr) {
+            currentIntExtType = typeStr;
+            const modal = document.getElementById('intExtRecapModal');
+            if (!modal) return;
+
+            let sourceData = currentFilteredData && currentFilteredData.length > 0 ? currentFilteredData : globalData;
+            let typeData = sourceData.filter(item => item.type === typeStr);
+            let overallCost = sourceData.reduce((acc, i) => acc + i.cost, 0);
+            let typeTotalCost = typeData.reduce((acc, i) => acc + i.cost, 0);
+
+            let percVal = overallCost > 0 ? ((typeTotalCost / overallCost) * 100).toFixed(1) : '0';
+            let invoiceCount = typeData.length;
+            let avgCost = invoiceCount > 0 ? (typeTotalCost / invoiceCount) : 0;
+
+            document.getElementById('intExtModalTitle').innerText = typeStr === 'Interno' ? '🛠️ Rekapitulacija INTERNIH Servisa i Popravki' : '🏢 Rekapitulacija EKSTERNIH Servisa i Faktura';
+            document.getElementById('intExtModalSubtitle').innerText = typeStr === 'Interno' ? 'Analiza vlastitih servisa, radionice i rezervnih dijelova' : 'Analiza vanjskih dobavljača, ovlaštenih servisa i vanjskih izvođača';
+            document.getElementById('intExtModalIcon').innerHTML = typeStr === 'Interno' ? '🛠️' : '🏢';
+
+            document.getElementById('intExtTotalCost').innerText = typeTotalCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM';
+            document.getElementById('intExtPerc').innerText = percVal + '%';
+            document.getElementById('intExtInvoiceCount').innerText = invoiceCount.toLocaleString('bs-BA');
+            document.getElementById('intExtAvgCost').innerText = avgCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM';
+
+            // 1. Podjela po Tipu vozila
+            let costsByType = {};
+            let countByType = {};
+            typeData.forEach(item => {
+                let tip = ocistiTip(item.tipMehan);
+                costsByType[tip] = (costsByType[tip] || 0) + item.cost;
+                countByType[tip] = (countByType[tip] || 0) + 1;
+            });
+
+            let typeHTML = [];
+            let sortedTypes = Object.entries(costsByType).sort((a,b) => b[1] - a[1]);
+            sortedTypes.forEach(([tipName, costVal]) => {
+                let cnt = countByType[tipName] || 0;
+                let pct = typeTotalCost > 0 ? ((costVal / typeTotalCost) * 100).toFixed(1) : 0;
+                typeHTML.push(`
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-slate-800">${tipName}</span>
+                            <span class="font-black text-slate-900">${costVal.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM <span class="text-slate-400 font-normal">(${cnt} servisa | ${pct}%)</span></span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                            <div class="bg-indigo-600 h-full rounded-full transition-all" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `);
+            });
+            document.getElementById('intExtTypeBreakdown').innerHTML = typeHTML.join('') || '<p class="text-slate-400 italic py-2">Nema registrovanih podataka u ovom periodu.</p>';
+
+            // 2. Podjela po Segmentu
+            let costsBySeg = {};
+            typeData.forEach(item => {
+                let seg = item.segment || 'Ostalo';
+                costsBySeg[seg] = (costsBySeg[seg] || 0) + item.cost;
+            });
+
+            let segHTML = [];
+            let sortedSegs = Object.entries(costsBySeg).sort((a,b) => b[1] - a[1]);
+            sortedSegs.forEach(([segName, costVal]) => {
+                let pct = typeTotalCost > 0 ? ((costVal / typeTotalCost) * 100).toFixed(1) : 0;
+                segHTML.push(`
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-slate-800">${segName}</span>
+                            <span class="font-black text-slate-900">${costVal.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM <span class="text-slate-400 font-normal">(${pct}%)</span></span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                            <div class="bg-emerald-500 h-full rounded-full transition-all" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `);
+            });
+            document.getElementById('intExtSegmentBreakdown').innerHTML = segHTML.join('') || '<p class="text-slate-400 italic py-2">Nema registrovanih podataka u ovom periodu.</p>';
+
+            // 3. Top Izvođači / Dobavljači
+            let costsBySup = {};
+            let countBySup = {};
+            typeData.forEach(item => {
+                let sup = item.dobavljacOrig && item.dobavljacOrig !== '-' ? item.dobavljacOrig : (typeStr === 'Interno' ? 'Vlastita Radionica / Magacin' : 'Ostali Eksterni');
+                costsBySup[sup] = (costsBySup[sup] || 0) + item.cost;
+                countBySup[sup] = (countBySup[sup] || 0) + 1;
+            });
+
+            let supHTML = [];
+            let sortedSups = Object.entries(costsBySup).sort((a,b) => b[1] - a[1]).slice(0, 6);
+            sortedSups.forEach(([supName, costVal]) => {
+                let cnt = countBySup[supName] || 0;
+                let pct = typeTotalCost > 0 ? ((costVal / typeTotalCost) * 100).toFixed(1) : 0;
+                supHTML.push(`
+                    <div class="p-3 bg-white rounded-xl border border-slate-200 shadow-sm">
+                        <div class="font-bold text-slate-800 truncate text-xs" title="${supName}">${supName}</div>
+                        <div class="text-indigo-900 font-black text-sm mt-1">${costVal.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
+                        <div class="text-[10px] text-slate-500 font-medium">${cnt} faktura (${pct}%)</div>
+                    </div>
+                `);
+            });
+            document.getElementById('intExtSupplierBreakdown').innerHTML = supHTML.join('') || '<p class="text-slate-400 italic py-2">Nema registrovanih servisa.</p>';
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeIntExtRecapModal() {
+            const modal = document.getElementById('intExtRecapModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function exportIntExtRecapToExcel() {
+            let sourceData = currentFilteredData && currentFilteredData.length > 0 ? currentFilteredData : globalData;
+            let typeData = sourceData.filter(item => item.type === currentIntExtType);
+            
+            if (typeData.length === 0) {
+                alert("Nema podataka za izvoz.");
+                return;
+            }
+
+            let exportRows = typeData.map((item, idx) => ({
+                "RB": idx + 1,
+                "Datum": item.datumObj ? item.datumObj.toISOString().slice(0,10) : `${item.year}-${item.month}`,
+                "Registracija": item.reg,
+                "Garažni Broj": item.garazniBroj || '-',
+                "Segment": item.segment,
+                "Tip Mehanizacije": item.tipMehan,
+                "Marka": item.markaVoz,
+                "Opis Opravke": item.opisPopravke,
+                "Serviser / Dobavljač": item.dobavljacOrig,
+                "Tip Servisa": item.type,
+                "Ukupan Trošak (KM)": item.cost
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, `Rekapitulacija_${currentIntExtType}`);
+            XLSX.writeFile(wb, `Rekapitulacija_${currentIntExtType}_Servisa_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
         window.onclick = function(event) {
             if (event.target == document.getElementById('vehicleModal')) closeVehicleModal();
             if (event.target == document.getElementById('newCostModal')) closeNewCostModal();
             if (event.target == document.getElementById('adminPanelModal')) closeAdminPanel();
             if (event.target == document.getElementById('editVehicleMasterModal')) closeEditVehicleModal();
+            if (event.target == document.getElementById('intExtRecapModal')) closeIntExtRecapModal();
         };
 
         window.addEventListener('DOMContentLoaded', function() {
