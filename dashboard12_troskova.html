@@ -140,7 +140,10 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </button>
 
-                <div class="pt-3 border-t border-slate-100 text-center">
+                <div class="pt-3 border-t border-slate-100 flex flex-col items-center gap-2 text-center">
+                    <button type="button" onclick="resetAuthCredentials()" class="text-xs text-indigo-600 hover:text-indigo-800 font-bold hover:underline transition-all">
+                        🔄 Zaboravili ste lozinku / Resetuj nalog na (Emir1235)
+                    </button>
                     <span class="text-[11px] text-slate-400">Siguran pristup sistemu za održavanje flote</span>
                 </div>
             </form>
@@ -1138,8 +1141,8 @@
     </div>
 
     <script>
-        // ================= AUTHENTICATION & USER MANAGEMENT (V17) =================
-        const LOCAL_STORAGE_USERS_KEY = 'transport_app_users_v17';
+        // ================= AUTHENTICATION & USER MANAGEMENT (V18) =================
+        const LOCAL_STORAGE_USERS_KEY = 'transport_app_users_v18';
         const SESSION_ACTIVE_USER_KEY = 'transport_app_active_user';
 
         let usersDB = [];
@@ -1171,7 +1174,6 @@
                     } else {
                         usersDB[existingIdx].fullname = defU.fullname;
                         usersDB[existingIdx].role = defU.role;
-                        usersDB[existingIdx].password = defU.password;
                     }
                 });
                 saveUsersDB();
@@ -1188,23 +1190,45 @@
                 } catch(e) {}
             }
 
-            // Učitavanje spašenih korisničkih podataka ako je označeno "Zapamti me"
             let savedCreds = localStorage.getItem('saved_login_creds');
             if (savedCreds) {
                 try {
                     let creds = JSON.parse(savedCreds);
-                    if (creds.username && creds.password) {
+                    let matchingUser = usersDB.find(u => u.username.toLowerCase() === creds.username.toLowerCase());
+                    if (matchingUser && creds.password === matchingUser.password) {
                         const uElem = document.getElementById('loginUsername');
                         const pElem = document.getElementById('loginPassword');
                         const remElem = document.getElementById('rememberMe');
                         if (uElem) uElem.value = creds.username;
                         if (pElem) pElem.value = creds.password;
                         if (remElem) remElem.checked = true;
+                    } else {
+                        localStorage.removeItem('saved_login_creds');
                     }
                 } catch(e) {}
             }
 
             updateAuthUI();
+        }
+
+        function resetAuthCredentials() {
+            if (confirm("Da li želite ponovo postaviti lozinku na fabričku (Emir1235) i obrisati keširane podatke za prijavu?")) {
+                localStorage.removeItem('transport_app_users_v17');
+                localStorage.removeItem('transport_app_users_v18');
+                localStorage.removeItem('saved_login_creds');
+                localStorage.removeItem(SESSION_ACTIVE_USER_KEY);
+                sessionStorage.removeItem(SESSION_ACTIVE_USER_KEY);
+                
+                usersDB = JSON.parse(JSON.stringify(defaultSystemUsers));
+                saveUsersDB();
+
+                const uElem = document.getElementById('loginUsername');
+                const pElem = document.getElementById('loginPassword');
+                if (uElem) uElem.value = 'emir.durakovic';
+                if (pElem) pElem.value = 'Emir1235';
+
+                alert("Vaš nalog je uspješno resetovan na lozinku: Emir1235");
+            }
         }
 
         function saveUsersDB() {
