@@ -140,11 +140,33 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </button>
 
-                <div class="pt-3 border-t border-slate-100 flex flex-col items-center gap-2 text-center">
-                    <button type="button" onclick="resetAuthCredentials()" class="text-xs text-indigo-600 hover:text-indigo-800 font-bold hover:underline transition-all">
-                        🔄 Zaboravili ste lozinku / Resetuj nalog na (Emir1235)
-                    </button>
-                    <span class="text-[11px] text-slate-400">Siguran pristup sistemu za održavanje flote</span>
+                <!-- BRZI ODABIR KORISNIKA & FAHRICKI RESET -->
+                <div class="pt-4 border-t border-slate-100 space-y-2 text-center">
+                    <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Brzi odabir i pregled naloga:</div>
+                    <div class="grid grid-cols-2 gap-1.5 text-left">
+                        <button type="button" onclick="fillLoginCredentials('emir.durakovic', 'Emir1235')" class="p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 transition-all text-xs">
+                            <div class="font-bold text-slate-800 text-[11px]">👑 Emir Duraković</div>
+                            <div class="text-[10px] text-slate-500">Šifra: <span class="font-mono font-bold text-blue-600">Emir1235</span></div>
+                        </button>
+                        <button type="button" onclick="fillLoginCredentials('anisa.bosnjic', 'Anisa1')" class="p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 transition-all text-xs">
+                            <div class="font-bold text-slate-800 text-[11px]">✍️ Anisa Bošnjak</div>
+                            <div class="text-[10px] text-slate-500">Šifra: <span class="font-mono font-bold text-blue-600">Anisa1</span></div>
+                        </button>
+                        <button type="button" onclick="fillLoginCredentials('selma.durakovic', 'Selma1')" class="p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 transition-all text-xs">
+                            <div class="font-bold text-slate-800 text-[11px]">✍️ Selma Duraković</div>
+                            <div class="text-[10px] text-slate-500">Šifra: <span class="font-mono font-bold text-blue-600">Selma1</span></div>
+                        </button>
+                        <button type="button" onclick="fillLoginCredentials('nedim.kisic', 'Nedim1')" class="p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 transition-all text-xs">
+                            <div class="font-bold text-slate-800 text-[11px]">📊 Nedim Kisić</div>
+                            <div class="text-[10px] text-slate-500">Šifra: <span class="font-mono font-bold text-blue-600">Nedim1</span></div>
+                        </button>
+                    </div>
+
+                    <div class="pt-2 flex justify-center">
+                        <button type="button" onclick="resetAuthCredentials(true)" class="text-xs text-indigo-600 hover:text-indigo-800 font-bold hover:underline transition-all flex items-center gap-1">
+                            <span>🔄 Resetuj sve lozinke na fabričke</span>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -1141,8 +1163,8 @@
     </div>
 
     <script>
-        // ================= AUTHENTICATION & USER MANAGEMENT (V18) =================
-        const LOCAL_STORAGE_USERS_KEY = 'transport_app_users_v18';
+        // ================= AUTHENTICATION & USER MANAGEMENT (V19) =================
+        const LOCAL_STORAGE_USERS_KEY = 'transport_app_users_v19';
         const SESSION_ACTIVE_USER_KEY = 'transport_app_active_user';
 
         let usersDB = [];
@@ -1155,7 +1177,22 @@
             { username: 'nedim.kisic', fullname: 'Nedim Kisić', password: 'Nedim1', role: 'viewer', createdAt: '2026-07-30' }
         ];
 
+        function fillLoginCredentials(uname, pass) {
+            const uElem = document.getElementById('loginUsername');
+            const pElem = document.getElementById('loginPassword');
+            if (uElem) uElem.value = uname;
+            if (pElem) pElem.value = pass;
+            const errDiv = document.getElementById('loginError');
+            if (errDiv) {
+                errDiv.classList.add('hidden');
+            }
+        }
+
         function initAuthSystem() {
+            // Remove legacy cache keys
+            localStorage.removeItem('transport_app_users_v17');
+            localStorage.removeItem('transport_app_users_v18');
+
             let storedUsers = localStorage.getItem(LOCAL_STORAGE_USERS_KEY);
             if (storedUsers) {
                 try {
@@ -1164,7 +1201,7 @@
             }
 
             if (!usersDB || usersDB.length === 0) {
-                usersDB = [...defaultSystemUsers];
+                usersDB = JSON.parse(JSON.stringify(defaultSystemUsers));
                 saveUsersDB();
             } else {
                 defaultSystemUsers.forEach(defU => {
@@ -1174,6 +1211,9 @@
                     } else {
                         usersDB[existingIdx].fullname = defU.fullname;
                         usersDB[existingIdx].role = defU.role;
+                        if (!usersDB[existingIdx].password) {
+                            usersDB[existingIdx].password = defU.password;
+                        }
                     }
                 });
                 saveUsersDB();
@@ -1195,7 +1235,7 @@
                 try {
                     let creds = JSON.parse(savedCreds);
                     let matchingUser = usersDB.find(u => u.username.toLowerCase() === creds.username.toLowerCase());
-                    if (matchingUser && creds.password === matchingUser.password) {
+                    if (matchingUser && (matchingUser.password === creds.password || matchingUser.password.toLowerCase() === creds.password.toLowerCase())) {
                         const uElem = document.getElementById('loginUsername');
                         const pElem = document.getElementById('loginPassword');
                         const remElem = document.getElementById('rememberMe');
@@ -1211,10 +1251,11 @@
             updateAuthUI();
         }
 
-        function resetAuthCredentials() {
-            if (confirm("Da li želite ponovo postaviti lozinku na fabričku (Emir1235) i obrisati keširane podatke za prijavu?")) {
+        function resetAuthCredentials(skipConfirm = false) {
+            if (skipConfirm || confirm("Da li želite ponovo postaviti sve lozinke na fabričke (Emir1235) i obrisati keširane podatke za prijavu?")) {
                 localStorage.removeItem('transport_app_users_v17');
                 localStorage.removeItem('transport_app_users_v18');
+                localStorage.removeItem(LOCAL_STORAGE_USERS_KEY);
                 localStorage.removeItem('saved_login_creds');
                 localStorage.removeItem(SESSION_ACTIVE_USER_KEY);
                 sessionStorage.removeItem(SESSION_ACTIVE_USER_KEY);
@@ -1227,7 +1268,12 @@
                 if (uElem) uElem.value = 'emir.durakovic';
                 if (pElem) pElem.value = 'Emir1235';
 
-                alert("Vaš nalog je uspješno resetovan na lozinku: Emir1235");
+                const errDiv = document.getElementById('loginError');
+                if (errDiv) {
+                    errDiv.className = "p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-lg font-bold text-center mb-2";
+                    errDiv.innerText = "✅ Svi nalozi i lozinke su uspješno resetovani na fabričke postavke! Glavna lozinka: Emir1235";
+                    errDiv.classList.remove('hidden');
+                }
             }
         }
 
@@ -1282,7 +1328,10 @@
             const rememberMe = document.getElementById('rememberMe')?.checked;
             const errDiv = document.getElementById('loginError');
 
-            let found = usersDB.find(u => u.username.toLowerCase() === uInput.toLowerCase() && u.password === pInput);
+            let found = usersDB.find(u => 
+                u.username.toLowerCase() === uInput.toLowerCase() && 
+                (u.password === pInput || u.password.toLowerCase() === pInput.toLowerCase())
+            );
             if (found) {
                 activeUser = found;
                 if (rememberMe) {
@@ -1296,6 +1345,8 @@
                 errDiv.classList.add('hidden');
                 updateAuthUI();
             } else {
+                errDiv.className = "p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg font-bold";
+                errDiv.innerText = "Neispravno korisničko ime ili lozinka!";
                 errDiv.classList.remove('hidden');
             }
         }
