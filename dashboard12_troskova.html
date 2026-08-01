@@ -4070,19 +4070,22 @@
             });
             ncVehicleList.innerHTML = vOptions.join('');
 
-            // Dinamičko popunjavanje segmenta sa podrazumijevanim stavkama
-            let standardSegments = ['Guma', 'Redovan servis', 'Elektronika', 'Mehanika', 'Motor', 'Kočnice', 'Ovjes / Vješanje', 'Limarija / Karoserija', 'Klima / Grijanje', 'Stakla / Svjetla', 'Sistem goriva', 'Ulje / Tečnosti'];
-            let segmentsSet = new Set(standardSegments);
+            // Dinamičko popunjavanje segmenta strictly iz postojeće baze (fleet_data.json)
+            let segmentsSet = new Set();
             globalData.forEach(item => {
-                if (item.segment && item.segment !== 'Ostalo') segmentsSet.add(item.segment);
+                if (item.segment) segmentsSet.add(item.segment);
             });
             const ncSegmentSelect = document.getElementById('ncSegment');
             let segOptions = [];
             Array.from(segmentsSet).sort().forEach(s => {
-                let sel = (s === 'Redovan servis') ? 'selected' : '';
+                let sel = (s === 'Redovan servis' || s === 'Guma') ? 'selected' : '';
                 segOptions.push(`<option value="${s}" ${sel}>${s}</option>`);
             });
-            segOptions.push('<option value="Ostalo">Ostalo</option>');
+            if (segOptions.length === 0) {
+                segOptions.push('<option value="Guma">Guma</option>');
+                segOptions.push('<option value="Redovan servis">Redovan servis</option>');
+                segOptions.push('<option value="Ostalo">Ostalo</option>');
+            }
             ncSegmentSelect.innerHTML = segOptions.join('');
 
             // Dinamičko popunjavanje dobavljača / servisera
@@ -4235,9 +4238,17 @@
                 }
 
                 let dateVal = document.getElementById('ncDatum').value;
-                let dateObj = dateVal ? new Date(dateVal) : new Date();
+                let dateObj = new Date();
+                if (dateVal) {
+                    let parsed = new Date(dateVal);
+                    if (!isNaN(parsed.getTime())) {
+                        dateObj = parsed;
+                    }
+                }
                 let year = dateObj.getFullYear();
                 let month = dateObj.getMonth() + 1;
+                if (isNaN(year) || year < 2000) year = new Date().getFullYear();
+                if (isNaN(month) || month < 1 || month > 12) month = new Date().getMonth() + 1;
 
                 let costPart = parseFloat(document.getElementById('ncCijenaDijela').value) || 0;
                 let costService = parseFloat(document.getElementById('ncCijenaUsluge').value) || 0;
