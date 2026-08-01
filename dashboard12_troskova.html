@@ -253,20 +253,29 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
                             <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Reg. Oznaka <span class="text-red-500">*</span></label>
-                            <input type="text" id="ncReg" required list="ncVehicleList" placeholder="Unesite ili izaberite reg..." onchange="ncOnVehicleSelect()" oninput="ncOnVehicleSelect()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-black uppercase outline-none focus:ring-2 focus:ring-emerald-500 bg-emerald-50/30">
+                            <input type="text" id="ncReg" required list="ncVehicleList" placeholder="Ukucajte reg. ili garažni br..." onchange="ncOnVehicleSelect()" oninput="ncOnVehicleSelect()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-black uppercase outline-none focus:ring-2 focus:ring-emerald-500 bg-emerald-50/40 shadow-sm">
                             <datalist id="ncVehicleList"></datalist>
                         </div>
                         <div>
-                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">MT / Garažni Broj</label>
-                            <input type="text" id="ncMt" placeholder="npr. GB-102 ili MT-50" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-500 mb-1 flex items-center gap-1">
+                                <span>MT / Garažni Broj</span>
+                                <span class="text-[9px] text-slate-400 font-normal">🔒 Šifrarnik</span>
+                            </label>
+                            <input type="text" id="ncMt" placeholder="Garažni broj..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none">
                         </div>
                         <div>
-                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Godište (God. Pr.)</label>
-                            <input type="text" id="ncGod" placeholder="npr. 2022" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-semibold outline-none focus:ring-2 focus:ring-emerald-500">
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-500 mb-1 flex items-center gap-1">
+                                <span>Godište</span>
+                                <span class="text-[9px] text-slate-400 font-normal">🔒 Šifrarnik</span>
+                            </label>
+                            <input type="text" id="ncGod" placeholder="Godište..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-semibold outline-none">
                         </div>
                         <div>
-                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Tip Mehanizacije <span class="text-red-500">*</span></label>
-                            <select id="ncTip" required onchange="ncOnTipChange()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-500 mb-1 flex items-center gap-1">
+                                <span>Tip Mehanizacije</span>
+                                <span class="text-[9px] text-slate-400 font-normal">🔒 Šifrarnik</span>
+                            </label>
+                            <select id="ncTip" required onchange="ncOnTipChange()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none bg-white">
                                 <option value="Teretno vozilo">Teretno vozilo</option>
                                 <option value="Putničko vozilo">Putničko vozilo</option>
                                 <option value="Skladišna mehanizacija">Skladišna mehanizacija</option>
@@ -279,8 +288,11 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Marka i Model Vozila</label>
-                            <input type="text" id="ncMarka" placeholder="npr. Volvo FH500 ili Mercedes Actros" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-emerald-500">
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-500 mb-1 flex items-center gap-1">
+                                <span>Marka i Model Vozila</span>
+                                <span class="text-[9px] text-slate-400 font-normal">🔒 Šifrarnik</span>
+                            </label>
+                            <input type="text" id="ncMarka" placeholder="Marka i model..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none">
                         </div>
 
                         <!-- DINAMIČKO POLJE ZA KILOMETRAŽU (PUTNIČKO I TERETNO) -->
@@ -2821,7 +2833,7 @@
             document.getElementById('ncKilometraza').value = '';
             document.getElementById('ncRadniSati').value = '';
 
-            ncOnTipChange();
+            ncLockVehicleFields(false);
 
             // Dinamičko popunjavanje dataliste vozila iz baze AKTIVNIH VOZILA 2026
             let activeVehicleMap = new Map();
@@ -2831,14 +2843,15 @@
                 masterFleetData.forEach(v => {
                     let reg = (v.reg || '').trim().toUpperCase();
                     if (!reg || reg === '-') return;
-                    let isInactive = v.status && (v.status.toLowerCase().includes('neaktivno') || v.status.toLowerCase().includes('rashod'));
+                    let isInactive = v.status && (v.status.toLowerCase().includes('neaktivno') || v.status.toLowerCase().includes('rashod') || v.status.toLowerCase().includes('prodat'));
                     if (!isInactive && !activeVehicleMap.has(reg)) {
                         activeVehicleMap.set(reg, {
                             reg: reg,
                             garazniBroj: v.garazniBroj || '-',
-                            tipMehan: v.tipMehan || 'Teretno',
+                            tipMehan: ocistiTip(v.tipMehan || v.tip),
                             godProizvodnje: v.godProizvodnje || '-',
-                            markaVoz: v.markaVoz || 'Nepoznato'
+                            markaVoz: v.markaVoz || 'Nepoznato',
+                            modelVoz: v.modelVoz || ''
                         });
                     }
                 });
@@ -2860,8 +2873,13 @@
             let vOptions = [];
             Array.from(activeVehicleMap.keys()).sort().forEach(reg => {
                 let v = activeVehicleMap.get(reg);
-                let gb = (v.garazniBroj && v.garazniBroj !== '-') ? ` [GB: ${v.garazniBroj}]` : '';
-                vOptions.push(`<option value="${reg}${gb}"></option>`);
+                let gbStr = (v.garazniBroj && v.garazniBroj !== '-') ? ` [GB: ${v.garazniBroj}]` : '';
+                let markaStr = (v.markaVoz && v.markaVoz !== 'Nepoznato') ? ` - ${v.markaVoz}` : '';
+                
+                vOptions.push(`<option value="${reg}${gbStr}${markaStr}"></option>`);
+                if (v.garazniBroj && v.garazniBroj !== '-' && v.garazniBroj !== reg) {
+                    vOptions.push(`<option value="${v.garazniBroj} (${reg})${markaStr}"></option>`);
+                }
             });
             ncVehicleList.innerHTML = vOptions.join('');
 
@@ -2917,24 +2935,76 @@
             }
         }
 
+        function ncLockVehicleFields(lock) {
+            ['ncMt', 'ncGod', 'ncMarka'].forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    input.readOnly = lock;
+                    if (lock) {
+                        input.classList.add('bg-slate-100', 'text-slate-700', 'cursor-not-allowed', 'border-slate-200');
+                        input.classList.remove('bg-white');
+                    } else {
+                        input.classList.remove('bg-slate-100', 'text-slate-700', 'cursor-not-allowed', 'border-slate-200');
+                        input.classList.add('bg-white');
+                    }
+                }
+            });
+
+            const tipSelect = document.getElementById('ncTip');
+            if (tipSelect) {
+                if (lock) {
+                    tipSelect.style.pointerEvents = 'none';
+                    tipSelect.tabIndex = -1;
+                    tipSelect.classList.add('bg-slate-100', 'text-slate-700', 'cursor-not-allowed', 'border-slate-200');
+                    tipSelect.classList.remove('bg-white');
+                } else {
+                    tipSelect.style.pointerEvents = 'auto';
+                    tipSelect.removeAttribute('tabindex');
+                    tipSelect.classList.remove('bg-slate-100', 'text-slate-700', 'cursor-not-allowed', 'border-slate-200');
+                    tipSelect.classList.add('bg-white');
+                }
+            }
+        }
+
         function ncOnVehicleSelect() {
             let inputVal = document.getElementById('ncReg').value.trim().toUpperCase();
-            if (!inputVal) return;
+            if (!inputVal) {
+                document.getElementById('ncMt').value = '';
+                document.getElementById('ncGod').value = '';
+                document.getElementById('ncMarka').value = '';
+                ncLockVehicleFields(false);
+                return;
+            }
 
-            let cleanReg = inputVal.split(' [')[0].trim();
-            // Traži prvo u bazi aktivnih vozila masterFleetData, zatim u globalData
-            let match = (masterFleetData && masterFleetData.find(item => item.reg === cleanReg || item.reg.toUpperCase().includes(cleanReg))) ||
-                        globalData.find(item => item.reg === cleanReg || item.reg.toUpperCase().includes(cleanReg));
+            let cleanReg = inputVal.split(' [')[0].split(' (')[0].trim();
+            
+            // Traži meč u bazi aktivnih vozila masterFleetData ili u globalData
+            let match = (masterFleetData && masterFleetData.find(v => {
+                let r = (v.reg || '').toUpperCase();
+                let gb = (v.garazniBroj || '').toString().toUpperCase();
+                return r === cleanReg || (gb && gb !== '-' && gb === cleanReg) || inputVal.includes(r);
+            })) || globalData.find(v => {
+                let r = (v.reg || '').toUpperCase();
+                let gb = (v.garazniBroj || '').toString().toUpperCase();
+                return r === cleanReg || (gb && gb !== '-' && gb === cleanReg) || inputVal.includes(r);
+            });
 
             if (match) {
-                if (match.garazniBroj && match.garazniBroj !== '-') document.getElementById('ncMt').value = match.garazniBroj;
-                if (match.godProizvodnje && match.godProizvodnje !== '-') document.getElementById('ncGod').value = match.godProizvodnje;
-                let tip = match.tipMehan || match.tip;
+                if (match.reg) document.getElementById('ncReg').value = match.reg;
+                document.getElementById('ncMt').value = (match.garazniBroj && match.garazniBroj !== '-') ? match.garazniBroj : '-';
+                document.getElementById('ncGod').value = (match.godProizvodnje && match.godProizvodnje !== '-') ? match.godProizvodnje : '-';
+                
+                let tip = ocistiTip(match.tipMehan || match.tip);
                 if (tip) {
                     document.getElementById('ncTip').value = tip;
                     ncOnTipChange();
                 }
-                if (match.markaVoz || match.marka) document.getElementById('ncMarka').value = match.markaVoz || match.marka;
+
+                let markaModel = (match.markaVoz || '') + (match.modelVoz && match.modelVoz !== '-' ? ' ' + match.modelVoz : '');
+                document.getElementById('ncMarka').value = markaModel.trim() || '-';
+
+                // Zaključaj automatski popunjena polja iz šifrarnika
+                ncLockVehicleFields(true);
             }
         }
 
