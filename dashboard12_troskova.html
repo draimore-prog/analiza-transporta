@@ -4070,15 +4070,17 @@
             });
             ncVehicleList.innerHTML = vOptions.join('');
 
-            // Dinamičko popunjavanje segmenta iz postojeće baze
-            let segmentsSet = new Set();
+            // Dinamičko popunjavanje segmenta sa podrazumijevanim stavkama
+            let standardSegments = ['Guma', 'Redovan servis', 'Elektronika', 'Mehanika', 'Motor', 'Kočnice', 'Ovjes / Vješanje', 'Limarija / Karoserija', 'Klima / Grijanje', 'Stakla / Svjetla', 'Sistem goriva', 'Ulje / Tečnosti'];
+            let segmentsSet = new Set(standardSegments);
             globalData.forEach(item => {
                 if (item.segment && item.segment !== 'Ostalo') segmentsSet.add(item.segment);
             });
             const ncSegmentSelect = document.getElementById('ncSegment');
-            let segOptions = ['<option value="">-- Izaberite Segment --</option>'];
+            let segOptions = [];
             Array.from(segmentsSet).sort().forEach(s => {
-                segOptions.push(`<option value="${s}">${s}</option>`);
+                let sel = (s === 'Redovan servis') ? 'selected' : '';
+                segOptions.push(`<option value="${s}" ${sel}>${s}</option>`);
             });
             segOptions.push('<option value="Ostalo">Ostalo</option>');
             ncSegmentSelect.innerHTML = segOptions.join('');
@@ -4330,7 +4332,7 @@
                         let docRef = await window.db.collection('fleet_costs').add({
                             ...newItem,
                             datum: dateObj.toISOString(),
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            createdAt: new Date().toISOString()
                         });
                         newItem._firestoreId = docRef.id;
                     } catch (e) {
@@ -4350,6 +4352,7 @@
                 yearsSet.add(year);
 
                 applyFilters();
+                renderTransactionTable(globalData);
                 closeNewCostModal();
 
                 alert(`✅ Trošak za vozilo ${reg} od ${totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 2})} KM je uspješno sačuvan u bazu!`);
