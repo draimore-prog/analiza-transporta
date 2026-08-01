@@ -4268,12 +4268,55 @@
             try {
                 let regInput = document.getElementById('ncReg');
                 let rawReg = (regInput ? regInput.value : '').trim().toUpperCase();
-                let reg = rawReg.split(' [')[0].split(' (')[0].trim();
+                
+                let reg = rawReg;
+                let garazniBroj = (document.getElementById('ncMt').value || '').trim();
+                
+                if (rawReg.includes('(') && rawReg.includes(')')) {
+                    let matchInside = rawReg.match(/\(([^)]+)\)/);
+                    if (matchInside) reg = matchInside[1].trim();
+                    let matchOutside = rawReg.split('(')[0].trim();
+                    if (!garazniBroj || garazniBroj === '-') garazniBroj = matchOutside;
+                } else {
+                    reg = rawReg.split(' [')[0].split(' (')[0].split(' -')[0].trim();
+                }
+
                 if (!reg) {
                     alert("⚠️ Molimo unesite registarsku oznaku ili garažni broj vozila!");
                     if (regInput) regInput.focus();
                     return;
                 }
+
+                // Pronađi postojeće vozilo iz baze za preuzimanje pravog tipa i marke
+                let cleanRegSearch = reg.replace(/[\s-]/g, '');
+                let existingVeh = masterFleetData.find(v => {
+                    let r = (v.reg || '').toUpperCase().replace(/[\s-]/g, '');
+                    let gb = (v.garazniBroj || '').toString().toUpperCase();
+                    return r === cleanRegSearch || (gb && gb !== '-' && gb === reg);
+                }) || globalData.find(v => {
+                    let r = (v.reg || '').toUpperCase().replace(/[\s-]/g, '');
+                    let gb = (v.garazniBroj || '').toString().toUpperCase();
+                    return r === cleanRegSearch || (gb && gb !== '-' && gb === reg);
+                });
+
+                let tipMehan = document.getElementById('ncTip').value;
+                let godProizvodnje = (document.getElementById('ncGod').value || '').trim();
+                let markaVoz = (document.getElementById('ncMarka').value || '').trim();
+
+                if (existingVeh) {
+                    if (existingVeh.reg) reg = existingVeh.reg;
+                    if (!garazniBroj || garazniBroj === '-') garazniBroj = existingVeh.garazniBroj || '-';
+                    if (!godProizvodnje || godProizvodnje === '-') godProizvodnje = existingVeh.godProizvodnje || '-';
+                    if (!markaVoz || markaVoz === 'Nepoznato') markaVoz = existingVeh.markaVoz || 'Nepoznato';
+                    if (existingVeh.tipMehan) {
+                        tipMehan = ocistiTip(existingVeh.tipMehan);
+                    }
+                }
+
+                if (!garazniBroj) garazniBroj = '-';
+                if (!godProizvodnje) godProizvodnje = '-';
+                if (!markaVoz) markaVoz = 'Nepoznato';
+                if (!tipMehan) tipMehan = 'Teretna vozila';
 
                 let dateVal = document.getElementById('ncDatum').value;
                 let dateObj = new Date();
@@ -4294,22 +4337,17 @@
                 let totalCost = totalCostInput > 0 ? totalCostInput : (costPart + costService);
 
                 if (!totalCost || totalCost <= 0) {
-                    alert("⚠️ Molimo unesite ukupan iznos troška u polje 'Total Trošak' ili pošaljite cijenu dijela / usluge!");
+                    alert("⚠️ Molimo unesite ukupan iznos troška u polje 'Total Trošak'!");
                     let totalElem = document.getElementById('ncTotalTrosak');
                     if (totalElem) totalElem.focus();
                     return;
                 }
 
-                // Postavi izračunatu vrijednost u polje
                 document.getElementById('ncTotalTrosak').value = totalCost.toFixed(2);
 
                 let opis = (document.getElementById('ncOpis').value || '').trim() || 'Servis / Popravka';
                 let segment = document.getElementById('ncSegment').value || 'Ostalo';
-                let tipMehan = document.getElementById('ncTip').value || 'Teretna vozila';
                 let dobavljacOrig = (document.getElementById('ncServiser').value || '').trim() || 'Nepoznato';
-                let garazniBroj = (document.getElementById('ncMt').value || '').trim() || '-';
-                let godProizvodnje = (document.getElementById('ncGod').value || '').trim() || '-';
-                let markaVoz = (document.getElementById('ncMarka').value || '').trim() || 'Nepoznato';
                 let brojRacuna = (document.getElementById('ncBrojRacuna').value || '').trim() || '-';
                 let vrstaTroska = document.getElementById('ncVrstaTroska') ? document.getElementById('ncVrstaTroska').value : 'Eksterno';
                 let isInternal = dobavljacOrig.toLowerCase().includes('intern') || vrstaTroska === 'Interno';
