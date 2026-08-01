@@ -525,7 +525,7 @@
             <button id="tabBtn3" onclick="switchTab(3)" class="px-5 py-3 rounded-t-xl bg-slate-100 text-slate-600 hover:bg-slate-200 border-t border-x border-slate-200 flex items-center gap-2 transition-all">
                 <span>📋 Tab 3: Matrica & Filtrirana Tabela</span>
             </button>
-            <button id="tabBtn4" onclick="switchTab(4)" class="px-5 py-3 rounded-t-xl bg-slate-100 text-slate-600 hover:bg-slate-200 border-t border-x border-slate-200 flex items-center gap-2 transition-all">
+            <button id="tabBtn4" onclick="switchTab(4)" class="hidden px-5 py-3 rounded-t-xl bg-slate-100 text-slate-600 hover:bg-slate-200 border-t border-x border-slate-200 items-center gap-2 transition-all">
                 <span>🏢 Tab 4: Šifrarnik Vozila (Master Registar)</span>
             </button>
         </div>
@@ -1353,6 +1353,7 @@
         let currentFilteredData = [];
 
         function switchTab(tabId) {
+            if (tabId === 4) tabId = 1; // Šifrarnik tab skriven sa portala po zahtjevu
             activeTab = tabId;
             [1, 2, 3, 4].forEach(id => {
                 const btn = document.getElementById(`tabBtn${id}`);
@@ -1368,9 +1369,7 @@
                 }
             });
 
-            if (tabId === 4) {
-                renderMasterFleetTable();
-            } else if (currentFilteredData.length > 0) {
+            if (currentFilteredData.length > 0) {
                 renderActiveTabContent();
             }
         }
@@ -1567,7 +1566,42 @@
                         let sheetNames = workbook.SheetNames;
                         sheetNames.forEach(sheetName => {
                             let sLower = sheetName.toLowerCase();
-                            if (sLower.includes('šifrarnik') || sLower.includes('sifrarnik') || sLower.includes('kpi') || sLower.includes('pregled odr') || sLower.includes('sipanja')) return;
+                            
+                            // Uvoz baze aktivnih vozila ako Excel sadrži šifrarnik / aktivna vozila / flote 2026
+                            if (sLower.includes('šifrarnik') || sLower.includes('sifrarnik') || sLower.includes('baza vozil') || sLower.includes('aktivna vozil') || sLower.includes('flota 2026')) {
+                                try {
+                                    const sheet = workbook.Sheets[sheetName];
+                                    if (sheet) {
+                                        const vRows = XLSX.utils.sheet_to_json(sheet);
+                                        if (Array.isArray(vRows) && vRows.length > 0) {
+                                            vRows.forEach(vRow => {
+                                                let rRaw = vRow['Reg.oznaka'] || vRow['RegBroj'] || vRow['Reg. Oznaka'] || vRow['REG'] || vRow['Registracija'] || vRow['Registarska Oznaka'];
+                                                if (!rRaw) return;
+                                                let rClean = rRaw.toString().trim().toUpperCase();
+                                                if (!rClean || rClean === '-' || rClean === 'NEPOZNATO') return;
+
+                                                let vObj = {
+                                                    reg: rClean,
+                                                    garazniBroj: (vRow['MT'] || vRow['GB'] || vRow['Garažni Broj'] || vRow['GarazniBroj'] || '-').toString().trim(),
+                                                    tipMehan: ocistiTip(vRow['Tip'] || vRow['TipMehan'] || vRow['Tip Mehanizacije']),
+                                                    markaVoz: ocistiMarku(vRow['Marka'] || vRow['MarkaVoz']),
+                                                    modelVoz: (vRow['Model'] || vRow['ModelVoz'] || '-').toString().trim(),
+                                                    godProizvodnje: (vRow['God.'] || vRow['Godište'] || vRow['GodProizvodnje'] || '-').toString(),
+                                                    brojSasije: (vRow['Broj Šasije'] || vRow['BrojSasije'] || vRow['VIN'] || '-').toString(),
+                                                    status: (vRow['Status'] || 'Aktivno').toString()
+                                                };
+                                                let idx = masterFleetData.findIndex(m => m.reg === rClean);
+                                                if (idx !== -1) masterFleetData[idx] = { ...masterFleetData[idx], ...vObj };
+                                                else masterFleetData.unshift(vObj);
+                                            });
+                                            console.log("Učitana baza aktivnih vozila iz Excela:", masterFleetData.length);
+                                        }
+                                    }
+                                } catch(eV) { console.warn("Notice loading active vehicle sheet:", eV); }
+                                return;
+                            }
+
+                            if (sLower.includes('kpi') || sLower.includes('pregled odr') || sLower.includes('sipanja')) return;
 
                             const sheet = workbook.Sheets[sheetName];
                             if(!sheet) return;
@@ -2796,18 +2830,43 @@
 
             ncOnTipChange();
 
-            // Dinamičko popunjavanje dataliste vozila za automatsko dopunjavanje
-            let vehicleMap = new Map();
-            globalData.forEach(item => {
-                if (item.reg && !vehicleMap.has(item.reg)) {
-                    vehicleMap.set(item.reg, item);
-                }
-            });
+            // Dinamičko popunjavanje dataliste vozila iz baze AKTIVNIH VOZILA 2026
+            let activeVehicleMap = new Map();
+            
+            // Prvo učitaj iz masterFleetData (Aktivna vozila 2026)
+            if (masterFleetData && masterFleetData.length > 0) {
+                masterFleetData.forEach(v => {
+                    let reg = (v.reg || '').trim().toUpperCase();
+                    if (!reg || reg === '-') return;
+                    let isInactive = v.status && (v.status.toLowerCase().includes('neaktivno') || v.status.toLowerCase().includes('rashod'));
+                    if (!isInactive && !activeVehicleMap.has(reg)) {
+                        activeVehicleMap.set(reg, {
+                            reg: reg,
+                            garazniBroj: v.garazniBroj || '-',
+                            tipMehan: v.tipMehan || 'Teretno',
+                            godProizvodnje: v.godProizvodnje || '-',
+                            markaVoz: v.markaVoz || 'Nepoznato'
+                        });
+                    }
+                });
+            }
+            
+            // Fallback: Ako je masterFleetData prazan, uzmi iz globalData ali samo tekuća aktivna vozila iz 2026. godine
+            if (activeVehicleMap.size === 0) {
+                globalData.forEach(item => {
+                    let reg = (item.reg || '').trim().toUpperCase();
+                    if (reg && reg !== '-' && !activeVehicleMap.has(reg)) {
+                        if (item.year >= 2026 || !item.year) {
+                            activeVehicleMap.set(reg, item);
+                        }
+                    }
+                });
+            }
 
             const ncVehicleList = document.getElementById('ncVehicleList');
             let vOptions = [];
-            Array.from(vehicleMap.keys()).sort().forEach(reg => {
-                let v = vehicleMap.get(reg);
+            Array.from(activeVehicleMap.keys()).sort().forEach(reg => {
+                let v = activeVehicleMap.get(reg);
                 let gb = (v.garazniBroj && v.garazniBroj !== '-') ? ` [GB: ${v.garazniBroj}]` : '';
                 vOptions.push(`<option value="${reg}${gb}"></option>`);
             });
@@ -2870,16 +2929,19 @@
             if (!inputVal) return;
 
             let cleanReg = inputVal.split(' [')[0].trim();
-            let match = globalData.find(item => item.reg === cleanReg || item.reg.toUpperCase().includes(cleanReg));
+            // Traži prvo u bazi aktivnih vozila masterFleetData, zatim u globalData
+            let match = (masterFleetData && masterFleetData.find(item => item.reg === cleanReg || item.reg.toUpperCase().includes(cleanReg))) ||
+                        globalData.find(item => item.reg === cleanReg || item.reg.toUpperCase().includes(cleanReg));
 
             if (match) {
                 if (match.garazniBroj && match.garazniBroj !== '-') document.getElementById('ncMt').value = match.garazniBroj;
                 if (match.godProizvodnje && match.godProizvodnje !== '-') document.getElementById('ncGod').value = match.godProizvodnje;
-                if (match.tipMehan) {
-                    document.getElementById('ncTip').value = match.tipMehan;
+                let tip = match.tipMehan || match.tip;
+                if (tip) {
+                    document.getElementById('ncTip').value = tip;
                     ncOnTipChange();
                 }
-                if (match.markaVoz) document.getElementById('ncMarka').value = match.markaVoz;
+                if (match.markaVoz || match.marka) document.getElementById('ncMarka').value = match.markaVoz || match.marka;
             }
         }
 
@@ -2959,6 +3021,34 @@
                     console.log("Dodano u Firestore");
                 } catch (e) {
                     console.warn("Notice saving to Firestore:", e);
+                }
+            }
+
+            // Ako vozilo još ne postoji u bazi aktivnih vozila 2026, dodaj ga automatski kao novo aktivno vozilo!
+            let activeVeh = masterFleetData.find(v => v.reg === reg);
+            if (!activeVeh) {
+                let newVehObj = {
+                    rb: masterFleetData.length + 1,
+                    reg: reg,
+                    garazniBroj: garazniBroj,
+                    tipMehan: tipMehan,
+                    markaVoz: markaVoz,
+                    modelVoz: markaVoz,
+                    godProizvodnje: godProizvodnje,
+                    brojSasije: '-',
+                    status: 'Aktivno',
+                    pocetnaKmRh: kilometraza || radniSati || 0,
+                    prodajnaKmRh: 0
+                };
+                masterFleetData.unshift(newVehObj);
+                try {
+                    localStorage.setItem('fleet_master_custom_edits_v1', JSON.stringify(masterFleetData));
+                } catch(err) {}
+                if (window.db) {
+                    try {
+                        let safeDocId = reg.replace(/[\/\\#\?]/g, '_');
+                        window.db.collection('fleet_master').doc(safeDocId).set(newVehObj, { merge: true });
+                    } catch(e) {}
                 }
             }
 
