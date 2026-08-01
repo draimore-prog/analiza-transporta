@@ -648,7 +648,10 @@
                 <div class="card lg:col-span-3">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
                         <div>
-                            <h3 class="text-base font-bold text-slate-800" id="title-suppliers">Top 7 Eksternih Dobavljača & Partnera</h3>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-base font-bold text-slate-800" id="title-suppliers">Top 7 Eksternih Dobavljača & Partnera</h3>
+                                <span class="text-[11px] bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-xs">💡 Klikni za detalje faktura i rekap</span>
+                            </div>
                             <p class="text-xs text-slate-500 mt-0.5" id="sub-suppliers">Pregled vanjskih servisa i partnera sa najvećim obimom održavanja flote</p>
                         </div>
                         <div class="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold gap-1">
@@ -657,7 +660,8 @@
                             <button id="supplierModeIntBtn" onclick="setSupplierMode('internal')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-all font-bold cursor-pointer">🛠️ Samo Interno</button>
                         </div>
                     </div>
-                    <div class="h-[260px] relative"><canvas id="chartSuppliers"></canvas></div>
+                    <div class="h-[260px] relative clickable-chart"><canvas id="chartSuppliers"></canvas></div>
+                </div>
                 </div>
             </div>
         </div>
@@ -1067,6 +1071,146 @@
                     <span>📥 Izvezi Rekapitulaciju u Excel</span>
                 </button>
                 <button onclick="closeIntExtRecapModal()" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition-all">
+                    Zatvori
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL ZA DETALJE DOBAVLJAČA / BINGO REKAP ================= -->
+    <div id="supplierDetailModal" class="fixed inset-0 bg-slate-900/75 hidden flex justify-center items-center z-50 backdrop-blur-sm p-3 sm:p-5">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[94vh] flex flex-col overflow-hidden border border-slate-100">
+            <!-- Header -->
+            <div class="flex justify-between items-center p-5 bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 text-white">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-white/10 rounded-xl backdrop-blur-md text-2xl" id="supModalIcon">
+                        🏢
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-lg sm:text-xl font-black tracking-tight" id="supModalTitle">
+                                Dobavljač: -
+                            </h2>
+                            <span id="supModalBadge" class="bg-indigo-500/30 border border-indigo-300 text-white text-[11px] px-2.5 py-0.5 rounded-full font-bold">
+                                Partner
+                            </span>
+                        </div>
+                        <p class="text-xs text-indigo-200 mt-0.5" id="supModalSubtitle">Detaljna lista faktura, popravki i intervencija po vozilima</p>
+                    </div>
+                </div>
+                <button onclick="closeSupplierModal()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-lg w-9 h-9 flex items-center justify-center text-2xl font-light transition-colors">&times;</button>
+            </div>
+
+            <!-- Body Content -->
+            <div class="p-5 overflow-y-auto space-y-5 bg-slate-50 text-xs">
+                <!-- KPI Summary Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[10px] font-extrabold uppercase text-slate-400">Ukupan Trošak</span>
+                        <h3 class="text-lg font-black text-indigo-900 mt-1" id="supTotalCost">0 KM</h3>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[10px] font-extrabold uppercase text-slate-400">Broj Faktura / Naloga</span>
+                        <h3 class="text-lg font-black text-emerald-600 mt-1" id="supInvoiceCount">0</h3>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[10px] font-extrabold uppercase text-slate-400">Obrađeno Vozila</span>
+                        <h3 class="text-lg font-black text-slate-800 mt-1" id="supVehicleCount">0</h3>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[10px] font-extrabold uppercase text-slate-400">Prosjek po Fakturi</span>
+                        <h3 class="text-lg font-black text-amber-600 mt-1" id="supAvgCost">0 KM</h3>
+                    </div>
+                </div>
+
+                <!-- Tab Navigation Buttons & Filter -->
+                <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button id="supTabInvoicesBtn" onclick="switchSupplierTab('invoices')" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white font-bold transition-all text-xs cursor-pointer shadow-sm">
+                            📋 Sve Fakture & Popravke
+                        </button>
+                        <button id="supTabMonthlyBtn" onclick="switchSupplierTab('monthly')" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 font-bold transition-all text-xs cursor-pointer">
+                            📅 Mjesečna Rekapitulacija
+                        </button>
+                        <button id="supTabPonjaveBtn" onclick="switchSupplierTab('ponjave')" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 font-bold transition-all text-xs cursor-pointer flex items-center gap-1.5">
+                            <span>🚚 Ponjave & Cerade / Servisi</span>
+                            <span id="supPonjaveBadge" class="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.2 rounded-full font-black">0</span>
+                        </button>
+                    </div>
+
+                    <!-- Search & Filter Controls -->
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <input type="text" id="supModalSearch" oninput="filterSupplierModalTable()" placeholder="🔍 Pretraži vozilo, GB ili radove..." class="w-full sm:w-56 text-xs border border-slate-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-slate-50">
+                        <select id="supModalSegmentFilter" onchange="filterSupplierModalTable()" class="text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-slate-50">
+                            <option value="all">Svi segmenti</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- TAB 1: SVE FAKTURE I POPRAVKE -->
+                <div id="supViewInvoices" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto max-h-[50vh]">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-100 sticky top-0 font-bold text-slate-700 border-b border-slate-200 text-[11px] uppercase tracking-wider">
+                                <tr>
+                                    <th class="py-2.5 px-3">Datum</th>
+                                    <th class="py-2.5 px-3">Vozilo / Reg.</th>
+                                    <th class="py-2.5 px-3">GB</th>
+                                    <th class="py-2.5 px-3">Segment</th>
+                                    <th class="py-2.5 px-3">Opis popravke / Rezervni dio</th>
+                                    <th class="py-2.5 px-3 text-right">Iznos (KM)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="supTableBody" class="divide-y divide-slate-100 text-slate-600 text-xs">
+                                <!-- Popunjava se dinamički -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB 2: MJESEČNA REKAPITULACIJA -->
+                <div id="supViewMonthly" class="hidden bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <h4 class="font-extrabold text-slate-800 text-sm mb-3">📅 Pregled troškova po mjesecima i godinama</h4>
+                    <div class="overflow-x-auto max-h-[50vh]">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-100 sticky top-0 font-bold text-slate-700 border-b border-slate-200 text-[11px] uppercase tracking-wider">
+                                <tr>
+                                    <th class="py-2.5 px-3">Godina</th>
+                                    <th class="py-2.5 px-3">Mjesec</th>
+                                    <th class="py-2.5 px-3 text-center">Broj Intervencija</th>
+                                    <th class="py-2.5 px-3 text-center">Broj Vozila</th>
+                                    <th class="py-2.5 px-3 text-right">Ukupno Iznos (KM)</th>
+                                    <th class="py-2.5 px-3 text-right">Udio</th>
+                                </tr>
+                            </thead>
+                            <tbody id="supMonthlyTableBody" class="divide-y divide-slate-100 text-slate-600 text-xs">
+                                <!-- Popunjava se dinamički -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB 3: PONJAVE & CERADE / INTERNI SERVISI -->
+                <div id="supViewPonjave" class="hidden space-y-4">
+                    <div class="bg-indigo-50 border border-indigo-100 p-3.5 rounded-xl text-indigo-900 flex items-start gap-3">
+                        <span class="text-xl">🚚</span>
+                        <div>
+                            <h4 class="font-bold text-xs">Rekapitulacija Intervencija na Ponjavama, Ceradama i Internom Održavanju</h4>
+                            <p class="text-[11px] text-indigo-700 mt-0.5">Pregled konkretnih vozila na kojima su rađene popravke, zamjene ili krpljenje ponjava/cerada i ostali radovi.</p>
+                        </div>
+                    </div>
+                    <div id="supPonjaveContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[52vh] overflow-y-auto pr-1">
+                        <!-- Popunjava se dinamički -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-4 bg-white border-t border-slate-200 flex justify-between items-center">
+                <button onclick="exportSupplierModalToExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center gap-2">
+                    <span>📥 Izvezi Podatke u Excel</span>
+                </button>
+                <button onclick="closeSupplierModal()" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition-all">
                     Zatvori
                 </button>
             </div>
@@ -2415,7 +2559,16 @@
                     labels: sortedSuppliers.map(s => s[0]),
                     datasets: [{ label: 'Ukupan iznos popravki (KM)', data: sortedSuppliers.map(s => s[1]), backgroundColor: '#6366f1', borderRadius: 6 }]
                 },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    onClick: (e, els, ch) => {
+                        if (els.length > 0) {
+                            let supplierName = ch.data.labels[els[0].index];
+                            openSupplierDetailModal(supplierName);
+                        }
+                    }
+                }
             });
         }
 
@@ -3802,12 +3955,296 @@
             XLSX.writeFile(wb, `Rekapitulacija_${currentIntExtType}_Servisa_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
+        // ================= LOGIKA ZA DETALJNI PREGLED DOBAVLJAČA I BINGO REKAP =================
+        let activeSupplierData = [];
+        let activeSupplierFilteredData = [];
+        let activeSupplierName = '';
+        let activeSupplierTab = 'invoices';
+
+        function openSupplierDetailModal(supplierName) {
+            activeSupplierName = supplierName;
+            const modal = document.getElementById('supplierDetailModal');
+            if (!modal) return;
+
+            let sourceData = currentFilteredData && currentFilteredData.length > 0 ? currentFilteredData : globalData;
+            let sLower = supplierName.toLowerCase();
+
+            let isBingoOrInternal = sLower.includes('bingo') || sLower.includes('vlastita') || sLower.includes('intern');
+
+            if (supplierName === 'Vlastita Radionica / Magacin' || sLower.includes('vlastita radionica')) {
+                activeSupplierData = sourceData.filter(item => item.type === 'Interno' || (item.dobavljacOrig && item.dobavljacOrig.toLowerCase().includes('intern')) || item.dobavljacOrig === '-');
+            } else if (supplierName === 'Ostali Eksterni') {
+                activeSupplierData = sourceData.filter(item => item.type === 'Eksterno');
+            } else {
+                activeSupplierData = sourceData.filter(item => item.dobavljacOrig && item.dobavljacOrig.toLowerCase() === sLower);
+            }
+
+            if (activeSupplierData.length === 0) {
+                activeSupplierData = sourceData.filter(item => item.dobavljacOrig && item.dobavljacOrig.toLowerCase().includes(sLower));
+            }
+
+            let totalCost = activeSupplierData.reduce((acc, i) => acc + i.cost, 0);
+            let invoiceCount = activeSupplierData.length;
+            let vehicleCount = new Set(activeSupplierData.map(i => i.reg)).size;
+            let avgCost = invoiceCount > 0 ? (totalCost / invoiceCount) : 0;
+
+            document.getElementById('supModalTitle').innerText = isBingoOrInternal ? `🛠️ ${supplierName}` : `🏢 ${supplierName}`;
+            document.getElementById('supModalSubtitle').innerText = isBingoOrInternal ? `Analiza internih naloga, radionice, servisa i ponjava po vozilima` : `Detaljna analiza faktura, popravki i intervencija po vozilima`;
+            document.getElementById('supModalBadge').innerText = isBingoOrInternal ? 'Interno / Bingo' : 'Eksterni Dobavljač';
+            document.getElementById('supModalBadge').className = isBingoOrInternal ? 'bg-amber-500/30 border border-amber-300 text-amber-200 text-[11px] px-2.5 py-0.5 rounded-full font-bold' : 'bg-indigo-500/30 border border-indigo-300 text-white text-[11px] px-2.5 py-0.5 rounded-full font-bold';
+            document.getElementById('supModalIcon').innerText = isBingoOrInternal ? '🛠️' : '🏢';
+
+            document.getElementById('supTotalCost').innerText = totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM';
+            document.getElementById('supInvoiceCount').innerText = invoiceCount.toLocaleString('bs-BA');
+            document.getElementById('supVehicleCount').innerText = vehicleCount.toLocaleString('bs-BA');
+            document.getElementById('supAvgCost').innerText = avgCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM';
+
+            // Reset pretrage i filtera po segmentu
+            document.getElementById('supModalSearch').value = '';
+            let segSet = new Set(activeSupplierData.map(i => i.segment).filter(Boolean));
+            let segOptions = ['<option value="all">Svi segmenti</option>'];
+            Array.from(segSet).sort().forEach(s => segOptions.push(`<option value="${s}">${s}</option>`));
+            document.getElementById('supModalSegmentFilter').innerHTML = segOptions.join('');
+
+            // Prebrojavanje Ponjava / Cerada i internih radova
+            let ponjaveData = activeSupplierData.filter(i => {
+                let seg = (i.segment || '').toLowerCase();
+                let opis = (i.opisPopravke || '').toLowerCase();
+                return seg.includes('ponjav') || seg.includes('cerad') || opis.includes('ponjav') || opis.includes('cerad') || isBingoOrInternal;
+            });
+            document.getElementById('supPonjaveBadge').innerText = ponjaveData.length;
+
+            activeSupplierFilteredData = [...activeSupplierData];
+            renderSupplierTable();
+            renderSupplierMonthly();
+            renderSupplierPonjave();
+
+            switchSupplierTab(isBingoOrInternal ? 'monthly' : 'invoices');
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeSupplierModal() {
+            const modal = document.getElementById('supplierDetailModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function switchSupplierTab(tabName) {
+            activeSupplierTab = tabName;
+            const invBtn = document.getElementById('supTabInvoicesBtn');
+            const monBtn = document.getElementById('supTabMonthlyBtn');
+            const ponBtn = document.getElementById('supTabPonjaveBtn');
+
+            const invView = document.getElementById('supViewInvoices');
+            const monView = document.getElementById('supViewMonthly');
+            const ponView = document.getElementById('supViewPonjave');
+
+            [invBtn, monBtn, ponBtn].forEach(b => {
+                if (b) b.className = "px-3.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 font-bold transition-all text-xs cursor-pointer";
+            });
+
+            if (tabName === 'invoices') {
+                if (invBtn) invBtn.className = "px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white font-bold transition-all text-xs cursor-pointer shadow-sm";
+                if (invView) invView.classList.remove('hidden');
+                if (monView) monView.classList.add('hidden');
+                if (ponView) ponView.classList.add('hidden');
+            } else if (tabName === 'monthly') {
+                if (monBtn) monBtn.className = "px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white font-bold transition-all text-xs cursor-pointer shadow-sm";
+                if (invView) invView.classList.add('hidden');
+                if (monView) monView.classList.remove('hidden');
+                if (ponView) ponView.classList.add('hidden');
+            } else if (tabName === 'ponjave') {
+                if (ponBtn) ponBtn.className = "px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white font-bold transition-all text-xs cursor-pointer shadow-sm";
+                if (invView) invView.classList.add('hidden');
+                if (monView) monView.classList.add('hidden');
+                if (ponView) ponView.classList.remove('hidden');
+            }
+        }
+
+        function filterSupplierModalTable() {
+            let term = (document.getElementById('supModalSearch').value || '').toLowerCase().trim();
+            let seg = document.getElementById('supModalSegmentFilter').value;
+
+            activeSupplierFilteredData = activeSupplierData.filter(item => {
+                let matchTerm = !term ||
+                    (item.reg && item.reg.toLowerCase().includes(term)) ||
+                    (item.garazniBroj && item.garazniBroj.toLowerCase().includes(term)) ||
+                    (item.opisPopravke && item.opisPopravke.toLowerCase().includes(term)) ||
+                    (item.segment && item.segment.toLowerCase().includes(term));
+                
+                let matchSeg = seg === 'all' || item.segment === seg;
+                return matchTerm && matchSeg;
+            });
+
+            renderSupplierTable();
+        }
+
+        function renderSupplierTable() {
+            const tbody = document.getElementById('supTableBody');
+            if (!tbody) return;
+
+            if (activeSupplierFilteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400 italic">Nema pronađenih faktura/intervencija za zadate filtere.</td></tr>`;
+                return;
+            }
+
+            let sorted = [...activeSupplierFilteredData].sort((a,b) => (b.datumObj || 0) - (a.datumObj || 0));
+
+            let html = sorted.map(item => {
+                let dateStr = item.datumObj ? `${String(item.datumObj.getDate()).padStart(2,'0')}.${String(item.datumObj.getMonth()+1).padStart(2,'0')}.${item.datumObj.getFullYear()}.` : `${item.month}/${item.year}`;
+                let regDisplay = item.reg !== '-' ? `<button onclick="closeSupplierModal(); openVehicleModal('${item.reg}')" class="text-indigo-600 hover:text-indigo-900 font-bold hover:underline">${item.reg}</button>` : '<span class="text-slate-400">-</span>';
+                
+                return `<tr class="hover:bg-slate-50 transition-colors">
+                    <td class="py-2.5 px-3 font-semibold text-slate-700 whitespace-nowrap">${dateStr}</td>
+                    <td class="py-2.5 px-3 font-bold whitespace-nowrap">${regDisplay}</td>
+                    <td class="py-2.5 px-3 font-semibold text-slate-500">${item.garazniBroj || '-'}</td>
+                    <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">${item.segment || 'Ostalo'}</span></td>
+                    <td class="py-2.5 px-3 text-slate-800 font-medium" title="${item.opisPopravke}">${item.opisPopravke || '-'}</td>
+                    <td class="py-2.5 px-3 text-right font-black text-slate-900 whitespace-nowrap">${item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM</td>
+                </tr>`;
+            }).join('');
+
+            tbody.innerHTML = html;
+        }
+
+        function renderSupplierMonthly() {
+            const tbody = document.getElementById('supMonthlyTableBody');
+            if (!tbody) return;
+
+            const monthsNames = ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Juni', 'Juli', 'August', 'Septembar', 'Oktobar', 'Novembar', 'Decembar'];
+
+            let monthlyMap = {};
+            let totalCostSum = activeSupplierData.reduce((acc, i) => acc + i.cost, 0);
+
+            activeSupplierData.forEach(item => {
+                let key = `${item.year}-${String(item.month).padStart(2, '0')}`;
+                if (!monthlyMap[key]) {
+                    monthlyMap[key] = { year: item.year, month: item.month, cost: 0, count: 0, vehicles: new Set() };
+                }
+                monthlyMap[key].cost += item.cost;
+                monthlyMap[key].count += 1;
+                monthlyMap[key].vehicles.add(item.reg);
+            });
+
+            let sortedKeys = Object.keys(monthlyMap).sort().reverse();
+
+            if (sortedKeys.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400 italic">Nema mjesečnih podataka.</td></tr>`;
+                return;
+            }
+
+            let html = sortedKeys.map(key => {
+                let m = monthlyMap[key];
+                let mName = monthsNames[m.month - 1] || m.month;
+                let pct = totalCostSum > 0 ? ((m.cost / totalCostSum) * 100).toFixed(1) : '0';
+
+                return `<tr class="hover:bg-slate-50 transition-colors">
+                    <td class="py-2.5 px-3 font-bold text-slate-800">${m.year}.</td>
+                    <td class="py-2.5 px-3 font-semibold text-slate-700">${mName}</td>
+                    <td class="py-2.5 px-3 text-center font-bold text-slate-800">${m.count}</td>
+                    <td class="py-2.5 px-3 text-center font-semibold text-indigo-700 bg-indigo-50/50 rounded-lg">${m.vehicles.size} vozila</td>
+                    <td class="py-2.5 px-3 text-right font-black text-slate-900">${m.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM</td>
+                    <td class="py-2.5 px-3 text-right font-bold text-emerald-600">${pct}%</td>
+                </tr>`;
+            }).join('');
+
+            tbody.innerHTML = html;
+        }
+
+        function renderSupplierPonjave() {
+            const container = document.getElementById('supPonjaveContainer');
+            if (!container) return;
+
+            let sLower = activeSupplierName.toLowerCase();
+            let isBingoOrInternal = sLower.includes('bingo') || sLower.includes('vlastita') || sLower.includes('intern');
+
+            let ponjaveData = activeSupplierData.filter(i => {
+                let seg = (i.segment || '').toLowerCase();
+                let opis = (i.opisPopravke || '').toLowerCase();
+                return seg.includes('ponjav') || seg.includes('cerad') || opis.includes('ponjav') || opis.includes('cerad') || isBingoOrInternal;
+            });
+
+            if (ponjaveData.length === 0) {
+                container.innerHTML = `<div class="col-span-2 text-center py-8 bg-white rounded-xl border border-slate-200 text-slate-400 italic">Nema evidentiranih radova na ponjavama ili ceradama kod ovog dobavljača.</div>`;
+                return;
+            }
+
+            let vehMap = {};
+            ponjaveData.forEach(item => {
+                let reg = item.reg || 'Nepoznato';
+                if (!vehMap[reg]) {
+                    vehMap[reg] = { reg: reg, garazniBroj: item.garazniBroj, marka: item.markaVoz, tip: item.tipMehan, totalCost: 0, items: [] };
+                }
+                vehMap[reg].totalCost += item.cost;
+                vehMap[reg].items.push(item);
+            });
+
+            let sortedVehicles = Object.values(vehMap).sort((a,b) => b.totalCost - a.totalCost);
+
+            let html = sortedVehicles.map(v => {
+                let itemsHtml = v.items.sort((a,b) => (b.datumObj||0)-(a.datumObj||0)).map(it => {
+                    let dStr = it.datumObj ? `${String(it.datumObj.getDate()).padStart(2,'0')}.${String(it.datumObj.getMonth()+1).padStart(2,'0')}.${it.datumObj.getFullYear()}.` : `${it.month}/${it.year}`;
+                    return `<div class="flex justify-between items-center text-[11px] py-1 border-b border-slate-100 last:border-0">
+                        <div class="truncate max-w-[240px]" title="${it.opisPopravke}">
+                            <span class="text-slate-400 font-mono text-[10px] mr-1">${dStr}</span>
+                            <span class="text-slate-800 font-medium">${it.opisPopravke}</span>
+                        </div>
+                        <span class="font-bold text-slate-900 whitespace-nowrap">${it.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM</span>
+                    </div>`;
+                }).join('');
+
+                return `<div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-200">
+                            <div class="flex items-center gap-2">
+                                <button onclick="closeSupplierModal(); openVehicleModal('${v.reg}')" class="font-black text-indigo-700 text-sm hover:underline">${v.reg}</button>
+                                ${v.garazniBroj ? `<span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold">GB: ${v.garazniBroj}</span>` : ''}
+                            </div>
+                            <span class="font-black text-emerald-600 text-sm">${v.totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</span>
+                        </div>
+                        <div class="text-[11px] text-slate-500 mb-2 font-medium">${v.marka || ''} ${v.tip || ''} (${v.items.length} zahvata)</div>
+                        <div class="space-y-1 max-h-40 overflow-y-auto pr-1">
+                            ${itemsHtml}
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            container.innerHTML = html;
+        }
+
+        function exportSupplierModalToExcel() {
+            if (!activeSupplierData || activeSupplierData.length === 0) {
+                alert("Nema podataka za izvoz.");
+                return;
+            }
+
+            let exportRows = activeSupplierData.map(item => ({
+                "Dobavljač / Serviser": item.dobavljacOrig,
+                "Datum": item.datumObj ? `${String(item.datumObj.getDate()).padStart(2,'0')}.${String(item.datumObj.getMonth()+1).padStart(2,'0')}.${item.datumObj.getFullYear()}.` : `${item.month}/${item.year}`,
+                "Registracija": item.reg,
+                "Garažni Broj": item.garazniBroj,
+                "Marka / Tip": `${item.markaVoz || ''} ${item.tipMehan || ''}`,
+                "Segment": item.segment,
+                "Opis popravke / Dio": item.opisPopravke,
+                "Trošak (KM)": item.cost,
+                "Tip Održavanja": item.type
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportRows);
+            const wb = XLSX.utils.book_new();
+            let safeName = activeSupplierName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 25);
+            XLSX.utils.book_append_sheet(wb, ws, "Fakture");
+            XLSX.writeFile(wb, `Dobavljac_${safeName}_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
         window.onclick = function(event) {
             if (event.target == document.getElementById('vehicleModal')) closeVehicleModal();
             if (event.target == document.getElementById('newCostModal')) closeNewCostModal();
             if (event.target == document.getElementById('adminPanelModal')) closeAdminPanel();
             if (event.target == document.getElementById('editVehicleMasterModal')) closeEditVehicleModal();
             if (event.target == document.getElementById('intExtRecapModal')) closeIntExtRecapModal();
+            if (event.target == document.getElementById('supplierDetailModal')) closeSupplierModal();
         };
 
         window.addEventListener('DOMContentLoaded', function() {
