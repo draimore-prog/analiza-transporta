@@ -267,10 +267,10 @@
                         <div>
                             <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Tip Mehanizacije <span class="text-red-500">*</span></label>
                             <select id="ncTip" required onchange="ncOnTipChange()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
-                                <option value="Teretno">Teretno</option>
-                                <option value="Putničko">Putničko</option>
+                                <option value="Teretno vozilo">Teretno vozilo</option>
+                                <option value="Putničko vozilo">Putničko vozilo</option>
                                 <option value="Skladišna mehanizacija">Skladišna mehanizacija</option>
-                                <option value="Priključno">Priključno</option>
+                                <option value="Priključno vozilo">Priključno vozilo</option>
                                 <option value="Radna mašina">Radna mašina</option>
                                 <option value="Ostalo">Ostalo</option>
                             </select>
@@ -1338,21 +1338,21 @@
 
         // AUTORITATIVNA STRUKTURA FLOTE I TROŠKOVA DIREKTNO IZ EXCEL SHEET-A "KPI Total"
         let kpiTotalFleetByYear = {
-            2021: { Total: 661, 'Priključno': 37, 'Putničko': 107, 'Radna mašina': 10, 'Skladišna mehanizacija': 312, 'Teretno': 195 },
-            2022: { Total: 623, 'Priključno': 37, 'Putničko': 103, 'Radna mašina': 5, 'Skladišna mehanizacija': 291, 'Teretno': 187 },
-            2023: { Total: 652, 'Priključno': 38, 'Putničko': 103, 'Radna mašina': 5, 'Skladišna mehanizacija': 352, 'Teretno': 154 },
-            2024: { Total: 747, 'Priključno': 46, 'Putničko': 125, 'Radna mašina': 8, 'Skladišna mehanizacija': 419, 'Teretno': 149 },
-            2025: { Total: 939, 'Priključno': 45, 'Putničko': 124, 'Radna mašina': 8, 'Skladišna mehanizacija': 595, 'Teretno': 167 },
-            2026: { Total: 964, 'Priključno': 51, 'Putničko': 124, 'Radna mašina': 8, 'Skladišna mehanizacija': 608, 'Teretno': 173 }
+            2021: { Total: 661, 'Priključno vozilo': 37, 'Putničko vozilo': 107, 'Radna mašina': 10, 'Skladišna mehanizacija': 312, 'Teretno vozilo': 195 },
+            2022: { Total: 623, 'Priključno vozilo': 37, 'Putničko vozilo': 103, 'Radna mašina': 5, 'Skladišna mehanizacija': 291, 'Teretno vozilo': 187 },
+            2023: { Total: 652, 'Priključno vozilo': 38, 'Putničko vozilo': 103, 'Radna mašina': 5, 'Skladišna mehanizacija': 352, 'Teretno vozilo': 154 },
+            2024: { Total: 747, 'Priključno vozilo': 46, 'Putničko vozilo': 125, 'Radna mašina': 8, 'Skladišna mehanizacija': 419, 'Teretno vozilo': 149 },
+            2025: { Total: 939, 'Priključno vozilo': 45, 'Putničko vozilo': 124, 'Radna mašina': 8, 'Skladišna mehanizacija': 595, 'Teretno vozilo': 167 },
+            2026: { Total: 964, 'Priključno vozilo': 51, 'Putničko vozilo': 124, 'Radna mašina': 8, 'Skladišna mehanizacija': 608, 'Teretno vozilo': 173 }
         };
 
         let kpiTotalCostsByYear = {
-            2021: { Total: 863648, 'Priključno': 59951, 'Putničko': 120143, 'Radna mašina': 39347, 'Skladišna mehanizacija': 154418, 'Teretno': 488188 },
-            2022: { Total: 1088803, 'Priključno': 106260, 'Putničko': 153293, 'Radna mašina': 26708, 'Skladišna mehanizacija': 235373, 'Teretno': 564491 },
-            2023: { Total: 1285971, 'Priključno': 121657, 'Putničko': 150136, 'Radna mašina': 22241, 'Skladišna mehanizacija': 346204, 'Teretno': 645022 },
-            2024: { Total: 1377411, 'Priključno': 139402, 'Putničko': 176374, 'Radna mašina': 17495, 'Skladišna mehanizacija': 349736, 'Teretno': 740553 },
-            2025: { Total: 1692956, 'Priključno': 192401, 'Putničko': 195374, 'Radna mašina': 32042, 'Skladišna mehanizacija': 344124, 'Teretno': 923258 },
-            2026: { Total: 761304, 'Priključno': 88970, 'Putničko': 95228, 'Radna mašina': 8055, 'Skladišna mehanizacija': 137748, 'Teretno': 419095 }
+            2021: { Total: 863648, 'Priključno vozilo': 59951, 'Putničko vozilo': 120143, 'Radna mašina': 39347, 'Skladišna mehanizacija': 154418, 'Teretno vozilo': 488188 },
+            2022: { Total: 1088803, 'Priključno vozilo': 106260, 'Putničko vozilo': 153293, 'Radna mašina': 26708, 'Skladišna mehanizacija': 235373, 'Teretno vozilo': 564491 },
+            2023: { Total: 1285971, 'Priključno vozilo': 121657, 'Putničko vozilo': 150136, 'Radna mašina': 22241, 'Skladišna mehanizacija': 346204, 'Teretno vozilo': 645022 },
+            2024: { Total: 1377411, 'Priključno vozilo': 139402, 'Putničko vozilo': 176374, 'Radna mašina': 17495, 'Skladišna mehanizacija': 349736, 'Teretno vozilo': 740553 },
+            2025: { Total: 1692956, 'Priključno vozilo': 192401, 'Putničko vozilo': 195374, 'Radna mašina': 32042, 'Skladišna mehanizacija': 344124, 'Teretno vozilo': 923258 },
+            2026: { Total: 761304, 'Priključno vozilo': 88970, 'Putničko vozilo': 95228, 'Radna mašina': 8055, 'Skladišna mehanizacija': 137748, 'Teretno vozilo': 419095 }
         };
 
         // Instanca Grafikona
@@ -1443,10 +1443,10 @@
         function ocistiTip(tip) {
             if (!tip) return 'Ostalo';
             let t = tip.toString().trim().toLowerCase();
-            if (t.includes('putni')) return 'Putničko';
-            if (t.includes('teretn')) return 'Teretno';
+            if (t.includes('putni')) return 'Putničko vozilo';
+            if (t.includes('teretn')) return 'Teretno vozilo';
             if (t.includes('skladis') || t.includes('skladiš') || t.includes('viljušk') || t.includes('viljusk') || t.includes('paletar') || t.includes('staker') || t.includes('regalni')) return 'Skladišna mehanizacija';
-            if (t.includes('priklju')) return 'Priključno';
+            if (t.includes('priklju')) return 'Priključno vozilo';
             if (t.includes('radna ma') || t.includes('radna')) return 'Radna mašina';
             if (t.includes('servis motor')) return 'Servis motornih vozila';
             if (t === '/' || t === '') return 'Ostalo';
@@ -3086,7 +3086,11 @@
             if (event.target == document.getElementById('vehicleModal')) closeVehicleModal();
             if (event.target == document.getElementById('newCostModal')) closeNewCostModal();
             if (event.target == document.getElementById('adminPanelModal')) closeAdminPanel();
-        }
+        };
+
+        window.addEventListener('DOMContentLoaded', function() {
+            autoLoadMasterFleet();
+        });
     </script>
 </body>
 </html>
