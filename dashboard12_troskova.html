@@ -4009,7 +4009,7 @@
             document.getElementById('ncReg').value = '';
             document.getElementById('ncMt').value = '';
             document.getElementById('ncGod').value = '';
-            document.getElementById('ncTip').value = 'Teretno';
+            document.getElementById('ncTip').value = 'Teretna vozila';
             document.getElementById('ncMarka').value = '';
             document.getElementById('ncBrojRacuna').value = '';
             document.getElementById('ncServiser').value = '';
@@ -4216,128 +4216,132 @@
         }
 
         async function handleCreateNewCost(event) {
-            event.preventDefault();
+            if (event) event.preventDefault();
 
-            let rawReg = document.getElementById('ncReg').value.trim().toUpperCase();
-            let reg = rawReg.split(' [')[0].trim();
-            if (!reg) { alert("Molimo unesite registarsku oznaku!"); return; }
-
-            // Provjera da li vozilo postoji u bazi aktivnih vozila 2026
-            let activeVehCheck = masterFleetData.find(v => v.reg === reg);
-            if (!activeVehCheck && masterFleetData.length > 0) {
-                alert(`⚠️ Vozilo sa registracijom "${reg}" ne postoji u bazi aktivnih vozila za 2026. godinu!\n\nUnos troškova je dozvoljen samo za zvanično registrovana aktivna vozila. Obratite se administratoru za registraciju novog vozila u bazu.`);
-                return;
-            }
-
-            let dateVal = document.getElementById('ncDatum').value;
-            let dateObj = dateVal ? new Date(dateVal) : new Date();
-            let year = dateObj.getFullYear();
-            let month = dateObj.getMonth() + 1;
-
-            let costPart = parseFloat(document.getElementById('ncCijenaDijela').value) || 0;
-            let costService = parseFloat(document.getElementById('ncCijenaUsluge').value) || 0;
-            let totalCost = parseFloat(document.getElementById('ncTotalTrosak').value) || (costPart + costService);
-
-            if (!totalCost || totalCost <= 0) {
-                alert("Molimo unesite ispravan iznos troška!");
-                return;
-            }
-
-            let segment = document.getElementById('ncSegment').value || 'Ostalo';
-            let tipMehan = document.getElementById('ncTip').value || 'Teretno';
-            let dobavljacOrig = document.getElementById('ncServiser').value.trim() || 'Nepoznato';
-            let opisPopravke = document.getElementById('ncOpis').value.trim();
-            let garazniBroj = document.getElementById('ncMt').value.trim() || '-';
-            let godProizvodnje = document.getElementById('ncGod').value.trim() || '-';
-            let markaVoz = document.getElementById('ncMarka').value.trim() || 'Nepoznato';
-            let brojRacuna = document.getElementById('ncBrojRacuna').value.trim() || '-';
-            let vrstaTroska = document.getElementById('ncVrstaTroska').value;
-            let isInternal = dobavljacOrig.toLowerCase().includes('intern') || vrstaTroska === 'Interno';
-
-            let kilometraza = (tipMehan === 'Putničko' || tipMehan === 'Teretno') ? (parseFloat(document.getElementById('ncKilometraza').value) || null) : null;
-            let radniSati = (tipMehan === 'Skladišna mehanizacija') ? (parseFloat(document.getElementById('ncRadniSati').value) || null) : null;
-
-            let newItem = {
-                id: 'cost_' + Date.now() + '_' + Math.floor(Math.random()*10000),
-                reg,
-                garazniBroj,
-                year,
-                month,
-                datumObj: dateObj,
-                datum: dateObj.toISOString(),
-                segment,
-                type: isInternal ? 'Interno' : 'Eksterno',
-                dobavljacOrig,
-                opisPopravke,
-                tipMehan,
-                markaVoz,
-                godProizvodnje,
-                cost: totalCost,
-                costPart,
-                costService,
-                brojRacuna,
-                kilometraza,
-                radniSati
-            };
-
-            // Čuvanje u Cloud Bazu (Firestore)
-            if (window.db) {
-                try {
-                    let docRef = await window.db.collection('fleet_costs').add({
-                        ...newItem,
-                        datum: dateObj.toISOString(),
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    newItem._firestoreId = docRef.id;
-                    console.log("Dodano u Firestore:", docRef.id);
-                } catch (e) {
-                    console.warn("Notice saving to Firestore:", e);
-                }
-            }
-
-            // Čuvanje u lokalni keš pretraživača
             try {
-                let customEdits = JSON.parse(localStorage.getItem('fleet_custom_cost_edits_v1') || '[]');
-                customEdits.unshift(newItem);
-                localStorage.setItem('fleet_custom_cost_edits_v1', JSON.stringify(customEdits));
-            } catch(e) {}
+                let rawReg = (document.getElementById('ncReg').value || '').trim().toUpperCase();
+                let reg = rawReg.split(' [')[0].split(' (')[0].trim();
+                if (!reg) { alert("Molimo unesite registarsku oznaku ili garažni broj!"); return; }
 
-            // Ako vozilo još ne postoji u bazi aktivnih vozila 2026, dodaj ga automatski kao novo aktivno vozilo!
-            let activeVeh = masterFleetData.find(v => v.reg === reg);
-            if (!activeVeh) {
-                let newVehObj = {
-                    rb: masterFleetData.length + 1,
-                    reg: reg,
-                    garazniBroj: garazniBroj,
-                    tipMehan: tipMehan,
-                    markaVoz: markaVoz,
-                    modelVoz: markaVoz,
-                    godProizvodnje: godProizvodnje,
-                    brojSasije: '-',
-                    status: 'Aktivno',
-                    pocetnaKmRh: kilometraza || radniSati || 0,
-                    prodajnaKmRh: 0
+                let dateVal = document.getElementById('ncDatum').value;
+                let dateObj = dateVal ? new Date(dateVal) : new Date();
+                let year = dateObj.getFullYear();
+                let month = dateObj.getMonth() + 1;
+
+                let costPart = parseFloat(document.getElementById('ncCijenaDijela').value) || 0;
+                let costService = parseFloat(document.getElementById('ncCijenaUsluge').value) || 0;
+                let totalCost = parseFloat(document.getElementById('ncTotalTrosak').value) || (costPart + costService);
+
+                if (!totalCost || totalCost <= 0) {
+                    alert("Molimo unesite ispravan iznos troška!");
+                    return;
+                }
+
+                let segment = document.getElementById('ncSegment').value || 'Ostalo';
+                let tipMehan = document.getElementById('ncTip').value || 'Teretna vozila';
+                let dobavljacOrig = (document.getElementById('ncServiser').value || '').trim() || 'Nepoznato';
+                let opisPopravke = (document.getElementById('ncOpis').value || '').trim() || 'Servis / Popravka';
+                let garazniBroj = (document.getElementById('ncMt').value || '').trim() || '-';
+                let godProizvodnje = (document.getElementById('ncGod').value || '').trim() || '-';
+                let markaVoz = (document.getElementById('ncMarka').value || '').trim() || 'Nepoznato';
+                let brojRacuna = (document.getElementById('ncBrojRacuna').value || '').trim() || '-';
+                let vrstaTroska = document.getElementById('ncVrstaTroska') ? document.getElementById('ncVrstaTroska').value : 'Eksterno';
+                let isInternal = dobavljacOrig.toLowerCase().includes('intern') || vrstaTroska === 'Interno';
+
+                let kilometraza = (tipMehan.includes('Putničk') || tipMehan.includes('Teretn')) ? (parseFloat(document.getElementById('ncKilometraza').value) || null) : null;
+                let radniSati = (tipMehan.includes('Skladišn')) ? (parseFloat(document.getElementById('ncRadniSati').value) || null) : null;
+
+                let newItem = {
+                    id: 'cost_' + Date.now() + '_' + Math.floor(Math.random()*10000),
+                    isNewCustom: true,
+                    reg,
+                    garazniBroj,
+                    year,
+                    month,
+                    datumObj: dateObj,
+                    datum: dateObj.toISOString(),
+                    segment,
+                    type: isInternal ? 'Interno' : 'Eksterno',
+                    dobavljacOrig,
+                    opisPopravke,
+                    tipMehan,
+                    markaVoz,
+                    godProizvodnje,
+                    cost: totalCost,
+                    costPart,
+                    costService,
+                    brojRacuna,
+                    kilometraza,
+                    radniSati
                 };
-                masterFleetData.unshift(newVehObj);
-                try {
-                    localStorage.setItem('fleet_master_custom_edits_v1', JSON.stringify(masterFleetData));
-                } catch(err) {}
+
+                // Ako vozilo još ne postoji u bazi aktivnih vozila 2026, dodaj ga automatski kao novo aktivno vozilo!
+                let cleanReg = reg.toUpperCase().replace(/[\s-]/g, '');
+                let activeVeh = masterFleetData.find(v => {
+                    let r = (v.reg || '').toUpperCase().replace(/[\s-]/g, '');
+                    let gb = (v.garazniBroj || '').toString().toUpperCase();
+                    return r === cleanReg || (gb && gb !== '-' && gb === reg.toUpperCase());
+                });
+
+                if (!activeVeh) {
+                    let newVehObj = {
+                        rb: masterFleetData.length + 1,
+                        reg: reg,
+                        garazniBroj: garazniBroj,
+                        tipMehan: tipMehan,
+                        markaVoz: markaVoz,
+                        modelVoz: markaVoz,
+                        godProizvodnje: godProizvodnje,
+                        brojSasije: '-',
+                        status: 'Aktivno',
+                        pocetnaKmRh: kilometraza || radniSati || 0,
+                        prodajnaKmRh: 0
+                    };
+                    masterFleetData.unshift(newVehObj);
+                    try {
+                        localStorage.setItem('fleet_master_custom_edits_v1', JSON.stringify(masterFleetData));
+                    } catch(err) {}
+                    if (window.db) {
+                        try {
+                            let safeDocId = reg.replace(/[\/\\#\?]/g, '_');
+                            window.db.collection('fleet_master').doc(safeDocId).set(newVehObj, { merge: true });
+                        } catch(e) {}
+                    }
+                }
+
+                // Čuvanje u Cloud Bazu (Firestore)
                 if (window.db) {
                     try {
-                        let safeDocId = reg.replace(/[\/\\#\?]/g, '_');
-                        window.db.collection('fleet_master').doc(safeDocId).set(newVehObj, { merge: true });
-                    } catch(e) {}
+                        let docRef = await window.db.collection('fleet_costs').add({
+                            ...newItem,
+                            datum: dateObj.toISOString(),
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        newItem._firestoreId = docRef.id;
+                    } catch (e) {
+                        console.warn("Notice saving to Firestore:", e);
+                    }
                 }
+
+                // Čuvanje u lokalni keš pretraživača
+                try {
+                    let customEdits = JSON.parse(localStorage.getItem('fleet_custom_cost_edits_v1') || '[]');
+                    customEdits.unshift(newItem);
+                    localStorage.setItem('fleet_custom_cost_edits_v1', JSON.stringify(customEdits));
+                } catch(e) {}
+
+                // Ažuriranje in-memory niza podataka i ponovno primjenjivanje filtera
+                globalData.unshift(newItem);
+                yearsSet.add(year);
+
+                applyFilters();
+                closeNewCostModal();
+
+                alert(`✅ Trošak za vozilo ${reg} od ${totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 2})} KM je uspješno sačuvan u bazu!`);
+            } catch(err) {
+                console.error("Greška pri unosu troška:", err);
+                alert("Greška pri spašavanju: " + err.message);
             }
-
-            // Ažuriranje in-memory niza podataka i ponovno primjenjivanje filtera
-            globalData.unshift(newItem);
-            yearsSet.add(year);
-
-            applyFilters();
-            closeNewCostModal();
-
-            alert(`✅ Trošak za vozilo ${reg} od ${totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 2})} KM je uspješno sačuvan u bazu!`);
         }
 
         function deleteCostRecord(costId) {
@@ -4925,14 +4929,8 @@
         }
 
         window.onclick = function(event) {
-            if (event.target == document.getElementById('vehicleModal')) closeVehicleModal();
-            if (event.target == document.getElementById('newCostModal')) closeNewCostModal();
-            if (event.target == document.getElementById('adminPanelModal')) closeAdminPanel();
-            if (event.target == document.getElementById('editVehicleMasterModal')) closeEditVehicleModal();
-            if (event.target == document.getElementById('intExtRecapModal')) closeIntExtRecapModal();
-            if (event.target == document.getElementById('supplierDetailModal')) closeSupplierModal();
-            if (event.target == document.getElementById('segmentDetailModal')) closeSegmentModal();
-            if (event.target == document.getElementById('editUserModal')) closeEditUserModal();
+            // Svrha: Onemogućeno slučajno zatvaranje modala klikom van prozora (backdrop click) kako korisnik ne bi izgubio unesene podatke!
+            // Modali se zatvaraju isključivo dugmetom 'X', 'Odustani' ili 'Sačuvaj'.
         };
 
         window.addEventListener('DOMContentLoaded', function() {
