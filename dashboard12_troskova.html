@@ -287,7 +287,7 @@
                 <button onclick="closeNewCostModal()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-lg w-9 h-9 flex items-center justify-center text-2xl font-light transition-colors">&times;</button>
             </div>
 
-            <form onsubmit="handleCreateNewCost(event)" class="p-6 overflow-y-auto space-y-6 bg-slate-50">
+            <div class="p-6 overflow-y-auto space-y-6 bg-slate-50">
                 <!-- SEKCIJA 1: OSNOVNI PODACI O VOZILU -->
                 <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
                     <h3 class="text-xs font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
@@ -447,7 +447,7 @@
                         <span>💾 Sačuvaj Trošak u Bazu</span>
                     </button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -4262,8 +4262,11 @@
             }
         }
 
-        async function handleCreateNewCost(event) {
-            if (event) event.preventDefault();
+        function handleCreateNewCost(event) {
+            if (event) {
+                if (typeof event.preventDefault === 'function') event.preventDefault();
+                if (typeof event.stopPropagation === 'function') event.stopPropagation();
+            }
 
             try {
                 let regInput = document.getElementById('ncReg');
@@ -4284,7 +4287,7 @@
                 if (!reg) {
                     alert("⚠️ Molimo unesite registarsku oznaku ili garažni broj vozila!");
                     if (regInput) regInput.focus();
-                    return;
+                    return false;
                 }
 
                 // Pronađi postojeće vozilo iz baze za preuzimanje pravog tipa i marke
@@ -4340,7 +4343,7 @@
                     alert("⚠️ Molimo unesite ukupan iznos troška u polje 'Total Trošak'!");
                     let totalElem = document.getElementById('ncTotalTrosak');
                     if (totalElem) totalElem.focus();
-                    return;
+                    return false;
                 }
 
                 document.getElementById('ncTotalTrosak').value = totalCost.toFixed(2);
@@ -4413,32 +4416,18 @@
                     }
                 }
 
-                // Čuvanje u Cloud Bazu (Firestore)
-                if (window.db) {
-                    try {
-                        let docRef = await window.db.collection('fleet_costs').add({
-                            ...newItem,
-                            datum: dateObj.toISOString(),
-                            createdAt: new Date().toISOString()
-                        });
-                        newItem._firestoreId = docRef.id;
-                    } catch (e) {
-                        console.warn("Notice saving to Firestore:", e);
-                    }
-                }
-
-                // Čuvanje u lokalni keš pretraživača
+                // 1. Čuvanje u lokalni keš pretraživača
                 try {
                     let customEdits = JSON.parse(localStorage.getItem('fleet_custom_cost_edits_v1') || '[]');
                     customEdits.unshift(newItem);
                     localStorage.setItem('fleet_custom_cost_edits_v1', JSON.stringify(customEdits));
                 } catch(e) {}
 
-                // Ažuriranje in-memory niza podataka
+                // 2. Ažuriranje in-memory niza podataka
                 globalData.unshift(newItem);
                 yearsSet.add(year);
 
-                // Automatski podesi glavne filtere na godinu novog unosa tako da se novouneseni trošak ODMAH vidi!
+                // 3. Automatski podesi glavne filtere na godinu novog unosa
                 const filterYearElem = document.getElementById('filterYear');
                 if (filterYearElem) {
                     if (!Array.from(filterYearElem.options).some(opt => opt.value === year.toString())) {
@@ -4461,11 +4450,26 @@
 
                 activeSegment = null;
 
+                // 4. Osvježi filtere, prebaci na Tab 3 i zatvori modal
                 applyFilters();
                 switchTab(3);
                 closeNewCostModal();
 
-                alert(`✅ Trošak za vozilo "${reg}" od ${totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM je uspješno sačuvan! Automatski ste prebačeni na Tab 3 gdje se unos nalazi na samom vrhu tabele.`);
+                // 5. Ne-blokirajuće slanje u Cloud Bazu Firestore u pozadini
+                if (window.db) {
+                    window.db.collection('fleet_costs').add({
+                        ...newItem,
+                        datum: dateObj.toISOString(),
+                        createdAt: new Date().toISOString()
+                    }).then(docRef => {
+                        newItem._firestoreId = docRef.id;
+                    }).catch(e => {
+                        console.warn("Notice saving to Firestore:", e);
+                    });
+                }
+
+                // 6. Odmah obavijesti korisnika zelenim popup-om
+                alert(`✅ Uspješno sačuvan trošak za vozilo "${reg}" od ${totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM!\n\nAutomatski ste prebačeni na Tab 3 gdje se unos nalazi na samom vrhu tabele.`);
             } catch(err) {
                 console.error("Greška pri unosu troška:", err);
                 alert("Greška pri spašavanju: " + err.message);
