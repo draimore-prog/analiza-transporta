@@ -1489,17 +1489,34 @@
         }
 
         function ocistiMarku(marka) {
-            if (!marka) return 'Nepoznato';
+            if (!marka) return 'Servis motornih vozila';
             let m = marka.toString().trim();
-            if (m === '/' || m === '') return 'Ostalo';
-            let mLower = m.toLowerCase();
-            if (mLower.includes('mercedes')) return 'Mercedes Benz';
-            if (mLower === 'vw' || mLower.includes('volkswagen')) return 'Volkswagen';
-            if (mLower.includes('man')) return 'MAN';
-            if (mLower.includes('škoda') || mLower.includes('skoda')) return 'Škoda';
-            if (mLower.includes('iveco')) return 'Iveco';
-            if (mLower.includes('volvo')) return 'Volvo';
-            return m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
+            if (m === '/' || m === '-' || m === 'Nepoznato' || m === 'nepoznato' || m === '' || m === 'Ostalo' || m.toLowerCase() === 'servis motornih vozila') return 'Servis motornih vozila';
+            let mL = m.toLowerCase();
+            if (mL === 'cat' || mL.includes('caterp') || mL.includes('caterpillar')) return 'Caterpillar';
+            if (mL.includes('cadil') || mL.includes('cadiil')) return 'Cadillac';
+            if (mL.includes('mercedes') || mL === 'mb') return 'Mercedes Benz';
+            if (mL === 'vw' || mL.includes('volkswagen') || mL === 'crafter' || mL === 'tiguan') return 'Volkswagen';
+            if (mL === 'man' || mL.includes('man truck')) return 'MAN';
+            if (mL.includes('škoda') || mL.includes('skoda')) return 'Škoda';
+            if (mL.includes('iveco')) return 'Iveco';
+            if (mL.includes('volvo')) return 'Volvo';
+            if (mL.includes('peugeot') || mL.includes('peugot')) return 'Peugeot';
+            if (mL.includes('citroen') || mL.includes('citroën')) return 'Citroën';
+            if (mL.includes('bobcat') || mL.includes('bob cat')) return 'Bobcat';
+            if (mL.includes('john deere') || mL.includes('john der') || mL === 'dere' || mL === 'derre') return 'John Deere';
+            if (mL.includes('schmitz')) return 'Schmitz Cargobull';
+            if (mL.includes('schwarzmuller') || mL.includes('schwarzmüller')) return 'Schwarzmüller';
+            if (mL.includes('koegel') || mL.includes('kögel')) return 'Kögel';
+            if (mL.includes('moeslein') || mL.includes('moeslin')) return 'Möslein';
+            if (mL.includes('tomo vinkovi') || mL === 'tomo') return 'Tomo Vinković';
+            if (mL === 'toyota bt') return 'Toyota BT';
+            if (mL.includes('toyota')) return 'Toyota';
+            if (mL === 'bmw') return 'BMW';
+            if (mL === 'daf') return 'DAF';
+            if (mL === 'jcb') return 'JCB';
+            if (mL.includes('steyr')) return 'Steyr';
+            return m.charAt(0).toUpperCase() + m.slice(1);
         }
 
         function ocistiSegment(segment) {
