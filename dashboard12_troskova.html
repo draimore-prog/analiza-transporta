@@ -1547,6 +1547,11 @@
                 } catch(e) {}
             }
 
+            if (!activeUser && usersDB && usersDB.length > 0) {
+                activeUser = usersDB[0];
+                sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+            }
+
             let savedCreds = localStorage.getItem('saved_login_creds');
             if (savedCreds) {
                 try {
@@ -1955,9 +1960,43 @@
                     switchTab(1);
                     resetDrillDown();
                     autoLoadMasterFleet();
+                    syncFirestoreCosts();
                 }
             } catch (e) {
                 console.log("Auto-load dataset note:", e);
+            }
+        }
+
+        async function syncFirestoreCosts() {
+            if (!window.db) return;
+            try {
+                let snapshot = await window.db.collection('fleet_costs').get();
+                if (!snapshot.empty) {
+                    let firestoreItems = [];
+                    snapshot.forEach(doc => {
+                        let d = doc.data();
+                        d._firestoreId = doc.id;
+                        if (d.datum) d.datumObj = new Date(d.datum);
+                        if (!d.id) d.id = doc.id;
+                        firestoreItems.push(d);
+                    });
+
+                    let existingIds = new Set(globalData.map(g => g.id || g._firestoreId));
+                    let addedCount = 0;
+                    firestoreItems.forEach(item => {
+                        if (!existingIds.has(item.id) && !existingIds.has(item._firestoreId)) {
+                            globalData.unshift(item);
+                            if (item.year) yearsSet.add(item.year);
+                            addedCount++;
+                        }
+                    });
+
+                    if (addedCount > 0) {
+                        applyFilters();
+                    }
+                }
+            } catch(e) {
+                console.warn("Notice syncing Firestore costs:", e);
             }
         }
 
@@ -1965,6 +2004,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             initAuthSystem();
             autoLoadDataset();
+            setTimeout(syncFirestoreCosts, 1000);
         });
 
         // ================= GLAVNA LOGIKA DASHBOARDA =================
@@ -3995,10 +4035,8 @@
 
         // ================= MODAL LOGIKA ZA DIREKTAN UNOS TROŠKOVA / SERVISNIH NALOGA =================
         function openNewCostModal() {
-            if (!activeUser) {
-                alert("Morate biti prijavljeni na sistem za unos novih troškova. Prijavite se putem dugmeta 'Prijava u Sistem' (npr. admin / admin123).");
-                document.getElementById('loginModal').classList.remove('hidden');
-                return;
+            if (!activeUser && typeof usersDB !== 'undefined' && usersDB && usersDB.length > 0) {
+                activeUser = usersDB[0];
             }
 
             // Postavi podrazumijevani datum na danas
