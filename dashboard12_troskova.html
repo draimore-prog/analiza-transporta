@@ -2603,11 +2603,27 @@
         function ocistiSegment(segment, dobavljac) {
             if (dobavljac && dobavljac.toString().toLowerCase().includes('pgl')) return 'Guma';
             if (!segment) return 'Ostalo';
-            let s = segment.toString().trim();
-            if (s === '/' || s === '') return 'Ostalo';
-            let clean = s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-            if (clean === 'Gume' || clean === 'gume') return 'Guma';
-            return clean;
+            
+            let s = segment.toString().replace(/[\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, " ").trim();
+            if (s === '/' || s === '' || s === '-' || s.toLowerCase() === 'nepoznato') return 'Ostalo';
+
+            let sLower = s.toLowerCase();
+
+            // 1. Gume -> Uvijek 'Guma' (Jednina)
+            if (sLower.includes('gum') || sLower.includes('pneumat')) return 'Guma';
+
+            // 2. Hidraulika -> Uvijek 'Hidraulika' (Sa velikim H)
+            if (sLower.includes('hidraul')) return 'Hidraulika';
+
+            // 3. Ostale poznate kategorije
+            if (sLower.includes('motor') || sLower.includes('agregat')) return 'Motor';
+            if (sLower.includes('kočnic') || sLower.includes('kocnic') || sLower.includes('disk')) return 'Kočnice';
+            if (sLower.includes('mjenjač') || sLower.includes('mjenjac') || sLower.includes('kvačil') || sLower.includes('kvacil')) return 'Mjenjač';
+            if (sLower.includes('elektr') || sLower.includes('akumulat')) return 'Autoelektrika';
+            if (sLower.includes('limarij') || sLower.includes('staklo') || sLower.includes('šajb') || sLower.includes('sajb')) return 'Limarija i stakla';
+            if (sLower.includes('redovn') || sLower.includes('ulje') || sLower.includes('filter')) return 'Redovan servis';
+
+            return sLower.charAt(0).toUpperCase() + sLower.slice(1);
         }
 
         function parseExcelDate(rawDate, yearVal, monthVal) {
@@ -2785,9 +2801,9 @@
                                     let dobavljacOrig = ocistiDobavljaca(row['dobavljacOrig'] || row['dobavljac'] || row['Dobavljac'] || row['Serviser'] || row['Izvođač'] || '-');
                                     let isInternal = dobavljacOrig.toLowerCase().includes('intern'); 
                                     
-                                    let segment = ocistiSegment(row['Segment'] || row['Kategorija']);
+                                    let segment = ocistiSegment(row['Segment'] || row['Kategorija'], dobavljacOrig);
                                     if (dobavljacOrig.toLowerCase().includes('pgl')) {
-                                        segment = 'Gume';
+                                        segment = 'Guma';
                                     } 
                                     
                                     let rezDio = (row['RezDio'] || row['rezervni dio'] || '-').toString();
