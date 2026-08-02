@@ -3614,22 +3614,22 @@
 
                 let badgeHTML = '';
                 if (pCost === 0 && cCost === 0) {
-                    badgeHTML = '<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">0.0%</span>';
+                    badgeHTML = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 whitespace-nowrap">0.0%</span>';
                 } else if (diffKM < 0) {
-                    badgeHTML = `<span class="px-2 py-0.5 rounded text-[11px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">🟢 ${diffPerc.toFixed(1)}% (${diffKM.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)</span>`;
+                    badgeHTML = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 whitespace-nowrap">🟢 ${diffPerc.toFixed(1)}% (${diffKM.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)</span>`;
                 } else if (diffKM > 0) {
-                    badgeHTML = `<span class="px-2 py-0.5 rounded text-[11px] font-black bg-red-100 dark:bg-red-950/80 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-700">🔴 +${diffPerc.toFixed(1)}% (+${diffKM.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)</span>`;
+                    badgeHTML = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-black bg-red-100 dark:bg-red-950/80 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-700 whitespace-nowrap">🔴 +${diffPerc.toFixed(1)}% (+${diffKM.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)</span>`;
                 } else {
-                    badgeHTML = '<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">0.0%</span>';
+                    badgeHTML = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 whitespace-nowrap">0.0%</span>';
                 }
 
                 rowsHTML.push(`
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
-                        <td class="py-2.5 px-3 text-left font-bold text-slate-800 dark:text-slate-200">${k}</td>
-                        <td class="py-2.5 px-3 font-medium text-slate-600 dark:text-slate-400">${pCost > 0 ? pCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'} <span class="text-[10px] text-slate-400">(${pCount} op.)</span></td>
-                        <td class="py-2.5 px-3 font-extrabold text-slate-900 dark:text-white">${cCost > 0 ? cCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'} <span class="text-[10px] text-slate-400">(${cCount} op.)</span></td>
-                        <td class="py-2.5 px-3 font-semibold text-slate-600 dark:text-slate-400">${cAvg > 0 ? cAvg.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'}</td>
-                        <td class="py-2.5 px-3 text-center">${badgeHTML}</td>
+                        <td class="py-2.5 px-3 text-left font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">${k}</td>
+                        <td class="py-2.5 px-3 text-right font-mono font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap">${pCost > 0 ? pCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'} <span class="text-[10px] text-slate-400 font-sans">(${pCount})</span></td>
+                        <td class="py-2.5 px-3 text-right font-mono font-extrabold text-blue-700 dark:text-blue-400 whitespace-nowrap">${cCost > 0 ? cCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'} <span class="text-[10px] text-slate-400 font-sans">(${cCount})</span></td>
+                        <td class="py-2.5 px-3 text-right font-mono font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">${cAvg > 0 ? cAvg.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'}</td>
+                        <td class="py-2.5 px-3 text-right whitespace-nowrap">${badgeHTML}</td>
                     </tr>
                 `);
             });
@@ -3637,29 +3637,29 @@
             let totalDiffKM = totalCurrCost - totalPrevCost;
             let totalDiffPerc = totalPrevCost > 0 ? ((totalCurrCost - totalPrevCost) / totalPrevCost) * 100 : 0;
             let totalBadgeHTML = totalDiffKM <= 0 
-                ? `<span class="px-2.5 py-1 rounded text-xs font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700">🟢 UŠTEDA ${totalDiffPerc.toFixed(1)}% (${totalDiffKM.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)</span>`
-                : `<span class="px-2.5 py-1 rounded text-xs font-black bg-red-100 dark:bg-red-950 text-red-900 dark:text-red-200 border border-red-300 dark:border-red-700">🔴 RAST +${totalDiffPerc.toFixed(1)}% (+${totalDiffKM.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)</span>`;
+                ? `<span class="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 whitespace-nowrap">🟢 UŠTEDA ${totalDiffPerc.toFixed(1)}% (${totalDiffKM.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)</span>`
+                : `<span class="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-black bg-red-100 dark:bg-red-950 text-red-900 dark:text-red-200 border border-red-300 dark:border-red-700 whitespace-nowrap">🔴 RAST +${totalDiffPerc.toFixed(1)}% (+${totalDiffKM.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)</span>`;
 
             let grandTotalRow = `
                 <tr class="bg-slate-100 dark:bg-slate-800 font-extrabold text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700">
-                    <td class="py-3 px-3 text-left">UKUPNO (${groupKey === 'tipMehan' ? 'Svi tipovi' : 'Svi segmenti'})</td>
-                    <td class="py-3 px-3">${totalPrevCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM (${totalPrevCount})</td>
-                    <td class="py-3 px-3 text-blue-700 dark:text-blue-400">${totalCurrCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM (${totalCurrCount})</td>
-                    <td class="py-3 px-3">${totalCurrCount > 0 ? (totalCurrCost / totalCurrCount).toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'}</td>
-                    <td class="py-3 px-3 text-center">${totalBadgeHTML}</td>
+                    <td class="py-3 px-3 text-left whitespace-nowrap">UKUPNO (${groupKey === 'tipMehan' ? 'Svi tipovi' : 'Svi segmenti'})</td>
+                    <td class="py-3 px-3 text-right font-mono whitespace-nowrap">${totalPrevCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM (${totalPrevCount})</td>
+                    <td class="py-3 px-3 text-right font-mono text-blue-700 dark:text-blue-400 whitespace-nowrap">${totalCurrCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM (${totalCurrCount})</td>
+                    <td class="py-3 px-3 text-right font-mono whitespace-nowrap">${totalCurrCount > 0 ? (totalCurrCost / totalCurrCount).toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'}</td>
+                    <td class="py-3 px-3 text-right whitespace-nowrap">${totalBadgeHTML}</td>
                 </tr>
             `;
             rowsHTML.push(grandTotalRow);
 
             let tableHeader = `
-                <table class="min-w-full text-xs text-left border-collapse">
+                <table class="min-w-full text-xs text-left border-collapse font-sans">
                     <thead class="bg-slate-100 dark:bg-slate-900 font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                         <tr>
-                            <th class="py-2.5 px-3">${groupKey === 'tipMehan' ? 'Tip Mehanizacije' : 'Segment'}</th>
-                            <th class="py-2.5 px-3">${prevLabel}</th>
-                            <th class="py-2.5 px-3 text-blue-700 dark:text-blue-400">${currLabel}</th>
-                            <th class="py-2.5 px-3">Prosjek / Opravci</th>
-                            <th class="py-2.5 px-3 text-center">Status / Razlika</th>
+                            <th class="py-2.5 px-3 text-left whitespace-nowrap">${groupKey === 'tipMehan' ? 'Tip Mehanizacije' : 'Segment'}</th>
+                            <th class="py-2.5 px-3 text-right whitespace-nowrap">${prevLabel}</th>
+                            <th class="py-2.5 px-3 text-right text-blue-700 dark:text-blue-400 whitespace-nowrap">${currLabel}</th>
+                            <th class="py-2.5 px-3 text-right whitespace-nowrap">Prosječan Trošak</th>
+                            <th class="py-2.5 px-3 text-right whitespace-nowrap">Status / Razlika</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
@@ -3687,9 +3687,9 @@
             });
 
             const headerElem = document.getElementById('matrixTableHeader');
-            let headerHTML = `<tr><th class="py-2.5 px-3 text-left">Mjesec</th>`;
-            availableYears.forEach(y => { headerHTML += `<th class="py-2.5 px-3">${y} (KM)</th>`; });
-            headerHTML += `<th class="py-2.5 px-3 bg-blue-50 dark:bg-slate-800 text-blue-900 dark:text-blue-300">Ukupno</th></tr>`;
+            let headerHTML = `<tr><th class="py-2.5 px-3 text-left whitespace-nowrap">Mjesec</th>`;
+            availableYears.forEach(y => { headerHTML += `<th class="py-2.5 px-3 text-right whitespace-nowrap">${y} (KM)</th>`; });
+            headerHTML += `<th class="py-2.5 px-3 text-right bg-blue-50 dark:bg-slate-800 text-blue-900 dark:text-blue-300 whitespace-nowrap">Ukupno</th></tr>`;
             if (headerElem) headerElem.innerHTML = headerHTML;
 
             const bodyElem = document.getElementById('matrixTableBody');
@@ -3700,43 +3700,43 @@
             monthsNames.forEach((mName, mIdx) => {
                 let mNum = mIdx + 1;
                 let rowSum = 0;
-                let rowHTML = `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60"><td class="py-2 px-3 text-left font-bold text-slate-800 dark:text-slate-200">${mName}</td>`;
+                let rowHTML = `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60"><td class="py-2.5 px-3 text-left font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">${mName}</td>`;
                 
                 availableYears.forEach(y => {
                     let val = matrixData[mNum][y] || 0;
                     rowSum += val;
                     yearTotals[y] += val;
-                    rowHTML += `<td class="py-2 px-3 text-slate-700 dark:text-slate-300">${val > 0 ? val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) : '-'}</td>`;
+                    rowHTML += `<td class="py-2.5 px-3 text-right font-mono text-slate-700 dark:text-slate-300 whitespace-nowrap">${val > 0 ? val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) : '-'}</td>`;
                 });
 
-                rowHTML += `<td class="py-2 px-3 font-bold bg-blue-50/50 dark:bg-slate-800 text-blue-900 dark:text-blue-300">${rowSum.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td></tr>`;
+                rowHTML += `<td class="py-2.5 px-3 text-right font-mono font-bold bg-blue-50/50 dark:bg-slate-800 text-blue-900 dark:text-blue-300 whitespace-nowrap">${rowSum.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td></tr>`;
                 bodyRows.push(rowHTML);
             });
 
             let grandTotal = 0;
-            let totalRowHTML = `<tr class="bg-slate-100 dark:bg-slate-800 font-extrabold text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700"><td class="py-3 px-3 text-left">UKUPNO</td>`;
+            let totalRowHTML = `<tr class="bg-slate-100 dark:bg-slate-800 font-extrabold text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700"><td class="py-3 px-3 text-left whitespace-nowrap">UKUPNO</td>`;
             availableYears.forEach(y => {
                 let yTot = yearTotals[y] || 0;
                 grandTotal += yTot;
-                totalRowHTML += `<td class="py-3 px-3">${yTot.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>`;
+                totalRowHTML += `<td class="py-3 px-3 text-right font-mono whitespace-nowrap">${yTot.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>`;
             });
-            totalRowHTML += `<td class="py-3 px-3 bg-blue-100 dark:bg-slate-800 text-blue-950 dark:text-blue-300">${grandTotal.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</td></tr>`;
+            totalRowHTML += `<td class="py-3 px-3 text-right font-mono bg-blue-100 dark:bg-slate-800 text-blue-950 dark:text-blue-300 whitespace-nowrap">${grandTotal.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</td></tr>`;
             bodyRows.push(totalRowHTML);
 
             if (bodyElem) bodyElem.innerHTML = bodyRows.join('');
 
             // Matrica postotnih razlika
             const percHeaderElem = document.getElementById('matrixPercTableHeader');
-            let percHeaderHTML = `<tr><th class="py-2.5 px-3 text-left">Mjesec</th>`;
+            let percHeaderHTML = `<tr><th class="py-2.5 px-3 text-left whitespace-nowrap">Mjesec</th>`;
             availableYears.forEach((y, idx) => {
                 if (idx === 0) {
-                    percHeaderHTML += `<th class="py-2.5 px-3">${y} (Baza)</th>`;
+                    percHeaderHTML += `<th class="py-2.5 px-3 text-right whitespace-nowrap">${y} (Baza)</th>`;
                 } else {
                     let prevY = availableYears[idx - 1];
-                    percHeaderHTML += `<th class="py-2.5 px-3">${y} vs ${prevY}</th>`;
+                    percHeaderHTML += `<th class="py-2.5 px-3 text-right whitespace-nowrap">${y} vs ${prevY}</th>`;
                 }
             });
-            percHeaderHTML += `<th class="py-2.5 px-3 bg-indigo-50 dark:bg-slate-800 text-indigo-900 dark:text-indigo-300">Prosječni YoY Trend</th></tr>`;
+            percHeaderHTML += `<th class="py-2.5 px-3 text-right bg-indigo-50 dark:bg-slate-800 text-indigo-900 dark:text-indigo-300 whitespace-nowrap">Prosječni YoY Trend</th></tr>`;
             if (percHeaderElem) percHeaderElem.innerHTML = percHeaderHTML;
 
             const percBodyElem = document.getElementById('matrixPercTableBody');
@@ -3744,7 +3744,7 @@
 
             monthsNames.forEach((mName, mIdx) => {
                 let mNum = mIdx + 1;
-                let rowHTML = `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60"><td class="py-2 px-3 text-left font-bold text-slate-800 dark:text-slate-200">${mName}</td>`;
+                let rowHTML = `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60"><td class="py-2.5 px-3 text-left font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">${mName}</td>`;
                 let validPercSums = 0;
                 let validPercCount = 0;
 
@@ -3752,7 +3752,7 @@
                     let val = matrixData[mNum][y] || 0;
                     if (idx === 0) {
                         let displayVal = val > 0 ? val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-';
-                        rowHTML += `<td class="py-2 px-3 text-slate-600 dark:text-slate-400 font-semibold">${displayVal}</td>`;
+                        rowHTML += `<td class="py-2.5 px-3 text-right font-mono text-slate-600 dark:text-slate-400 font-semibold whitespace-nowrap">${displayVal}</td>`;
                     } else {
                         let prevY = availableYears[idx - 1];
                         let prevVal = matrixData[mNum][prevY] || 0;
@@ -3764,24 +3764,24 @@
 
                             let badgeHTML = '';
                             if (diffPerc > 0) {
-                                badgeHTML = `<span class="inline-block px-2 py-0.5 rounded text-[11px] font-extrabold bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">+${diffPerc.toFixed(1)}% 📈</span>`;
+                                badgeHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-extrabold bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 whitespace-nowrap">+${diffPerc.toFixed(1)}% 📈</span>`;
                             } else if (diffPerc < 0) {
-                                badgeHTML = `<span class="inline-block px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">${diffPerc.toFixed(1)}% 📉</span>`;
+                                badgeHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">${diffPerc.toFixed(1)}% 📉</span>`;
                             } else {
-                                badgeHTML = `<span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">0.0%</span>`;
+                                badgeHTML = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 whitespace-nowrap">0.0%</span>`;
                             }
 
-                            rowHTML += `<td class="py-2 px-3">
-                                <div class="font-bold text-slate-800 dark:text-slate-200 text-[11px]">${val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
-                                <div>${badgeHTML}</div>
+                            rowHTML += `<td class="py-2.5 px-3 text-right whitespace-nowrap">
+                                <div class="font-mono font-bold text-slate-800 dark:text-slate-200 text-[11px]">${val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
+                                <div class="mt-0.5">${badgeHTML}</div>
                             </td>`;
                         } else if (prevVal === 0 && val > 0) {
-                            rowHTML += `<td class="py-2 px-3">
-                                <div class="font-bold text-slate-800 dark:text-slate-200 text-[11px]">${val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
-                                <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300">Novo 🆕</span>
+                            rowHTML += `<td class="py-2.5 px-3 text-right whitespace-nowrap">
+                                <div class="font-mono font-bold text-slate-800 dark:text-slate-200 text-[11px]">${val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
+                                <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 whitespace-nowrap">Novo 🆕</span>
                             </td>`;
                         } else {
-                            rowHTML += `<td class="py-2 px-3 text-slate-400">-</td>`;
+                            rowHTML += `<td class="py-2.5 px-3 text-right text-slate-400 whitespace-nowrap">-</td>`;
                         }
                     }
                 });
@@ -3790,24 +3790,24 @@
                 if (validPercCount > 0) {
                     let avgP = validPercSums / validPercCount;
                     if (avgP > 0) {
-                        avgTrendBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-red-100 dark:bg-red-900/60 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800">+${avgP.toFixed(1)}%/god 📈</span>`;
+                        avgTrendBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-red-100 dark:bg-red-900/60 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800 whitespace-nowrap">+${avgP.toFixed(1)}%/god 📈</span>`;
                     } else if (avgP < 0) {
-                        avgTrendBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">${avgP.toFixed(1)}%/god 📉</span>`;
+                        avgTrendBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">${avgP.toFixed(1)}%/god 📉</span>`;
                     } else {
-                        avgTrendBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">0.0%/god</span>`;
+                        avgTrendBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 whitespace-nowrap">0.0%/god</span>`;
                     }
                 }
-                rowHTML += `<td class="py-2 px-3 font-bold bg-indigo-50/40 dark:bg-slate-800/40">${avgTrendBadge}</td></tr>`;
+                rowHTML += `<td class="py-2.5 px-3 text-right font-bold bg-indigo-50/40 dark:bg-slate-800/40 whitespace-nowrap">${avgTrendBadge}</td></tr>`;
                 percBodyRows.push(rowHTML);
             });
 
-            let totalPercRowHTML = `<tr class="bg-slate-100 dark:bg-slate-800 font-extrabold text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700"><td class="py-3 px-3 text-left">UKUPNO YOY RAST / PAD</td>`;
+            let totalPercRowHTML = `<tr class="bg-slate-100 dark:bg-slate-800 font-extrabold text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700"><td class="py-3 px-3 text-left whitespace-nowrap">UKUPNO YOY RAST / PAD</td>`;
             let totalValidSums = 0, totalValidCount = 0;
 
             availableYears.forEach((y, idx) => {
                 let yTot = yearTotals[y] || 0;
                 if (idx === 0) {
-                    totalPercRowHTML += `<td class="py-3 px-3 text-slate-700 dark:text-slate-300 font-bold">${yTot.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</td>`;
+                    totalPercRowHTML += `<td class="py-3 px-3 text-right font-mono text-slate-700 dark:text-slate-300 font-bold whitespace-nowrap">${yTot.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</td>`;
                 } else {
                     let prevY = availableYears[idx - 1];
                     let prevYTot = yearTotals[prevY] || 0;
@@ -3821,12 +3821,12 @@
                         let sign = diffP > 0 ? '+' : '';
                         let arrow = diffP > 0 ? '📈' : (diffP < 0 ? '📉' : '');
 
-                        totalPercRowHTML += `<td class="py-3 px-3">
-                            <div class="font-black text-slate-900 dark:text-white text-[11px]">${yTot.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
-                            <span class="inline-block mt-0.5 px-2 py-0.5 rounded text-[11px] font-black ${badgeClass}">${sign}${diffP.toFixed(1)}% ${arrow}</span>
+                        totalPercRowHTML += `<td class="py-3 px-3 text-right whitespace-nowrap">
+                            <div class="font-mono font-black text-slate-900 dark:text-white text-[11px]">${yTot.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
+                            <span class="inline-block mt-0.5 px-2 py-0.5 rounded text-[11px] font-black ${badgeClass} whitespace-nowrap">${sign}${diffP.toFixed(1)}% ${arrow}</span>
                         </td>`;
                     } else {
-                        totalPercRowHTML += `<td class="py-3 px-3 text-slate-400">-</td>`;
+                        totalPercRowHTML += `<td class="py-3 px-3 text-right text-slate-400 whitespace-nowrap">-</td>`;
                     }
                 }
             });
@@ -3837,9 +3837,9 @@
                 let badgeC = grandAvg > 0 ? 'bg-red-100 dark:bg-red-900/60 text-red-900 dark:text-red-200 border border-red-300 dark:border-red-700' : 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700';
                 let sign = grandAvg > 0 ? '+' : '';
                 let arrow = grandAvg > 0 ? '📈' : '📉';
-                grandAvgBadge = `<span class="px-2.5 py-1 rounded-lg text-xs font-black ${badgeC}">${sign}${grandAvg.toFixed(1)}%/god ${arrow}</span>`;
+                grandAvgBadge = `<span class="px-2.5 py-1 rounded-lg text-xs font-black ${badgeC} whitespace-nowrap">${sign}${grandAvg.toFixed(1)}%/god ${arrow}</span>`;
             }
-            totalPercRowHTML += `<td class="py-3 px-3 bg-indigo-100 dark:bg-slate-800 text-indigo-950 dark:text-indigo-300">${grandAvgBadge}</td></tr>`;
+            totalPercRowHTML += `<td class="py-3 px-3 text-right bg-indigo-100 dark:bg-slate-800 text-indigo-950 dark:text-indigo-300 whitespace-nowrap">${grandAvgBadge}</td></tr>`;
             percBodyRows.push(totalPercRowHTML);
 
             if (percBodyElem) percBodyElem.innerHTML = percBodyRows.join('');
