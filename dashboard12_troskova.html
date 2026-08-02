@@ -4152,8 +4152,8 @@
             document.getElementById('modalRegBadge').innerText = `GARAŽNI BROJ: ${gb}`;
             document.getElementById('modalSubtitle').innerText = `Marka: ${marka}  |  Godište: ${god}  |  Tip: ${tip}`;
             
-            renderModalContent(currentModalVehicleData);
             document.getElementById('vehicleModal').classList.remove('hidden');
+            renderModalContent(currentModalVehicleData);
         }
 
         document.getElementById('modalSegmentFilter').addEventListener('change', function() {
@@ -4219,16 +4219,32 @@
             let sortedYears = Object.keys(costsByYear).sort();
             modalYearChartInstance = new Chart(ctxYear, { 
                 type: 'bar', 
-                data: { labels: sortedYears, datasets: [{ label: 'Trošak (KM)', data: sortedYears.map(y => costsByYear[y]), backgroundColor: '#2563eb', borderRadius: 6 }] }, 
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } } 
+                data: { labels: sortedYears, datasets: [{ label: 'Trošak (KM)', data: sortedYears.map(y => costsByYear[y]), backgroundColor: isDarkMode ? '#38bdf8' : '#2563eb', borderRadius: 6 }] }, 
+                options: { 
+                    responsive: true,
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: isDarkMode ? '#cbd5e1' : '#64748b' }, grid: { color: isDarkMode ? '#334155' : '#e2e8f0' } },
+                        y: { ticks: { color: isDarkMode ? '#cbd5e1' : '#64748b' }, grid: { color: isDarkMode ? '#334155' : '#e2e8f0' } }
+                    }
+                } 
             });
 
             if(modalMonthChartInstance) modalMonthChartInstance.destroy(); 
             const ctxMonth = document.getElementById('modalMonthChart').getContext('2d'); 
             modalMonthChartInstance = new Chart(ctxMonth, { 
                 type: 'line', 
-                data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'], datasets: [{ label: 'Trošak (KM)', data: Object.values(costsByMonth), borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.12)', fill: true, tension: 0.3 }] }, 
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } } 
+                data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'], datasets: [{ label: 'Trošak (KM)', data: Object.values(costsByMonth), borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.18)', fill: true, tension: 0.3 }] }, 
+                options: { 
+                    responsive: true,
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: isDarkMode ? '#cbd5e1' : '#64748b' }, grid: { color: isDarkMode ? '#334155' : '#e2e8f0' } },
+                        y: { ticks: { color: isDarkMode ? '#cbd5e1' : '#64748b' }, grid: { color: isDarkMode ? '#334155' : '#e2e8f0' } }
+                    }
+                } 
             });
         }
 
