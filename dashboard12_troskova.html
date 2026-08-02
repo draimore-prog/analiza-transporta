@@ -27,6 +27,85 @@
         ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* ================= DARK MODE COLOR PALETTE & STYLES ================= */
+        html.dark {
+            color-scheme: dark;
+        }
+        html.dark body {
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+        html.dark .card,
+        html.dark .bg-white {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f1f5f9 !important;
+        }
+        html.dark .text-slate-800,
+        html.dark .text-slate-900,
+        html.dark .text-slate-700,
+        html.dark .text-slate-600,
+        html.dark .text-gray-800,
+        html.dark .text-gray-900 {
+            color: #f8fafc !important;
+        }
+        html.dark .text-slate-500,
+        html.dark .text-slate-400,
+        html.dark .text-gray-500,
+        html.dark .text-gray-600 {
+            color: #94a3b8 !important;
+        }
+        html.dark .bg-slate-50,
+        html.dark .bg-slate-100,
+        html.dark .bg-gray-50,
+        html.dark .bg-gray-100 {
+            background-color: #0f172a !important;
+            color: #e2e8f0 !important;
+        }
+        html.dark .bg-slate-200,
+        html.dark .bg-slate-300 {
+            background-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        html.dark .border-slate-100,
+        html.dark .border-slate-200,
+        html.dark .border-slate-300,
+        html.dark .border-gray-200 {
+            border-color: #334155 !important;
+        }
+        html.dark input,
+        html.dark select,
+        html.dark textarea {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+            border-color: #475569 !important;
+        }
+        html.dark input::placeholder,
+        html.dark textarea::placeholder {
+            color: #64748b !important;
+        }
+        html.dark table thead {
+            background-color: #0f172a !important;
+            color: #cbd5e1 !important;
+        }
+        html.dark table tbody tr {
+            border-color: #334155 !important;
+        }
+        html.dark table tbody tr:hover {
+            background-color: #334155 !important;
+        }
+        html.dark .dropzone {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+        }
+        html.dark .dropzone:hover {
+            background-color: #1e3a8a !important;
+        }
+        html.dark select option {
+            background-color: #1e293b !important;
+            color: #f8fafc !important;
+        }
         
         /* PRILAGOĐENI STILOVI ZA PRINTE / PDF IZDAVANJE KARTONA VOZILA */
         @media print {
@@ -489,6 +568,12 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Theme Switcher Button -->
+                <button id="themeToggleBtn" onclick="toggleTheme()" class="px-3.5 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-amber-300 hover:bg-slate-300 dark:hover:bg-slate-700 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 border border-slate-300 dark:border-slate-700 shadow-sm cursor-pointer" title="Prebaci temu (Svijetla / Tamna)">
+                    <span id="themeToggleIcon">🌙</span>
+                    <span id="themeToggleText" class="font-extrabold">Tamna Tema</span>
+                </button>
 
                 <!-- Upload Zona / Dropzone -->
                 <div id="dropZone" class="dropzone p-4 rounded-xl flex items-center gap-4 shadow-sm relative group">
@@ -1486,6 +1571,74 @@
     </div>
 
     <script>
+        // ================= THEME MANAGEMENT (LIGHT & DARK MODE) =================
+        function initTheme() {
+            let savedTheme = localStorage.getItem('app_theme');
+            if (!savedTheme) {
+                savedTheme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+            }
+            applyTheme(savedTheme);
+        }
+
+        function toggleTheme() {
+            let current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+            let newTheme = current === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('app_theme', newTheme);
+            applyTheme(newTheme);
+            
+            if (typeof currentFilteredData !== 'undefined' && currentFilteredData.length > 0) {
+                renderActiveTabContent();
+            }
+            let vModal = document.getElementById('vehicleModal');
+            if (vModal && !vModal.classList.contains('hidden') && typeof currentModalVehicleData !== 'undefined' && currentModalVehicleData.length > 0) {
+                let regTitle = document.getElementById('modalRegBadge')?.innerText || '';
+                if (regTitle) openVehicleModal(regTitle);
+            }
+        }
+
+        function applyTheme(theme) {
+            const btnIcon = document.getElementById('themeToggleIcon');
+            const btnText = document.getElementById('themeToggleText');
+            
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                if (btnIcon) btnIcon.innerText = '☀️';
+                if (btnText) btnText.innerText = 'Svijetla Tema';
+            } else {
+                document.documentElement.classList.remove('dark');
+                if (btnIcon) btnIcon.innerText = '🌙';
+                if (btnText) btnText.innerText = 'Tamna Tema';
+            }
+
+            applyChartDefaultsForTheme(theme === 'dark');
+        }
+
+        function applyChartDefaultsForTheme(isDark) {
+            if (typeof Chart === 'undefined') return;
+            const textColor = isDark ? '#cbd5e1' : '#475569';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+            const tooltipBg = isDark ? '#0f172a' : '#1e293b';
+
+            Chart.defaults.color = textColor;
+            Chart.defaults.borderColor = gridColor;
+
+            if (Chart.defaults.plugins) {
+                if (Chart.defaults.plugins.legend && Chart.defaults.plugins.legend.labels) {
+                    Chart.defaults.plugins.legend.labels.color = textColor;
+                }
+                if (Chart.defaults.plugins.tooltip) {
+                    Chart.defaults.plugins.tooltip.backgroundColor = tooltipBg;
+                    Chart.defaults.plugins.tooltip.titleColor = '#ffffff';
+                    Chart.defaults.plugins.tooltip.bodyColor = '#f8fafc';
+                    Chart.defaults.plugins.tooltip.borderColor = isDark ? '#334155' : '#cbd5e1';
+                    Chart.defaults.plugins.tooltip.borderWidth = 1;
+                }
+            }
+        }
+
+        // Run immediately to avoid visual flicker
+        initTheme();
+
         // ================= AUTHENTICATION & USER MANAGEMENT (V19) =================
         const LOCAL_STORAGE_USERS_KEY = 'transport_app_users_v19';
         const SESSION_ACTIVE_USER_KEY = 'transport_app_active_user';
@@ -2029,6 +2182,7 @@
 
         // Initialize Auth system & dataset on load
         window.addEventListener('DOMContentLoaded', () => {
+            initTheme();
             initAuthSystem();
             autoLoadDataset();
             setTimeout(syncFirestoreUsers, 500);
@@ -2844,7 +2998,7 @@
                         data: [intCost, extCost],
                         backgroundColor: ['#2563eb', '#f59e0b'],
                         borderWidth: 2,
-                        borderColor: '#ffffff'
+                        borderColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff'
                     }]
                 },
                 options: {
@@ -2918,7 +3072,7 @@
                         data: sortedSegments.map(s => s[1]),
                         backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'],
                         borderWidth: 2,
-                        borderColor: '#ffffff'
+                        borderColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff'
                     }]
                 },
                 options: {
@@ -3182,7 +3336,7 @@
                 type: 'doughnut',
                 data: {
                     labels: ['Rezervni Dijelovi', 'Usluge / Radni sati'],
-                    datasets: [{ data: [parts, services], backgroundColor: ['#3b82f6', '#f59e0b'] }]
+                    datasets: [{ data: [parts, services], backgroundColor: ['#3b82f6', '#f59e0b'], borderWidth: 2, borderColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff' }]
                 },
                 options: { maintainAspectRatio: false }
             });
