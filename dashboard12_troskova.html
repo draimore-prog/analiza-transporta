@@ -2947,10 +2947,22 @@
             renderActiveTabContent();
         }
 
+        function getTab3BaseData() {
+            const selectedTip = document.getElementById('filterTip')?.value || 'all';
+            const selectedMarka = document.getElementById('filterMarka')?.value || 'all';
+
+            return globalData.filter(item => {
+                let matchTip = selectedTip === 'all' || item.tipMehan === selectedTip;
+                let matchMarka = selectedMarka === 'all' || item.markaVoz === selectedMarka;
+                let matchSeg = activeSegment === null || item.segment === activeSegment;
+                return matchTip && matchMarka && matchSeg;
+            });
+        }
+
         function renderActiveTabContent() {
             if (activeTab === 1) processTab1(currentFilteredData);
             else if (activeTab === 2) processTab2(currentFilteredData);
-            else if (activeTab === 3) processTab3(currentFilteredData);
+            else if (activeTab === 3) processTab3(getTab3BaseData());
             else if (activeTab === 4) renderTransactionTable(currentFilteredData);
             else if (activeTab === 5) renderMasterFleetTable();
         }
@@ -3598,7 +3610,7 @@
 
         function triggerTab3Comparison() {
             if (typeof globalData !== 'undefined' && globalData.length > 0) {
-                processTab3(globalData);
+                processTab3(getTab3BaseData());
             }
         }
 
