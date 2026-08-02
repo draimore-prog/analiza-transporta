@@ -3683,8 +3683,8 @@
             let ytdBadge = document.getElementById('ytdPeriodLabel');
             if (ytdBadge) ytdBadge.innerText = periodLabel;
 
-            renderComparisonGrid('ytdTypeGrid', currPeriodData, prevPeriodData, 'tipMehan', currYear.toString(), prevYear.toString());
-            renderComparisonGrid('ytdSegmentGrid', currPeriodData, prevPeriodData, 'segment', currYear.toString(), prevYear.toString());
+            renderComparisonGrid('ytdTypeGrid', currPeriodData, prevPeriodData, 'tipMehan', currYear.toString(), prevYear.toString(), currYear, prevYear);
+            renderComparisonGrid('ytdSegmentGrid', currPeriodData, prevPeriodData, 'segment', currYear.toString(), prevYear.toString(), currYear, prevYear);
 
             // 2. Mjesečni YoY
             let currMonthData = data.filter(d => d.year === currYear && d.month === targetMonth);
@@ -3694,7 +3694,7 @@
             
             let yoyLbl = document.getElementById('yoyMonthLabel');
             if (yoyLbl) yoyLbl.innerText = `${mName} ${currYear}. vs ${mName} ${prevYear}. (YoY)`;
-            renderComparisonGrid('yoyMonthTypeGrid', currMonthData, prevYearMonthData, 'tipMehan', `${mName} ${currYear}`, `${mName} ${prevYear}`);
+            renderComparisonGrid('yoyMonthTypeGrid', currMonthData, prevYearMonthData, 'tipMehan', `${mName} ${currYear}`, `${mName} ${prevYear}`, currYear, prevYear);
 
             // 3. Mjesečni MoM
             let momMonthData = data.filter(d => d.year === prevMonthYear && d.month === prevMonth);
@@ -3702,13 +3702,13 @@
             
             let momLbl = document.getElementById('momMonthLabel');
             if (momLbl) momLbl.innerText = `${mName} ${currYear}. vs ${prevMName} ${prevMonthYear}. (MoM)`;
-            renderComparisonGrid('momMonthTypeGrid', currMonthData, momMonthData, 'tipMehan', `${mName} ${currYear}`, `${prevMName} ${prevMonthYear}`);
+            renderComparisonGrid('momMonthTypeGrid', currMonthData, momMonthData, 'tipMehan', `${mName} ${currYear}`, `${prevMName} ${prevMonthYear}`, currYear, prevMonthYear);
 
             // 4. Render Multi-year Matrices
             renderMultiYearMatrices(data, availableYears);
         }
 
-        function renderComparisonGrid(containerId, currData, prevData, groupKey, currLabel, prevLabel) {
+        function renderComparisonGrid(containerId, currData, prevData, groupKey, currLabel, prevLabel, yearA, yearB) {
             const container = document.getElementById(containerId);
             if (!container) return;
 
@@ -3740,24 +3740,34 @@
             let totalCurrCost = 0;
             let totalPrevCost = 0;
 
+            // Određujemo koja je godina novija radi poređenja (Novija vs Starija)
+            let yA = yearA || 0;
+            let yB = yearB || 0;
+            let isANewer = yA >= yB;
+
             let rowsHTML = [];
             sortedKeys.forEach(k => {
-                let cCost = currMap[k] ? currMap[k].cost : 0;
-                let pCost = prevMap[k] ? prevMap[k].cost : 0;
+                let cCost = currMap[k] ? currMap[k].cost : 0; // Godina A
+                let pCost = prevMap[k] ? prevMap[k].cost : 0; // Godina B
 
                 totalCurrCost += cCost;
                 totalPrevCost += pCost;
 
-                let diffKM = cCost - pCost;
-                let diffPerc = pCost > 0 ? ((cCost - pCost) / pCost) * 100 : (cCost > 0 ? 100 : 0);
+                let newerCost = isANewer ? cCost : pCost;
+                let olderCost = isANewer ? pCost : cCost;
+
+                let diffKM = newerCost - olderCost;
+                let diffPerc = olderCost > 0 ? ((newerCost - olderCost) / olderCost) * 100 : (newerCost > 0 ? 100 : 0);
 
                 let badgeHTML = '';
-                if (pCost === 0 && cCost === 0) {
+                if (olderCost === 0 && newerCost === 0) {
                     badgeHTML = '<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">0.0%</span>';
-                } else if (diffKM < 0) {
-                    badgeHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">🟢 ${diffPerc.toFixed(1)}%</span>`;
                 } else if (diffKM > 0) {
+                    // Trošak u novijoj godini je veći -> VEĆI TROŠAK = RAST (🔴 RED)
                     badgeHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-black bg-red-100 dark:bg-red-950/80 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-700">🔴 +${diffPerc.toFixed(1)}%</span>`;
+                } else if (diffKM < 0) {
+                    // Trošak u novijoj godini je manji -> MANJI TROŠAK = UŠTEDA (🟢 GREEN)
+                    badgeHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">🟢 ${diffPerc.toFixed(1)}%</span>`;
                 } else {
                     badgeHTML = '<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">0.0%</span>';
                 }
@@ -3772,11 +3782,19 @@
                 `);
             });
 
-            let totalDiffKM = totalCurrCost - totalPrevCost;
-            let totalDiffPerc = totalPrevCost > 0 ? ((totalCurrCost - totalPrevCost) / totalPrevCost) * 100 : 0;
-            let totalBadgeHTML = totalDiffKM <= 0 
-                ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700">🟢 ${totalDiffPerc.toFixed(1)}%</span>`
-                : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-black bg-red-100 dark:bg-red-950 text-red-900 dark:text-red-200 border border-red-300 dark:border-red-700">🔴 +${totalDiffPerc.toFixed(1)}%</span>`;
+            let totalNewerCost = isANewer ? totalCurrCost : totalPrevCost;
+            let totalOlderCost = isANewer ? totalPrevCost : totalCurrCost;
+
+            let totalDiffKM = totalNewerCost - totalOlderCost;
+            let totalDiffPerc = totalOlderCost > 0 ? ((totalNewerCost - totalOlderCost) / totalOlderCost) * 100 : 0;
+            let totalBadgeHTML = '';
+            if (totalDiffKM > 0) {
+                totalBadgeHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-black bg-red-100 dark:bg-red-950 text-red-900 dark:text-red-200 border border-red-300 dark:border-red-700">🔴 +${totalDiffPerc.toFixed(1)}%</span>`;
+            } else if (totalDiffKM < 0) {
+                totalBadgeHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700">🟢 ${totalDiffPerc.toFixed(1)}%</span>`;
+            } else {
+                totalBadgeHTML = `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">0.0%</span>`;
+            }
 
             let grandTotalRow = `
                 <tr class="bg-slate-100 dark:bg-slate-800 font-extrabold text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700">
