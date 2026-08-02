@@ -921,9 +921,9 @@
                         <h3 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
                             <span>🚛 1. Komparacija po Tipu Mehanizacije (YoY Period)</span>
                         </h3>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase">Total | Opravci | Prosjek</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Poređenje Troškova</span>
                     </div>
-                    <div id="ytdTypeGrid" class="overflow-x-auto">
+                    <div id="ytdTypeGrid" class="w-full">
                         <!-- Popunjava se dinamički -->
                     </div>
                 </div>
@@ -934,9 +934,9 @@
                         <h3 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
                             <span>🏷️ 2. Komparacija po Segmentima Troškova (YoY Period)</span>
                         </h3>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase">Total | Opravci | Prosjek</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Poređenje Troškova</span>
                     </div>
-                    <div id="ytdSegmentGrid" class="overflow-x-auto">
+                    <div id="ytdSegmentGrid" class="w-full">
                         <!-- Popunjava se dinamički -->
                     </div>
                 </div>
@@ -952,7 +952,7 @@
                         </h3>
                         <span id="yoyMonthLabel" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 font-mono">YoY</span>
                     </div>
-                    <div id="yoyMonthTypeGrid" class="overflow-x-auto">
+                    <div id="yoyMonthTypeGrid" class="w-full">
                         <!-- Popunjava se dinamički -->
                     </div>
                 </div>
@@ -965,7 +965,7 @@
                         </h3>
                         <span id="momMonthLabel" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono">MoM</span>
                     </div>
-                    <div id="momMonthTypeGrid" class="overflow-x-auto">
+                    <div id="momMonthTypeGrid" class="w-full">
                         <!-- Popunjava se dinamički -->
                     </div>
                 </div>
@@ -3593,43 +3593,37 @@
                 return cB - cA;
             });
 
-            let totalCurrCost = 0, totalCurrCount = 0;
-            let totalPrevCost = 0, totalPrevCount = 0;
+            let totalCurrCost = 0;
+            let totalPrevCost = 0;
 
             let rowsHTML = [];
             sortedKeys.forEach(k => {
                 let cCost = currMap[k] ? currMap[k].cost : 0;
-                let cCount = currMap[k] ? currMap[k].count : 0;
-                let cAvg = cCount > 0 ? cCost / cCount : 0;
-
                 let pCost = prevMap[k] ? prevMap[k].cost : 0;
-                let pCount = prevMap[k] ? prevMap[k].count : 0;
-                let pAvg = pCount > 0 ? pCost / pCount : 0;
 
-                totalCurrCost += cCost; totalCurrCount += cCount;
-                totalPrevCost += pCost; totalPrevCount += pCount;
+                totalCurrCost += cCost;
+                totalPrevCost += pCost;
 
                 let diffKM = cCost - pCost;
                 let diffPerc = pCost > 0 ? ((cCost - pCost) / pCost) * 100 : (cCost > 0 ? 100 : 0);
 
                 let badgeHTML = '';
                 if (pCost === 0 && cCost === 0) {
-                    badgeHTML = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 whitespace-nowrap">0.0%</span>';
+                    badgeHTML = '<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">0.0%</span>';
                 } else if (diffKM < 0) {
-                    badgeHTML = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 whitespace-nowrap">🟢 ${diffPerc.toFixed(1)}% (${diffKM.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)</span>`;
+                    badgeHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">🟢 ${diffPerc.toFixed(1)}%</span>`;
                 } else if (diffKM > 0) {
-                    badgeHTML = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-black bg-red-100 dark:bg-red-950/80 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-700 whitespace-nowrap">🔴 +${diffPerc.toFixed(1)}% (+${diffKM.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)</span>`;
+                    badgeHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-black bg-red-100 dark:bg-red-950/80 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-700">🔴 +${diffPerc.toFixed(1)}%</span>`;
                 } else {
-                    badgeHTML = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 whitespace-nowrap">0.0%</span>';
+                    badgeHTML = '<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">0.0%</span>';
                 }
 
                 rowsHTML.push(`
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
-                        <td class="py-2.5 px-3 text-left font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">${k}</td>
-                        <td class="py-2.5 px-3 text-right font-mono font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap">${pCost > 0 ? pCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'} <span class="text-[10px] text-slate-400 font-sans">(${pCount})</span></td>
-                        <td class="py-2.5 px-3 text-right font-mono font-extrabold text-blue-700 dark:text-blue-400 whitespace-nowrap">${cCost > 0 ? cCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'} <span class="text-[10px] text-slate-400 font-sans">(${cCount})</span></td>
-                        <td class="py-2.5 px-3 text-right font-mono font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">${cAvg > 0 ? cAvg.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'}</td>
-                        <td class="py-2.5 px-3 text-right whitespace-nowrap">${badgeHTML}</td>
+                        <td class="py-2 px-2.5 text-left font-bold text-slate-800 dark:text-slate-200">${k}</td>
+                        <td class="py-2 px-2.5 text-right font-mono font-medium text-slate-600 dark:text-slate-400">${pCost > 0 ? pCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'}</td>
+                        <td class="py-2 px-2.5 text-right font-mono font-extrabold text-blue-700 dark:text-blue-400">${cCost > 0 ? cCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'}</td>
+                        <td class="py-2 px-2.5 text-right font-mono">${badgeHTML}</td>
                     </tr>
                 `);
             });
@@ -3637,29 +3631,27 @@
             let totalDiffKM = totalCurrCost - totalPrevCost;
             let totalDiffPerc = totalPrevCost > 0 ? ((totalCurrCost - totalPrevCost) / totalPrevCost) * 100 : 0;
             let totalBadgeHTML = totalDiffKM <= 0 
-                ? `<span class="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 whitespace-nowrap">🟢 UŠTEDA ${totalDiffPerc.toFixed(1)}% (${totalDiffKM.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)</span>`
-                : `<span class="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-black bg-red-100 dark:bg-red-950 text-red-900 dark:text-red-200 border border-red-300 dark:border-red-700 whitespace-nowrap">🔴 RAST +${totalDiffPerc.toFixed(1)}% (+${totalDiffKM.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)</span>`;
+                ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700">🟢 ${totalDiffPerc.toFixed(1)}%</span>`
+                : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-black bg-red-100 dark:bg-red-950 text-red-900 dark:text-red-200 border border-red-300 dark:border-red-700">🔴 +${totalDiffPerc.toFixed(1)}%</span>`;
 
             let grandTotalRow = `
                 <tr class="bg-slate-100 dark:bg-slate-800 font-extrabold text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700">
-                    <td class="py-3 px-3 text-left whitespace-nowrap">UKUPNO (${groupKey === 'tipMehan' ? 'Svi tipovi' : 'Svi segmenti'})</td>
-                    <td class="py-3 px-3 text-right font-mono whitespace-nowrap">${totalPrevCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM (${totalPrevCount})</td>
-                    <td class="py-3 px-3 text-right font-mono text-blue-700 dark:text-blue-400 whitespace-nowrap">${totalCurrCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM (${totalCurrCount})</td>
-                    <td class="py-3 px-3 text-right font-mono whitespace-nowrap">${totalCurrCount > 0 ? (totalCurrCost / totalCurrCount).toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'}</td>
-                    <td class="py-3 px-3 text-right whitespace-nowrap">${totalBadgeHTML}</td>
+                    <td class="py-2.5 px-2.5 text-left">UKUPNO</td>
+                    <td class="py-2.5 px-2.5 text-right font-mono">${totalPrevCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</td>
+                    <td class="py-2.5 px-2.5 text-right font-mono text-blue-700 dark:text-blue-400">${totalCurrCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</td>
+                    <td class="py-2.5 px-2.5 text-right font-mono">${totalBadgeHTML}</td>
                 </tr>
             `;
             rowsHTML.push(grandTotalRow);
 
             let tableHeader = `
-                <table class="min-w-full text-xs text-left border-collapse font-sans">
+                <table class="w-full text-xs text-left border-collapse font-sans">
                     <thead class="bg-slate-100 dark:bg-slate-900 font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                         <tr>
-                            <th class="py-2.5 px-3 text-left whitespace-nowrap">${groupKey === 'tipMehan' ? 'Tip Mehanizacije' : 'Segment'}</th>
-                            <th class="py-2.5 px-3 text-right whitespace-nowrap">${prevLabel}</th>
-                            <th class="py-2.5 px-3 text-right text-blue-700 dark:text-blue-400 whitespace-nowrap">${currLabel}</th>
-                            <th class="py-2.5 px-3 text-right whitespace-nowrap">Prosječan Trošak</th>
-                            <th class="py-2.5 px-3 text-right whitespace-nowrap">Status / Razlika</th>
+                            <th class="py-2 px-2.5 text-left">${groupKey === 'tipMehan' ? 'Tip Mehanizacije' : 'Segment'}</th>
+                            <th class="py-2 px-2.5 text-right">${prevLabel}</th>
+                            <th class="py-2 px-2.5 text-right text-blue-700 dark:text-blue-400">${currLabel}</th>
+                            <th class="py-2 px-2.5 text-right">Razlika</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
