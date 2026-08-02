@@ -42,36 +42,69 @@
             border-color: #334155 !important;
             color: #f1f5f9 !important;
         }
-        html.dark .text-slate-800,
         html.dark .text-slate-900,
+        html.dark .text-slate-800,
         html.dark .text-slate-700,
         html.dark .text-slate-600,
+        html.dark .text-gray-900,
         html.dark .text-gray-800,
-        html.dark .text-gray-900 {
+        html.dark .text-gray-700 {
             color: #f8fafc !important;
         }
         html.dark .text-slate-500,
         html.dark .text-slate-400,
         html.dark .text-gray-500,
-        html.dark .text-gray-600 {
-            color: #94a3b8 !important;
+        html.dark .text-gray-400 {
+            color: #cbd5e1 !important;
+        }
+        html.dark .text-indigo-900,
+        html.dark .text-indigo-800,
+        html.dark .text-indigo-700,
+        html.dark .text-indigo-600,
+        html.dark .text-blue-900,
+        html.dark .text-blue-800,
+        html.dark .text-blue-700,
+        html.dark .text-emerald-900,
+        html.dark .text-emerald-800,
+        html.dark .text-emerald-700,
+        html.dark .text-amber-900,
+        html.dark .text-amber-800,
+        html.dark .text-amber-700,
+        html.dark .text-purple-900,
+        html.dark .text-purple-800,
+        html.dark .text-purple-700 {
+            color: #38bdf8 !important;
         }
         html.dark .bg-slate-50,
         html.dark .bg-slate-100,
         html.dark .bg-gray-50,
-        html.dark .bg-gray-100 {
+        html.dark .bg-gray-100,
+        html.dark .bg-indigo-50,
+        html.dark .bg-blue-50,
+        html.dark .bg-emerald-50,
+        html.dark .bg-amber-50,
+        html.dark .bg-gradient-to-br {
             background-color: #0f172a !important;
+            background-image: none !important;
             color: #e2e8f0 !important;
         }
         html.dark .bg-slate-200,
-        html.dark .bg-slate-300 {
+        html.dark .bg-slate-300,
+        html.dark .bg-indigo-100,
+        html.dark .bg-blue-100,
+        html.dark .bg-emerald-100,
+        html.dark .bg-amber-100,
+        html.dark .bg-purple-100 {
             background-color: #334155 !important;
             color: #f8fafc !important;
         }
         html.dark .border-slate-100,
         html.dark .border-slate-200,
         html.dark .border-slate-300,
-        html.dark .border-gray-200 {
+        html.dark .border-gray-200,
+        html.dark .border-indigo-100,
+        html.dark .border-blue-100,
+        html.dark .border-emerald-200 {
             border-color: #334155 !important;
         }
         html.dark input,
@@ -570,9 +603,9 @@
                 </div>
 
                 <!-- Theme Switcher Button -->
-                <button id="themeToggleBtn" onclick="toggleTheme()" class="px-3.5 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-amber-300 hover:bg-slate-300 dark:hover:bg-slate-700 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 border border-slate-300 dark:border-slate-700 shadow-sm cursor-pointer" title="Prebaci temu (Svijetla / Tamna)">
+                <button id="themeToggleBtn" onclick="toggleTheme()" class="px-3.5 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-amber-300 hover:bg-slate-300 dark:hover:bg-slate-700 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 border border-slate-300 dark:border-slate-700 shadow-sm cursor-pointer" title="Light Mode / Dark Mode">
                     <span id="themeToggleIcon">🌙</span>
-                    <span id="themeToggleText" class="font-extrabold">Tamna Tema</span>
+                    <span id="themeToggleText" class="font-extrabold">Dark Mode</span>
                 </button>
 
                 <!-- Upload Zona / Dropzone -->
@@ -1603,11 +1636,11 @@
             if (theme === 'dark') {
                 document.documentElement.classList.add('dark');
                 if (btnIcon) btnIcon.innerText = '☀️';
-                if (btnText) btnText.innerText = 'Svijetla Tema';
+                if (btnText) btnText.innerText = 'Light Mode';
             } else {
                 document.documentElement.classList.remove('dark');
                 if (btnIcon) btnIcon.innerText = '🌙';
-                if (btnText) btnText.innerText = 'Tamna Tema';
+                if (btnText) btnText.innerText = 'Dark Mode';
             }
 
             applyChartDefaultsForTheme(theme === 'dark');
