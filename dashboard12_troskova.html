@@ -1497,6 +1497,8 @@
             { username: 'emir.durakovic', fullname: 'Emir Duraković', password: 'Emir1235', role: 'superadmin', createdAt: '2026-07-30' },
             { username: 'anisa.bosnjic', fullname: 'Anisa Bošnjak', password: 'Anisa1', role: 'editor', createdAt: '2026-07-30' },
             { username: 'selma.durakovic', fullname: 'Selma Duraković', password: 'Selma1', role: 'editor', createdAt: '2026-07-30' },
+            { username: 'silvio.suljic', fullname: 'Silvio Suljić', password: 'Silvio1', role: 'editor', createdAt: '2026-08-02' },
+            { username: 'jasmin.avdic', fullname: 'Jasmin Avdić', password: 'Jasmin1', role: 'editor', createdAt: '2026-08-02' },
             { username: 'nedim.kisic', fullname: 'Nedim Kisić', password: 'Nedim1', role: 'viewer', createdAt: '2026-07-30' }
         ];
 
@@ -1590,6 +1592,39 @@
 
         function saveUsersDB() {
             localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(usersDB));
+            if (window.db) {
+                usersDB.forEach(user => {
+                    try {
+                        window.db.collection('app_users').doc(user.username.toLowerCase()).set(user, { merge: true });
+                    } catch(e) {}
+                });
+            }
+        }
+
+        async function syncFirestoreUsers() {
+            if (!window.db) return;
+            try {
+                let snapshot = await window.db.collection('app_users').get();
+                if (!snapshot.empty) {
+                    snapshot.forEach(doc => {
+                        let u = doc.data();
+                        if (u && u.username) {
+                            let idx = usersDB.findIndex(x => x.username.toLowerCase() === u.username.toLowerCase());
+                            if (idx !== -1) {
+                                usersDB[idx] = { ...usersDB[idx], ...u };
+                            } else {
+                                usersDB.push(u);
+                            }
+                        }
+                    });
+                    localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(usersDB));
+                    if (document.getElementById('adminPanelModal') && !document.getElementById('adminPanelModal').classList.contains('hidden')) {
+                        renderUserTable();
+                    }
+                }
+            } catch(e) {
+                console.warn("Notice syncing Firestore users:", e);
+            }
         }
 
         function updateAuthUI() {
@@ -1716,7 +1751,7 @@
         }
 
         function deleteUser(uname) {
-            if (uname.toLowerCase() === 'emir.durakovic' || uname === activeUser.username) {
+            if (uname.toLowerCase() === 'emir.durakovic' || (activeUser && uname === activeUser.username)) {
                 alert("Ne možete obrisati vlastiti ili glavne administrator nalog.");
                 return;
             }
@@ -1724,6 +1759,9 @@
             if (confirm(`Da li ste sigurni da želite obrisati korisnika "${uname}"?`)) {
                 usersDB = usersDB.filter(u => u.username !== uname);
                 saveUsersDB();
+                if (window.db) {
+                    try { window.db.collection('app_users').doc(uname.toLowerCase()).delete(); } catch(e) {}
+                }
                 renderUserTable();
             }
         }
@@ -1993,6 +2031,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             initAuthSystem();
             autoLoadDataset();
+            setTimeout(syncFirestoreUsers, 500);
             setTimeout(syncFirestoreCosts, 1000);
         });
 
