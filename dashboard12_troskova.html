@@ -1536,21 +1536,10 @@
                 saveUsersDB();
             }
 
-            let savedActive = sessionStorage.getItem(SESSION_ACTIVE_USER_KEY) || localStorage.getItem(SESSION_ACTIVE_USER_KEY);
-            if (savedActive) {
-                try {
-                    let userObj = JSON.parse(savedActive);
-                    let found = usersDB.find(u => u.username.toLowerCase() === userObj.username.toLowerCase());
-                    if (found) {
-                        activeUser = found;
-                    }
-                } catch(e) {}
-            }
-
-            if (!activeUser && usersDB && usersDB.length > 0) {
-                activeUser = usersDB[0];
-                sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
-            }
+            // Uklonjen automatski login tako da se pri svakom pristupu/otvaranju stranice prikazuje ekran za prijavu
+            activeUser = null;
+            sessionStorage.removeItem(SESSION_ACTIVE_USER_KEY);
+            localStorage.removeItem(SESSION_ACTIVE_USER_KEY);
 
             let savedCreds = localStorage.getItem('saved_login_creds');
             if (savedCreds) {
@@ -4035,8 +4024,10 @@
 
         // ================= MODAL LOGIKA ZA DIREKTAN UNOS TROŠKOVA / SERVISNIH NALOGA =================
         function openNewCostModal() {
-            if (!activeUser && typeof usersDB !== 'undefined' && usersDB && usersDB.length > 0) {
-                activeUser = usersDB[0];
+            if (!activeUser) {
+                alert("Morate biti prijavljeni na sistem za unos novih troškova. Prijavite se u prozoru za prijavu.");
+                document.getElementById('loginModal').classList.remove('hidden');
+                return;
             }
 
             // Postavi podrazumijevani datum na danas
