@@ -913,15 +913,66 @@
                 </div>
             </div>
 
+            <!-- CONTROL BAR ZA IZBOR GODINA I MJESECI KOJI SE POREDE -->
+            <div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Glavna Godina (A):</label>
+                        <select id="compYearA" onchange="triggerTab3Comparison()" class="text-xs font-bold border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 cursor-pointer">
+                            <!-- Popunjava se dinamički, default 2026 -->
+                        </select>
+                    </div>
+                    <span class="text-xs font-bold text-slate-400">vs</span>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Usporedna Godina (B):</label>
+                        <select id="compYearB" onchange="triggerTab3Comparison()" class="text-xs font-bold border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 cursor-pointer">
+                            <!-- Popunjava se dinamički, default 2025 -->
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2 ml-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Mjesec / Period:</label>
+                        <select id="compMonth" onchange="triggerTab3Comparison()" class="text-xs font-bold border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 cursor-pointer">
+                            <option value="all">Svi tekući mjeseci (YTD Kumulativno)</option>
+                            <option value="1">Januar</option>
+                            <option value="2">Februar</option>
+                            <option value="3">Mart</option>
+                            <option value="4">April</option>
+                            <option value="5">Maj</option>
+                            <option value="6">Juni</option>
+                            <option value="7">Juli</option>
+                            <option value="8">August</option>
+                            <option value="9">Septembar</option>
+                            <option value="10">Oktobar</option>
+                            <option value="11">Novembar</option>
+                            <option value="12">Decembar</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="exportAllComparisonToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer" title="Izvezi sve komparativne tabele u Excel">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span>Export Excel (Sve Tabele)</span>
+                    </button>
+                    <button onclick="printComparisonReport()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer" title="Sačuvaj ili printaj u PDF">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        <span>PDF / Print</span>
+                    </button>
+                </div>
+            </div>
+
             <!-- 1. YTD / PERIOD KOMPARACIJA (PO UZORU NA EXCEL SHEET "KPI Mjesečni") -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Podjela po Tipu Mehanizacije -->
                 <div class="card">
                     <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-100 dark:border-slate-800">
                         <h3 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
-                            <span>🚛 1. Komparacija po Tipu Mehanizacije (YoY Period)</span>
+                            <span>🚛 1. Komparacija po Tipu Mehanizacije</span>
                         </h3>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase">Poređenje Troškova</span>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="exportComparisonTableToExcel('ytdTypeGrid', 'Komparacija_Tip_Mehanizacije')" class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 transition-colors" title="Izvezi u Excel">📥 Excel</button>
+                            <button onclick="printComparisonReport()" class="text-[11px] font-bold text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800 transition-colors" title="PDF / Print">📄 PDF</button>
+                        </div>
                     </div>
                     <div id="ytdTypeGrid" class="w-full">
                         <!-- Popunjava se dinamički -->
@@ -932,9 +983,12 @@
                 <div class="card">
                     <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-100 dark:border-slate-800">
                         <h3 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
-                            <span>🏷️ 2. Komparacija po Segmentima Troškova (YoY Period)</span>
+                            <span>🏷️ 2. Komparacija po Segmentima Troškova</span>
                         </h3>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase">Poređenje Troškova</span>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="exportComparisonTableToExcel('ytdSegmentGrid', 'Komparacija_Segmenti')" class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 transition-colors" title="Izvezi u Excel">📥 Excel</button>
+                            <button onclick="printComparisonReport()" class="text-[11px] font-bold text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800 transition-colors" title="PDF / Print">📄 PDF</button>
+                        </div>
                     </div>
                     <div id="ytdSegmentGrid" class="w-full">
                         <!-- Popunjava se dinamički -->
@@ -949,8 +1003,12 @@
                     <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-100 dark:border-slate-800">
                         <h3 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
                             <span>📅 Mjesec na Isti Mjesec Prošle Godine</span>
+                            <span id="yoyMonthLabel" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 font-mono ml-1">YoY</span>
                         </h3>
-                        <span id="yoyMonthLabel" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 font-mono">YoY</span>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="exportComparisonTableToExcel('yoyMonthTypeGrid', 'Komparacija_YoY_Mjesec')" class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 transition-colors" title="Izvezi u Excel">📥 Excel</button>
+                            <button onclick="printComparisonReport()" class="text-[11px] font-bold text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800 transition-colors" title="PDF / Print">📄 PDF</button>
+                        </div>
                     </div>
                     <div id="yoyMonthTypeGrid" class="w-full">
                         <!-- Popunjava se dinamički -->
@@ -962,8 +1020,12 @@
                     <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-100 dark:border-slate-800">
                         <h3 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
                             <span>📆 Mjesec na Prethodni Mjesec Iste Godine</span>
+                            <span id="momMonthLabel" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono ml-1">MoM</span>
                         </h3>
-                        <span id="momMonthLabel" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono">MoM</span>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="exportComparisonTableToExcel('momMonthTypeGrid', 'Komparacija_MoM_Mjesec')" class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 transition-colors" title="Izvezi u Excel">📥 Excel</button>
+                            <button onclick="printComparisonReport()" class="text-[11px] font-bold text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800 transition-colors" title="PDF / Print">📄 PDF</button>
+                        </div>
                     </div>
                     <div id="momMonthTypeGrid" class="w-full">
                         <!-- Popunjava se dinamički -->
@@ -3506,30 +3568,100 @@
         }
 
         // ================= TAB 3 PROCESSOR (YOY KOMPARACIJA & KPI MJESEČNI) =================
+        function populateTab3Controls() {
+            const yearASelect = document.getElementById('compYearA');
+            const yearBSelect = document.getElementById('compYearB');
+            if (!yearASelect || !yearBSelect) return;
+
+            let sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
+            if (sortedYears.length === 0) return;
+
+            let latest = sortedYears[0];
+            let previous = sortedYears.length > 1 ? sortedYears[1] : latest - 1;
+
+            let currentA = yearASelect.value || latest.toString();
+            let currentB = yearBSelect.value || previous.toString();
+
+            let optionsA = [];
+            let optionsB = [];
+
+            sortedYears.forEach(y => {
+                let selA = y.toString() === currentA ? 'selected' : '';
+                let selB = y.toString() === currentB ? 'selected' : '';
+                optionsA.push(`<option value="${y}" ${selA}>${y}. godina</option>`);
+                optionsB.push(`<option value="${y}" ${selB}>${y}. godina</option>`);
+            });
+
+            yearASelect.innerHTML = optionsA.join('');
+            yearBSelect.innerHTML = optionsB.join('');
+        }
+
+        function triggerTab3Comparison() {
+            if (typeof globalData !== 'undefined' && globalData.length > 0) {
+                processTab3(globalData);
+            }
+        }
+
+        function exportComparisonTableToExcel(containerId, title) {
+            const table = document.querySelector(`#${containerId} table`);
+            if (!table) {
+                alert("Tabela nije pronađena za izvoz.");
+                return;
+            }
+            const wb = XLSX.utils.table_to_book(table, { sheet: "Komparacija" });
+            XLSX.writeFile(wb, `${title.replace(/[^a-zA-Z0-9_]/g, '_')}.xlsx`);
+        }
+
+        function exportAllComparisonToExcel() {
+            if (typeof XLSX === 'undefined') return;
+            const wb = XLSX.utils.book_new();
+            const gridIds = ['ytdTypeGrid', 'ytdSegmentGrid', 'yoyMonthTypeGrid', 'momMonthTypeGrid'];
+            const sheetNames = ['YTD_Tip_Mehanizacije', 'YTD_Segmenti', 'YoY_Mjesečno', 'MoM_Mjesečno'];
+            
+            gridIds.forEach((id, idx) => {
+                const table = document.querySelector(`#${id} table`);
+                if (table) {
+                    const ws = XLSX.utils.table_to_sheet(table);
+                    XLSX.utils.book_append_sheet(wb, ws, sheetNames[idx]);
+                }
+            });
+            XLSX.writeFile(wb, `Komparativni_Izvjestaj_Troskova_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        function printComparisonReport() {
+            window.print();
+        }
+
         function processTab3(data) {
             if (!data || data.length === 0) return;
 
-            const selectedYearStr = document.getElementById('filterYear').value;
-            const selectedMonthStr = document.getElementById('filterMonth').value;
+            populateTab3Controls();
 
             let availableYears = Array.from(yearsSet).sort((a,b) => a - b);
             let latestYear = availableYears.length > 0 ? Math.max(...availableYears) : new Date().getFullYear();
-            let currYear = selectedYearStr !== 'all' ? parseInt(selectedYearStr) : latestYear;
-            let prevYear = currYear - 1;
+            let defaultPrevYear = availableYears.length > 1 ? availableYears[availableYears.length - 2] : latestYear - 1;
+
+            const elemA = document.getElementById('compYearA');
+            const elemB = document.getElementById('compYearB');
+            const elemM = document.getElementById('compMonth');
+
+            let currYear = elemA && elemA.value ? parseInt(elemA.value) : latestYear;
+            let prevYear = elemB && elemB.value ? parseInt(elemB.value) : defaultPrevYear;
+            let monthSel = elemM && elemM.value ? elemM.value : 'all';
 
             let yearDataCurr = data.filter(d => d.year === currYear);
             let activeMonths = Array.from(new Set(yearDataCurr.map(d => d.month))).sort((a,b) => a - b);
             if (activeMonths.length === 0) activeMonths = [1, 2, 3, 4, 5, 6];
 
-            let targetMonth = selectedMonthStr !== 'all' ? parseInt(selectedMonthStr) : Math.max(...activeMonths);
+            let targetMonth = monthSel !== 'all' ? parseInt(monthSel) : Math.max(...activeMonths);
             let prevMonth = targetMonth > 1 ? targetMonth - 1 : 12;
             let prevMonthYear = targetMonth > 1 ? currYear : currYear - 1;
 
-            // 1. YTD / Period Komparacija (npr. 01.01.-30.06. 2026 vs 01.01.-30.06. 2025)
-            let periodMonths = selectedMonthStr !== 'all' ? [targetMonth] : activeMonths;
+            // 1. YTD / Period Komparacija
+            let periodMonths = monthSel !== 'all' ? [targetMonth] : activeMonths;
             let startM = Math.min(...periodMonths);
             let endM = Math.max(...periodMonths);
-            let periodLabel = selectedMonthStr !== 'all' 
+            let periodLabel = monthSel !== 'all' 
                 ? `${targetMonth}. mjesec (${currYear}. vs ${prevYear}.)`
                 : `Period 01.0${startM}.-${endM < 10 ? '0'+endM : endM}.${currYear}. vs ${prevYear}.`;
 
@@ -3542,7 +3674,7 @@
             renderComparisonGrid('ytdTypeGrid', currPeriodData, prevPeriodData, 'tipMehan', currYear.toString(), prevYear.toString());
             renderComparisonGrid('ytdSegmentGrid', currPeriodData, prevPeriodData, 'segment', currYear.toString(), prevYear.toString());
 
-            // 2. Mjesečni YoY (npr. Juni 2026 vs Juni 2025)
+            // 2. Mjesečni YoY
             let currMonthData = data.filter(d => d.year === currYear && d.month === targetMonth);
             let prevYearMonthData = data.filter(d => d.year === prevYear && d.month === targetMonth);
             let monthNames = ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Juni', 'Juli', 'August', 'Septembar', 'Oktobar', 'Novembar', 'Decembar'];
@@ -3552,7 +3684,7 @@
             if (yoyLbl) yoyLbl.innerText = `${mName} ${currYear}. vs ${mName} ${prevYear}. (YoY)`;
             renderComparisonGrid('yoyMonthTypeGrid', currMonthData, prevYearMonthData, 'tipMehan', `${mName} ${currYear}`, `${mName} ${prevYear}`);
 
-            // 3. Mjesečni MoM (npr. Juni 2026 vs Maj 2026)
+            // 3. Mjesečni MoM
             let momMonthData = data.filter(d => d.year === prevMonthYear && d.month === prevMonth);
             let prevMName = monthNames[prevMonth - 1] || `${prevMonth}. mjesec`;
             
