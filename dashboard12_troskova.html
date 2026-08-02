@@ -707,17 +707,20 @@
 
         <!-- GLAVNA NAVIGACIJA SA TABOVIMA -->
         <div id="tabs-navigation" class="mb-6 hidden border-b border-slate-200 flex flex-wrap gap-2 text-sm font-bold">
-            <button id="tabBtn1" onclick="switchTab(1)" class="px-5 py-3 rounded-t-xl bg-blue-600 text-white shadow-sm flex items-center gap-2 border-t border-x border-blue-600 transition-all">
+            <button id="tabBtn1" onclick="switchTab(1)" class="px-4 py-3 rounded-t-xl bg-blue-600 text-white shadow-sm flex items-center gap-2 border-t border-x border-blue-600 transition-all">
                 <span>📊 Tab 1: Pregled Flote & KPI</span>
             </button>
-            <button id="tabBtn2" onclick="switchTab(2)" class="px-5 py-3 rounded-t-xl bg-slate-100 text-slate-600 hover:bg-slate-200 border-t border-x border-slate-200 flex items-center gap-2 transition-all">
+            <button id="tabBtn2" onclick="switchTab(2)" class="px-4 py-3 rounded-t-xl bg-slate-100 text-slate-600 hover:bg-slate-200 border-t border-x border-slate-200 flex items-center gap-2 transition-all">
                 <span>📈 Tab 2: Analiza Održavanja & Trošak po Vozilu</span>
             </button>
-            <button id="tabBtn3" onclick="switchTab(3)" class="px-5 py-3 rounded-t-xl bg-slate-100 text-slate-600 hover:bg-slate-200 border-t border-x border-slate-200 flex items-center gap-2 transition-all">
-                <span>📋 Tab 3: Matrica & Filtrirana Tabela</span>
+            <button id="tabBtn3" onclick="switchTab(3)" class="px-4 py-3 rounded-t-xl bg-slate-100 text-slate-600 hover:bg-slate-200 border-t border-x border-slate-200 flex items-center gap-2 transition-all">
+                <span>📊 Tab 3: YoY Komparacija & KPI Mjesečni</span>
             </button>
-            <button id="tabBtn4" onclick="switchTab(4)" class="px-5 py-3 rounded-t-xl bg-slate-100 text-slate-600 hover:bg-slate-200 border-t border-x border-slate-200 flex items-center gap-2 transition-all">
-                <span>🏢 Tab 4: Šifrarnik Vozila (Master Registar)</span>
+            <button id="tabBtn4" onclick="switchTab(4)" class="px-4 py-3 rounded-t-xl bg-slate-100 text-slate-600 hover:bg-slate-200 border-t border-x border-slate-200 flex items-center gap-2 transition-all">
+                <span>📋 Tab 4: Tabela Servisa & Transakcija</span>
+            </button>
+            <button id="tabBtn5" onclick="switchTab(5)" class="px-4 py-3 rounded-t-xl bg-slate-100 text-slate-600 hover:bg-slate-200 border-t border-x border-slate-200 flex items-center gap-2 transition-all">
+                <span>🏢 Tab 5: Master Šifrarnik Vozila</span>
             </button>
         </div>
 
@@ -895,18 +898,89 @@
             </div>
         </div>
 
-        <!-- ================= TAB 3: MATRICA & FILTRIRANA TABELA ================= -->
-        <div id="tabContent3" class="tab-content hidden">
+        <!-- ================= TAB 3: YOY KOMPARACIJA & KPI MJESEČNI ================= -->
+        <div id="tabContent3" class="tab-content hidden space-y-6">
+            <!-- Header Kartica za Komparativnu Analizu -->
+            <div class="card bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 shadow-md border border-slate-800">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="text-2xl font-black tracking-tight flex items-center gap-2">
+                            <span>📊 YoY Komparativna Analiza & KPI Mjesečni</span>
+                            <span id="ytdPeriodLabel" class="text-xs bg-indigo-500/30 text-indigo-200 border border-indigo-400 px-3 py-0.5 rounded-full font-mono font-bold">Učitavanje...</span>
+                        </h2>
+                        <p class="text-xs text-slate-300 mt-1">Poređenje proteklih mjeseci tekuće godine naspram istog perioda prošle godine (YoY i MoM) sa indikatorima ušteda (🟢) ili rasta (🔴)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 1. YTD / PERIOD KOMPARACIJA (PO UZORU NA EXCEL SHEET "KPI Mjesečni") -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Podjela po Tipu Mehanizacije -->
+                <div class="card">
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-100 dark:border-slate-800">
+                        <h3 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
+                            <span>🚛 1. Komparacija po Tipu Mehanizacije (YoY Period)</span>
+                        </h3>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Total | Opravci | Prosjek</span>
+                    </div>
+                    <div id="ytdTypeGrid" class="overflow-x-auto">
+                        <!-- Popunjava se dinamički -->
+                    </div>
+                </div>
+
+                <!-- Podjela po Segmentima -->
+                <div class="card">
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-100 dark:border-slate-800">
+                        <h3 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
+                            <span>🏷️ 2. Komparacija po Segmentima Troškova (YoY Period)</span>
+                        </h3>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Total | Opravci | Prosjek</span>
+                    </div>
+                    <div id="ytdSegmentGrid" class="overflow-x-auto">
+                        <!-- Popunjava se dinamički -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. MJESEČNA YOY I MOM POREĐENJA -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Mjesec na Isti Mjesec Prošle Godine (YoY) -->
+                <div class="card">
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-100 dark:border-slate-800">
+                        <h3 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
+                            <span>📅 Mjesec na Isti Mjesec Prošle Godine</span>
+                        </h3>
+                        <span id="yoyMonthLabel" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 font-mono">YoY</span>
+                    </div>
+                    <div id="yoyMonthTypeGrid" class="overflow-x-auto">
+                        <!-- Popunjava se dinamički -->
+                    </div>
+                </div>
+
+                <!-- Mjesec na Prethodni Mjesec iste godine (MoM) -->
+                <div class="card">
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-100 dark:border-slate-800">
+                        <h3 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
+                            <span>📆 Mjesec na Prethodni Mjesec Iste Godine</span>
+                        </h3>
+                        <span id="momMonthLabel" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono">MoM</span>
+                    </div>
+                    <div id="momMonthTypeGrid" class="overflow-x-auto">
+                        <!-- Popunjava se dinamički -->
+                    </div>
+                </div>
+            </div>
+
             <!-- Višegodišnja Matrica (YoY Grid - Nominalni Iznosi) -->
-            <div class="card mb-6">
-                <h3 class="text-base font-bold text-slate-800 mb-1">📊 Višegodišnja Mjesečna Matrica Troškova (Nominalni Iznosi u KM)</h3>
+            <div class="card">
+                <h3 class="text-base font-bold text-slate-800 dark:text-white mb-1">📊 Višegodišnja Mjesečna Matrica Troškova (Nominalni Iznosi u KM)</h3>
                 <p class="text-xs text-slate-500 mb-4">Poređenje ukupnih troškova održavanja po mjesecima i godinama (KM)</p>
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-xs text-center border-collapse">
-                        <thead id="matrixTableHeader" class="bg-slate-100 font-bold text-slate-700 border-b border-slate-200">
+                        <thead id="matrixTableHeader" class="bg-slate-100 dark:bg-slate-900 font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                             <!-- Pune se kolone -->
                         </thead>
-                        <tbody id="matrixTableBody" class="divide-y divide-slate-100 bg-white">
+                        <tbody id="matrixTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
                             <!-- Pune se redovi -->
                         </tbody>
                     </table>
@@ -914,46 +988,48 @@
             </div>
 
             <!-- Višegodišnja Matrica Postotnih Razlika (YoY % Rast / Pad) -->
-            <div class="card mb-8">
+            <div class="card">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3">
                     <div>
-                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
                             <span>📈 Višegodišnja Matrica Postotnih Razlika (YoY % Rast / Pad)</span>
                         </h3>
-                        <p class="text-xs text-slate-500 mt-0.5">Postotne izmjene u odnosu na prethodnu godinu (<span class="text-emerald-600 font-bold">Zeleno = Smanjenje troškova / Ušteda 📉</span> | <span class="text-red-600 font-bold">Crveno = Povećanje troškova 📈</span>)</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Postotne izmjene u odnosu na prethodnu godinu (<span class="text-emerald-600 dark:text-emerald-400 font-bold">Zeleno = Smanjenje troškova / Ušteda 📉</span> | <span class="text-red-600 dark:text-red-400 font-bold">Crveno = Povećanje troškova 📈</span>)</p>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-xs text-center border-collapse">
-                        <thead id="matrixPercTableHeader" class="bg-slate-100 font-bold text-slate-700 border-b border-slate-200">
+                        <thead id="matrixPercTableHeader" class="bg-slate-100 dark:bg-slate-900 font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                             <!-- Pune se kolone za procente -->
                         </thead>
-                        <tbody id="matrixPercTableBody" class="divide-y divide-slate-100 bg-white">
+                        <tbody id="matrixPercTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
                             <!-- Pune se redovi za procente -->
                         </tbody>
                     </table>
                 </div>
             </div>
+        </div>
 
-            <!-- Detaljna Tabela Transakcija -->
+        <!-- ================= TAB 4: TABELA SERVISA & TRANSAKCIJA ================= -->
+        <div id="tabContent4" class="tab-content hidden space-y-6">
             <div class="card">
-                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-3 bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
                     <div>
-                        <h3 class="text-base font-extrabold text-slate-800">📋 Tabela filtriranih servisa i transakcija</h3>
+                        <h3 class="text-base font-extrabold text-slate-800 dark:text-white">📋 Tabela filtriranih servisa i transakcija</h3>
                         <p class="text-xs text-slate-500 mt-0.5" id="tableRecordCount">Prikazano 0 zapisa</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
                         <!-- Filter Godine -->
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Godina</label>
-                            <select id="tableYearFilter" onchange="filterTransactionTable()" class="text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white font-bold text-slate-700">
+                            <select id="tableYearFilter" onchange="filterTransactionTable()" class="text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200">
                                 <option value="all">Sve godine</option>
                             </select>
                         </div>
                         <!-- Sortiranje po datumu/iznosu -->
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Sortiranje / Novi unosi</label>
-                            <select id="tableSortFilter" onchange="filterTransactionTable()" class="text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white font-bold text-slate-700">
+                            <select id="tableSortFilter" onchange="filterTransactionTable()" class="text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200">
                                 <option value="new-first">🆕 Novi unosi na vrhu + Datum (Najnovije)</option>
                                 <option value="date-desc">📅 Datum (Najnovije prvo)</option>
                                 <option value="date-asc">📅 Datum (Najstarije prvo)</option>
@@ -964,14 +1040,14 @@
                         <!-- Pretraga -->
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Pretraga</label>
-                            <input type="text" id="tableSearchInput" onkeyup="filterTransactionTable()" placeholder="🔍 Pretraži reg, opis ili servisera..." class="text-xs border border-slate-300 rounded-lg px-3 py-1.5 w-full sm:w-56 focus:ring-2 focus:ring-blue-500 font-medium bg-white">
+                            <input type="text" id="tableSearchInput" onkeyup="filterTransactionTable()" placeholder="🔍 Pretraži reg, opis ili servisera..." class="text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 w-full sm:w-56 focus:ring-2 focus:ring-blue-500 font-medium bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">
                         </div>
                     </div>
                 </div>
 
-                <div class="overflow-x-auto max-h-[500px] border border-slate-200 rounded-lg">
+                <div class="overflow-x-auto max-h-[550px] border border-slate-200 dark:border-slate-800 rounded-lg">
                     <table class="min-w-full text-xs text-left">
-                        <thead class="bg-slate-100 sticky top-0 font-bold text-slate-700 border-b border-slate-200">
+                        <thead class="bg-slate-100 dark:bg-slate-900 sticky top-0 font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800">
                             <tr>
                                 <th class="py-2.5 px-3">Datum</th>
                                 <th class="py-2.5 px-3">Registracija</th>
@@ -984,7 +1060,7 @@
                                 <th class="py-2.5 px-3 text-right">Trošak (KM)</th>
                             </tr>
                         </thead>
-                        <tbody id="transactionTableBody" class="divide-y divide-slate-100 bg-white">
+                        <tbody id="transactionTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
                             <!-- Pune se redovi -->
                         </tbody>
                     </table>
@@ -992,8 +1068,8 @@
             </div>
         </div>
 
-        <!-- ================= TAB 4: ŠIFRARNIK VOZILA (MASTER REGISTAR) ================= -->
-        <div id="tabContent4" class="tab-content hidden space-y-6">
+        <!-- ================= TAB 5: ŠIFRARNIK VOZILA (MASTER REGISTAR) ================= -->
+        <div id="tabContent5" class="tab-content hidden space-y-6">
             <!-- Header Kartica za Šifrarnik -->
             <div class="card bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-6 shadow-md border border-slate-800">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -2260,22 +2336,24 @@
 
         function switchTab(tabId) {
             activeTab = tabId;
-            [1, 2, 3, 4].forEach(id => {
+            [1, 2, 3, 4, 5].forEach(id => {
                 const btn = document.getElementById(`tabBtn${id}`);
                 const content = document.getElementById(`tabContent${id}`);
                 if (btn && content) {
                     if (id === tabId) {
-                        btn.className = "px-5 py-3 rounded-t-xl bg-blue-600 text-white shadow-sm flex items-center gap-2 border-t border-x border-blue-600 transition-all";
+                        btn.className = "px-4 py-3 rounded-t-xl bg-blue-600 text-white shadow-sm flex items-center gap-2 border-t border-x border-blue-600 transition-all";
                         content.classList.remove('hidden');
                     } else {
-                        btn.className = "px-5 py-3 rounded-t-xl bg-slate-100 text-slate-600 hover:bg-slate-200 border-t border-x border-slate-200 flex items-center gap-2 transition-all";
+                        btn.className = "px-4 py-3 rounded-t-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border-t border-x border-slate-200 dark:border-slate-700 flex items-center gap-2 transition-all";
                         content.classList.add('hidden');
                     }
                 }
             });
 
-            if (tabId === 4) {
+            if (tabId === 5) {
                 renderMasterFleetTable();
+            } else if (tabId === 4) {
+                if (currentFilteredData.length > 0) renderTransactionTable(currentFilteredData);
             } else if (currentFilteredData.length > 0) {
                 renderActiveTabContent();
             }
@@ -2811,6 +2889,8 @@
             if (activeTab === 1) processTab1(currentFilteredData);
             else if (activeTab === 2) processTab2(currentFilteredData);
             else if (activeTab === 3) processTab3(currentFilteredData);
+            else if (activeTab === 4) renderTransactionTable(currentFilteredData);
+            else if (activeTab === 5) renderMasterFleetTable();
         }
 
         function getDailyCalculationPeriod(data, overrideYear = null) {
@@ -3425,9 +3505,173 @@
             });
         }
 
-        // ================= TAB 3 PROCESSOR =================
+        // ================= TAB 3 PROCESSOR (YOY KOMPARACIJA & KPI MJESEČNI) =================
         function processTab3(data) {
-            const availableYears = Array.from(yearsSet).sort((a,b) => a - b);
+            if (!data || data.length === 0) return;
+
+            const selectedYearStr = document.getElementById('filterYear').value;
+            const selectedMonthStr = document.getElementById('filterMonth').value;
+
+            let availableYears = Array.from(yearsSet).sort((a,b) => a - b);
+            let latestYear = availableYears.length > 0 ? Math.max(...availableYears) : new Date().getFullYear();
+            let currYear = selectedYearStr !== 'all' ? parseInt(selectedYearStr) : latestYear;
+            let prevYear = currYear - 1;
+
+            let yearDataCurr = data.filter(d => d.year === currYear);
+            let activeMonths = Array.from(new Set(yearDataCurr.map(d => d.month))).sort((a,b) => a - b);
+            if (activeMonths.length === 0) activeMonths = [1, 2, 3, 4, 5, 6];
+
+            let targetMonth = selectedMonthStr !== 'all' ? parseInt(selectedMonthStr) : Math.max(...activeMonths);
+            let prevMonth = targetMonth > 1 ? targetMonth - 1 : 12;
+            let prevMonthYear = targetMonth > 1 ? currYear : currYear - 1;
+
+            // 1. YTD / Period Komparacija (npr. 01.01.-30.06. 2026 vs 01.01.-30.06. 2025)
+            let periodMonths = selectedMonthStr !== 'all' ? [targetMonth] : activeMonths;
+            let startM = Math.min(...periodMonths);
+            let endM = Math.max(...periodMonths);
+            let periodLabel = selectedMonthStr !== 'all' 
+                ? `${targetMonth}. mjesec (${currYear}. vs ${prevYear}.)`
+                : `Period 01.0${startM}.-${endM < 10 ? '0'+endM : endM}.${currYear}. vs ${prevYear}.`;
+
+            let currPeriodData = data.filter(d => d.year === currYear && periodMonths.includes(d.month));
+            let prevPeriodData = data.filter(d => d.year === prevYear && periodMonths.includes(d.month));
+
+            let ytdBadge = document.getElementById('ytdPeriodLabel');
+            if (ytdBadge) ytdBadge.innerText = periodLabel;
+
+            renderComparisonGrid('ytdTypeGrid', currPeriodData, prevPeriodData, 'tipMehan', currYear.toString(), prevYear.toString());
+            renderComparisonGrid('ytdSegmentGrid', currPeriodData, prevPeriodData, 'segment', currYear.toString(), prevYear.toString());
+
+            // 2. Mjesečni YoY (npr. Juni 2026 vs Juni 2025)
+            let currMonthData = data.filter(d => d.year === currYear && d.month === targetMonth);
+            let prevYearMonthData = data.filter(d => d.year === prevYear && d.month === targetMonth);
+            let monthNames = ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Juni', 'Juli', 'August', 'Septembar', 'Oktobar', 'Novembar', 'Decembar'];
+            let mName = monthNames[targetMonth - 1] || `${targetMonth}. mjesec`;
+            
+            let yoyLbl = document.getElementById('yoyMonthLabel');
+            if (yoyLbl) yoyLbl.innerText = `${mName} ${currYear}. vs ${mName} ${prevYear}. (YoY)`;
+            renderComparisonGrid('yoyMonthTypeGrid', currMonthData, prevYearMonthData, 'tipMehan', `${mName} ${currYear}`, `${mName} ${prevYear}`);
+
+            // 3. Mjesečni MoM (npr. Juni 2026 vs Maj 2026)
+            let momMonthData = data.filter(d => d.year === prevMonthYear && d.month === prevMonth);
+            let prevMName = monthNames[prevMonth - 1] || `${prevMonth}. mjesec`;
+            
+            let momLbl = document.getElementById('momMonthLabel');
+            if (momLbl) momLbl.innerText = `${mName} ${currYear}. vs ${prevMName} ${prevMonthYear}. (MoM)`;
+            renderComparisonGrid('momMonthTypeGrid', currMonthData, momMonthData, 'tipMehan', `${mName} ${currYear}`, `${prevMName} ${prevMonthYear}`);
+
+            // 4. Render Multi-year Matrices
+            renderMultiYearMatrices(data, availableYears);
+        }
+
+        function renderComparisonGrid(containerId, currData, prevData, groupKey, currLabel, prevLabel) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            let currMap = {}, prevMap = {};
+            let keys = new Set();
+
+            currData.forEach(d => {
+                let k = d[groupKey] || 'Ostalo';
+                if (!currMap[k]) currMap[k] = { cost: 0, count: 0 };
+                currMap[k].cost += d.cost;
+                currMap[k].count += 1;
+                keys.add(k);
+            });
+
+            prevData.forEach(d => {
+                let k = d[groupKey] || 'Ostalo';
+                if (!prevMap[k]) prevMap[k] = { cost: 0, count: 0 };
+                prevMap[k].cost += d.cost;
+                prevMap[k].count += 1;
+                keys.add(k);
+            });
+
+            let sortedKeys = Array.from(keys).sort((a,b) => {
+                let cA = (currMap[a] ? currMap[a].cost : 0) + (prevMap[a] ? prevMap[a].cost : 0);
+                let cB = (currMap[b] ? currMap[b].cost : 0) + (prevMap[b] ? prevMap[b].cost : 0);
+                return cB - cA;
+            });
+
+            let totalCurrCost = 0, totalCurrCount = 0;
+            let totalPrevCost = 0, totalPrevCount = 0;
+
+            let rowsHTML = [];
+            sortedKeys.forEach(k => {
+                let cCost = currMap[k] ? currMap[k].cost : 0;
+                let cCount = currMap[k] ? currMap[k].count : 0;
+                let cAvg = cCount > 0 ? cCost / cCount : 0;
+
+                let pCost = prevMap[k] ? prevMap[k].cost : 0;
+                let pCount = prevMap[k] ? prevMap[k].count : 0;
+                let pAvg = pCount > 0 ? pCost / pCount : 0;
+
+                totalCurrCost += cCost; totalCurrCount += cCount;
+                totalPrevCost += pCost; totalPrevCount += pCount;
+
+                let diffKM = cCost - pCost;
+                let diffPerc = pCost > 0 ? ((cCost - pCost) / pCost) * 100 : (cCost > 0 ? 100 : 0);
+
+                let badgeHTML = '';
+                if (pCost === 0 && cCost === 0) {
+                    badgeHTML = '<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">0.0%</span>';
+                } else if (diffKM < 0) {
+                    badgeHTML = `<span class="px-2 py-0.5 rounded text-[11px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">🟢 ${diffPerc.toFixed(1)}% (${diffKM.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)</span>`;
+                } else if (diffKM > 0) {
+                    badgeHTML = `<span class="px-2 py-0.5 rounded text-[11px] font-black bg-red-100 dark:bg-red-950/80 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-700">🔴 +${diffPerc.toFixed(1)}% (+${diffKM.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)</span>`;
+                } else {
+                    badgeHTML = '<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">0.0%</span>';
+                }
+
+                rowsHTML.push(`
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+                        <td class="py-2.5 px-3 text-left font-bold text-slate-800 dark:text-slate-200">${k}</td>
+                        <td class="py-2.5 px-3 font-medium text-slate-600 dark:text-slate-400">${pCost > 0 ? pCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'} <span class="text-[10px] text-slate-400">(${pCount} op.)</span></td>
+                        <td class="py-2.5 px-3 font-extrabold text-slate-900 dark:text-white">${cCost > 0 ? cCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'} <span class="text-[10px] text-slate-400">(${cCount} op.)</span></td>
+                        <td class="py-2.5 px-3 font-semibold text-slate-600 dark:text-slate-400">${cAvg > 0 ? cAvg.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'}</td>
+                        <td class="py-2.5 px-3 text-center">${badgeHTML}</td>
+                    </tr>
+                `);
+            });
+
+            let totalDiffKM = totalCurrCost - totalPrevCost;
+            let totalDiffPerc = totalPrevCost > 0 ? ((totalCurrCost - totalPrevCost) / totalPrevCost) * 100 : 0;
+            let totalBadgeHTML = totalDiffKM <= 0 
+                ? `<span class="px-2.5 py-1 rounded text-xs font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700">🟢 UŠTEDA ${totalDiffPerc.toFixed(1)}% (${totalDiffKM.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)</span>`
+                : `<span class="px-2.5 py-1 rounded text-xs font-black bg-red-100 dark:bg-red-950 text-red-900 dark:text-red-200 border border-red-300 dark:border-red-700">🔴 RAST +${totalDiffPerc.toFixed(1)}% (+${totalDiffKM.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM)</span>`;
+
+            let grandTotalRow = `
+                <tr class="bg-slate-100 dark:bg-slate-800 font-extrabold text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700">
+                    <td class="py-3 px-3 text-left">UKUPNO (${groupKey === 'tipMehan' ? 'Svi tipovi' : 'Svi segmenti'})</td>
+                    <td class="py-3 px-3">${totalPrevCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM (${totalPrevCount})</td>
+                    <td class="py-3 px-3 text-blue-700 dark:text-blue-400">${totalCurrCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM (${totalCurrCount})</td>
+                    <td class="py-3 px-3">${totalCurrCount > 0 ? (totalCurrCost / totalCurrCount).toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'}</td>
+                    <td class="py-3 px-3 text-center">${totalBadgeHTML}</td>
+                </tr>
+            `;
+            rowsHTML.push(grandTotalRow);
+
+            let tableHeader = `
+                <table class="min-w-full text-xs text-left border-collapse">
+                    <thead class="bg-slate-100 dark:bg-slate-900 font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                        <tr>
+                            <th class="py-2.5 px-3">${groupKey === 'tipMehan' ? 'Tip Mehanizacije' : 'Segment'}</th>
+                            <th class="py-2.5 px-3">${prevLabel}</th>
+                            <th class="py-2.5 px-3 text-blue-700 dark:text-blue-400">${currLabel}</th>
+                            <th class="py-2.5 px-3">Prosjek / Opravci</th>
+                            <th class="py-2.5 px-3 text-center">Status / Razlika</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                        ${rowsHTML.join('')}
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = tableHeader;
+        }
+
+        function renderMultiYearMatrices(data, availableYears) {
             const monthsNames = ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Juni', 'Juli', 'August', 'Septembar', 'Oktobar', 'Novembar', 'Decembar'];
 
             let matrixData = {};
@@ -3445,8 +3689,8 @@
             const headerElem = document.getElementById('matrixTableHeader');
             let headerHTML = `<tr><th class="py-2.5 px-3 text-left">Mjesec</th>`;
             availableYears.forEach(y => { headerHTML += `<th class="py-2.5 px-3">${y} (KM)</th>`; });
-            headerHTML += `<th class="py-2.5 px-3 bg-blue-50 text-blue-900">Ukupno</th></tr>`;
-            headerElem.innerHTML = headerHTML;
+            headerHTML += `<th class="py-2.5 px-3 bg-blue-50 dark:bg-slate-800 text-blue-900 dark:text-blue-300">Ukupno</th></tr>`;
+            if (headerElem) headerElem.innerHTML = headerHTML;
 
             const bodyElem = document.getElementById('matrixTableBody');
             let bodyRows = [];
@@ -3456,32 +3700,32 @@
             monthsNames.forEach((mName, mIdx) => {
                 let mNum = mIdx + 1;
                 let rowSum = 0;
-                let rowHTML = `<tr class="hover:bg-slate-50"><td class="py-2 px-3 text-left font-bold text-slate-800">${mName}</td>`;
+                let rowHTML = `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60"><td class="py-2 px-3 text-left font-bold text-slate-800 dark:text-slate-200">${mName}</td>`;
                 
                 availableYears.forEach(y => {
                     let val = matrixData[mNum][y] || 0;
                     rowSum += val;
                     yearTotals[y] += val;
-                    rowHTML += `<td class="py-2 px-3">${val > 0 ? val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) : '-'}</td>`;
+                    rowHTML += `<td class="py-2 px-3 text-slate-700 dark:text-slate-300">${val > 0 ? val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) : '-'}</td>`;
                 });
 
-                rowHTML += `<td class="py-2 px-3 font-bold bg-blue-50/50 text-blue-900">${rowSum.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td></tr>`;
+                rowHTML += `<td class="py-2 px-3 font-bold bg-blue-50/50 dark:bg-slate-800 text-blue-900 dark:text-blue-300">${rowSum.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td></tr>`;
                 bodyRows.push(rowHTML);
             });
 
             let grandTotal = 0;
-            let totalRowHTML = `<tr class="bg-slate-100 font-extrabold text-slate-900 border-t-2 border-slate-300"><td class="py-3 px-3 text-left">UKUPNO</td>`;
+            let totalRowHTML = `<tr class="bg-slate-100 dark:bg-slate-800 font-extrabold text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700"><td class="py-3 px-3 text-left">UKUPNO</td>`;
             availableYears.forEach(y => {
                 let yTot = yearTotals[y] || 0;
                 grandTotal += yTot;
                 totalRowHTML += `<td class="py-3 px-3">${yTot.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>`;
             });
-            totalRowHTML += `<td class="py-3 px-3 bg-blue-100 text-blue-950">${grandTotal.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</td></tr>`;
+            totalRowHTML += `<td class="py-3 px-3 bg-blue-100 dark:bg-slate-800 text-blue-950 dark:text-blue-300">${grandTotal.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</td></tr>`;
             bodyRows.push(totalRowHTML);
 
-            bodyElem.innerHTML = bodyRows.join('');
+            if (bodyElem) bodyElem.innerHTML = bodyRows.join('');
 
-            // ================= GRADIVNA MATRICA POSTOTNIH RAZLIKA (YoY % RAST / PAD) =================
+            // Matrica postotnih razlika
             const percHeaderElem = document.getElementById('matrixPercTableHeader');
             let percHeaderHTML = `<tr><th class="py-2.5 px-3 text-left">Mjesec</th>`;
             availableYears.forEach((y, idx) => {
@@ -3492,7 +3736,7 @@
                     percHeaderHTML += `<th class="py-2.5 px-3">${y} vs ${prevY}</th>`;
                 }
             });
-            percHeaderHTML += `<th class="py-2.5 px-3 bg-indigo-50 text-indigo-900">Prosječni YoY Trend</th></tr>`;
+            percHeaderHTML += `<th class="py-2.5 px-3 bg-indigo-50 dark:bg-slate-800 text-indigo-900 dark:text-indigo-300">Prosječni YoY Trend</th></tr>`;
             if (percHeaderElem) percHeaderElem.innerHTML = percHeaderHTML;
 
             const percBodyElem = document.getElementById('matrixPercTableBody');
@@ -3500,7 +3744,7 @@
 
             monthsNames.forEach((mName, mIdx) => {
                 let mNum = mIdx + 1;
-                let rowHTML = `<tr class="hover:bg-slate-50"><td class="py-2 px-3 text-left font-bold text-slate-800">${mName}</td>`;
+                let rowHTML = `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60"><td class="py-2 px-3 text-left font-bold text-slate-800 dark:text-slate-200">${mName}</td>`;
                 let validPercSums = 0;
                 let validPercCount = 0;
 
@@ -3508,7 +3752,7 @@
                     let val = matrixData[mNum][y] || 0;
                     if (idx === 0) {
                         let displayVal = val > 0 ? val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-';
-                        rowHTML += `<td class="py-2 px-3 text-slate-600 font-semibold">${displayVal}</td>`;
+                        rowHTML += `<td class="py-2 px-3 text-slate-600 dark:text-slate-400 font-semibold">${displayVal}</td>`;
                     } else {
                         let prevY = availableYears[idx - 1];
                         let prevVal = matrixData[mNum][prevY] || 0;
@@ -3520,21 +3764,21 @@
 
                             let badgeHTML = '';
                             if (diffPerc > 0) {
-                                badgeHTML = `<span class="inline-block px-2 py-0.5 rounded text-[11px] font-extrabold bg-red-100 text-red-700 border border-red-200">+${diffPerc.toFixed(1)}% 📈</span>`;
+                                badgeHTML = `<span class="inline-block px-2 py-0.5 rounded text-[11px] font-extrabold bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">+${diffPerc.toFixed(1)}% 📈</span>`;
                             } else if (diffPerc < 0) {
-                                badgeHTML = `<span class="inline-block px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">${diffPerc.toFixed(1)}% 📉</span>`;
+                                badgeHTML = `<span class="inline-block px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">${diffPerc.toFixed(1)}% 📉</span>`;
                             } else {
-                                badgeHTML = `<span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-600">0.0%</span>`;
+                                badgeHTML = `<span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">0.0%</span>`;
                             }
 
                             rowHTML += `<td class="py-2 px-3">
-                                <div class="font-bold text-slate-800 text-[11px]">${val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
+                                <div class="font-bold text-slate-800 dark:text-slate-200 text-[11px]">${val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
                                 <div>${badgeHTML}</div>
                             </td>`;
                         } else if (prevVal === 0 && val > 0) {
                             rowHTML += `<td class="py-2 px-3">
-                                <div class="font-bold text-slate-800 text-[11px]">${val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
-                                <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">Novo 🆕</span>
+                                <div class="font-bold text-slate-800 dark:text-slate-200 text-[11px]">${val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
+                                <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300">Novo 🆕</span>
                             </td>`;
                         } else {
                             rowHTML += `<td class="py-2 px-3 text-slate-400">-</td>`;
@@ -3546,39 +3790,39 @@
                 if (validPercCount > 0) {
                     let avgP = validPercSums / validPercCount;
                     if (avgP > 0) {
-                        avgTrendBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-red-100 text-red-800 border border-red-200">+${avgP.toFixed(1)}%/god 📈</span>`;
+                        avgTrendBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-red-100 dark:bg-red-900/60 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800">+${avgP.toFixed(1)}%/god 📈</span>`;
                     } else if (avgP < 0) {
-                        avgTrendBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">${avgP.toFixed(1)}%/god 📉</span>`;
+                        avgTrendBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">${avgP.toFixed(1)}%/god 📉</span>`;
                     } else {
-                        avgTrendBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-600">0.0%/god</span>`;
+                        avgTrendBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">0.0%/god</span>`;
                     }
                 }
-                rowHTML += `<td class="py-2 px-3 font-bold bg-indigo-50/40">${avgTrendBadge}</td></tr>`;
+                rowHTML += `<td class="py-2 px-3 font-bold bg-indigo-50/40 dark:bg-slate-800/40">${avgTrendBadge}</td></tr>`;
                 percBodyRows.push(rowHTML);
             });
 
-            // UKUPNO red za postotnu matricu
-            let totalPercRowHTML = `<tr class="bg-slate-100 font-extrabold text-slate-900 border-t-2 border-slate-300"><td class="py-3 px-3 text-left">UKUPNO YOY RAST / PAD</td>`;
+            let totalPercRowHTML = `<tr class="bg-slate-100 dark:bg-slate-800 font-extrabold text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700"><td class="py-3 px-3 text-left">UKUPNO YOY RAST / PAD</td>`;
             let totalValidSums = 0, totalValidCount = 0;
 
             availableYears.forEach((y, idx) => {
                 let yTot = yearTotals[y] || 0;
                 if (idx === 0) {
-                    totalPercRowHTML += `<td class="py-3 px-3 text-slate-700 font-bold">${yTot.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</td>`;
+                    totalPercRowHTML += `<td class="py-3 px-3 text-slate-700 dark:text-slate-300 font-bold">${yTot.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</td>`;
                 } else {
                     let prevY = availableYears[idx - 1];
                     let prevYTot = yearTotals[prevY] || 0;
+
                     if (prevYTot > 0 && yTot > 0) {
                         let diffP = ((yTot - prevYTot) / prevYTot) * 100;
                         totalValidSums += diffP;
                         totalValidCount++;
 
-                        let badgeClass = diffP > 0 ? 'bg-red-100 text-red-800 border border-red-300' : (diffP < 0 ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-slate-200 text-slate-700');
+                        let badgeClass = diffP > 0 ? 'bg-red-100 dark:bg-red-900/60 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-700' : (diffP < 0 ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300');
                         let sign = diffP > 0 ? '+' : '';
                         let arrow = diffP > 0 ? '📈' : (diffP < 0 ? '📉' : '');
 
                         totalPercRowHTML += `<td class="py-3 px-3">
-                            <div class="font-black text-slate-900 text-[11px]">${yTot.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
+                            <div class="font-black text-slate-900 dark:text-white text-[11px]">${yTot.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
                             <span class="inline-block mt-0.5 px-2 py-0.5 rounded text-[11px] font-black ${badgeClass}">${sign}${diffP.toFixed(1)}% ${arrow}</span>
                         </td>`;
                     } else {
@@ -3590,17 +3834,15 @@
             let grandAvgBadge = '<span class="text-slate-400">-</span>';
             if (totalValidCount > 0) {
                 let grandAvg = totalValidSums / totalValidCount;
-                let badgeC = grandAvg > 0 ? 'bg-red-100 text-red-900 border border-red-300' : 'bg-emerald-100 text-emerald-900 border border-emerald-300';
+                let badgeC = grandAvg > 0 ? 'bg-red-100 dark:bg-red-900/60 text-red-900 dark:text-red-200 border border-red-300 dark:border-red-700' : 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700';
                 let sign = grandAvg > 0 ? '+' : '';
                 let arrow = grandAvg > 0 ? '📈' : '📉';
                 grandAvgBadge = `<span class="px-2.5 py-1 rounded-lg text-xs font-black ${badgeC}">${sign}${grandAvg.toFixed(1)}%/god ${arrow}</span>`;
             }
-            totalPercRowHTML += `<td class="py-3 px-3 bg-indigo-100 text-indigo-950">${grandAvgBadge}</td></tr>`;
+            totalPercRowHTML += `<td class="py-3 px-3 bg-indigo-100 dark:bg-slate-800 text-indigo-950 dark:text-indigo-300">${grandAvgBadge}</td></tr>`;
             percBodyRows.push(totalPercRowHTML);
 
             if (percBodyElem) percBodyElem.innerHTML = percBodyRows.join('');
-
-            renderTransactionTable(data);
         }
 
         let transactionTableData = [];
