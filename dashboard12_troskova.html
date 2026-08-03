@@ -1199,6 +1199,9 @@
                         <button id="addVehicleMasterBtn" onclick="openEditVehicleModal()" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-4 py-2.5 rounded-xl shadow transition-all text-xs flex items-center gap-2">
                             <span>➕ Dodaj Novo Vozilo (Nabavka)</span>
                         </button>
+                        <button onclick="clearMasterFleetColumnFilters()" title="Resetuj sve filtere i sortiranje u kolonama tabele" class="bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-xl border border-white/30 shadow transition-all text-xs flex items-center gap-2">
+                            <span>🔄 Resetuj filtere</span>
+                        </button>
                         <button onclick="exportMasterFleetToExcel()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2.5 rounded-xl shadow transition-all text-xs flex items-center gap-2">
                             <span>📥 Izvezi Šifrarnik (Excel)</span>
                         </button>
@@ -1240,18 +1243,48 @@
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-xs text-left">
-                        <thead class="bg-slate-100 font-bold text-slate-700 border-b border-slate-200">
+                        <thead class="bg-slate-100 font-bold text-slate-700 border-b border-slate-200 sticky top-0 z-10">
                             <tr>
-                                <th class="py-3 px-3 text-center w-12">RB</th>
-                                <th class="py-3 px-3">Registracija</th>
-                                <th class="py-3 px-3">MT / Garažni Br.</th>
-                                <th class="py-3 px-3">Tip Mehanizacije</th>
-                                <th class="py-3 px-3">Marka</th>
-                                <th class="py-3 px-3">Model</th>
-                                <th class="py-3 px-3">Godina</th>
-                                <th class="py-3 px-3">Broj Šasije (VIN)</th>
-                                <th class="py-3 px-3 text-center">Status</th>
-                                <th class="py-3 px-3 text-right">Akcije</th>
+                                <th class="py-2.5 px-3 text-center w-10 text-[10px] uppercase tracking-wide text-slate-500">#</th>
+                                <th class="py-2 px-3 cursor-pointer select-none hover:bg-slate-200 transition-colors" onclick="sortMasterFleet('reg')">
+                                    <div class="flex items-center gap-1">Registracija <span id="sortIcon_reg" class="text-slate-400">⇅</span></div>
+                                    <input type="text" id="colFilter_reg" onclick="event.stopPropagation()" oninput="filterMasterFleetTable()" placeholder="Filtriraj..." class="mt-1 w-full text-[10px] font-normal bg-white border border-slate-300 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-400 text-slate-700">
+                                </th>
+                                <th class="py-2 px-3 cursor-pointer select-none hover:bg-slate-200 transition-colors" onclick="sortMasterFleet('garazniBroj')">
+                                    <div class="flex items-center gap-1">MT / Garažni Br. <span id="sortIcon_garazniBroj" class="text-slate-400">⇅</span></div>
+                                    <input type="text" id="colFilter_garazniBroj" onclick="event.stopPropagation()" oninput="filterMasterFleetTable()" placeholder="Filtriraj..." class="mt-1 w-full text-[10px] font-normal bg-white border border-slate-300 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-400 text-slate-700">
+                                </th>
+                                <th class="py-2 px-3 cursor-pointer select-none hover:bg-slate-200 transition-colors" onclick="sortMasterFleet('tipMehan')">
+                                    <div class="flex items-center gap-1">Tip Mehanizacije <span id="sortIcon_tipMehan" class="text-slate-400">⇅</span></div>
+                                    <input type="text" id="colFilter_tipMehan" onclick="event.stopPropagation()" oninput="filterMasterFleetTable()" placeholder="Filtriraj..." class="mt-1 w-full text-[10px] font-normal bg-white border border-slate-300 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-400 text-slate-700">
+                                </th>
+                                <th class="py-2 px-3 cursor-pointer select-none hover:bg-slate-200 transition-colors" onclick="sortMasterFleet('markaVoz')">
+                                    <div class="flex items-center gap-1">Marka <span id="sortIcon_markaVoz" class="text-slate-400">⇅</span></div>
+                                    <input type="text" id="colFilter_markaVoz" onclick="event.stopPropagation()" oninput="filterMasterFleetTable()" placeholder="Filtriraj..." class="mt-1 w-full text-[10px] font-normal bg-white border border-slate-300 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-400 text-slate-700">
+                                </th>
+                                <th class="py-2 px-3 cursor-pointer select-none hover:bg-slate-200 transition-colors" onclick="sortMasterFleet('modelVoz')">
+                                    <div class="flex items-center gap-1">Model <span id="sortIcon_modelVoz" class="text-slate-400">⇅</span></div>
+                                    <input type="text" id="colFilter_modelVoz" onclick="event.stopPropagation()" oninput="filterMasterFleetTable()" placeholder="Filtriraj..." class="mt-1 w-full text-[10px] font-normal bg-white border border-slate-300 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-400 text-slate-700">
+                                </th>
+                                <th class="py-2 px-3 cursor-pointer select-none hover:bg-slate-200 transition-colors" onclick="sortMasterFleet('godProizvodnje')">
+                                    <div class="flex items-center gap-1">Godina <span id="sortIcon_godProizvodnje" class="text-slate-400">⇅</span></div>
+                                    <input type="text" id="colFilter_godProizvodnje" onclick="event.stopPropagation()" oninput="filterMasterFleetTable()" placeholder="npr. 2019" class="mt-1 w-full text-[10px] font-normal bg-white border border-slate-300 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-400 text-slate-700">
+                                </th>
+                                <th class="py-2 px-3 cursor-pointer select-none hover:bg-slate-200 transition-colors" onclick="sortMasterFleet('brojSasije')">
+                                    <div class="flex items-center gap-1">Broj Šasije (VIN) <span id="sortIcon_brojSasije" class="text-slate-400">⇅</span></div>
+                                    <input type="text" id="colFilter_brojSasije" onclick="event.stopPropagation()" oninput="filterMasterFleetTable()" placeholder="Filtriraj..." class="mt-1 w-full text-[10px] font-normal bg-white border border-slate-300 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-400 text-slate-700">
+                                </th>
+                                <th class="py-2 px-3 text-center cursor-pointer select-none hover:bg-slate-200 transition-colors" onclick="sortMasterFleet('status')">
+                                    <div class="flex items-center justify-center gap-1">Status <span id="sortIcon_status" class="text-slate-400">⇅</span></div>
+                                    <select id="colFilter_status" onclick="event.stopPropagation()" onchange="filterMasterFleetTable()" class="mt-1 w-full text-[10px] font-normal bg-white border border-slate-300 rounded px-1 py-1 outline-none focus:ring-1 focus:ring-indigo-400 text-slate-700">
+                                        <option value="">Svi</option>
+                                        <option value="Aktivno">Aktivno</option>
+                                        <option value="Neaktivno">Neaktivno</option>
+                                        <option value="Rashodovano">Rashodovano</option>
+                                        <option value="Prodato">Prodato</option>
+                                    </select>
+                                </th>
+                                <th class="py-2.5 px-3 text-right text-[10px] uppercase tracking-wide text-slate-500">Akcije</th>
                             </tr>
                         </thead>
                         <tbody id="masterFleetTableBody" class="divide-y divide-slate-100 bg-white">
@@ -4913,12 +4946,48 @@
             renderMasterFleetTable();
         }
 
+        let masterFleetSort = { col: null, dir: 'asc' };
+
+        function sortMasterFleet(col) {
+            if (masterFleetSort.col === col) {
+                masterFleetSort.dir = masterFleetSort.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                masterFleetSort.col = col;
+                masterFleetSort.dir = 'asc';
+            }
+            // Update sort icons
+            const allCols = ['reg','garazniBroj','tipMehan','markaVoz','modelVoz','godProizvodnje','brojSasije','status'];
+            allCols.forEach(c => {
+                const icon = document.getElementById('sortIcon_' + c);
+                if (!icon) return;
+                if (c === masterFleetSort.col) {
+                    icon.textContent = masterFleetSort.dir === 'asc' ? '▲' : '▼';
+                    icon.className = 'text-indigo-500';
+                } else {
+                    icon.textContent = '⇅';
+                    icon.className = 'text-slate-400';
+                }
+            });
+            masterFleetPage = 1;
+            renderMasterFleetTable();
+        }
+
         function getFilteredMasterFleetData() {
             let searchTerm = (document.getElementById('masterFleetSearch')?.value || '').trim().toLowerCase();
             let tipFilter = (document.getElementById('masterFleetTipFilter')?.value || 'all');
             let statusFilter = (document.getElementById('masterFleetStatusFilter')?.value || 'Aktivno');
 
-            return masterFleetData.filter(v => {
+            // Per-column header filters
+            let colReg       = (document.getElementById('colFilter_reg')?.value || '').trim().toLowerCase();
+            let colGar       = (document.getElementById('colFilter_garazniBroj')?.value || '').trim().toLowerCase();
+            let colTip       = (document.getElementById('colFilter_tipMehan')?.value || '').trim().toLowerCase();
+            let colMarka     = (document.getElementById('colFilter_markaVoz')?.value || '').trim().toLowerCase();
+            let colModel     = (document.getElementById('colFilter_modelVoz')?.value || '').trim().toLowerCase();
+            let colGod       = (document.getElementById('colFilter_godProizvodnje')?.value || '').trim().toLowerCase();
+            let colSasija    = (document.getElementById('colFilter_brojSasije')?.value || '').trim().toLowerCase();
+            let colStatus    = (document.getElementById('colFilter_status')?.value || '').trim().toLowerCase();
+
+            let filtered = masterFleetData.filter(v => {
                 let matchTip = tipFilter === 'all' || v.tipMehan === tipFilter;
                 let matchStatus = statusFilter === 'all' || (v.status && v.status.toLowerCase().includes(statusFilter.toLowerCase()));
 
@@ -4930,8 +4999,38 @@
                                   (v.modelVoz && v.modelVoz.toLowerCase().includes(searchTerm)) ||
                                   (v.brojSasije && v.brojSasije.toLowerCase().includes(searchTerm));
                 }
+
+                // Column-level filters
+                if (colReg    && !(v.reg && v.reg.toLowerCase().includes(colReg))) return false;
+                if (colGar    && !(v.garazniBroj && v.garazniBroj.toLowerCase().includes(colGar))) return false;
+                if (colTip    && !(v.tipMehan && v.tipMehan.toLowerCase().includes(colTip))) return false;
+                if (colMarka  && !(v.markaVoz && v.markaVoz.toLowerCase().includes(colMarka))) return false;
+                if (colModel  && !(v.modelVoz && v.modelVoz.toLowerCase().includes(colModel))) return false;
+                if (colGod    && !(String(v.godProizvodnje || '').toLowerCase().includes(colGod))) return false;
+                if (colSasija && !(v.brojSasije && v.brojSasije.toLowerCase().includes(colSasija))) return false;
+                if (colStatus && !(v.status && v.status.toLowerCase().includes(colStatus))) return false;
+
                 return matchTip && matchStatus && matchSearch;
             });
+
+            // Column sort
+            if (masterFleetSort.col) {
+                let col = masterFleetSort.col;
+                let dir = masterFleetSort.dir === 'asc' ? 1 : -1;
+                filtered.sort((a, b) => {
+                    let aVal = String(a[col] || '').toLowerCase();
+                    let bVal = String(b[col] || '').toLowerCase();
+                    // Numeric sort for godina
+                    if (col === 'godProizvodnje') {
+                        aVal = parseInt(a[col]) || 0;
+                        bVal = parseInt(b[col]) || 0;
+                        return (aVal - bVal) * dir;
+                    }
+                    return aVal < bVal ? -dir : aVal > bVal ? dir : 0;
+                });
+            }
+
+            return filtered;
         }
 
         function renderMasterFleetTable() {
@@ -5026,6 +5125,15 @@
         function filterMasterFleetTable() {
             masterFleetPage = 1;
             renderMasterFleetTable();
+        }
+
+        function clearMasterFleetColumnFilters() {
+            ['reg','garazniBroj','tipMehan','markaVoz','modelVoz','godProizvodnje','brojSasije','status'].forEach(col => {
+                const el = document.getElementById('colFilter_' + col);
+                if (el) el.value = '';
+            });
+            masterFleetSort = { col: null, dir: 'asc' };
+            filterMasterFleetTable();
         }
 
         function prevMasterFleetPage() {
