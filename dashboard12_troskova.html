@@ -2525,6 +2525,13 @@
                         }
                     });
 
+                    if (firestoreItems.length > 0) {
+                        const statusSub = document.getElementById('uploadStatusSubtitle');
+                        if (statusSub) {
+                            statusSub.innerText = `☁️ Cloud Firestore Baza: ${masterFleetData.length || 953} vozila | Učitano ${firestoreItems.length.toLocaleString('bs-BA')} servisa iz Firestore baze`;
+                        }
+                    }
+
                     if (addedCount > 0) {
                         applyFilters();
                     }
