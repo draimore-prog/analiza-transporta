@@ -2071,6 +2071,8 @@
             }
         }
 
+        let _dataLoaded = false; // ensure data loads only once after login
+
         function updateAuthUI() {
             const loginModal = document.getElementById('loginModal');
             const userHeaderBadge = document.getElementById('userHeaderBadge');
@@ -2092,20 +2094,26 @@
                 }
                 document.getElementById('headerUserRole').innerText = roleLabel;
 
-                // SAMO emir.durakovic (ili superadmin) VIDI ADMIN PANEL!
                 if (isEmir) {
                     adminPanelBtn.classList.remove('hidden');
                 } else {
                     adminPanelBtn.classList.add('hidden');
                 }
 
-                // Samo nalozi sa pravom unosa (editor, superadmin) vide dugme "➕ Unos Troška"
                 if (activeUser.role !== 'viewer') {
                     if (newCostBtn) newCostBtn.classList.remove('hidden');
                 } else {
                     if (newCostBtn) newCostBtn.classList.add('hidden');
                 }
+
+                // Load data AFTER login (only once)
+                if (!_dataLoaded) {
+                    _dataLoaded = true;
+                    autoLoadDataset();
+                    setTimeout(syncFirestoreUsers, 600);
+                }
             } else {
+                _dataLoaded = false;
                 loginModal.classList.remove('hidden');
                 userHeaderBadge.classList.add('hidden');
             }
@@ -2640,63 +2648,90 @@
             if (modal) modal.classList.add('hidden');
         }
 
-        async function autoLoadDataset() {
-            showGlobalSpinner('Učitavanje troškova...', 'Dohvatanje podataka iz Firestore baze');
-            try {
-                // PRIMARY SOURCE: Firestore fleet_costs
-                if (window.db) {
-                    try {
-                        let snapshot = await window.db.collection('fleet_costs').get();
-                        if (!snapshot.empty) {
-                            let records = [];
-                            snapshot.forEach(doc => {
-                                let d = doc.data();
-                                d._firestoreId = doc.id;
-                                if (!d.id) d.id = doc.id;
-                                if (d.datum) d.datumObj = new Date(d.datum);
-                                let dob = (d.dobavljacOrig || d.dobavljac || '').toLowerCase();
-                                if (dob.includes('pgl')) d.segment = 'Guma';
-                                records.push(d);
-                            });
-                            globalData = records;
-                            yearsSet.clear();
-                            globalData.forEach(d => { if (d.year) yearsSet.add(d.year); });
-                            _finalizeDatasetLoad();
-                            hideGlobalSpinner();
-                            return;
-                        }
-                    } catch(e) {
-                        console.warn('Firestore fleet_costs load notice, falling back to JSON:', e);
-                    }
-                }
+        // Years whose data has already been fetched from Firestore
+        let loadedYears = new Set();
+        let currentLoadYear = new Date().getFullYear(); // start with current year
 
-                // FALLBACK: fleet_data.json (offline/cold start)
+        async function autoLoadDataset() {
+            showGlobalSpinner('Prijavljivanje...',  'Priprema podataka za prikaz');
+            try {
+                // Load master fleet immediately (small dataset ~953 docs)
+                autoLoadMasterFleet();
+
+                // Load ONLY current year's costs first
+                await loadCostsForYear(currentLoadYear);
+
+                // Also load previous year for comparison charts
+                setTimeout(() => loadCostsForYear(currentLoadYear - 1), 1500);
+
+            } catch (e) {
+                console.log('autoLoadDataset error:', e);
+            }
+            hideGlobalSpinner();
+        }
+
+        async function loadCostsForYear(year) {
+            if (loadedYears.has(year)) return; // already loaded
+            loadedYears.add(year);
+
+            try {
+                if (window.db) {
+                    let snapshot = await window.db.collection('fleet_costs')
+                        .where('year', '==', year)
+                        .get();
+
+                    let records = [];
+                    snapshot.forEach(doc => {
+                        let d = doc.data();
+                        d._firestoreId = doc.id;
+                        if (!d.id) d.id = doc.id;
+                        if (d.datum) d.datumObj = new Date(d.datum);
+                        let dob = (d.dobavljacOrig || d.dobavljac || '').toLowerCase();
+                        if (dob.includes('pgl')) d.segment = 'Guma';
+                        records.push(d);
+                    });
+
+                    if (records.length > 0) {
+                        // Merge into globalData (avoid duplicates)
+                        let existingIds = new Set(globalData.map(g => g.id || g._firestoreId));
+                        records.forEach(r => {
+                            if (!existingIds.has(r.id)) globalData.push(r);
+                        });
+                        yearsSet.add(year);
+                        _finalizeDatasetLoad();
+                    } else if (loadedYears.size === 1) {
+                        // Firestore has no data for this year — try JSON fallback
+                        _loadFallbackJson();
+                    }
+                } else {
+                    _loadFallbackJson();
+                }
+            } catch(e) {
+                console.warn('loadCostsForYear error:', e);
+                if (loadedYears.size === 1) _loadFallbackJson();
+            }
+        }
+
+        async function _loadFallbackJson() {
+            try {
                 const res = await fetch('fleet_data.json');
-                if (!res.ok) { hideGlobalSpinner(); return; }
+                if (!res.ok) return;
                 const data = await res.json();
                 if (data && data.records && data.records.length > 0) {
-                    globalData = data.records.map((item, idx) => {
-                        let dob = (item.dobavljacOrig || item.dobavljac || '').toLowerCase();
-                        let seg = item.segment;
-                        if (dob.includes('pgl')) seg = 'Guma';
-                        return {
-                            ...item,
-                            id: item.id || `rec_${idx}_${item.reg}_${item.cost}`,
-                            segment: seg,
-                            datumObj: item.datum ? new Date(item.datum) : null
-                        };
-                    });
+                    globalData = data.records.map((item, idx) => ({
+                        ...item,
+                        id: item.id || `rec_${idx}_${item.reg}_${item.cost}`,
+                        segment: (item.dobavljacOrig||'').toLowerCase().includes('pgl') ? 'Guma' : item.segment,
+                        datumObj: item.datum ? new Date(item.datum) : null
+                    }));
                     yearsSet.clear();
-                    globalData.forEach(d => yearsSet.add(d.year));
-                    if (data.metadata && data.metadata.fleetByYear) {
+                    globalData.forEach(d => { if (d.year) yearsSet.add(d.year); });
+                    if (data.metadata?.fleetByYear) {
                         kpiTotalFleetByYear = { ...kpiTotalFleetByYear, ...data.metadata.fleetByYear };
                     }
                     _finalizeDatasetLoad();
                 }
-            } catch (e) {
-                console.log('Auto-load dataset note:', e);
-            }
-            hideGlobalSpinner();
+            } catch(e) { console.warn('JSON fallback error:', e); }
         }
 
         function _finalizeDatasetLoad() {
@@ -2727,46 +2762,14 @@
         }
 
 
+        // syncFirestoreCosts is now superseded by loadCostsForYear (year-by-year lazy loading).
+        // This stub loads any year the user is currently viewing that hasn't been fetched yet.
         async function syncFirestoreCosts() {
-            if (!window.db) return;
-            try {
-                let snapshot = await window.db.collection('fleet_costs').get();
-                if (!snapshot.empty) {
-                    let firestoreMap = new Map();
-                    snapshot.forEach(doc => {
-                        let d = doc.data();
-                        d._firestoreId = doc.id;
-                        if (d.datum) d.datumObj = new Date(d.datum);
-                        if (!d.id) d.id = doc.id;
-                        firestoreMap.set(d.id, d);
-                    });
-
-                    let firestoreItems = Array.from(firestoreMap.values());
-
-                    // Replace globalData with clean Cloud Firestore data
-                    if (firestoreItems.length >= 1000) {
-                        globalData = firestoreItems;
-                        yearsSet.clear();
-                        globalData.forEach(d => { if (d.year) yearsSet.add(d.year); });
-                    } else {
-                        let existingIds = new Set(globalData.map(g => g.id || g._firestoreId));
-                        firestoreItems.forEach(item => {
-                            if (!existingIds.has(item.id)) {
-                                globalData.unshift(item);
-                                if (item.year) yearsSet.add(item.year);
-                            }
-                        });
-                    }
-
-                    const statusSub = document.getElementById('uploadStatusSubtitle');
-                    if (statusSub) {
-                        statusSub.innerText = `☁️ Cloud Firestore Baza: ${masterFleetData.length || 953} vozila | Učitano ${globalData.length.toLocaleString('bs-BA')} servisa iz Firestore baze (Bez Duplikata)`;
-                    }
-
-                    applyFilters();
-                }
-            } catch(e) {
-                console.warn("Notice syncing Firestore costs:", e);
+            // Load years visible in the current filter if not already loaded
+            const filterYearElem = document.getElementById('filterYear');
+            let yr = filterYearElem ? parseInt(filterYearElem.value) : currentLoadYear;
+            if (!isNaN(yr) && !loadedYears.has(yr)) {
+                await loadCostsForYear(yr);
             }
         }
 
@@ -2810,12 +2813,10 @@
             }
         }
 
-        // Initialize Auth system & dataset on load
+        // Initialize Auth & theme only — data loads after login in updateAuthUI
         window.addEventListener('DOMContentLoaded', () => {
             initTheme();
             initAuthSystem();
-            autoLoadDataset(); // Loads from Firestore (primary) or fleet_data.json (fallback)
-            setTimeout(syncFirestoreUsers, 800);
         });
 
         // ================= GLAVNA LOGIKA DASHBOARDA =================
@@ -4501,8 +4502,14 @@
 
         let transactionTableData = [];
 
+        // How many transaction rows to render at a time (virtual scroll)
+        let _txRenderedCount = 250;
+        let _txCurrentData = [];
+        let _txScrollObserver = null;
+
         function renderTransactionTable(data) {
             transactionTableData = data;
+            _txRenderedCount = 250;
 
             const yearSelect = document.getElementById('tableYearFilter');
             if (yearSelect) {
@@ -4520,9 +4527,18 @@
         }
 
         function filterTransactionTable() {
-            let term = (document.getElementById('tableSearchInput').value || '').trim().toLowerCase();
-            let selectedYear = document.getElementById('tableYearFilter') ? document.getElementById('tableYearFilter').value : 'all';
-            let sortMode = document.getElementById('tableSortFilter') ? document.getElementById('tableSortFilter').value : 'new-first';
+            let term = (document.getElementById('tableSearchInput')?.value || '').trim().toLowerCase();
+            let selectedYear = document.getElementById('tableYearFilter')?.value || 'all';
+            let sortMode = document.getElementById('tableSortFilter')?.value || 'new-first';
+
+            // If user selects a year not yet loaded — fetch it from Firestore
+            if (selectedYear !== 'all') {
+                let yr = parseInt(selectedYear);
+                if (!loadedYears.has(yr) && window.db) {
+                    loadCostsForYear(yr).then(() => filterTransactionTable());
+                    return;
+                }
+            }
 
             let filtered = transactionTableData.filter(item => {
                 let matchYear = selectedYear === 'all' || item.year === parseInt(selectedYear);
@@ -4551,15 +4567,24 @@
                 filtered.sort((a, b) => a.cost - b.cost);
             }
 
+            _txCurrentData = filtered;
+            _txRenderedCount = 250;
             document.getElementById('tableRecordCount').innerText = `Prikazano ${filtered.length.toLocaleString('bs-BA')} servisa i transakcija`;
+            _renderTxRows();
+            _setupTxScrollObserver();
+        }
 
+        function _renderTxRows() {
             const tbody = document.getElementById('transactionTableBody');
+            const slice = _txCurrentData.slice(0, _txRenderedCount);
             let rowsHTML = [];
 
-            filtered.slice(0, 250).forEach(item => {
-                let dateStr = "-";
-                if(item.datumObj && !isNaN(item.datumObj)) {
-                    dateStr = ("0" + item.datumObj.getDate()).slice(-2) + "." + ("0" + (item.datumObj.getMonth() + 1)).slice(-2) + "." + item.datumObj.getFullYear() + ".";
+            slice.forEach(item => {
+                let dateStr = '-';
+                if (item.datumObj && !isNaN(item.datumObj)) {
+                    dateStr = ('0' + item.datumObj.getDate()).slice(-2) + '.' +
+                              ('0' + (item.datumObj.getMonth() + 1)).slice(-2) + '.' +
+                              item.datumObj.getFullYear() + '.';
                 }
 
                 let newBadge = item.isNewCustom ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] px-1.5 py-0.5 rounded font-extrabold ml-1">🆕 Novo</span>` : '';
@@ -4584,11 +4609,29 @@
                 `);
             });
 
-            if (filtered.length === 0) {
+            if (_txCurrentData.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400 font-medium italic">Nema zapisa koji odgovaraju odabranim filterima.</td></tr>`;
             } else {
                 tbody.innerHTML = rowsHTML.join('');
             }
+        }
+
+        function _setupTxScrollObserver() {
+            if (_txScrollObserver) _txScrollObserver.disconnect();
+            const tbody = document.getElementById('transactionTableBody');
+            if (!tbody) return;
+            const lastRow = tbody.lastElementChild;
+            if (!lastRow || _txRenderedCount >= _txCurrentData.length) return;
+
+            _txScrollObserver = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    _txScrollObserver.disconnect();
+                    _txRenderedCount += 200;
+                    _renderTxRows();
+                    _setupTxScrollObserver();
+                }
+            }, { threshold: 0.1 });
+            _txScrollObserver.observe(lastRow);
         }
 
         // --- UNIVERZALNA PRETRAGA I KARTON VOZILA ---
