@@ -1907,27 +1907,17 @@
         let activeUser = null;
 
         const defaultSystemUsers = [
-            { username: 'emir.durakovic', fullname: 'Emir Duraković', password: 'Emir1235', role: 'superadmin', createdAt: '2026-07-30' },
-            { username: 'anisa.bosnjic', fullname: 'Anisa Bošnjak', password: 'Anisa1', role: 'editor', createdAt: '2026-07-30' },
-            { username: 'selma.durakovic', fullname: 'Selma Duraković', password: 'Selma1', role: 'editor', createdAt: '2026-07-30' },
-            { username: 'silvio.suljic', fullname: 'Silvio Suljić', password: 'Silvio1', role: 'editor', createdAt: '2026-08-02' },
-            { username: 'jasmin.avdic', fullname: 'Jasmin Avdić', password: 'Jasmin1', role: 'editor', createdAt: '2026-08-02' },
-            { username: 'nedim.kisic', fullname: 'Nedim Kisić', password: 'Nedim1', role: 'viewer', createdAt: '2026-07-30' }
+            { username: 'emir.durakovic', fullname: 'Emir Duraković', role: 'superadmin', createdAt: '2026-07-30' },
+            { username: 'anisa.bosnjic', fullname: 'Anisa Bošnjak', role: 'editor', createdAt: '2026-07-30' },
+            { username: 'selma.durakovic', fullname: 'Selma Duraković', role: 'editor', createdAt: '2026-07-30' },
+            { username: 'silvio.suljic', fullname: 'Silvio Suljić', role: 'editor', createdAt: '2026-08-02' },
+            { username: 'jasmin.avdic', fullname: 'Jasmin Avdić', role: 'editor', createdAt: '2026-08-02' },
+            { username: 'nedim.kisic', fullname: 'Nedim Kisić', role: 'viewer', createdAt: '2026-07-30' }
         ];
 
-        function fillLoginCredentials(uname, pass) {
-            const uElem = document.getElementById('loginUsername');
-            const pElem = document.getElementById('loginPassword');
-            if (uElem) uElem.value = uname;
-            if (pElem) pElem.value = pass;
-            const errDiv = document.getElementById('loginError');
-            if (errDiv) {
-                errDiv.classList.add('hidden');
-            }
-        }
-
         function initAuthSystem() {
-            // Remove legacy cache keys
+            // Clear legacy plain text credentials cache
+            localStorage.removeItem('saved_login_creds');
             localStorage.removeItem('transport_app_users_v17');
             localStorage.removeItem('transport_app_users_v18');
 
@@ -1951,28 +1941,9 @@
                 localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(usersDB));
             }
 
-            // Uklonjen automatski login tako da se pri svakom pristupu/otvaranju stranice prikazuje ekran za prijavu
             activeUser = null;
             sessionStorage.removeItem(SESSION_ACTIVE_USER_KEY);
             localStorage.removeItem(SESSION_ACTIVE_USER_KEY);
-
-            let savedCreds = localStorage.getItem('saved_login_creds');
-            if (savedCreds) {
-                try {
-                    let creds = JSON.parse(savedCreds);
-                    let matchingUser = usersDB.find(u => u.username.toLowerCase() === creds.username.toLowerCase());
-                    if (matchingUser && (matchingUser.password === creds.password || matchingUser.password.toLowerCase() === creds.password.toLowerCase())) {
-                        const uElem = document.getElementById('loginUsername');
-                        const pElem = document.getElementById('loginPassword');
-                        const remElem = document.getElementById('rememberMe');
-                        if (uElem) uElem.value = creds.username;
-                        if (pElem) pElem.value = creds.password;
-                        if (remElem) remElem.checked = true;
-                    } else {
-                        localStorage.removeItem('saved_login_creds');
-                    }
-                } catch(e) {}
-            }
 
             updateAuthUI();
             setTimeout(syncFirestoreUsers, 100);
@@ -2171,86 +2142,87 @@
                 return;
             }
 
-            // 1. Probaj prijavu preko Firebase Auth (Email & Password)
-            if (window.auth) {
-                let emailToUse = uInput.includes('@') ? uInput : `${uInput.toLowerCase()}@analizatransporta.ba`;
-                try {
-                    let userCred = await window.auth.signInWithEmailAndPassword(emailToUse, pInput);
-                    if (userCred && userCred.user) {
-                        console.log("🔥 Firebase Auth prijava uspješna:", userCred.user.email);
-                        let uname = uInput.toLowerCase();
-                        let foundUser = usersDB.find(u => u.username.toLowerCase() === uname) || {
-                            username: uname,
-                            fullname: uInput,
-                            role: uname === 'emir.durakovic' ? 'superadmin' : 'editor'
-                        };
-                        activeUser = foundUser;
-                        if (rememberMe) {
-                            localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
-                            localStorage.setItem('saved_login_creds', JSON.stringify({ username: uInput, password: pInput }));
-                        } else {
-                            sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
-                        }
-                        if (errDiv) errDiv.classList.add('hidden');
-                        updateAuthUI();
-                        return;
-                    }
-                } catch (authErr) {
-                    console.log("Firebase Auth notice:", authErr.code, authErr.message);
-                    if (authErr.code === 'auth/user-not-found') {
-                        // Kreiraj novi Firebase Auth nalog automatski za postojeći profil
+            if (!window.auth) {
+                alert("Firebase Authentication servis nije inicijalizovan. Molimo osvježite stranicu.");
+                return;
+            }
+
+            let emailToUse = uInput.includes('@') ? uInput : `${uInput.toLowerCase()}@analizatransporta.ba`;
+
+            try {
+                // Autentičnost se provjerava striktno na Firebase Auth Cloud servisu
+                let userCred = await window.auth.signInWithEmailAndPassword(emailToUse, pInput);
+                if (userCred && userCred.user) {
+                    console.log("🔥 Firebase Auth prijava uspješna:", userCred.user.email);
+                    let uname = uInput.includes('@') ? uInput.split('@')[0].toLowerCase() : uInput.toLowerCase();
+                    
+                    let uDoc = null;
+                    if (window.db) {
                         try {
-                            let newCred = await window.auth.createUserWithEmailAndPassword(emailToUse, pInput);
-                            if (newCred && newCred.user) {
-                                console.log("🔥 Novi Firebase Auth nalog kreiran u oblaku:", emailToUse);
-                            }
-                        } catch(createErr) {}
+                            let snap = await window.db.collection('app_users').doc(uname).get();
+                            if (snap.exists) uDoc = snap.data();
+                        } catch(err) {}
                     }
-                }
-            }
 
-            // 2. Real-time Firestore i Local User Fallback
-            if (window.db) {
-                try {
-                    let doc = await window.db.collection('app_users').doc(uInput.toLowerCase()).get();
-                    if (doc.exists) {
-                        let cloudUser = doc.data();
-                        if (cloudUser && cloudUser.username) {
-                            let idx = usersDB.findIndex(u => u.username.toLowerCase() === uInput.toLowerCase());
-                            if (idx !== -1) {
-                                usersDB[idx] = { ...usersDB[idx], ...cloudUser };
+                    let isSuper = uname === 'emir.durakovic' || (uDoc && uDoc.role === 'superadmin');
+
+                    activeUser = {
+                        username: uname,
+                        fullname: uDoc ? uDoc.fullname : (userCred.user.displayName || uname),
+                        role: isSuper ? 'superadmin' : (uDoc ? uDoc.role : 'editor'),
+                        email: userCred.user.email,
+                        uid: userCred.user.uid
+                    };
+
+                    if (rememberMe) {
+                        localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+                    } else {
+                        sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+                    }
+                    if (errDiv) errDiv.classList.add('hidden');
+                    updateAuthUI();
+                    return;
+                }
+            } catch (authErr) {
+                console.error("Firebase Auth Error:", authErr.code, authErr.message);
+
+                // Automatsko kreiranje naloga u Firebase Auth za inicijalne naloge ako prvi put pristupa
+                if (authErr.code === 'auth/user-not-found' || authErr.code === 'auth/invalid-credential') {
+                    try {
+                        let newCred = await window.auth.createUserWithEmailAndPassword(emailToUse, pInput);
+                        if (newCred && newCred.user) {
+                            let uname = uInput.includes('@') ? uInput.split('@')[0].toLowerCase() : uInput.toLowerCase();
+                            let isSuper = uname === 'emir.durakovic';
+                            activeUser = {
+                                username: uname,
+                                fullname: uInput,
+                                role: isSuper ? 'superadmin' : 'editor',
+                                email: newCred.user.email,
+                                uid: newCred.user.uid
+                            };
+                            if (rememberMe) {
+                                localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
                             } else {
-                                usersDB.push(cloudUser);
+                                sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
                             }
-                            localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(usersDB));
+                            if (errDiv) errDiv.classList.add('hidden');
+                            updateAuthUI();
+                            return;
                         }
+                    } catch(regErr) {
+                        console.warn("Notice creating Firebase Auth user:", regErr.message);
                     }
-                } catch(err) {
-                    console.warn("Notice verifying Firestore user credentials:", err);
                 }
-            }
 
-            let found = usersDB.find(u => 
-                u.username.toLowerCase() === uInput.toLowerCase() && 
-                (u.password === pInput || u.password.toLowerCase() === pInput.toLowerCase())
-            );
-
-            if (found) {
-                activeUser = found;
-                if (rememberMe) {
-                    localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
-                    localStorage.setItem('saved_login_creds', JSON.stringify({ username: uInput, password: pInput }));
-                } else {
-                    sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
-                    localStorage.removeItem(SESSION_ACTIVE_USER_KEY);
-                    localStorage.removeItem('saved_login_creds');
-                }
-                if (errDiv) errDiv.classList.add('hidden');
-                updateAuthUI();
-            } else {
                 if (errDiv) {
                     errDiv.className = "p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg font-bold";
-                    errDiv.innerText = "Neispravno korisničko ime ili lozinka!";
+                    if (authErr.code === 'auth/wrong-password') {
+                        errDiv.innerText = "❌ Pogrešna lozinka na Firebase Auth servisu!";
+                    } else if (authErr.code === 'auth/user-not-found') {
+                        errDiv.innerText = "❌ Korisnički nalog nije pronađen u Firebase Auth oblaku.";
+                    } else {
+                        errDiv.innerText = "❌ Firebase Auth greška: " + (authErr.message || "Neispravni podaci za prijavu.");
+                    }
                     errDiv.classList.remove('hidden');
                 }
             }
