@@ -2506,35 +2506,38 @@
             try {
                 let snapshot = await window.db.collection('fleet_costs').get();
                 if (!snapshot.empty) {
-                    let firestoreItems = [];
+                    let firestoreMap = new Map();
                     snapshot.forEach(doc => {
                         let d = doc.data();
                         d._firestoreId = doc.id;
                         if (d.datum) d.datumObj = new Date(d.datum);
                         if (!d.id) d.id = doc.id;
-                        firestoreItems.push(d);
+                        firestoreMap.set(d.id, d);
                     });
 
-                    let existingIds = new Set(globalData.map(g => g.id || g._firestoreId));
-                    let addedCount = 0;
-                    firestoreItems.forEach(item => {
-                        if (!existingIds.has(item.id) && !existingIds.has(item._firestoreId)) {
-                            globalData.unshift(item);
-                            if (item.year) yearsSet.add(item.year);
-                            addedCount++;
-                        }
-                    });
+                    let firestoreItems = Array.from(firestoreMap.values());
 
-                    if (firestoreItems.length > 0) {
-                        const statusSub = document.getElementById('uploadStatusSubtitle');
-                        if (statusSub) {
-                            statusSub.innerText = `☁️ Cloud Firestore Baza: ${masterFleetData.length || 953} vozila | Učitano ${firestoreItems.length.toLocaleString('bs-BA')} servisa iz Firestore baze`;
-                        }
+                    // Replace globalData with clean Cloud Firestore data
+                    if (firestoreItems.length >= 1000) {
+                        globalData = firestoreItems;
+                        yearsSet.clear();
+                        globalData.forEach(d => { if (d.year) yearsSet.add(d.year); });
+                    } else {
+                        let existingIds = new Set(globalData.map(g => g.id || g._firestoreId));
+                        firestoreItems.forEach(item => {
+                            if (!existingIds.has(item.id)) {
+                                globalData.unshift(item);
+                                if (item.year) yearsSet.add(item.year);
+                            }
+                        });
                     }
 
-                    if (addedCount > 0) {
-                        applyFilters();
+                    const statusSub = document.getElementById('uploadStatusSubtitle');
+                    if (statusSub) {
+                        statusSub.innerText = `☁️ Cloud Firestore Baza: ${masterFleetData.length || 953} vozila | Učitano ${globalData.length.toLocaleString('bs-BA')} servisa iz Firestore baze (Bez Duplikata)`;
                     }
+
+                    applyFilters();
                 }
             } catch(e) {
                 console.warn("Notice syncing Firestore costs:", e);
@@ -5470,14 +5473,12 @@
                 switchTab(3);
                 closeNewCostModal();
 
-                // 5. Ne-blokirajuće slanje u Cloud Bazu Firestore u pozadini
+                // 5. Ne-blokirajuće slanje u Cloud Bazu Firestore u pozadini (sa jedinstvenim ID ključem bez duplikata)
                 if (window.db) {
-                    window.db.collection('fleet_costs').add({
+                    window.db.collection('fleet_costs').doc(newItem.id).set({
                         ...newItem,
                         datum: dateObj.toISOString(),
                         createdAt: new Date().toISOString()
-                    }).then(docRef => {
-                        newItem._firestoreId = docRef.id;
                     }).catch(e => {
                         console.warn("Notice saving to Firestore:", e);
                     });
