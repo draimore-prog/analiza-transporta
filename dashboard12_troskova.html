@@ -1851,7 +1851,7 @@
 
             if (!usersDB || usersDB.length === 0) {
                 usersDB = JSON.parse(JSON.stringify(defaultSystemUsers));
-                saveUsersDB();
+                localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(usersDB));
             } else {
                 defaultSystemUsers.forEach(defU => {
                     let existingIdx = usersDB.findIndex(u => u.username.toLowerCase() === defU.username.toLowerCase());
@@ -1859,7 +1859,7 @@
                         usersDB.push(defU);
                     }
                 });
-                saveUsersDB();
+                localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(usersDB));
             }
 
             // Uklonjen automatski login tako da se pri svakom pristupu/otvaranju stranice prikazuje ekran za prijavu
@@ -1886,6 +1886,7 @@
             }
 
             updateAuthUI();
+            setTimeout(syncFirestoreUsers, 100);
         }
 
         function resetAuthCredentials(skipConfirm = false) {
@@ -1945,6 +1946,9 @@
                     if (document.getElementById('adminPanelModal') && !document.getElementById('adminPanelModal').classList.contains('hidden')) {
                         renderUserTable();
                     }
+                } else {
+                    // Seed Firestore users if database is empty
+                    saveUsersDB();
                 }
             } catch(e) {
                 console.warn("Notice syncing Firestore users:", e);
@@ -1991,17 +1995,48 @@
             }
         }
 
-        function handleLogin(e) {
-            e.preventDefault();
+        async function handleLogin(e) {
+            if (e) e.preventDefault();
             const uInput = document.getElementById('loginUsername').value.trim();
             const pInput = document.getElementById('loginPassword').value.trim();
             const rememberMe = document.getElementById('rememberMe')?.checked;
             const errDiv = document.getElementById('loginError');
 
+            if (!uInput || !pInput) {
+                if (errDiv) {
+                    errDiv.className = "p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg font-bold";
+                    errDiv.innerText = "Molimo unesite korisničko ime i lozinku!";
+                    errDiv.classList.remove('hidden');
+                }
+                return;
+            }
+
+            // Real-time Cloud check to ensure new passwords changed on any device work instantly
+            if (window.db) {
+                try {
+                    let doc = await window.db.collection('app_users').doc(uInput.toLowerCase()).get();
+                    if (doc.exists) {
+                        let cloudUser = doc.data();
+                        if (cloudUser && cloudUser.username) {
+                            let idx = usersDB.findIndex(u => u.username.toLowerCase() === uInput.toLowerCase());
+                            if (idx !== -1) {
+                                usersDB[idx] = { ...usersDB[idx], ...cloudUser };
+                            } else {
+                                usersDB.push(cloudUser);
+                            }
+                            localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(usersDB));
+                        }
+                    }
+                } catch(err) {
+                    console.warn("Notice verifying Firestore user credentials:", err);
+                }
+            }
+
             let found = usersDB.find(u => 
                 u.username.toLowerCase() === uInput.toLowerCase() && 
                 (u.password === pInput || u.password.toLowerCase() === pInput.toLowerCase())
             );
+
             if (found) {
                 activeUser = found;
                 if (rememberMe) {
@@ -5235,9 +5270,10 @@
                     localStorage.setItem('fleet_custom_cost_edits_v1', JSON.stringify(customEdits));
                 } catch(e) {}
 
-                if (window.db && item._firestoreId) {
+                if (window.db) {
                     try {
-                        window.db.collection('fleet_costs').doc(item._firestoreId).delete();
+                        if (item._firestoreId) window.db.collection('fleet_costs').doc(item._firestoreId).delete();
+                        if (item.id) window.db.collection('fleet_costs').doc(item.id).delete();
                     } catch(e) {}
                 }
 
