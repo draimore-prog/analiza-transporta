@@ -2149,33 +2149,16 @@
 
         function initFirebaseAuthListener() {
             if (window.auth && typeof window.auth.onAuthStateChanged === 'function') {
-                window.auth.onAuthStateChanged(async (firebaseUser) => {
+                window.auth.onAuthStateChanged((firebaseUser) => {
                     let storedSession = sessionStorage.getItem(SESSION_ACTIVE_USER_KEY) || localStorage.getItem(SESSION_ACTIVE_USER_KEY);
                     if (firebaseUser && storedSession) {
                         try {
+                            // Use session data immediately — no blocking Firestore read
                             let parsed = JSON.parse(storedSession);
-                            let uname = firebaseUser.email ? firebaseUser.email.split('@')[0].toLowerCase() : firebaseUser.uid.substring(0, 10);
-                            
-                            let uDoc = null;
-                            if (window.db) {
-                                try {
-                                    let snap = await window.db.collection('app_users').doc(uname).get();
-                                    if (snap.exists) uDoc = snap.data();
-                                } catch(e) {}
+                            if (parsed && parsed.username) {
+                                activeUser = { ...parsed, uid: firebaseUser.uid, email: firebaseUser.email };
+                                updateAuthUI();
                             }
-
-                            let isSuper = uname === 'emir.durakovic' || (uDoc && uDoc.role === 'superadmin');
-
-                            activeUser = {
-                                username: uname,
-                                fullname: firebaseUser.displayName || (uDoc ? uDoc.fullname : (parsed ? parsed.fullname : uname)),
-                                role: isSuper ? 'superadmin' : (uDoc ? uDoc.role : (parsed ? parsed.role : 'editor')),
-                                email: firebaseUser.email,
-                                uid: firebaseUser.uid,
-                                photoURL: firebaseUser.photoURL
-                            };
-
-                            updateAuthUI();
                         } catch(e) {}
                     } else {
                         activeUser = null;
@@ -2259,26 +2242,17 @@
             setSubmitLoading(true);
 
             try {
-                // Autentičnost se provjerava striktno na Firebase Auth Cloud servisu
+                // Firebase Auth check — single network call
                 let userCred = await window.auth.signInWithEmailAndPassword(emailToUse, pInput);
                 if (userCred && userCred.user) {
                     console.log("🔥 Firebase Auth prijava uspješna:", userCred.user.email);
                     let uname = uInput.includes('@') ? uInput.split('@')[0].toLowerCase() : uInput.toLowerCase();
-                    
-                    let uDoc = null;
-                    if (window.db) {
-                        try {
-                            let snap = await window.db.collection('app_users').doc(uname).get();
-                            if (snap.exists) uDoc = snap.data();
-                        } catch(err) {}
-                    }
-
-                    let isSuper = uname === 'emir.durakovic' || (uDoc && uDoc.role === 'superadmin');
+                    let isSuper = uname === 'emir.durakovic';
 
                     activeUser = {
                         username: uname,
-                        fullname: uDoc ? uDoc.fullname : (userCred.user.displayName || uname),
-                        role: isSuper ? 'superadmin' : (uDoc ? uDoc.role : 'editor'),
+                        fullname: userCred.user.displayName || uname,
+                        role: isSuper ? 'superadmin' : 'editor',
                         email: userCred.user.email,
                         uid: userCred.user.uid
                     };
@@ -2290,6 +2264,26 @@
                     }
                     if (errDiv) errDiv.classList.add('hidden');
                     updateAuthUI();
+
+                    // Fetch role from Firestore in background AFTER login modal closes
+                    setTimeout(async () => {
+                        try {
+                            if (window.db) {
+                                let snap = await window.db.collection('app_users').doc(uname).get();
+                                if (snap.exists) {
+                                    let uDoc = snap.data();
+                                    if (uDoc.role) {
+                                        activeUser.role = uDoc.role;
+                                        activeUser.fullname = uDoc.fullname || activeUser.fullname;
+                                        let stored = rememberMe ? 'localStorage' : 'sessionStorage';
+                                        window[stored].setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+                                        updateAuthUI();
+                                    }
+                                }
+                            }
+                        } catch(e) {}
+                    }, 500);
+
                     return;
                 }
             } catch (authErr) {
@@ -2808,9 +2802,10 @@
             initTheme();
             initAuthSystem();
             autoLoadDataset();
-            setTimeout(syncFirestoreUsers, 500);
-            setTimeout(syncFirestoreCosts, 1000);
-            setTimeout(syncFirestoreMasterFleet, 1200);
+            // Defer heavy Firestore syncs — don't block login or initial render
+            setTimeout(syncFirestoreUsers, 800);
+            setTimeout(syncFirestoreMasterFleet, 3000);
+            setTimeout(syncFirestoreCosts, 5000);
         });
 
         // ================= GLAVNA LOGIKA DASHBOARDA =================
