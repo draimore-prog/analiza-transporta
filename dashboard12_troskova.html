@@ -214,6 +214,20 @@
 </head>
 <body class="p-4 md:p-8">
 
+    <!-- GLOBAL LOADING SPINNER OVERLAY -->
+    <div id="globalAppSpinner" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex flex-col justify-center items-center z-[100] hidden transition-all">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl flex items-center gap-4 border border-slate-100 max-w-sm">
+            <svg class="animate-spin h-8 w-8 text-blue-600 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <div>
+                <p id="spinnerTitle" class="text-sm font-extrabold text-slate-800">Učitavanje podataka...</p>
+                <p id="spinnerSubtitle" class="text-xs text-slate-500 mt-0.5">Molimo sačekajte trenutak</p>
+            </div>
+        </div>
+    </div>
+
     <!-- ================= MODAL ZA PRIJAVU (LOGIN SCREEN) ================= -->
     <div id="loginModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex justify-center items-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 p-8">
@@ -251,19 +265,27 @@
                     Neispravno korisničko ime ili lozinka!
                 </div>
 
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 px-4 rounded-xl shadow-lg transition-all hover:shadow-xl flex items-center justify-center gap-2">
-                    <span>🔥 Prijavi se u Firebase Auth</span>
+                <button type="submit" id="loginSubmitBtn" class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-extrabold py-3 px-4 rounded-xl shadow-lg transition-all hover:shadow-xl flex items-center justify-center gap-2 cursor-pointer">
+                    <svg id="loginBtnSpinner" class="animate-spin h-4 w-4 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span id="loginBtnText">🔥 Prijavi se u Firebase Auth</span>
                 </button>
 
                 <div class="pt-3 border-t border-slate-100 mt-3">
-                    <button type="button" onclick="handleGoogleLogin()" class="w-full bg-white hover:bg-slate-50 text-slate-700 font-extrabold py-2.5 px-4 rounded-xl border border-slate-300 shadow-sm transition-all flex items-center justify-center gap-2.5 text-xs cursor-pointer">
-                        <svg class="w-4 h-4" viewBox="0 0 24 24">
+                    <button type="button" id="googleLoginBtn" onclick="handleGoogleLogin()" class="w-full bg-white hover:bg-slate-50 disabled:opacity-60 text-slate-700 font-extrabold py-2.5 px-4 rounded-xl border border-slate-300 shadow-sm transition-all flex items-center justify-center gap-2.5 text-xs cursor-pointer">
+                        <svg id="googleBtnSpinner" class="animate-spin h-4 w-4 text-slate-600 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <svg id="googleIcon" class="w-4 h-4" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                         </svg>
-                        <span>Prijava putem Google Računa (Firebase Auth)</span>
+                        <span id="googleBtnText">Prijava putem Google Računa (Firebase Auth)</span>
                     </button>
                 </div>
             </form>
@@ -2056,33 +2078,74 @@
             }
         }
 
+        function setSubmitLoading(loading) {
+            const btn = document.getElementById('loginSubmitBtn');
+            const spinner = document.getElementById('loginBtnSpinner');
+            const text = document.getElementById('loginBtnText');
+            const inputs = document.querySelectorAll('#loginModal input');
+            if (btn) btn.disabled = loading;
+            inputs.forEach(i => i.disabled = loading);
+            if (spinner) spinner.classList.toggle('hidden', !loading);
+            if (text) text.innerText = loading ? 'Provjera u toku...' : '🔥 Prijavi se u Firebase Auth';
+        }
+
+        function setGoogleLoading(loading) {
+            const btn = document.getElementById('googleLoginBtn');
+            const spinner = document.getElementById('googleBtnSpinner');
+            const icon = document.getElementById('googleIcon');
+            const text = document.getElementById('googleBtnText');
+            if (btn) btn.disabled = loading;
+            if (spinner) spinner.classList.toggle('hidden', !loading);
+            if (icon) icon.classList.toggle('hidden', loading);
+            if (text) text.innerText = loading ? 'Povezivanje sa Google-om...' : 'Prijava putem Google Računa (Firebase Auth)';
+        }
+
+        function showGlobalSpinner(title = 'Učitavanje podataka...', sub = 'Molimo sačekajte trenutak') {
+            const spinner = document.getElementById('globalAppSpinner');
+            const titleElem = document.getElementById('spinnerTitle');
+            const subElem = document.getElementById('spinnerSubtitle');
+            if (titleElem) titleElem.innerText = title;
+            if (subElem) subElem.innerText = sub;
+            if (spinner) spinner.classList.remove('hidden');
+        }
+
+        function hideGlobalSpinner() {
+            const spinner = document.getElementById('globalAppSpinner');
+            if (spinner) spinner.classList.add('hidden');
+        }
+
         function initFirebaseAuthListener() {
             if (window.auth && typeof window.auth.onAuthStateChanged === 'function') {
                 window.auth.onAuthStateChanged(async (firebaseUser) => {
-                    if (firebaseUser) {
-                        let uname = firebaseUser.email ? firebaseUser.email.split('@')[0].toLowerCase() : firebaseUser.uid.substring(0, 10);
-                        
-                        let uDoc = null;
-                        if (window.db) {
-                            try {
-                                let snap = await window.db.collection('app_users').doc(uname).get();
-                                if (snap.exists) uDoc = snap.data();
-                            } catch(e) {}
-                        }
+                    let storedSession = sessionStorage.getItem(SESSION_ACTIVE_USER_KEY) || localStorage.getItem(SESSION_ACTIVE_USER_KEY);
+                    if (firebaseUser && storedSession) {
+                        try {
+                            let parsed = JSON.parse(storedSession);
+                            let uname = firebaseUser.email ? firebaseUser.email.split('@')[0].toLowerCase() : firebaseUser.uid.substring(0, 10);
+                            
+                            let uDoc = null;
+                            if (window.db) {
+                                try {
+                                    let snap = await window.db.collection('app_users').doc(uname).get();
+                                    if (snap.exists) uDoc = snap.data();
+                                } catch(e) {}
+                            }
 
-                        let localUser = usersDB.find(u => u.username.toLowerCase() === uname);
-                        let isSuper = uname === 'emir.durakovic' || (uDoc && uDoc.role === 'superadmin') || (localUser && localUser.role === 'superadmin');
+                            let isSuper = uname === 'emir.durakovic' || (uDoc && uDoc.role === 'superadmin');
 
-                        activeUser = {
-                            username: uname,
-                            fullname: firebaseUser.displayName || (uDoc ? uDoc.fullname : (localUser ? localUser.fullname : uname)),
-                            role: isSuper ? 'superadmin' : (uDoc ? uDoc.role : (localUser ? localUser.role : 'editor')),
-                            email: firebaseUser.email,
-                            uid: firebaseUser.uid,
-                            photoURL: firebaseUser.photoURL
-                        };
+                            activeUser = {
+                                username: uname,
+                                fullname: firebaseUser.displayName || (uDoc ? uDoc.fullname : (parsed ? parsed.fullname : uname)),
+                                role: isSuper ? 'superadmin' : (uDoc ? uDoc.role : (parsed ? parsed.role : 'editor')),
+                                email: firebaseUser.email,
+                                uid: firebaseUser.uid,
+                                photoURL: firebaseUser.photoURL
+                            };
 
-                        sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+                            updateAuthUI();
+                        } catch(e) {}
+                    } else {
+                        activeUser = null;
                         updateAuthUI();
                     }
                 });
@@ -2091,9 +2154,13 @@
 
         async function handleGoogleLogin() {
             if (!window.auth) {
-                alert("Firebase Authentication nije dostupan.");
+                alert("Firebase Authentication nije dostupan. Molimo osvježite stranicu.");
                 return;
             }
+            const errDiv = document.getElementById('loginError');
+            if (errDiv) errDiv.classList.add('hidden');
+            setGoogleLoading(true);
+
             const provider = new firebase.auth.GoogleAuthProvider();
             try {
                 let result = await window.auth.signInWithPopup(provider);
@@ -2122,7 +2189,13 @@
                 }
             } catch (err) {
                 console.error("Google Auth error:", err);
-                alert("Greška pri Google prijavi: " + err.message);
+                if (errDiv) {
+                    errDiv.className = "p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg font-bold";
+                    errDiv.innerText = "❌ Greška pri Google prijavi: " + (err.message || "Neuspješna autorizacija.");
+                    errDiv.classList.remove('hidden');
+                }
+            } finally {
+                setGoogleLoading(false);
             }
         }
 
@@ -2148,6 +2221,9 @@
             }
 
             let emailToUse = uInput.includes('@') ? uInput : `${uInput.toLowerCase()}@analizatransporta.ba`;
+            
+            if (errDiv) errDiv.classList.add('hidden');
+            setSubmitLoading(true);
 
             try {
                 // Autentičnost se provjerava striktno na Firebase Auth Cloud servisu
@@ -2186,7 +2262,6 @@
             } catch (authErr) {
                 console.error("Firebase Auth Error:", authErr.code, authErr.message);
 
-                // Automatsko kreiranje naloga u Firebase Auth za inicijalne naloge ako prvi put pristupa
                 if (authErr.code === 'auth/user-not-found' || authErr.code === 'auth/invalid-credential') {
                     try {
                         let newCred = await window.auth.createUserWithEmailAndPassword(emailToUse, pInput);
@@ -2225,6 +2300,8 @@
                     }
                     errDiv.classList.remove('hidden');
                 }
+            } finally {
+                setSubmitLoading(false);
             }
         }
 
@@ -2232,11 +2309,19 @@
             activeUser = null;
             sessionStorage.removeItem(SESSION_ACTIVE_USER_KEY);
             localStorage.removeItem(SESSION_ACTIVE_USER_KEY);
+            localStorage.removeItem('saved_login_creds');
             if (window.auth) {
                 try { window.auth.signOut(); } catch(e) {}
             }
             closeAdminPanel();
             updateAuthUI();
+
+            const uElem = document.getElementById('loginUsername');
+            const pElem = document.getElementById('loginPassword');
+            if (uElem) uElem.value = '';
+            if (pElem) pElem.value = '';
+            const errDiv = document.getElementById('loginError');
+            if (errDiv) errDiv.classList.add('hidden');
         }
 
         function openAdminPanel() {
