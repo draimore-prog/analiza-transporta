@@ -2641,17 +2641,44 @@
         }
 
         async function autoLoadDataset() {
+            showGlobalSpinner('Učitavanje troškova...', 'Dohvatanje podataka iz Firestore baze');
             try {
+                // PRIMARY SOURCE: Firestore fleet_costs
+                if (window.db) {
+                    try {
+                        let snapshot = await window.db.collection('fleet_costs').get();
+                        if (!snapshot.empty) {
+                            let records = [];
+                            snapshot.forEach(doc => {
+                                let d = doc.data();
+                                d._firestoreId = doc.id;
+                                if (!d.id) d.id = doc.id;
+                                if (d.datum) d.datumObj = new Date(d.datum);
+                                let dob = (d.dobavljacOrig || d.dobavljac || '').toLowerCase();
+                                if (dob.includes('pgl')) d.segment = 'Guma';
+                                records.push(d);
+                            });
+                            globalData = records;
+                            yearsSet.clear();
+                            globalData.forEach(d => { if (d.year) yearsSet.add(d.year); });
+                            _finalizeDatasetLoad();
+                            hideGlobalSpinner();
+                            return;
+                        }
+                    } catch(e) {
+                        console.warn('Firestore fleet_costs load notice, falling back to JSON:', e);
+                    }
+                }
+
+                // FALLBACK: fleet_data.json (offline/cold start)
                 const res = await fetch('fleet_data.json');
-                if (!res.ok) return;
+                if (!res.ok) { hideGlobalSpinner(); return; }
                 const data = await res.json();
                 if (data && data.records && data.records.length > 0) {
                     globalData = data.records.map((item, idx) => {
                         let dob = (item.dobavljacOrig || item.dobavljac || '').toLowerCase();
                         let seg = item.segment;
-                        if (dob.includes('pgl')) {
-                            seg = 'Guma';
-                        }
+                        if (dob.includes('pgl')) seg = 'Guma';
                         return {
                             ...item,
                             id: item.id || `rec_${idx}_${item.reg}_${item.cost}`,
@@ -2659,60 +2686,46 @@
                             datumObj: item.datum ? new Date(item.datum) : null
                         };
                     });
-
-                    try {
-                        let customEdits = JSON.parse(localStorage.getItem('fleet_custom_cost_edits_v1') || '[]');
-                        customEdits.forEach(c => {
-                            if (c.datum) c.datumObj = new Date(c.datum);
-                            if (!c.id) c.id = 'cost_' + Date.now() + '_' + Math.floor(Math.random()*10000);
-                            globalData.unshift(c);
-                        });
-                    } catch(e) {}
-
-                    try {
-                        let deletedIds = new Set(JSON.parse(localStorage.getItem('fleet_deleted_cost_ids_v1') || '[]'));
-                        if (deletedIds.size > 0) {
-                            globalData = globalData.filter(i => !deletedIds.has(i.id));
-                        }
-                    } catch(e) {}
-
                     yearsSet.clear();
                     globalData.forEach(d => yearsSet.add(d.year));
-
                     if (data.metadata && data.metadata.fleetByYear) {
                         kpiTotalFleetByYear = { ...kpiTotalFleetByYear, ...data.metadata.fleetByYear };
                     }
-
-                    const yearSelect = document.getElementById('filterYear');
-                    const tab2YearSelect = document.getElementById('tab2YearSelect');
-                    
-                    let sortedYearsArr = Array.from(yearsSet).sort((a,b) => b - a);
-                    let yearOptions = ['<option value="all">Sve godine</option>'];
-                    let tab2YearOptions = ['<option value="latest">Tekuća / Najnovija godina</option>', '<option value="all">Sve godine (Zbirno)</option>'];
-
-                    sortedYearsArr.forEach(y => { 
-                        yearOptions.push(`<option value="${y}">${y}</option>`); 
-                        tab2YearOptions.push(`<option value="${y}">${y}. godina</option>`);
-                    });
-                    if (yearSelect) yearSelect.innerHTML = yearOptions.join('');
-                    if (tab2YearSelect) tab2YearSelect.innerHTML = tab2YearOptions.join('');
-
-                    document.getElementById('filter-section').classList.remove('hidden');
-                    document.getElementById('tabs-navigation').classList.remove('hidden');
-                    let latestYear = Math.max(...Object.keys(kpiTotalFleetByYear).map(y => parseInt(y)));
-                    let masterCount = kpiTotalFleetByYear[latestYear] ? kpiTotalFleetByYear[latestYear].Total : 964;
-                    document.getElementById('uploadStatusSubtitle').innerText = `Flota: ${masterCount} vozila | Automatski učitano ${globalData.length.toLocaleString('bs-BA')} servisa`;
-                    
-                    switchTab(1);
-                    resetDrillDown();
-                    autoLoadMasterFleet();
-                    syncFirestoreCosts();
-                    syncFirestoreMasterFleet();
+                    _finalizeDatasetLoad();
                 }
             } catch (e) {
-                console.log("Auto-load dataset note:", e);
+                console.log('Auto-load dataset note:', e);
             }
+            hideGlobalSpinner();
         }
+
+        function _finalizeDatasetLoad() {
+            const yearSelect = document.getElementById('filterYear');
+            const tab2YearSelect = document.getElementById('tab2YearSelect');
+
+            let sortedYearsArr = Array.from(yearsSet).sort((a, b) => b - a);
+            let yearOptions = ['<option value="all">Sve godine</option>'];
+            let tab2YearOptions = ['<option value="latest">Tekuća / Najnovija godina</option>', '<option value="all">Sve godine (Zbirno)</option>'];
+
+            sortedYearsArr.forEach(y => {
+                yearOptions.push(`<option value="${y}">${y}</option>`);
+                tab2YearOptions.push(`<option value="${y}">${y}. godina</option>`);
+            });
+            if (yearSelect) yearSelect.innerHTML = yearOptions.join('');
+            if (tab2YearSelect) tab2YearSelect.innerHTML = tab2YearOptions.join('');
+
+            document.getElementById('filter-section')?.classList.remove('hidden');
+            document.getElementById('tabs-navigation')?.classList.remove('hidden');
+            let latestYear = Math.max(...Object.keys(kpiTotalFleetByYear).map(y => parseInt(y)));
+            let masterCount = kpiTotalFleetByYear[latestYear] ? kpiTotalFleetByYear[latestYear].Total : 964;
+            const statusSub = document.getElementById('uploadStatusSubtitle');
+            if (statusSub) statusSub.innerText = `☁️ Firestore: ${masterCount} vozila | ${globalData.length.toLocaleString('bs-BA')} troškova učitano`;
+
+            switchTab(1);
+            resetDrillDown();
+            autoLoadMasterFleet();
+        }
+
 
         async function syncFirestoreCosts() {
             if (!window.db) return;
@@ -2801,11 +2814,8 @@
         window.addEventListener('DOMContentLoaded', () => {
             initTheme();
             initAuthSystem();
-            autoLoadDataset();
-            // Defer heavy Firestore syncs — don't block login or initial render
+            autoLoadDataset(); // Loads from Firestore (primary) or fleet_data.json (fallback)
             setTimeout(syncFirestoreUsers, 800);
-            setTimeout(syncFirestoreMasterFleet, 3000);
-            setTimeout(syncFirestoreCosts, 5000);
         });
 
         // ================= GLAVNA LOGIKA DASHBOARDA =================
@@ -4873,48 +4883,53 @@
         const masterFleetPerPage = 50;
 
         async function autoLoadMasterFleet() {
+            // PRIMARY SOURCE: Firestore fleet_master
+            if (window.db) {
+                try {
+                    let snapshot = await window.db.collection('fleet_master').get();
+                    if (!snapshot.empty) {
+                        let vehicles = [];
+                        snapshot.forEach(doc => {
+                            let v = doc.data();
+                            if (v && v.reg) {
+                                v.tipMehan = ocistiTip(v.tipMehan);
+                                vehicles.push(v);
+                            }
+                        });
+                        if (vehicles.length > 0) {
+                            vehicles.sort((a, b) => (a.reg || '').localeCompare(b.reg || ''));
+                            vehicles.forEach((v, idx) => v.rb = idx + 1);
+                            masterFleetData = vehicles;
+                            renderMasterFleetTable();
+                            return;
+                        }
+                    }
+                } catch(e) {
+                    console.warn('Firestore fleet_master load notice, falling back to JSON:', e);
+                }
+            }
+
+            // FALLBACK: fleet_master.json (offline/cold start)
             try {
                 const res = await fetch('fleet_master.json?v=' + Date.now());
                 if (res.ok) {
                     const data = await res.json();
                     if (data && Array.isArray(data) && data.length > 0) {
-                        masterFleetData = data.map(v => ({
-                            ...v,
-                            tipMehan: ocistiTip(v.tipMehan)
-                        }));
-                        
-                        // Merge local custom edits if present
-                        let savedEdits = localStorage.getItem('fleet_master_custom_edits_v1');
-                        if (savedEdits) {
-                            try {
-                                let localMap = new Map(masterFleetData.map(v => [v.reg, v]));
-                                let parsedEdits = JSON.parse(savedEdits);
-                                if (Array.isArray(parsedEdits)) {
-                                    parsedEdits.forEach(v => {
-                                        if (v && v.reg) {
-                                            localMap.set(v.reg, { ...(localMap.get(v.reg) || {}), ...v });
-                                        }
-                                    });
-                                    masterFleetData = Array.from(localMap.values());
-                                }
-                            } catch(err) {}
-                        }
-                        
+                        masterFleetData = data.map(v => ({ ...v, tipMehan: ocistiTip(v.tipMehan) }));
                         renderMasterFleetTable();
-                        setTimeout(syncFirestoreMasterFleet, 300);
                         return;
                     }
                 }
             } catch (e) {
-                console.log("Notice auto-loading fleet_master.json:", e);
+                console.log('Notice auto-loading fleet_master.json:', e);
             }
 
-            // Fallback: build from globalData if fleet_master.json isn't loaded yet
+            // Last resort: build from cost data
             if (masterFleetData.length === 0 && globalData && globalData.length > 0) {
                 buildFallbackMasterFleetFromGlobalData();
             }
-            setTimeout(syncFirestoreMasterFleet, 300);
         }
+
 
         function buildFallbackMasterFleetFromGlobalData() {
             let map = new Map();
@@ -5261,28 +5276,23 @@
                     }
                 }
 
-                // 2. Trajno spasi u localStorage
-                try {
-                    localStorage.setItem('fleet_master_custom_edits_v1', JSON.stringify(masterFleetData));
-                } catch(err) {}
-
-                // 3. Ako je status promijenjen (npr. u Neaktivno/Rashodovano/Prodato), podesi filter da vozilo ostane vidljivo
+                // Adjust status filter so the edited vehicle stays visible
                 const statusFilterElem = document.getElementById('masterFleetStatusFilter');
                 if (statusFilterElem && statusFilterElem.value !== 'all' && statusFilterElem.value !== status) {
                     statusFilterElem.value = 'all';
                 }
 
-                // 4. ODMAH ZATVORI MODAL I APDEJTUJ UI TABELU SINHRONO
+                // Close modal and refresh table immediately
                 closeEditVehicleModal();
                 renderMasterFleetTable();
 
-                // 5. Asinhrono spasi u Firestore u pozadini
+                // Sync to Firestore (primary persistent store, non-blocking)
                 if (window.db) {
                     (async () => {
                         try {
                             let safeDocId = reg.replace(/[\/\\#\?]/g, '_');
                             await window.db.collection('fleet_master').doc(safeDocId).set(vehicleObj, { merge: true });
-                        } catch(e) { console.warn("Notice saving vehicle to Firestore:", e); }
+                        } catch(e) { console.warn('Notice saving vehicle to Firestore:', e); }
                     })();
                 }
 
@@ -5723,14 +5733,18 @@
                     }
                 }
 
-                // 1. Čuvanje u lokalni keš pretraživača
-                try {
-                    let customEdits = JSON.parse(localStorage.getItem('fleet_custom_cost_edits_v1') || '[]');
-                    customEdits.unshift(newItem);
-                    localStorage.setItem('fleet_custom_cost_edits_v1', JSON.stringify(customEdits));
-                } catch(e) {}
+                // 1. Save to Firestore (primary, non-blocking)
+                if (window.db) {
+                    window.db.collection('fleet_costs').doc(newItem.id).set({
+                        ...newItem,
+                        datum: dateObj.toISOString(),
+                        createdAt: new Date().toISOString()
+                    }).catch(e => {
+                        console.warn('Notice saving cost to Firestore:', e);
+                    });
+                }
 
-                // 2. Ažuriranje in-memory niza podataka
+                // 2. Update in-memory array
                 globalData.unshift(newItem);
                 yearsSet.add(year);
 
@@ -5757,23 +5771,11 @@
 
                 activeSegment = null;
 
-                // 4. Osvježi filtere, prebaci na Tab 3 i zatvori modal
+                // 5. Switch to Tab 3 and close modal
                 applyFilters();
                 switchTab(3);
                 closeNewCostModal();
 
-                // 5. Ne-blokirajuće slanje u Cloud Bazu Firestore u pozadini (sa jedinstvenim ID ključem bez duplikata)
-                if (window.db) {
-                    window.db.collection('fleet_costs').doc(newItem.id).set({
-                        ...newItem,
-                        datum: dateObj.toISOString(),
-                        createdAt: new Date().toISOString()
-                    }).catch(e => {
-                        console.warn("Notice saving to Firestore:", e);
-                    });
-                }
-
-                // 6. Odmah obavijesti korisnika zelenim popup-om
                 alert(`✅ Uspješno sačuvan trošak za vozilo "${reg}" od ${totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM!\n\nAutomatski ste prebačeni na Tab 3 gdje se unos nalazi na samom vrhu tabele.`);
             } catch(err) {
                 console.error("Greška pri unosu troška:", err);
@@ -5805,22 +5807,11 @@
             if (confirm(`Da li ste sigurni da želite trajno obrisati trošak za vozilo "${reg}" (${costStr})?`)) {
                 globalData.splice(targetIdx, 1);
 
-                try {
-                    let deletedIds = JSON.parse(localStorage.getItem('fleet_deleted_cost_ids_v1') || '[]');
-                    deletedIds.push(costId);
-                    localStorage.setItem('fleet_deleted_cost_ids_v1', JSON.stringify(deletedIds));
-                } catch(e) {}
-
-                try {
-                    let customEdits = JSON.parse(localStorage.getItem('fleet_custom_cost_edits_v1') || '[]');
-                    customEdits = customEdits.filter(c => c.id !== costId);
-                    localStorage.setItem('fleet_custom_cost_edits_v1', JSON.stringify(customEdits));
-                } catch(e) {}
-
+                // Delete from Firestore (primary)
                 if (window.db) {
                     try {
                         if (item._firestoreId) window.db.collection('fleet_costs').doc(item._firestoreId).delete();
-                        if (item.id) window.db.collection('fleet_costs').doc(item.id).delete();
+                        else if (item.id) window.db.collection('fleet_costs').doc(item.id).delete();
                     } catch(e) {}
                 }
 
