@@ -14,6 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
     <style>
         body { background-color: #f8fafc; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1e293b; }
@@ -491,6 +492,20 @@
                     <div>
                         <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Opis Kvara / Servisnih Radova <span class="text-red-500">*</span></label>
                         <textarea id="ncOpis" rows="2" placeholder="Unesite detaljan opis zamijenjenih dijelova ili izvršenih usluga..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                    </div>
+
+                    <div class="bg-emerald-50/60 p-3.5 rounded-xl border border-emerald-200/80 space-y-2">
+                        <label class="block text-[11px] font-extrabold uppercase text-emerald-900 flex items-center justify-between">
+                            <span>📎 Slika / Skenirana Faktura ili Račun (Firebase Storage)</span>
+                            <span class="text-[10px] text-emerald-700 font-normal">☁️ Cloud Prilog</span>
+                        </label>
+                        <input type="file" id="ncInvoiceFile" accept="image/*,application/pdf" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer border border-emerald-200 rounded-lg p-1.5 bg-white">
+                        <div id="ncUploadProgressContainer" class="hidden mt-1.5">
+                            <div class="w-full bg-slate-200 rounded-full h-1.5">
+                                <div id="ncUploadProgressBar" class="bg-emerald-600 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                            <span id="ncUploadProgressText" class="text-[10px] font-bold text-emerald-800">Slanje u Cloud Storage... 0%</span>
+                        </div>
                     </div>
                 </div>
 
@@ -1296,6 +1311,22 @@
                     </div>
                 </div>
 
+                <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 space-y-2">
+                    <label class="block text-[11px] font-extrabold uppercase text-indigo-900 flex items-center justify-between">
+                        <span>📷 Slika / Fotografija Vozila (Cloud Storage)</span>
+                        <span class="text-[10px] text-indigo-600 font-normal">☁️ Firebase Cloud Storage</span>
+                    </label>
+                    <div class="flex items-center gap-3">
+                        <input type="file" id="evPhotoFile" accept="image/*" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer border border-indigo-200 rounded-lg p-1.5 bg-white shadow-sm">
+                    </div>
+                    <div id="evUploadProgressContainer" class="hidden mt-2">
+                        <div class="w-full bg-slate-200 rounded-full h-1.5">
+                            <div id="evUploadProgressBar" class="bg-indigo-600 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <span id="evUploadProgressText" class="text-[10px] font-bold text-indigo-700">Prebacivanje u Cloud Storage... 0%</span>
+                    </div>
+                </div>
+
                 <div class="flex justify-end gap-3 pt-4 border-t border-slate-200">
                     <button type="button" onclick="closeEditVehicleModal()" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-xs hover:bg-slate-100 transition-colors">
                         Odustani
@@ -1677,6 +1708,36 @@
             </div>
             
             <div class="p-5 overflow-y-auto flex-grow flex flex-col gap-5 bg-slate-50">
+                <!-- Head sekcija sa slikom vozila iz Cloud Storage-a i tehničkim podacima -->
+                <div id="modalVehicleImageHeader" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col sm:flex-row items-center gap-4 no-print">
+                    <div class="relative group w-full sm:w-44 h-32 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 flex items-center justify-center flex-shrink-0">
+                        <img id="modalVehiclePhoto" src="" alt="Fotografija vozila" class="w-full h-full object-cover hidden cursor-pointer" onclick="openLightbox(this.src, 'Fotografija Vozila')">
+                        <div id="modalVehiclePhotoPlaceholder" class="text-center p-3 text-slate-400">
+                            <span class="text-3xl">🚛</span>
+                            <p class="text-[10px] font-bold mt-1">Nema dodane slike</p>
+                        </div>
+                        <label for="modalUploadVehiclePhotoInput" class="absolute inset-0 bg-slate-900/70 text-white font-bold text-xs flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer no-print p-2 text-center" title="Učitaj ili zamijeni sliku vozila u Firebase Cloud Storage">
+                            <span>📷 Učitaj Sliku</span>
+                            <span class="text-[9px] text-blue-200">Firebase Storage</span>
+                        </label>
+                        <input type="file" id="modalUploadVehiclePhotoInput" accept="image/*" class="hidden" onchange="handleModalVehiclePhotoUpload(event)">
+                    </div>
+
+                    <div class="flex-grow space-y-1.5 text-xs w-full">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-base font-black text-slate-900" id="modalVehicleTitle">Marka & Model</h3>
+                            <span id="modalVehicleStatusBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">🟢 Aktivno</span>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 border-t border-slate-100 text-slate-600">
+                            <div><span class="text-slate-400 font-medium uppercase text-[10px] block">Tip Mehanizacije</span><strong id="modalVehicleTip" class="text-slate-800">-</strong></div>
+                            <div><span class="text-slate-400 font-medium uppercase text-[10px] block">Godište</span><strong id="modalVehicleGod" class="text-slate-800">-</strong></div>
+                            <div><span class="text-slate-400 font-medium uppercase text-[10px] block">Garažni Broj / MT</span><strong id="modalVehicleGB" class="text-slate-800">-</strong></div>
+                            <div><span class="text-slate-400 font-medium uppercase text-[10px] block">Broj Šasije (VIN)</span><strong id="modalVehicleVIN" class="font-mono text-slate-800">-</strong></div>
+                            <div class="col-span-2 sm:col-span-2"><span class="text-slate-400 font-medium uppercase text-[10px] block">Cloud Storage Status</span><strong id="modalStorageStatus" class="text-blue-600 font-bold">☁️ Firebase Storage Prilozi Aktivni</strong></div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="print-kpi-grid grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
                         <span class="text-[11px] font-bold text-slate-500 uppercase">Ukupan Trošak Vozila</span>
@@ -1737,6 +1798,19 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= LIGHTBOX MODAL ZA SLIKE I ATTACHMENTE ================= -->
+    <div id="imageLightboxModal" class="fixed inset-0 bg-slate-950/90 hidden flex flex-col justify-center items-center z-50 backdrop-blur-md p-4 transition-all">
+        <div class="relative max-w-5xl max-h-[90vh] flex flex-col items-center">
+            <div class="flex justify-between items-center w-full pb-3 text-white">
+                <span id="lightboxTitle" class="text-sm font-black tracking-wide">🔍 Pregled Slike</span>
+                <button onclick="closeLightbox()" class="text-white/80 hover:text-white text-3xl font-light leading-none">&times;</button>
+            </div>
+            <div class="bg-black/40 p-2 rounded-2xl border border-white/10 shadow-2xl flex items-center justify-center overflow-hidden">
+                <img id="lightboxImg" src="" alt="Prilog" class="max-h-[80vh] max-w-full object-contain rounded-lg">
             </div>
         </div>
     </div>
@@ -2260,7 +2334,7 @@
             tbody.innerHTML = rowsHTML.join('');
         }
 
-        // ================= FIREBASE & FIRESTORE INTEGRATION =================
+        // ================= FIREBASE, FIRESTORE & STORAGE INTEGRATION =================
         const firebaseConfig = {
             apiKey: "AIzaSy_analiza_transporta_key",
             authDomain: "analiza-transporta-flota.firebaseapp.com",
@@ -2272,12 +2346,85 @@
 
         if (typeof firebase !== 'undefined' && firebase.initializeApp) {
             try {
-                firebase.initializeApp(firebaseConfig);
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
                 window.db = firebase.firestore();
-                console.log("Firebase & Firestore initialized successfully");
+                window.storage = firebase.storage ? firebase.storage() : null;
+                window.auth = firebase.auth ? firebase.auth() : null;
+                console.log("Firebase, Firestore, Auth & Storage initialized successfully");
             } catch (e) {
                 console.warn("Firebase initialization notice:", e);
             }
+        }
+
+        // --- HELPER ZA PREBACIVANJE DATOTEKA / SLIKA U FIREBASE CLOUD STORAGE ---
+        async function uploadFileToFirebaseStorage(folder, file, progressCallback) {
+            if (!file) return null;
+            let safeFolder = (folder || 'general').replace(/[^a-zA-Z0-9_-]/g, '_');
+            let timestamp = Date.now();
+            let safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+            let storagePath = `${safeFolder}/${timestamp}_${safeFileName}`;
+
+            if (window.storage) {
+                try {
+                    let storageRef = window.storage.ref(storagePath);
+                    let uploadTask = storageRef.put(file);
+
+                    return new Promise((resolve, reject) => {
+                        uploadTask.on('state_changed',
+                            (snapshot) => {
+                                let progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                if (progressCallback) progressCallback(progress);
+                            },
+                            (error) => {
+                                console.warn("Notice upload file storage, falling back to Base64:", error);
+                                createBase64Fallback(file).then(resolve).catch(reject);
+                            },
+                            async () => {
+                                try {
+                                    let downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                                    resolve(downloadURL);
+                                } catch(err) {
+                                    createBase64Fallback(file).then(resolve).catch(reject);
+                                }
+                            }
+                        );
+                    });
+                } catch(e) {
+                    console.warn("Storage upload notice, falling back to Base64:", e);
+                    return await createBase64Fallback(file);
+                }
+            } else {
+                return await createBase64Fallback(file);
+            }
+        }
+
+        function createBase64Fallback(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // --- LIGHTBOX MODAL ZA PREGLED SLIKA ---
+        function openLightbox(imgUrl, title = 'Pregled Slike') {
+            if (!imgUrl) return;
+            const modal = document.getElementById('imageLightboxModal');
+            const imgElem = document.getElementById('lightboxImg');
+            const titleElem = document.getElementById('lightboxTitle');
+            if (modal && imgElem) {
+                imgElem.src = imgUrl;
+                if (titleElem) titleElem.innerText = title;
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function closeLightbox() {
+            const modal = document.getElementById('imageLightboxModal');
+            if (modal) modal.classList.add('hidden');
         }
 
         async function autoLoadDataset() {
@@ -4254,11 +4401,80 @@
             document.getElementById('modalTitle').innerText = `KARTON VOZILA: ${mainReg}`; 
             document.getElementById('modalRegBadge').innerText = `GARAŽNI BROJ: ${gb}`;
             document.getElementById('modalSubtitle').innerText = `Marka: ${marka}  |  Godište: ${god}  |  Tip: ${tip}`;
+
+            // Popuni Header karticu sa slikom iz Firebase Cloud Storage-a i podacima
+            let vMaster = masterFleetData.find(x => x.reg === mainReg);
+            const photoImg = document.getElementById('modalVehiclePhoto');
+            const photoPlaceholder = document.getElementById('modalVehiclePhotoPlaceholder');
+            const vTitleElem = document.getElementById('modalVehicleTitle');
+            const vTipElem = document.getElementById('modalVehicleTip');
+            const vGodElem = document.getElementById('modalVehicleGod');
+            const vGBElem = document.getElementById('modalVehicleGB');
+            const vVINElem = document.getElementById('modalVehicleVIN');
+            const vStatusBadge = document.getElementById('modalVehicleStatusBadge');
+
+            if (vTitleElem) vTitleElem.innerText = `${marka} ${vMaster && vMaster.modelVoz && vMaster.modelVoz !== '-' ? vMaster.modelVoz : ''}`;
+            if (vTipElem) vTipElem.innerText = tip;
+            if (vGodElem) vGodElem.innerText = god;
+            if (vGBElem) vGBElem.innerText = gb;
+            if (vVINElem) vVINElem.innerText = vMaster ? (vMaster.brojSasije || '-') : '-';
+            if (vStatusBadge) vStatusBadge.innerText = vMaster ? (vMaster.status || '🟢 Aktivno') : '🟢 Aktivno';
+
+            if (vMaster && vMaster.photoUrl) {
+                if (photoImg) {
+                    photoImg.src = vMaster.photoUrl;
+                    photoImg.classList.remove('hidden');
+                }
+                if (photoPlaceholder) photoPlaceholder.classList.add('hidden');
+            } else {
+                if (photoImg) photoImg.classList.add('hidden');
+                if (photoPlaceholder) photoPlaceholder.classList.remove('hidden');
+            }
             
             document.getElementById('vehicleModal').classList.remove('hidden');
             requestAnimationFrame(() => {
                 renderModalContent(currentModalVehicleData);
             });
+        }
+
+        async function handleModalVehiclePhotoUpload(event) {
+            let file = event.target.files ? event.target.files[0] : null;
+            if (!file) return;
+
+            let titleStr = document.getElementById('modalTitle')?.innerText || '';
+            let reg = titleStr.replace('KARTON VOZILA:', '').trim();
+            if (!reg || reg === '-') return;
+
+            let statusElem = document.getElementById('modalStorageStatus');
+            if (statusElem) statusElem.innerText = '☁️ Slanje slike u Cloud Storage...';
+
+            let photoUrl = await uploadFileToFirebaseStorage(`vehicles/${reg}`, file, (p) => {
+                if (statusElem) statusElem.innerText = `☁️ Slanje u Cloud Storage... ${p.toFixed(0)}%`;
+            });
+
+            if (photoUrl) {
+                let imgElem = document.getElementById('modalVehiclePhoto');
+                let placeholderElem = document.getElementById('modalVehiclePhotoPlaceholder');
+                if (imgElem) {
+                    imgElem.src = photoUrl;
+                    imgElem.classList.remove('hidden');
+                }
+                if (placeholderElem) placeholderElem.classList.add('hidden');
+                if (statusElem) statusElem.innerText = `☁️ Fotografija sačuvana u Firebase Storage!`;
+
+                let vIdx = masterFleetData.findIndex(v => v.reg === reg);
+                if (vIdx !== -1) {
+                    masterFleetData[vIdx].photoUrl = photoUrl;
+                    try { localStorage.setItem('fleet_master_custom_edits_v1', JSON.stringify(masterFleetData)); } catch(e){}
+                }
+
+                if (window.db) {
+                    try {
+                        let safeDocId = reg.replace(/[\/\\#\?]/g, '_');
+                        window.db.collection('fleet_master').doc(safeDocId).set({ photoUrl: photoUrl }, { merge: true });
+                    } catch(e){}
+                }
+            }
         }
 
         document.getElementById('modalSegmentFilter').addEventListener('change', function() {
@@ -4296,11 +4512,13 @@
                     dateStr = ("0" + item.datumObj.getDate()).slice(-2) + "." + ("0" + (item.datumObj.getMonth() + 1)).slice(-2) + "." + item.datumObj.getFullYear() + ".";
                 }
 
+                let attachmentBtn = item.attachmentUrl ? `<button onclick="openLightbox('${item.attachmentUrl}', 'Račun / Prilog')" class="text-indigo-600 hover:text-indigo-900 font-bold hover:underline ml-1" title="Pregledaj skenirani račun/prilog">📎 Prilog</button>` : '';
+
                 tableRowsHTML.push(`
                     <tr class="hover:bg-blue-50/60 border-b border-slate-100 transition-colors">
                         <td class="py-2.5 px-3 whitespace-nowrap text-slate-700 font-medium">${dateStr}</td>
                         <td class="py-2.5 px-3 text-slate-600 font-semibold">${item.segment}</td>
-                        <td class="py-2.5 px-3 text-slate-900 font-semibold break-words max-w-[220px]">${item.opisPopravke}</td>
+                        <td class="py-2.5 px-3 text-slate-900 font-semibold break-words max-w-[220px]">${item.opisPopravke} ${attachmentBtn}</td>
                         <td class="py-2.5 px-3 text-slate-600 text-xs truncate max-w-[140px]" title="${sup}">${sup}</td>
                         <td class="py-2.5 px-3 text-right font-bold text-slate-800">
                             <div class="flex items-center justify-end gap-1.5">
@@ -4709,6 +4927,21 @@
                     status
                 };
 
+                let photoFileInput = document.getElementById('evPhotoFile');
+                let photoFile = photoFileInput && photoFileInput.files ? photoFileInput.files[0] : null;
+                if (photoFile) {
+                    let progContainer = document.getElementById('evUploadProgressContainer');
+                    let progBar = document.getElementById('evUploadProgressBar');
+                    let progText = document.getElementById('evUploadProgressText');
+                    if (progContainer) progContainer.classList.remove('hidden');
+
+                    let photoUrl = await uploadFileToFirebaseStorage(`vehicles/${reg}`, photoFile, (p) => {
+                        if (progBar) progBar.style.width = p.toFixed(0) + '%';
+                        if (progText) progText.innerText = `Prebacivanje u Cloud Storage... ${p.toFixed(0)}%`;
+                    });
+                    if (photoUrl) vehicleObj.photoUrl = photoUrl;
+                }
+
                 // 1. Ažuriraj u lokalnoj memoriji masterFleetData
                 if (origReg) {
                     let idx = masterFleetData.findIndex(v => v.reg === origReg);
@@ -5020,7 +5253,7 @@
             }
         }
 
-        function handleCreateNewCost(event) {
+        async function handleCreateNewCost(event) {
             if (event) {
                 if (typeof event.preventDefault === 'function') event.preventDefault();
                 if (typeof event.stopPropagation === 'function') event.stopPropagation();
@@ -5116,6 +5349,22 @@
                 let kilometraza = parseFloat(document.getElementById('ncKilometraza').value) || null;
                 let radniSati = parseFloat(document.getElementById('ncRadniSati').value) || null;
 
+                let invoiceFileInput = document.getElementById('ncInvoiceFile');
+                let invoiceFile = invoiceFileInput && invoiceFileInput.files ? invoiceFileInput.files[0] : null;
+                let attachmentUrl = null;
+
+                if (invoiceFile) {
+                    let progContainer = document.getElementById('ncUploadProgressContainer');
+                    let progBar = document.getElementById('ncUploadProgressBar');
+                    let progText = document.getElementById('ncUploadProgressText');
+                    if (progContainer) progContainer.classList.remove('hidden');
+
+                    attachmentUrl = await uploadFileToFirebaseStorage(`expenses/${reg}`, invoiceFile, (p) => {
+                        if (progBar) progBar.style.width = p.toFixed(0) + '%';
+                        if (progText) progText.innerText = `Slanje u Cloud Storage... ${p.toFixed(0)}%`;
+                    });
+                }
+
                 let newItem = {
                     id: 'cost_' + Date.now() + '_' + Math.floor(Math.random()*10000),
                     isNewCustom: true,
@@ -5137,7 +5386,8 @@
                     costService,
                     brojRacuna,
                     kilometraza,
-                    radniSati
+                    radniSati,
+                    attachmentUrl
                 };
 
                 // Ako vozilo još ne postoji u bazi aktivnih vozila 2026, dodaj ga automatski kao novo aktivno vozilo!
