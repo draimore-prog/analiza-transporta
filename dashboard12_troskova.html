@@ -2312,6 +2312,7 @@
                     resetDrillDown();
                     autoLoadMasterFleet();
                     syncFirestoreCosts();
+                    syncFirestoreMasterFleet();
                 }
             } catch (e) {
                 console.log("Auto-load dataset note:", e);
@@ -2351,6 +2352,46 @@
             }
         }
 
+        async function syncFirestoreMasterFleet() {
+            if (!window.db) return;
+            try {
+                let snapshot = await window.db.collection('fleet_master').get();
+                if (!snapshot.empty) {
+                    let firestoreVehicles = [];
+                    snapshot.forEach(doc => {
+                        let v = doc.data();
+                        if (v && v.reg) {
+                            firestoreVehicles.push(v);
+                        }
+                    });
+
+                    if (firestoreVehicles.length > 0) {
+                        let localMap = new Map(masterFleetData.map(v => [v.reg, v]));
+                        firestoreVehicles.forEach(fv => {
+                            if (fv.reg) {
+                                let existing = localMap.get(fv.reg) || {};
+                                localMap.set(fv.reg, { ...existing, ...fv });
+                            }
+                        });
+
+                        masterFleetData = Array.from(localMap.values());
+                        masterFleetData.sort((a, b) => (a.reg || '').localeCompare(b.reg || ''));
+                        masterFleetData.forEach((v, idx) => v.rb = idx + 1);
+
+                        try {
+                            localStorage.setItem('fleet_master_custom_edits_v1', JSON.stringify(masterFleetData));
+                        } catch(e) {}
+
+                        if (typeof renderMasterFleetTable === 'function') {
+                            renderMasterFleetTable();
+                        }
+                    }
+                }
+            } catch(e) {
+                console.warn("Notice syncing Firestore master fleet:", e);
+            }
+        }
+
         // Initialize Auth system & dataset on load
         window.addEventListener('DOMContentLoaded', () => {
             initTheme();
@@ -2358,6 +2399,7 @@
             autoLoadDataset();
             setTimeout(syncFirestoreUsers, 500);
             setTimeout(syncFirestoreCosts, 1000);
+            setTimeout(syncFirestoreMasterFleet, 1200);
         });
 
         // ================= GLAVNA LOGIKA DASHBOARDA =================
@@ -2759,6 +2801,32 @@
                                                 if (idx !== -1) masterFleetData[idx] = { ...masterFleetData[idx], ...vObj };
                                                 else masterFleetData.unshift(vObj);
                                             });
+                                            try {
+                                                localStorage.setItem('fleet_master_custom_edits_v1', JSON.stringify(masterFleetData));
+                                            } catch(e) {}
+                                            if (window.db) {
+                                                (async () => {
+                                                    try {
+                                                        let batch = window.db.batch();
+                                                        let count = 0;
+                                                        masterFleetData.forEach(v => {
+                                                            if (v && v.reg) {
+                                                                let safeDocId = v.reg.replace(/[\/\\#\?]/g, '_');
+                                                                batch.set(window.db.collection('fleet_master').doc(safeDocId), v, { merge: true });
+                                                                count++;
+                                                                if (count % 400 === 0) {
+                                                                    batch.commit();
+                                                                    batch = window.db.batch();
+                                                                }
+                                                            }
+                                                        });
+                                                        if (count % 400 !== 0) {
+                                                            await batch.commit();
+                                                        }
+                                                        console.log("Uploaded imported Excel vehicles to Firestore.");
+                                                    } catch(err) { console.warn("Notice uploading Excel vehicles to Firestore:", err); }
+                                                })();
+                                            }
                                             console.log("Učitana baza aktivnih vozila iz Excela:", masterFleetData.length);
                                         }
                                     }
@@ -4329,7 +4397,7 @@
 
         async function autoLoadMasterFleet() {
             try {
-                const res = await fetch('fleet_master.json');
+                const res = await fetch('fleet_master.json?v=' + Date.now());
                 if (res.ok) {
                     const data = await res.json();
                     if (data && Array.isArray(data) && data.length > 0) {
@@ -4342,17 +4410,21 @@
                         let savedEdits = localStorage.getItem('fleet_master_custom_edits_v1');
                         if (savedEdits) {
                             try {
-                                let localMap = new Map(JSON.parse(savedEdits).map(v => [v.reg, v]));
-                                masterFleetData = masterFleetData.map(v => localMap.has(v.reg) ? localMap.get(v.reg) : v);
-                                localMap.forEach((v, regKey) => {
-                                    if (!masterFleetData.some(m => m.reg === regKey)) {
-                                        masterFleetData.unshift(v);
-                                    }
-                                });
+                                let localMap = new Map(masterFleetData.map(v => [v.reg, v]));
+                                let parsedEdits = JSON.parse(savedEdits);
+                                if (Array.isArray(parsedEdits)) {
+                                    parsedEdits.forEach(v => {
+                                        if (v && v.reg) {
+                                            localMap.set(v.reg, { ...(localMap.get(v.reg) || {}), ...v });
+                                        }
+                                    });
+                                    masterFleetData = Array.from(localMap.values());
+                                }
                             } catch(err) {}
                         }
                         
                         renderMasterFleetTable();
+                        setTimeout(syncFirestoreMasterFleet, 300);
                         return;
                     }
                 }
@@ -4364,6 +4436,7 @@
             if (masterFleetData.length === 0 && globalData && globalData.length > 0) {
                 buildFallbackMasterFleetFromGlobalData();
             }
+            setTimeout(syncFirestoreMasterFleet, 300);
         }
 
         function buildFallbackMasterFleetFromGlobalData() {
