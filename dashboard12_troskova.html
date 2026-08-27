@@ -5728,6 +5728,14 @@
                     return r === cleanRegSearch || (gb && gb !== '-' && gb === reg);
                 });
 
+                if (existingVeh && existingVeh.status) {
+                    let st = existingVeh.status.toLowerCase();
+                    if (st.includes('prodat') || st.includes('rashod') || st.includes('neaktivno')) {
+                        alert("⚠️ Za ovo vozilo nije moguće unijeti trošak jer ima status: " + existingVeh.status.toUpperCase() + "!");
+                        return false;
+                    }
+                }
+
                 let tipMehan = document.getElementById('ncTip').value;
                 let godProizvodnje = (document.getElementById('ncGod').value || '').trim();
                 let markaVoz = (document.getElementById('ncMarka').value || '').trim();
