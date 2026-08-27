@@ -2071,6 +2071,8 @@
             }
         }
 
+        let _dataLoaded = false;
+
         function updateAuthUI() {
             const loginModal = document.getElementById('loginModal');
             const userHeaderBadge = document.getElementById('userHeaderBadge');
@@ -2105,7 +2107,15 @@
                 } else {
                     if (newCostBtn) newCostBtn.classList.add('hidden');
                 }
+
+                // Load data only once per session, after login
+                if (!_dataLoaded) {
+                    _dataLoaded = true;
+                    autoLoadDataset();
+                    setTimeout(syncFirestoreUsers, 800);
+                }
             } else {
+                _dataLoaded = false;
                 loginModal.classList.remove('hidden');
                 userHeaderBadge.classList.add('hidden');
             }
@@ -2640,63 +2650,113 @@
             if (modal) modal.classList.add('hidden');
         }
 
-        async function autoLoadDataset() {
-            showGlobalSpinner('Učitavanje troškova...', 'Dohvatanje podataka iz Firestore baze');
-            try {
-                // PRIMARY SOURCE: Firestore fleet_costs
-                if (window.db) {
-                    try {
-                        let snapshot = await window.db.collection('fleet_costs').get();
-                        if (!snapshot.empty) {
-                            let records = [];
-                            snapshot.forEach(doc => {
-                                let d = doc.data();
-                                d._firestoreId = doc.id;
-                                if (!d.id) d.id = doc.id;
-                                if (d.datum) d.datumObj = new Date(d.datum);
-                                let dob = (d.dobavljacOrig || d.dobavljac || '').toLowerCase();
-                                if (dob.includes('pgl')) d.segment = 'Guma';
-                                records.push(d);
-                            });
-                            globalData = records;
-                            yearsSet.clear();
-                            globalData.forEach(d => { if (d.year) yearsSet.add(d.year); });
-                            _finalizeDatasetLoad();
-                            hideGlobalSpinner();
-                            return;
-                        }
-                    } catch(e) {
-                        console.warn('Firestore fleet_costs load notice, falling back to JSON:', e);
-                    }
-                }
+        const COSTS_CACHE_KEY = 'fleet_costs_cache_v2';
+        const MASTER_CACHE_KEY = 'fleet_master_cache_v2';
+        const CACHE_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
 
-                // FALLBACK: fleet_data.json (offline/cold start)
-                const res = await fetch('fleet_data.json');
-                if (!res.ok) { hideGlobalSpinner(); return; }
-                const data = await res.json();
-                if (data && data.records && data.records.length > 0) {
-                    globalData = data.records.map((item, idx) => {
-                        let dob = (item.dobavljacOrig || item.dobavljac || '').toLowerCase();
-                        let seg = item.segment;
-                        if (dob.includes('pgl')) seg = 'Guma';
-                        return {
-                            ...item,
-                            id: item.id || `rec_${idx}_${item.reg}_${item.cost}`,
-                            segment: seg,
-                            datumObj: item.datum ? new Date(item.datum) : null
-                        };
-                    });
+        function _isCacheFresh(cacheKey) {
+            try {
+                let raw = localStorage.getItem(cacheKey);
+                if (!raw) return false;
+                let cached = JSON.parse(raw);
+                return cached.ts && (Date.now() - cached.ts) < CACHE_TTL_MS && cached.data && cached.data.length > 0;
+            } catch(e) { return false; }
+        }
+
+        function _saveCache(cacheKey, data) {
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
+            } catch(e) { console.warn('Cache save failed (storage full?):', e); }
+        }
+
+        function _loadCache(cacheKey) {
+            try {
+                let raw = localStorage.getItem(cacheKey);
+                if (!raw) return null;
+                return JSON.parse(raw).data || null;
+            } catch(e) { return null; }
+        }
+
+        async function autoLoadDataset() {
+            let loadedFromCache = false;
+            if (_isCacheFresh(COSTS_CACHE_KEY)) {
+                let cached = _loadCache(COSTS_CACHE_KEY);
+                if (cached && cached.length > 0) {
+                    globalData = cached.map(d => ({ ...d, datumObj: d.datum ? new Date(d.datum) : null }));
                     yearsSet.clear();
-                    globalData.forEach(d => yearsSet.add(d.year));
-                    if (data.metadata && data.metadata.fleetByYear) {
-                        kpiTotalFleetByYear = { ...kpiTotalFleetByYear, ...data.metadata.fleetByYear };
-                    }
+                    globalData.forEach(d => { if (d.year) yearsSet.add(d.year); });
                     _finalizeDatasetLoad();
+                    hideGlobalSpinner();
+                    console.log(`⚡ Instant loaded ${globalData.length} records from local cache`);
+                    loadedFromCache = true;
                 }
-            } catch (e) {
-                console.log('Auto-load dataset note:', e);
             }
-            hideGlobalSpinner();
+
+            if (!loadedFromCache) {
+                showGlobalSpinner('Učitavanje troškova...', 'Dohvatanje podataka iz Firestore baze');
+            }
+
+            // FIRESTORE SYNC (Primary source)
+            if (window.db) {
+                try {
+                    let snapshot = await window.db.collection('fleet_costs').get();
+                    if (!snapshot.empty) {
+                        let records = [];
+                        snapshot.forEach(doc => {
+                            let d = doc.data();
+                            d._firestoreId = doc.id;
+                            if (!d.id) d.id = doc.id;
+                            if (d.datum) d.datumObj = new Date(d.datum);
+                            let dob = (d.dobavljacOrig || d.dobavljac || '').toLowerCase();
+                            if (dob.includes('pgl')) d.segment = 'Guma';
+                            records.push(d);
+                        });
+                        globalData = records;
+                        yearsSet.clear();
+                        globalData.forEach(d => { if (d.year) yearsSet.add(d.year); });
+                        // Save fresh data to local cache (strip non-serializable datumObj)
+                        _saveCache(COSTS_CACHE_KEY, globalData.map(d => { let c={...d}; delete c.datumObj; return c; }));
+                        _finalizeDatasetLoad();
+                        hideGlobalSpinner();
+                        console.log(`🔄 Firestore sync complete: ${globalData.length} records updated`);
+                        return;
+                    }
+                } catch(e) {
+                    console.warn('Firestore fleet_costs load notice, falling back to JSON:', e);
+                }
+            }
+
+            // FALLBACK: fleet_data.json (offline/no Firestore)
+            if (!loadedFromCache) {
+                try {
+                    const res = await fetch('fleet_data.json');
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.records && data.records.length > 0) {
+                            globalData = data.records.map((item, idx) => {
+                                let dob = (item.dobavljacOrig || item.dobavljac || '').toLowerCase();
+                                let seg = item.segment;
+                                if (dob.includes('pgl')) seg = 'Guma';
+                                return {
+                                    ...item,
+                                    id: item.id || `rec_${idx}_${item.reg}_${item.cost}`,
+                                    segment: seg,
+                                    datumObj: item.datum ? new Date(item.datum) : null
+                                };
+                            });
+                            yearsSet.clear();
+                            globalData.forEach(d => yearsSet.add(d.year));
+                            if (data.metadata && data.metadata.fleetByYear) {
+                                kpiTotalFleetByYear = { ...kpiTotalFleetByYear, ...data.metadata.fleetByYear };
+                            }
+                            _finalizeDatasetLoad();
+                        }
+                    }
+                } catch (e) {
+                    console.log('Auto-load dataset note:', e);
+                }
+                hideGlobalSpinner();
+            }
         }
 
         function _finalizeDatasetLoad() {
@@ -2810,12 +2870,10 @@
             }
         }
 
-        // Initialize Auth system & dataset on load
+        // Initialize: only theme + auth on load. Data loads after login via updateAuthUI.
         window.addEventListener('DOMContentLoaded', () => {
             initTheme();
             initAuthSystem();
-            autoLoadDataset(); // Loads from Firestore (primary) or fleet_data.json (fallback)
-            setTimeout(syncFirestoreUsers, 800);
         });
 
         // ================= GLAVNA LOGIKA DASHBOARDA =================
@@ -4883,7 +4941,18 @@
         const masterFleetPerPage = 50;
 
         async function autoLoadMasterFleet() {
-            // PRIMARY SOURCE: Firestore fleet_master
+            let loadedFromCache = false;
+            if (_isCacheFresh(MASTER_CACHE_KEY)) {
+                let cached = _loadCache(MASTER_CACHE_KEY);
+                if (cached && cached.length > 0) {
+                    masterFleetData = cached.map(v => ({ ...v, tipMehan: ocistiTip(v.tipMehan) }));
+                    renderMasterFleetTable();
+                    console.log(`⚡ Instant loaded ${masterFleetData.length} vehicles from local cache`);
+                    loadedFromCache = true;
+                }
+            }
+
+            // FIRESTORE SYNC (Primary source)
             if (window.db) {
                 try {
                     let snapshot = await window.db.collection('fleet_master').get();
@@ -4900,7 +4969,9 @@
                             vehicles.sort((a, b) => (a.reg || '').localeCompare(b.reg || ''));
                             vehicles.forEach((v, idx) => v.rb = idx + 1);
                             masterFleetData = vehicles;
+                            _saveCache(MASTER_CACHE_KEY, masterFleetData);
                             renderMasterFleetTable();
+                            console.log(`🔄 Firestore fleet master synced (${masterFleetData.length} vehicles)`);
                             return;
                         }
                     }
@@ -4910,23 +4981,27 @@
             }
 
             // FALLBACK: fleet_master.json (offline/cold start)
-            try {
-                const res = await fetch('fleet_master.json?v=' + Date.now());
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && Array.isArray(data) && data.length > 0) {
-                        masterFleetData = data.map(v => ({ ...v, tipMehan: ocistiTip(v.tipMehan) }));
-                        renderMasterFleetTable();
-                        return;
+            if (!loadedFromCache) {
+                try {
+                    const res = await fetch('fleet_master.json?v=' + Date.now());
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && Array.isArray(data) && data.length > 0) {
+                            masterFleetData = data.map(v => ({ ...v, tipMehan: ocistiTip(v.tipMehan) }));
+                            masterFleetData.sort((a, b) => (a.reg || '').localeCompare(b.reg || ''));
+                            masterFleetData.forEach((v, idx) => v.rb = idx + 1);
+                            _saveCache(MASTER_CACHE_KEY, masterFleetData);
+                            renderMasterFleetTable();
+                        }
                     }
+                } catch (e) {
+                    console.log('Notice auto-loading fleet_master.json:', e);
                 }
-            } catch (e) {
-                console.log('Notice auto-loading fleet_master.json:', e);
-            }
 
-            // Last resort: build from cost data
-            if (masterFleetData.length === 0 && globalData && globalData.length > 0) {
-                buildFallbackMasterFleetFromGlobalData();
+                // Last resort: build from cost data
+                if (masterFleetData.length === 0 && globalData && globalData.length > 0) {
+                    buildFallbackMasterFleetFromGlobalData();
+                }
             }
         }
 
@@ -5284,6 +5359,7 @@
 
                 // Close modal and refresh table immediately
                 closeEditVehicleModal();
+                _saveCache(MASTER_CACHE_KEY, masterFleetData);
                 renderMasterFleetTable();
 
                 // Sync to Firestore (primary persistent store, non-blocking)
@@ -5733,7 +5809,7 @@
                     }
                 }
 
-                // 1. Save to Firestore (primary, non-blocking)
+                // 1. Save to Firestore (primary, non-blocking) + invalidate cache
                 if (window.db) {
                     window.db.collection('fleet_costs').doc(newItem.id).set({
                         ...newItem,
@@ -5743,6 +5819,8 @@
                         console.warn('Notice saving cost to Firestore:', e);
                     });
                 }
+                // Invalidate local cache so next load fetches fresh data from Firestore
+                localStorage.removeItem(COSTS_CACHE_KEY);
 
                 // 2. Update in-memory array
                 globalData.unshift(newItem);
@@ -5807,13 +5885,14 @@
             if (confirm(`Da li ste sigurni da želite trajno obrisati trošak za vozilo "${reg}" (${costStr})?`)) {
                 globalData.splice(targetIdx, 1);
 
-                // Delete from Firestore (primary)
+                // Delete from Firestore (primary) + invalidate cache
                 if (window.db) {
                     try {
                         if (item._firestoreId) window.db.collection('fleet_costs').doc(item._firestoreId).delete();
                         else if (item.id) window.db.collection('fleet_costs').doc(item.id).delete();
                     } catch(e) {}
                 }
+                localStorage.removeItem(COSTS_CACHE_KEY);
 
                 applyFilters();
 
