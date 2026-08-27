@@ -4370,8 +4370,8 @@
                             <div class="font-bold text-slate-800 dark:text-slate-200">${k}</div>
                             ${vehicleLabelHTML}
                         </td>
-                        <td class="py-2 px-2.5 text-right font-mono font-medium text-slate-600 dark:text-slate-400">${pCost > 0 ? pCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'}</td>
-                        <td class="py-2 px-2.5 text-right font-mono font-extrabold text-blue-700 dark:text-blue-400">${cCost > 0 ? cCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'}</td>
+                        <td class="py-2 px-2.5 text-right font-mono font-medium text-slate-600 dark:text-slate-400">${olderCost > 0 ? olderCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'}</td>
+                        <td class="py-2 px-2.5 text-right font-mono font-extrabold text-blue-700 dark:text-blue-400">${newerCost > 0 ? newerCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'}</td>
                         <td class="py-2 px-2.5 text-right font-mono">${badgeHTML}</td>
                     </tr>
                 `);
@@ -4394,20 +4394,23 @@
             let grandTotalRow = `
                 <tr class="bg-slate-100 dark:bg-slate-800 font-extrabold text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700">
                     <td class="py-2.5 px-2.5 text-left">UKUPNO</td>
-                    <td class="py-2.5 px-2.5 text-right font-mono">${totalPrevCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</td>
-                    <td class="py-2.5 px-2.5 text-right font-mono text-blue-700 dark:text-blue-400">${totalCurrCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</td>
+                    <td class="py-2.5 px-2.5 text-right font-mono">${totalOlderCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</td>
+                    <td class="py-2.5 px-2.5 text-right font-mono text-blue-700 dark:text-blue-400">${totalNewerCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</td>
                     <td class="py-2.5 px-2.5 text-right font-mono">${totalBadgeHTML}</td>
                 </tr>
             `;
             rowsHTML.push(grandTotalRow);
 
+            let olderLabel = isANewer ? prevLabel : currLabel;
+            let newerLabel = isANewer ? currLabel : prevLabel;
+            
             let tableHeader = `
                 <table class="w-full text-xs text-left border-collapse font-sans">
                     <thead class="bg-slate-100 dark:bg-slate-900 font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                         <tr>
                             <th class="py-2 px-2.5 text-left">${groupKey === 'tipMehan' ? 'Tip Mehanizacije' : 'Segment'}</th>
-                            <th class="py-2 px-2.5 text-right">${prevLabel}</th>
-                            <th class="py-2 px-2.5 text-right text-blue-700 dark:text-blue-400">${currLabel}</th>
+                            <th class="py-2 px-2.5 text-right">${olderLabel}</th>
+                            <th class="py-2 px-2.5 text-right text-blue-700 dark:text-blue-400">${newerLabel}</th>
                             <th class="py-2 px-2.5 text-right">Razlika</th>
                         </tr>
                     </thead>
