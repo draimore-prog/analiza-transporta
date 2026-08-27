@@ -1200,6 +1200,19 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- PAGINACIJA ZA TABELU SERVISA -->
+                <div class="flex items-center justify-between mt-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2.5 rounded-lg">
+                    <button id="transPrevBtn" onclick="prevTransPage()" class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+                        ⬅️ Prethodna
+                    </button>
+                    <span id="transCurrentPageDisplay" class="text-xs font-bold text-slate-600 dark:text-slate-400">
+                        Stranica 1 od 1
+                    </span>
+                    <button id="transNextBtn" onclick="nextTransPage()" class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+                        Sljedeća ➡️
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -4628,6 +4641,10 @@
             filterTransactionTable();
         }
 
+        let transPage = 1;
+        const transPerPage = 100;
+        let currentFilteredTransactions = [];
+
         function filterTransactionTable() {
             let term = (document.getElementById('tableSearchInput').value || '').trim().toLowerCase();
             let selectedYear = document.getElementById('tableYearFilter') ? document.getElementById('tableYearFilter').value : 'all';
@@ -4660,12 +4677,26 @@
                 filtered.sort((a, b) => a.cost - b.cost);
             }
 
-            document.getElementById('tableRecordCount').innerText = `Prikazano ${filtered.length.toLocaleString('bs-BA')} servisa i transakcija`;
+            currentFilteredTransactions = filtered;
+            transPage = 1;
+            renderTransactionTablePage();
+        }
+
+        function renderTransactionTablePage() {
+            let filtered = currentFilteredTransactions;
+            document.getElementById('tableRecordCount').innerText = `Prikazano ukupno ${filtered.length.toLocaleString('bs-BA')} servisa i transakcija`;
+
+            let totalPages = Math.ceil(filtered.length / transPerPage) || 1;
+            if (transPage > totalPages) transPage = totalPages;
+            if (transPage < 1) transPage = 1;
 
             const tbody = document.getElementById('transactionTableBody');
             let rowsHTML = [];
 
-            filtered.slice(0, 250).forEach(item => {
+            let startIdx = (transPage - 1) * transPerPage;
+            let endIdx = Math.min(startIdx + transPerPage, filtered.length);
+
+            filtered.slice(startIdx, endIdx).forEach(item => {
                 let dateStr = "-";
                 if(item.datumObj && !isNaN(item.datumObj)) {
                     dateStr = ("0" + item.datumObj.getDate()).slice(-2) + "." + ("0" + (item.datumObj.getMonth() + 1)).slice(-2) + "." + item.datumObj.getFullYear() + ".";
@@ -4697,6 +4728,30 @@
                 tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400 font-medium italic">Nema zapisa koji odgovaraju odabranim filterima.</td></tr>`;
             } else {
                 tbody.innerHTML = rowsHTML.join('');
+            }
+
+            let pageDisp = document.getElementById('transCurrentPageDisplay');
+            if (pageDisp) pageDisp.innerText = `Stranica ${transPage} od ${totalPages}`;
+
+            let prevBtn = document.getElementById('transPrevBtn');
+            if (prevBtn) prevBtn.disabled = transPage <= 1;
+
+            let nextBtn = document.getElementById('transNextBtn');
+            if (nextBtn) nextBtn.disabled = transPage >= totalPages;
+        }
+
+        function prevTransPage() {
+            if (transPage > 1) {
+                transPage--;
+                renderTransactionTablePage();
+            }
+        }
+
+        function nextTransPage() {
+            let totalPages = Math.ceil(currentFilteredTransactions.length / transPerPage) || 1;
+            if (transPage < totalPages) {
+                transPage++;
+                renderTransactionTablePage();
             }
         }
 
