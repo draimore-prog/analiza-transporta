@@ -4537,12 +4537,10 @@
                             }
 
                             rowHTML += `<td class="py-2.5 px-3 text-right whitespace-nowrap">
-                                <div class="font-mono font-bold text-slate-800 dark:text-slate-200 text-[11px]">${val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
-                                <div class="mt-0.5">${badgeHTML}</div>
+                                <div>${badgeHTML}</div>
                             </td>`;
                         } else if (prevVal === 0 && val > 0) {
                             rowHTML += `<td class="py-2.5 px-3 text-right whitespace-nowrap">
-                                <div class="font-mono font-bold text-slate-800 dark:text-slate-200 text-[11px]">${val.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} KM</div>
                                 <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 whitespace-nowrap">Novo 🆕</span>
                             </td>`;
                         } else {
