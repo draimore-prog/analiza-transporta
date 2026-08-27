@@ -4275,19 +4275,17 @@
 
             currData.forEach(d => {
                 let k = d[groupKey] || 'Ostalo';
-                if (!currMap[k]) currMap[k] = { cost: 0, count: 0, regs: new Set() };
+                if (!currMap[k]) currMap[k] = { cost: 0, count: 0 };
                 currMap[k].cost += d.cost;
                 currMap[k].count += 1;
-                if (d.reg) currMap[k].regs.add(d.reg);
                 keys.add(k);
             });
 
             prevData.forEach(d => {
                 let k = d[groupKey] || 'Ostalo';
-                if (!prevMap[k]) prevMap[k] = { cost: 0, count: 0, regs: new Set() };
+                if (!prevMap[k]) prevMap[k] = { cost: 0, count: 0 };
                 prevMap[k].cost += d.cost;
                 prevMap[k].count += 1;
-                if (d.reg) prevMap[k].regs.add(d.reg);
                 keys.add(k);
             });
 
@@ -4319,12 +4317,18 @@
                 let diffKM = newerCost - olderCost;
                 let diffPerc = olderCost > 0 ? ((newerCost - olderCost) / olderCost) * 100 : (newerCost > 0 ? 100 : 0);
 
-                let cCount = currMap[k] ? currMap[k].regs.size : 0;
-                let pCount = prevMap[k] ? prevMap[k].regs.size : 0;
-                let newerCount = isANewer ? cCount : pCount;
-                let olderCount = isANewer ? pCount : cCount;
-                let vehicleLabelHTML = `<div class="text-[10px] text-slate-500 dark:text-slate-400 font-normal mt-0.5">${olderCount} ➔ ${newerCount} vozila</div>`;
-                if (olderCount === 0 && newerCount === 0) vehicleLabelHTML = '';
+                let vehicleLabelHTML = '';
+                if (groupKey === 'tipMehan') {
+                    let kpiA = kpiTotalFleetByYear[yA] || {};
+                    let kpiB = kpiTotalFleetByYear[yB] || {};
+                    let cCount = kpiA[k] || 0;
+                    let pCount = kpiB[k] || 0;
+                    let newerCount = isANewer ? cCount : pCount;
+                    let olderCount = isANewer ? pCount : cCount;
+                    if (olderCount > 0 || newerCount > 0) {
+                        vehicleLabelHTML = `<div class="text-[10px] text-slate-500 dark:text-slate-400 font-normal mt-0.5">${olderCount} ➔ ${newerCount} vozila</div>`;
+                    }
+                }
 
                 let badgeHTML = '';
                 if (olderCost === 0 && newerCost === 0) {
@@ -4405,19 +4409,20 @@
             });
 
             let yearVehicleCounts = {};
-            availableYears.forEach(y => yearVehicleCounts[y] = new Set());
+            availableYears.forEach(y => {
+                yearVehicleCounts[y] = (kpiTotalFleetByYear[y] && kpiTotalFleetByYear[y].Total) ? kpiTotalFleetByYear[y].Total : 0;
+            });
 
             data.forEach(item => {
                 if (matrixData[item.month] && matrixData[item.month][item.year] !== undefined) {
                     matrixData[item.month][item.year] += item.cost;
-                    if (item.reg) yearVehicleCounts[item.year].add(item.reg);
                 }
             });
 
             const headerElem = document.getElementById('matrixTableHeader');
             let headerHTML = `<tr><th class="py-2.5 px-3 text-left whitespace-nowrap">Mjesec</th>`;
             availableYears.forEach(y => { 
-                let vCount = yearVehicleCounts[y].size;
+                let vCount = yearVehicleCounts[y];
                 let vLabel = vCount > 0 ? `<br><span class="text-[10px] text-slate-500 dark:text-slate-400 font-normal">(${vCount} vozila)</span>` : '';
                 headerHTML += `<th class="py-2.5 px-3 text-right whitespace-nowrap">${y} (KM)${vLabel}</th>`; 
             });
@@ -4461,13 +4466,13 @@
             const percHeaderElem = document.getElementById('matrixPercTableHeader');
             let percHeaderHTML = `<tr><th class="py-2.5 px-3 text-left whitespace-nowrap">Mjesec</th>`;
             availableYears.forEach((y, idx) => {
-                let vCount = yearVehicleCounts[y].size;
+                let vCount = yearVehicleCounts[y];
                 if (idx === 0) {
                     let vLabel = vCount > 0 ? `<br><span class="text-[10px] text-slate-500 dark:text-slate-400 font-normal">(${vCount} vozila)</span>` : '';
                     percHeaderHTML += `<th class="py-2.5 px-3 text-right whitespace-nowrap">${y} (Baza)${vLabel}</th>`;
                 } else {
                     let prevY = availableYears[idx - 1];
-                    let prevVCount = yearVehicleCounts[prevY].size;
+                    let prevVCount = yearVehicleCounts[prevY];
                     let percVLabel = (prevVCount > 0 || vCount > 0) ? `<br><span class="text-[10px] text-slate-500 dark:text-slate-400 font-normal">(${prevVCount} ➔ ${vCount} vozila)</span>` : '';
                     percHeaderHTML += `<th class="py-2.5 px-3 text-right whitespace-nowrap">${y} vs ${prevY}${percVLabel}</th>`;
                 }
