@@ -4275,17 +4275,19 @@
 
             currData.forEach(d => {
                 let k = d[groupKey] || 'Ostalo';
-                if (!currMap[k]) currMap[k] = { cost: 0, count: 0 };
+                if (!currMap[k]) currMap[k] = { cost: 0, count: 0, regs: new Set() };
                 currMap[k].cost += d.cost;
                 currMap[k].count += 1;
+                if (d.reg) currMap[k].regs.add(d.reg);
                 keys.add(k);
             });
 
             prevData.forEach(d => {
                 let k = d[groupKey] || 'Ostalo';
-                if (!prevMap[k]) prevMap[k] = { cost: 0, count: 0 };
+                if (!prevMap[k]) prevMap[k] = { cost: 0, count: 0, regs: new Set() };
                 prevMap[k].cost += d.cost;
                 prevMap[k].count += 1;
+                if (d.reg) prevMap[k].regs.add(d.reg);
                 keys.add(k);
             });
 
@@ -4317,6 +4319,13 @@
                 let diffKM = newerCost - olderCost;
                 let diffPerc = olderCost > 0 ? ((newerCost - olderCost) / olderCost) * 100 : (newerCost > 0 ? 100 : 0);
 
+                let cCount = currMap[k] ? currMap[k].regs.size : 0;
+                let pCount = prevMap[k] ? prevMap[k].regs.size : 0;
+                let newerCount = isANewer ? cCount : pCount;
+                let olderCount = isANewer ? pCount : cCount;
+                let vehicleLabelHTML = `<div class="text-[10px] text-slate-500 dark:text-slate-400 font-normal mt-0.5">${olderCount} ➔ ${newerCount} vozila</div>`;
+                if (olderCount === 0 && newerCount === 0) vehicleLabelHTML = '';
+
                 let badgeHTML = '';
                 if (olderCost === 0 && newerCost === 0) {
                     badgeHTML = '<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">0.0%</span>';
@@ -4332,7 +4341,10 @@
 
                 rowsHTML.push(`
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
-                        <td class="py-2 px-2.5 text-left font-bold text-slate-800 dark:text-slate-200">${k}</td>
+                        <td class="py-2 px-2.5 text-left">
+                            <div class="font-bold text-slate-800 dark:text-slate-200">${k}</div>
+                            ${vehicleLabelHTML}
+                        </td>
                         <td class="py-2 px-2.5 text-right font-mono font-extrabold text-blue-700 dark:text-blue-400">${cCost > 0 ? cCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'}</td>
                         <td class="py-2 px-2.5 text-right font-mono font-medium text-slate-600 dark:text-slate-400">${pCost > 0 ? pCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM' : '-'}</td>
                         <td class="py-2 px-2.5 text-right font-mono">${badgeHTML}</td>
@@ -4392,16 +4404,24 @@
                 availableYears.forEach(y => matrixData[idx + 1][y] = 0);
             });
 
+            let yearVehicleCounts = {};
+            availableYears.forEach(y => yearVehicleCounts[y] = new Set());
+
             data.forEach(item => {
                 if (matrixData[item.month] && matrixData[item.month][item.year] !== undefined) {
                     matrixData[item.month][item.year] += item.cost;
+                    if (item.reg) yearVehicleCounts[item.year].add(item.reg);
                 }
             });
 
             const headerElem = document.getElementById('matrixTableHeader');
             let headerHTML = `<tr><th class="py-2.5 px-3 text-left whitespace-nowrap">Mjesec</th>`;
-            availableYears.forEach(y => { headerHTML += `<th class="py-2.5 px-3 text-right whitespace-nowrap">${y} (KM)</th>`; });
-            headerHTML += `<th class="py-2.5 px-3 text-right bg-blue-50 dark:bg-slate-800 text-blue-900 dark:text-blue-300 whitespace-nowrap">Ukupno</th></tr>`;
+            availableYears.forEach(y => { 
+                let vCount = yearVehicleCounts[y].size;
+                let vLabel = vCount > 0 ? `<br><span class="text-[10px] text-slate-500 dark:text-slate-400 font-normal">(${vCount} vozila)</span>` : '';
+                headerHTML += `<th class="py-2.5 px-3 text-right whitespace-nowrap">${y} (KM)${vLabel}</th>`; 
+            });
+            headerHTML += `<th class="py-2.5 px-3 text-right bg-blue-50 dark:bg-slate-800 text-blue-900 dark:text-blue-300 whitespace-nowrap align-top">Ukupno</th></tr>`;
             if (headerElem) headerElem.innerHTML = headerHTML;
 
             const bodyElem = document.getElementById('matrixTableBody');
@@ -4441,14 +4461,18 @@
             const percHeaderElem = document.getElementById('matrixPercTableHeader');
             let percHeaderHTML = `<tr><th class="py-2.5 px-3 text-left whitespace-nowrap">Mjesec</th>`;
             availableYears.forEach((y, idx) => {
+                let vCount = yearVehicleCounts[y].size;
                 if (idx === 0) {
-                    percHeaderHTML += `<th class="py-2.5 px-3 text-right whitespace-nowrap">${y} (Baza)</th>`;
+                    let vLabel = vCount > 0 ? `<br><span class="text-[10px] text-slate-500 dark:text-slate-400 font-normal">(${vCount} vozila)</span>` : '';
+                    percHeaderHTML += `<th class="py-2.5 px-3 text-right whitespace-nowrap">${y} (Baza)${vLabel}</th>`;
                 } else {
                     let prevY = availableYears[idx - 1];
-                    percHeaderHTML += `<th class="py-2.5 px-3 text-right whitespace-nowrap">${y} vs ${prevY}</th>`;
+                    let prevVCount = yearVehicleCounts[prevY].size;
+                    let percVLabel = (prevVCount > 0 || vCount > 0) ? `<br><span class="text-[10px] text-slate-500 dark:text-slate-400 font-normal">(${prevVCount} ➔ ${vCount} vozila)</span>` : '';
+                    percHeaderHTML += `<th class="py-2.5 px-3 text-right whitespace-nowrap">${y} vs ${prevY}${percVLabel}</th>`;
                 }
             });
-            percHeaderHTML += `<th class="py-2.5 px-3 text-right bg-indigo-50 dark:bg-slate-800 text-indigo-900 dark:text-indigo-300 whitespace-nowrap">Prosječni YoY Trend</th></tr>`;
+            percHeaderHTML += `<th class="py-2.5 px-3 text-right bg-indigo-50 dark:bg-slate-800 text-indigo-900 dark:text-indigo-300 whitespace-nowrap align-top">Prosječni YoY Trend</th></tr>`;
             if (percHeaderElem) percHeaderElem.innerHTML = percHeaderHTML;
 
             const percBodyElem = document.getElementById('matrixPercTableBody');
