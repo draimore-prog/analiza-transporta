@@ -7004,29 +7004,42 @@
 
         function calculateDynamic2026() {
             let data26 = {
-                units: { "Priključno": new Set(), "Putničko": new Set(), "Radna mašina": new Set(), "Servis motornih vozila": new Set(), "Skladišna mehanizacija": new Set(), "Teretno": new Set() },
+                units: { "Priključno": 0, "Putničko": 0, "Radna mašina": 0, "Servis motornih vozila": 0, "Skladišna mehanizacija": 0, "Teretno": 0 },
                 typeCost: { "Priključno":0, "Putničko":0, "Radna mašina":0, "Servis motornih vozila":0, "Skladišna mehanizacija":0, "Teretno":0 },
                 segmentCost: { "Elektronika":0, "Guma":0, "Hidraulika":0, "Mehanika":0, "Redovan servis":0, "Signalizacija":0, "Tečnost":0 },
                 interventions: { "Priključno":0, "Putničko":0, "Radna mašina":0, "Servis motornih vozila":0, "Skladišna mehanizacija":0, "Teretno":0 }
             };
 
+            // 1. Broj jedinica se cita iz Master Fleet-a (sva aktivna vozila)
+            if (typeof masterFleetData !== 'undefined' && masterFleetData.length > 0) {
+                masterFleetData.forEach(v => {
+                    let type = (v.tipMehan || v.tipMehanizacije || '').trim();
+                    if (type === "Putnicko" || type === "Putnička vozila" || type === "Putničko") data26.units["Putničko"]++;
+                    else if (type === "Radna masina" || type === "Radna mašina") data26.units["Radna mašina"]++;
+                    else if (type === "Skladisna mehanizacija" || type === "Skladišna mehanizacija") data26.units["Skladišna mehanizacija"]++;
+                    else if (type === "Prikljucno" || type === "Priključna vozila" || type === "Priključno") data26.units["Priključno"]++;
+                    else if (type === "Teretna vozila" || type === "Teretno") data26.units["Teretno"]++;
+                    else if (type === "Servis motornih vozila") data26.units["Servis motornih vozila"]++;
+                });
+            }
+
+            // 2. Troskovi i intervencije iz globalData (odrzavanje)
             if (typeof globalData !== 'undefined') {
                 globalData.forEach(item => {
                     let y = item.year;
                     if (y === 2026) {
                         let type = (item.tipMehan || item['Tip vozila'] || '').trim();
-                        let reg = item.reg || item['Registarska oznaka'] || item['Inventurni broj'] || item['Vozilo'] || 'nepoznato';
                         let cost = parseFloat(item.cost || item['Iznos bez PDV'] || item['Iznos bez PDV-a'] || 0) || 0;
                         let segment = (item.segment || item['Segment'] || '').trim();
 
                         // Mappiranja
-                        if (type === "Putnicko") type = "Putničko";
-                        if (type === "Radna masina") type = "Radna mašina";
-                        if (type === "Skladisna mehanizacija") type = "Skladišna mehanizacija";
-                        if (type === "Prikljucno") type = "Priključno";
+                        if (type === "Putnicko" || type === "Putnička vozila") type = "Putničko";
+                        else if (type === "Radna masina") type = "Radna mašina";
+                        else if (type === "Skladisna mehanizacija") type = "Skladišna mehanizacija";
+                        else if (type === "Prikljucno" || type === "Priključna vozila") type = "Priključno";
+                        else if (type === "Teretna vozila") type = "Teretno";
 
-                        if (data26.units[type]) {
-                            data26.units[type].add(reg);
+                        if (data26.typeCost.hasOwnProperty(type)) {
                             data26.typeCost[type] += cost;
                             data26.interventions[type]++;
                         }
@@ -7038,10 +7051,6 @@
                 });
             }
 
-            // Convert sets to counts
-            for (let k in data26.units) {
-                data26.units[k] = data26.units[k].size;
-            }
             return data26;
         }
 
