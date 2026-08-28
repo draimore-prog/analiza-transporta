@@ -342,6 +342,7 @@
                                 <select id="newRole" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold bg-slate-50 outline-none">
                                     <option value="editor">Admin - Unos faktura</option>
                                     <option value="viewer">Analitičar (Samo pregled)</option>
+                                    <option value="serviser">Serviser (Samo pregled kartona)</option>
                                     <option value="superadmin">Super Administrator</option>
                                 </select>
                                 <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-lg shadow text-xs whitespace-nowrap transition-all">
@@ -421,6 +422,7 @@
                     <select id="editRole" class="w-full border border-slate-300 rounded-lg p-2.5 font-bold bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="editor">Admin - Unos faktura</option>
                         <option value="viewer">Analitičar (Samo pregled)</option>
+                        <option value="serviser">Serviser (Samo pregled kartona)</option>
                         <option value="superadmin">Super Administrator</option>
                     </select>
                 </div>
@@ -714,7 +716,33 @@
 
         <!-- Scrollable content -->
         <div class="flex-1 overflow-y-auto p-4 md:p-6 relative">
-            <div class="max-w-7xl mx-auto w-full">
+            <!-- SERVISER DASHBOARD (samo za servisere) -->
+            <div id="serviserDashboard" class="hidden h-full flex-col items-center justify-center">
+                <div class="w-full max-w-3xl bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 text-center">
+                    <div class="inline-flex bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 p-4 rounded-full mb-4 shadow-inner">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </div>
+                    <h2 class="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight mb-2">Servisna Radionica</h2>
+                    <p class="text-slate-500 dark:text-slate-400 mb-8 font-medium">Unesite registraciju ili garažni broj za pregled historije održavanja vozila</p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+                        <input type="text" id="serviserSearchInput" placeholder="Npr. J41-M-123 ili GB:123" class="w-full sm:w-2/3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-5 py-4 text-lg font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none uppercase placeholder:normal-case placeholder:text-slate-400" onkeydown="if(event.key === 'Enter') handleServiserSearch()">
+                        <button onclick="handleServiserSearch()" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-xl font-bold transition-all text-lg flex items-center justify-center gap-2 shadow-md">
+                            🔍 Pretraži
+                        </button>
+                    </div>
+                    
+                    <div class="flex justify-center items-center gap-4 text-xs font-bold mt-4 pt-6 border-t border-slate-100 dark:border-slate-700">
+                        <span class="text-slate-500">Prijavljen kao: <span id="serviserUsernameDisp" class="text-indigo-600 dark:text-indigo-400">Serviser</span></span>
+                        <span class="text-slate-300 dark:text-slate-600">|</span>
+                        <button onclick="handleLogout()" class="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 flex items-center gap-1 transition-colors">
+                            🚪 Odjavi se
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="appDashboardContent" class="max-w-7xl mx-auto w-full">
 
         <!-- Loader Indikator -->
         <div id="loader" class="hidden my-8 p-6 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-center gap-3">
@@ -1864,13 +1892,21 @@
                 <div class="flex flex-col lg:flex-row gap-6">
                     <div class="w-full lg:w-3/5 flex flex-col bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
                         <div class="mb-3 flex flex-wrap justify-between items-center text-slate-700 border-b border-slate-100 pb-3 gap-3">
-                            <div class="flex items-center gap-3">
+                            <div class="flex flex-wrap items-center gap-3">
                                 <h3 class="text-base font-bold text-slate-800">📋 Pregled svih servisa i zamjena dijelova</h3>
-                                <select id="modalSegmentFilter" class="text-xs border-slate-300 rounded-md p-1.5 border focus:ring-blue-500 bg-slate-50 text-slate-700 font-semibold outline-none no-print">
-                                    <option value="all">Svi segmenti</option>
-                                </select>
+                                <div class="flex items-center gap-2">
+                                    <select id="modalSegmentFilter" class="text-xs border-slate-300 rounded-md p-1.5 border focus:ring-blue-500 bg-slate-50 text-slate-700 font-semibold outline-none no-print">
+                                        <option value="all">Svi segmenti</option>
+                                    </select>
+                                    <div class="relative no-print">
+                                        <span class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none text-slate-400">
+                                            🔍
+                                        </span>
+                                        <input type="text" id="modalKeywordSearch" placeholder="Pretraži kvar (npr. 'stop')..." class="pl-8 text-xs border border-slate-300 rounded-md p-1.5 focus:ring-blue-500 bg-slate-50 text-slate-700 font-semibold outline-none w-48 sm:w-64" onkeyup="filterModalTable()">
+                                    </div>
+                                </div>
                             </div>
-                            <span id="modalTotalCost" class="text-blue-700 font-extrabold bg-blue-50 px-3 py-1 rounded-full text-xs border border-blue-200"></span>
+                            <span id="modalTotalCost" class="text-blue-700 font-extrabold bg-blue-50 px-3 py-1 rounded-full text-xs border border-blue-200 serviser-hide"></span>
                         </div>
                         
                         <div class="overflow-y-auto max-h-[50vh] lg:max-h-[55vh] border border-slate-200 rounded-lg shadow-inner bg-white">
@@ -1881,7 +1917,7 @@
                                         <th class="py-2.5 px-3">Segment</th>
                                         <th class="py-2.5 px-3">Opis opravke / Dio</th>
                                         <th class="py-2.5 px-3">Serviser</th>
-                                        <th class="py-2.5 px-3 text-right">Cijena (KM)</th>
+                                        <th class="py-2.5 px-3 text-right serviser-hide">Cijena (KM)</th>
                                     </tr>
                                 </thead>
                                 <tbody id="modalTableBody" class="divide-y divide-slate-100 bg-white">
@@ -2125,8 +2161,37 @@
                     roleLabel = '👑 Super Administrator';
                 } else if (activeUser.role === 'editor' || activeUser.role === 'admin') {
                     roleLabel = '✍️ Admin (Unos faktura)';
+                } else if (activeUser.role === 'serviser') {
+                    roleLabel = '🔧 Serviser (Karton vozila)';
                 }
                 document.getElementById('headerUserRole').innerText = roleLabel;
+
+                // UI Layout Toggle for Serviser
+                let sDash = document.getElementById('serviserDashboard');
+                let appDash = document.getElementById('appDashboardContent');
+                let aside = document.querySelector('aside');
+                let header = document.querySelector('header');
+                
+                if (activeUser.role === 'serviser') {
+                    if (aside) aside.classList.add('hidden');
+                    if (header) header.classList.add('hidden');
+                    if (appDash) appDash.classList.add('hidden');
+                    if (sDash) { 
+                        sDash.classList.remove('hidden');
+                        sDash.classList.add('flex');
+                    }
+                    if (document.getElementById('serviserUsernameDisp')) {
+                        document.getElementById('serviserUsernameDisp').innerText = activeUser.fullname || activeUser.username;
+                    }
+                } else {
+                    if (aside) aside.classList.remove('hidden');
+                    if (header) header.classList.remove('hidden');
+                    if (appDash) appDash.classList.remove('hidden');
+                    if (sDash) {
+                        sDash.classList.remove('flex');
+                        sDash.classList.add('hidden');
+                    }
+                }
 
                 // SAMO emir.durakovic (ili superadmin) VIDI ADMIN PANEL!
                 if (isEmir) {
@@ -2136,7 +2201,7 @@
                 }
 
                 // Samo nalozi sa pravom unosa (editor, superadmin) vide dugme "➕ Unos Troška"
-                if (activeUser.role !== 'viewer') {
+                if (activeUser.role !== 'viewer' && activeUser.role !== 'serviser') {
                     if (newCostBtn) newCostBtn.classList.remove('hidden');
                 } else {
                     if (newCostBtn) newCostBtn.classList.add('hidden');
@@ -2292,34 +2357,33 @@
                     console.log("🔥 Firebase Auth prijava uspješna:", userCred.user.email);
                     let uname = uInput.includes('@') ? uInput.split('@')[0].toLowerCase() : uInput.toLowerCase();
                     let isSuper = uname === 'emir.durakovic';
+                    let localUser = usersDB.find(u => u.username.toLowerCase() === uname);
+                    let initialRole = isSuper ? 'superadmin' : (localUser ? (localUser.role || 'editor') : 'editor');
 
                     activeUser = {
                         username: uname,
-                        fullname: userCred.user.displayName || uname,
-                        role: isSuper ? 'superadmin' : 'editor',
+                        fullname: userCred.user.displayName || (localUser ? localUser.fullname : uname),
+                        role: initialRole,
                         email: userCred.user.email,
                         uid: userCred.user.uid
                     };
 
-                    if (rememberMe) {
-                        localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
-                    } else {
-                        sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
-                    }
+                    let stored = rememberMe ? 'localStorage' : 'sessionStorage';
+                    window[stored].setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+                    
                     if (errDiv) errDiv.classList.add('hidden');
                     updateAuthUI();
 
-                    // Fetch role from Firestore in background AFTER login modal closes
+                    // Fetch role from Firestore in background AFTER login modal closes (as failsafe)
                     setTimeout(async () => {
                         try {
                             if (window.db) {
                                 let snap = await window.db.collection('app_users').doc(uname).get();
                                 if (snap.exists) {
                                     let uDoc = snap.data();
-                                    if (uDoc.role) {
+                                    if (uDoc.role && uDoc.role !== activeUser.role) {
                                         activeUser.role = uDoc.role;
                                         activeUser.fullname = uDoc.fullname || activeUser.fullname;
-                                        let stored = rememberMe ? 'localStorage' : 'sessionStorage';
                                         window[stored].setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
                                         updateAuthUI();
                                     }
@@ -2335,28 +2399,58 @@
 
                 if (authErr.code === 'auth/user-not-found' || authErr.code === 'auth/invalid-credential') {
                     try {
+                        let uname = uInput.includes('@') ? uInput.split('@')[0].toLowerCase() : uInput.toLowerCase();
+                        
+                        // SIGURNOSNA PROVJERA: Da li je admin prethodno kreirao ovog korisnika u bazi?
+                        let localUser = usersDB.find(u => u.username.toLowerCase() === uname);
+                        if (!localUser || localUser.password !== pInput) {
+                            throw new Error("Pristup odbijen. Obratite se administratoru.");
+                        }
+
                         let newCred = await window.auth.createUserWithEmailAndPassword(emailToUse, pInput);
                         if (newCred && newCred.user) {
-                            let uname = uInput.includes('@') ? uInput.split('@')[0].toLowerCase() : uInput.toLowerCase();
                             let isSuper = uname === 'emir.durakovic';
                             activeUser = {
                                 username: uname,
-                                fullname: uInput,
-                                role: isSuper ? 'superadmin' : 'editor',
+                                fullname: localUser.fullname || uname,
+                                role: isSuper ? 'superadmin' : (localUser.role || 'editor'),
                                 email: newCred.user.email,
                                 uid: newCred.user.uid
                             };
-                            if (rememberMe) {
-                                localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
-                            } else {
-                                sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
-                            }
+                            let stored = rememberMe ? 'localStorage' : 'sessionStorage';
+                            window[stored].setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+                            
                             if (errDiv) errDiv.classList.add('hidden');
                             updateAuthUI();
+
+                            setTimeout(async () => {
+                                try {
+                                    if (window.db) {
+                                        let snap = await window.db.collection('app_users').doc(uname).get();
+                                        if (snap.exists) {
+                                            let uDoc = snap.data();
+                                            if (uDoc.role && uDoc.role !== activeUser.role) {
+                                                activeUser.role = uDoc.role;
+                                                activeUser.fullname = uDoc.fullname || activeUser.fullname;
+                                                window[stored].setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+                                                updateAuthUI();
+                                            }
+                                        }
+                                    }
+                                } catch(e) {}
+                            }, 500);
+
                             return;
                         }
                     } catch(regErr) {
-                        console.warn("Notice creating Firebase Auth user:", regErr.message);
+                        console.warn("Spriječen neovlašten pristup:", regErr.message);
+                        if (errDiv) {
+                            errDiv.className = "p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg font-bold";
+                            errDiv.innerText = "❌ Pristup odbijen. Nalog nije odobren ili su podaci neispravni.";
+                            errDiv.classList.remove('hidden');
+                        }
+                        setSubmitLoading(false);
+                        return; // Stop flow completely
                     }
                 }
 
@@ -2408,7 +2502,7 @@
             document.getElementById('adminPanelModal').classList.add('hidden');
         }
 
-        function handleCreateUser(e) {
+        async function handleCreateUser(e) {
             e.preventDefault();
             if (!activeUser || (activeUser.username.toLowerCase() !== 'emir.durakovic' && activeUser.role !== 'superadmin')) return;
 
@@ -2420,6 +2514,22 @@
             if (usersDB.some(u => u.username.toLowerCase() === uname)) {
                 alert(`Korisničko ime "${uname}" već postoji!`);
                 return;
+            }
+
+            try {
+                let emailToUse = uname.includes("@") ? uname : uname + "@transport-analitika.local";
+                if (!firebase.apps.some(a => a.name === "SecondaryApp")) {
+                    firebase.initializeApp(firebase.app().options, "SecondaryApp");
+                }
+                const secondaryApp = firebase.app("SecondaryApp");
+                await secondaryApp.auth().createUserWithEmailAndPassword(emailToUse, pass);
+                await secondaryApp.auth().signOut();
+            } catch (err) {
+                console.error("Firebase Auth Error:", err);
+                if (err.code !== "auth/email-already-in-use") {
+                    alert("Gre�ka pri kreiranju autentikacije: " + err.message);
+                    return;
+                }
             }
 
             let newUser = {
@@ -2566,6 +2676,8 @@
                     roleBadgeHTML = '<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-900 border border-purple-300">👑 Super Administrator</span>';
                 } else if (user.role === 'viewer') {
                     roleBadgeHTML = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">📊 Analitičar (Samo pregled)</span>';
+                } else if (user.role === 'serviser') {
+                    roleBadgeHTML = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-800 border border-slate-300">🔧 Serviser</span>';
                 } else {
                     roleBadgeHTML = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-300">✍️ Admin (Unos faktura)</span>';
                 }
@@ -4762,6 +4874,12 @@
             openVehicleModal(inputVal);
         }
 
+        function handleServiserSearch() {
+            let inputVal = document.getElementById('serviserSearchInput').value.trim();
+            if(!inputVal) { alert("Molimo unesite registraciju ili garažni broj!"); return; }
+            openVehicleModal(inputVal);
+        }
+
         function openVehicleModal(searchQuery = null) {
             let query = searchQuery;
             if(!query) query = document.getElementById('modalVehicleInput').value.trim();
@@ -4770,11 +4888,18 @@
             let cleanQuery = query.split(' [')[0].trim().toLowerCase();
             let gbQuery = query.includes('GB:') ? query.split('GB:')[1].replace(']', '').trim().toLowerCase() : cleanQuery;
 
-            currentModalVehicleData = globalData.filter(item => {
-                let regMatch = item.reg.toLowerCase() === cleanQuery || item.reg.toLowerCase().includes(cleanQuery);
-                let gbMatch = item.garazniBroj !== '-' && (item.garazniBroj.toLowerCase() === gbQuery || item.garazniBroj.toLowerCase().includes(gbQuery));
-                return regMatch || gbMatch;
-            });
+            // Prvo pokušavamo naći tačno poklapanje po registraciji (kako bi izbjegli miješanje sa garažnim brojevima)
+            let exactRegMatches = globalData.filter(item => item.reg.toLowerCase() === cleanQuery);
+
+            if (exactRegMatches.length > 0) {
+                currentModalVehicleData = exactRegMatches;
+            } else {
+                currentModalVehicleData = globalData.filter(item => {
+                    let regMatch = item.reg.toLowerCase().includes(cleanQuery);
+                    let gbMatch = item.garazniBroj !== '-' && (item.garazniBroj.toLowerCase() === gbQuery || item.garazniBroj.toLowerCase().includes(gbQuery));
+                    return regMatch || gbMatch;
+                });
+            }
 
             if (currentModalVehicleData.length === 0) { 
                 alert(`Vozilo sa pojmom "${query}" nije pronađeno u filtriranim podacima.`); 
@@ -4790,6 +4915,8 @@
             Array.from(vehicleSegments).sort().forEach(s => { segOptions.push(`<option value="${s}">${s}</option>`); });
             segFilter.innerHTML = segOptions.join('');
             segFilter.value = 'all';
+            
+            document.getElementById('modalKeywordSearch').value = '';
 
             let gb = currentModalVehicleData[0].garazniBroj !== '-' ? currentModalVehicleData[0].garazniBroj : 'N/A';
             let god = currentModalVehicleData[0].godProizvodnje !== '-' ? currentModalVehicleData[0].godProizvodnje : 'N/A';
@@ -4875,13 +5002,24 @@
             }
         }
 
-        document.getElementById('modalSegmentFilter').addEventListener('change', function() {
+        function filterModalTable() {
+            let segVal = document.getElementById('modalSegmentFilter').value;
+            let keyVal = document.getElementById('modalKeywordSearch').value.trim().toLowerCase();
+            
             let filtered = currentModalVehicleData;
-            if(this.value !== 'all') {
-                filtered = currentModalVehicleData.filter(item => item.segment === this.value);
+            if(segVal !== 'all') {
+                filtered = filtered.filter(item => item.segment === segVal);
+            }
+            if(keyVal) {
+                filtered = filtered.filter(item => {
+                    let desc = (item.opisPopravke || '').toLowerCase();
+                    return desc.includes(keyVal);
+                });
             }
             renderModalContent(filtered);
-        });
+        }
+
+        document.getElementById('modalSegmentFilter').addEventListener('change', filterModalTable);
 
         function renderModalContent(vehData) {
             let isDarkMode = document.documentElement.classList.contains('dark');
@@ -4911,6 +5049,7 @@
                 }
 
                 let attachmentBtn = item.attachmentUrl ? `<button onclick="openLightbox('${item.attachmentUrl}', 'Račun / Prilog')" class="text-indigo-600 hover:text-indigo-900 font-bold hover:underline ml-1" title="Pregledaj skenirani račun/prilog">📎 Prilog</button>` : '';
+                let isServiser = activeUser && activeUser.role === 'serviser';
 
                 tableRowsHTML.push(`
                     <tr class="hover:bg-blue-50/60 border-b border-slate-100 transition-colors">
@@ -4918,7 +5057,7 @@
                         <td class="py-2.5 px-3 text-slate-600 font-semibold">${item.segment}</td>
                         <td class="py-2.5 px-3 text-slate-900 font-semibold break-words max-w-[220px]">${item.opisPopravke} ${attachmentBtn}</td>
                         <td class="py-2.5 px-3 text-slate-600 text-xs truncate max-w-[140px]" title="${sup}">${sup}</td>
-                        <td class="py-2.5 px-3 text-right font-bold text-slate-800">
+                        <td class="py-2.5 px-3 text-right font-bold text-slate-800 serviser-hide ${isServiser ? 'hidden' : ''}">
                             <div class="flex items-center justify-end gap-1.5">
                                 <span>${item.cost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM</span>
                                 ${(item.isNewCustom === true && activeUser && (activeUser.role === 'superadmin' || activeUser.role === 'editor' || activeUser.role === 'admin')) ? `<button onclick="deleteCostRecord('${item.id}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded font-bold text-xs no-print transition-all" title="Obriši ovaj ručno uneseni trošak">🗑️</button>` : ''}
@@ -4930,6 +5069,23 @@
             
             document.getElementById('modalTableBody').innerHTML = tableRowsHTML.join('');
             document.getElementById('modalTotalCost').innerText = `Σ ${totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM`;
+            
+            // Postavljanje klasa za skrivanje elemenata servisera
+            let isServiser = activeUser && activeUser.role === 'serviser';
+            document.querySelectorAll('.serviser-hide').forEach(el => {
+                if (isServiser) {
+                    el.classList.add('hidden');
+                } else {
+                    el.classList.remove('hidden');
+                }
+            });
+            document.querySelectorAll('.print-kpi-grid').forEach(el => {
+                if (isServiser) {
+                    el.classList.add('hidden');
+                } else {
+                    el.classList.remove('hidden');
+                }
+            });
             
             document.getElementById('mKpiTotal').innerText = totalCost.toLocaleString('bs-BA', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' KM';
             document.getElementById('mKpiCount').innerText = vehData.length;
