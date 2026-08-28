@@ -1578,13 +1578,18 @@
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3 pt-4 border-t border-slate-200">
-                    <button type="button" onclick="closeEditVehicleModal()" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-xs hover:bg-slate-100 transition-colors">
-                        Odustani
-                    </button>
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-6 py-2.5 rounded-xl shadow-lg transition-all text-xs flex items-center gap-2">
-                        <span>💾 Sačuvaj u Šifrarnik</span>
-                    </button>
+                <div class="flex justify-between items-center pt-4 border-t border-slate-200 w-full">
+                    <div id="evDeleteContainer">
+                        <!-- Ovdje se dinamički ubacuje dugme za brisanje (Samo za superadmina) -->
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <button type="button" onclick="closeEditVehicleModal()" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-xs hover:bg-slate-100 transition-colors">
+                            Odustani
+                        </button>
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-6 py-2.5 rounded-xl shadow-lg transition-all text-xs flex items-center gap-2">
+                            <span>💾 Sačuvaj u Šifrarnik</span>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -5728,11 +5733,47 @@
                 document.getElementById('evStatus').value = 'Aktivno';
             }
 
+            const delContainer = document.getElementById('evDeleteContainer');
+            if (delContainer) {
+                let isSuper = activeUser && (activeUser.username.toLowerCase() === 'emir.durakovic' || activeUser.role === 'superadmin');
+                if (regToEdit && isSuper) {
+                    delContainer.innerHTML = `<button type="button" onclick="deleteVehicleMaster('${regToEdit}')" class="px-4 py-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 font-bold text-xs transition-colors shadow-sm">🗑️ Obriši Vozilo</button>`;
+                } else {
+                    delContainer.innerHTML = '';
+                }
+            }
+
             document.getElementById('editVehicleMasterModal').classList.remove('hidden');
         }
 
         function closeEditVehicleModal() {
             document.getElementById('editVehicleMasterModal').classList.add('hidden');
+        }
+
+        async function deleteVehicleMaster(reg) {
+            if (!activeUser || (activeUser.username.toLowerCase() !== 'emir.durakovic' && activeUser.role !== 'superadmin')) {
+                alert("Pristup odbijen! Samo Super Administrator može brisati vozila iz šifrarnika.");
+                return;
+            }
+            if (!confirm(`Da li ste sigurni da želite TRAJNO OBRISATI vozilo sa registracijom ${reg} iz šifrarnika? Ova akcija se ne može poništiti!`)) {
+                return;
+            }
+            try {
+                let safeDocId = reg.replace(/[\/\\#\?]/g, '_');
+                if (window.db) {
+                    await window.db.collection('fleet_master').doc(safeDocId).delete();
+                }
+                masterFleetData = masterFleetData.filter(v => v.reg !== reg);
+                if (typeof _saveCache === 'function') {
+                    _saveCache(MASTER_CACHE_KEY, masterFleetData);
+                }
+                closeEditVehicleModal();
+                renderMasterFleetTable();
+                alert(`Vozilo ${reg} je uspješno obrisano.`);
+            } catch (err) {
+                console.error("Greška pri brisanju vozila:", err);
+                alert("Dogodila se greška pri brisanju vozila.");
+            }
         }
 
         async function handleSaveVehicleMaster(event) {
