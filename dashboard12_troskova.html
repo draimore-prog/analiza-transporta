@@ -2548,8 +2548,8 @@
             }
 
             const emailVal = document.getElementById("newEmail").value.trim();
+            let emailToUse = emailVal ? emailVal : (uname.includes("@") ? uname : uname + "@transport-analitika.local");
             try {
-                let emailToUse = emailVal ? emailVal : (uname.includes("@") ? uname : uname + "@transport-analitika.local");
                 if (!firebase.apps.some(a => a.name === "SecondaryApp")) {
                     firebase.initializeApp(firebase.app().options, "SecondaryApp");
                 }
