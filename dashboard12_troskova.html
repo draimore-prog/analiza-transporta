@@ -323,7 +323,7 @@
                     <h3 class="text-sm font-extrabold text-slate-800 mb-3 flex items-center gap-2">
                         <span>➕ Kreiranje Novog Korisnika</span>
                     </h3>
-                    <form onsubmit="handleCreateUser(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+                    <form onsubmit="handleCreateUser(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
                         <div>
                             <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Korisničko ime</label>
                             <input type="text" id="newUsername" required placeholder="npr. marka" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-blue-500">
@@ -2516,8 +2516,9 @@
                 return;
             }
 
+            const emailVal = document.getElementById("newEmail").value.trim();
             try {
-                let emailToUse = uname.includes("@") ? uname : uname + "@transport-analitika.local";
+                let emailToUse = emailVal ? emailVal : (uname.includes("@") ? uname : uname + "@transport-analitika.local");
                 if (!firebase.apps.some(a => a.name === "SecondaryApp")) {
                     firebase.initializeApp(firebase.app().options, "SecondaryApp");
                 }
