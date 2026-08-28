@@ -7012,12 +7012,12 @@
 
             if (typeof globalData !== 'undefined') {
                 globalData.forEach(item => {
-                    let d = item.Datum || item.datum || "";
-                    if (d.includes("2026")) {
-                        let type = (item['Tip vozila'] || '').trim();
-                        let reg = item['Registarska oznaka'] || item['Inventurni broj'] || item['Vozilo'] || item.reg || 'nepoznato';
-                        let cost = parseFloat(item['Iznos bez PDV'] || item['Iznos bez PDV-a'] || item.cost || 0) || 0;
-                        let segment = (item['Segment'] || item.segment || '').trim();
+                    let y = item.year;
+                    if (y === 2026) {
+                        let type = (item.tipMehan || item['Tip vozila'] || '').trim();
+                        let reg = item.reg || item['Registarska oznaka'] || item['Inventurni broj'] || item['Vozilo'] || 'nepoznato';
+                        let cost = parseFloat(item.cost || item['Iznos bez PDV'] || item['Iznos bez PDV-a'] || 0) || 0;
+                        let segment = (item.segment || item['Segment'] || '').trim();
 
                         // Mappiranja
                         if (type === "Putnicko") type = "Putničko";
