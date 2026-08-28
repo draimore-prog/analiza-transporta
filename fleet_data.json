@@ -44,12 +44,13 @@
         "Teretno": 167
       },
       "2026": {
-        "Total": 964,
-        "Putničko": 124,
+        "Total": 938,
+        "Putničko": 119,
         "Radna mašina": 8,
         "Servis motornih vozila": 0,
-        "Skladišna mehanizacija": 608,
-        "Teretno": 173
+        "Skladišna mehanizacija": 594,
+        "Teretno": 166,
+        "Priključna vozila": 51
       }
     }
   },
