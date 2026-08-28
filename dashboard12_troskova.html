@@ -1821,7 +1821,7 @@
 
     <!-- Modal za Karton Vozila -->
     <div id="vehicleModal" class="fixed inset-0 bg-slate-900/60 hidden flex justify-center items-center z-50 backdrop-blur-sm transition-opacity p-2 sm:p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[96vh] flex flex-col overflow-hidden border border-slate-100 print-full-width">
+        <div id="vehicleModalInner" class="bg-white rounded-2xl shadow-2xl w-full max-w-[98vw] max-h-[96vh] flex flex-col overflow-hidden border border-slate-100 print-full-width" style="resize: both; overflow: auto; min-width: 50vw; min-height: 50vh;">
             <div class="flex justify-between items-center p-5 bg-gradient-to-r from-blue-900 to-indigo-900 text-white modal-header-print">
                 <div>
                     <div class="flex items-center gap-3">
@@ -1831,6 +1831,11 @@
                     <p class="text-xs text-blue-200 mt-1 font-medium" id="modalSubtitle">Historija servisa i analitika troškova</p>
                 </div>
                 <div class="flex items-center gap-2 no-print">
+                    <div class="flex items-center gap-1 mr-2 bg-white/10 rounded-lg p-1 border border-white/20">
+                        <button onclick="zoomVehicleModal('out')" class="text-white hover:bg-white/20 px-2 py-1 rounded transition-colors font-bold" title="Umanji">-</button>
+                        <button onclick="zoomVehicleModal('reset')" class="text-white hover:bg-white/20 px-2 py-1 rounded transition-colors text-xs font-bold" title="Resetuj zoom">100%</button>
+                        <button onclick="zoomVehicleModal('in')" class="text-white hover:bg-white/20 px-2 py-1 rounded transition-colors font-bold" title="Uve�aj">+</button>
+                    </div>
                     <button onclick="exportVehicleCardToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5 border border-emerald-500 shadow-sm" title="Izvezi karton ovog vozila u Excel">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         <span>Export Excel</span>
@@ -1843,7 +1848,7 @@
                 </div>
             </div>
             
-            <div class="p-5 overflow-y-auto flex-grow flex flex-col gap-5 bg-slate-50">
+            <div id="vehicleModalContent" class="p-5 overflow-y-auto flex-grow flex flex-col gap-5 bg-slate-50" style="transform-origin: top center;">
                 <!-- Head sekcija sa slikom vozila iz Cloud Storage-a i tehničkim podacima -->
                 <div id="modalVehicleImageHeader" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col sm:flex-row items-center gap-4 no-print">
                     <div class="relative group w-full sm:w-44 h-32 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 flex items-center justify-center flex-shrink-0">
@@ -4883,6 +4888,22 @@
             let inputVal = document.getElementById('serviserSearchInput').value.trim();
             if(!inputVal) { alert("Molimo unesite registraciju ili garažni broj!"); return; }
             openVehicleModal(inputVal);
+        }
+
+        let vehicleModalZoomLevel = 1;
+        function zoomVehicleModal(direction) {
+            if (direction === 'in') vehicleModalZoomLevel += 0.1;
+            else if (direction === 'out') vehicleModalZoomLevel -= 0.1;
+            else vehicleModalZoomLevel = 1;
+            
+            if (vehicleModalZoomLevel < 0.5) vehicleModalZoomLevel = 0.5;
+            if (vehicleModalZoomLevel > 2.5) vehicleModalZoomLevel = 2.5;
+            
+            let contentDiv = document.getElementById('vehicleModalContent');
+            if (contentDiv) {
+                // Use zoom for Chrome/Safari support, very clean scaling
+                contentDiv.style.zoom = vehicleModalZoomLevel;
+            }
         }
 
         function openVehicleModal(searchQuery = null) {
