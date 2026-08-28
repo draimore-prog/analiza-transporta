@@ -2898,6 +2898,11 @@
                         const data = await res.json();
                         if (data && data.records && data.records.length > 0) {
                             globalData = data.records.map((item, idx) => {
+                                                                let regNorm = (item.reg || '').trim();
+                                if (/^(\d+)([A-Za-z]+)$/.test(regNorm)) {
+                                    regNorm = regNorm.replace(/^(\d+)([A-Za-z]+)$/, '$1 $2');
+                                }
+                                item.reg = regNorm;
                                 let dob = (item.dobavljacOrig || item.dobavljac || '').toLowerCase();
                                 let seg = item.segment;
                                 if (dob.includes('pgl')) seg = 'Guma';
@@ -2923,7 +2928,22 @@
             }
         }
 
-        function _finalizeDatasetLoad() {
+                function _finalizeDatasetLoad() {
+            // Globalna normalizacija registarskih/garažnih brojeva (npr. 101I -> 101 I)
+            if (typeof globalData !== 'undefined' && globalData && globalData.length > 0) {
+                globalData.forEach(item => {
+                    let regNorm = (item.reg || '').trim();
+                    if (/^(\d+)([A-Za-z]+)$/.test(regNorm)) {
+                        item.reg = regNorm.replace(/^(\d+)([A-Za-z]+)$/, '$1 $2');
+                    }
+                    if (item.garazniBroj) {
+                        let gbNorm = item.garazniBroj.trim();
+                        if (/^(\d+)([A-Za-z]+)$/.test(gbNorm)) {
+                            item.garazniBroj = gbNorm.replace(/^(\d+)([A-Za-z]+)$/, '$1 $2');
+                        }
+                    }
+                });
+            }
             const yearSelect = document.getElementById('filterYear');
             const tab2YearSelect = document.getElementById('tab2YearSelect');
 
