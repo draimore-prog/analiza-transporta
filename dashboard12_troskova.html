@@ -644,6 +644,14 @@
              </h1>
         </div>
         
+        <!-- Sat i Kalendar Widget -->
+        <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50">
+            <div class="flex flex-col items-center justify-center text-center">
+                <div id="sideClock" class="text-2xl font-black text-slate-700 dark:text-slate-200 tracking-tighter" style="font-variant-numeric: tabular-nums;">--:--:--</div>
+                <div id="sideDate" class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5 uppercase tracking-wider">--.--.----</div>
+            </div>
+        </div>
+        
         <!-- Navigation Links (instead of tabs) -->
         <nav id="tabs-navigation" class="flex-1 overflow-y-auto p-4 space-y-1 hidden">
              <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 mt-2">Nadzorna ploƒça</div>
@@ -746,7 +754,7 @@
                 </div>
             </div>
 
-            <div id="appDashboardContent" class="max-w-7xl mx-auto w-full">
+            <div id="appDashboardContent" class="w-full px-2 lg:px-6 mx-auto">
 
         <!-- Loader Indikator -->
         <div id="loader" class="hidden my-8 p-6 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-center gap-3">
@@ -3025,6 +3033,22 @@
                 console.warn("Notice syncing Firestore master fleet:", e);
             }
         }
+
+        // Clock Widget Logic
+        function updateSideClock() {
+            const clockEl = document.getElementById('sideClock');
+            const dateEl = document.getElementById('sideDate');
+            if(!clockEl || !dateEl) return;
+            
+            const now = new Date();
+            clockEl.innerText = now.toLocaleTimeString('bs-BA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            const days = ['Nedjelja', 'Ponedjeljak', 'Utorak', 'Srijeda', '»etvrtak', 'Petak', 'Subota'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'];
+            dateEl.innerText = `${days[now.getDay()]}, ${now.getDate().toString().padStart(2, '0')}. ${months[now.getMonth()]} ${now.getFullYear()}.`;
+        }
+        setInterval(updateSideClock, 1000);
+        updateSideClock(); // Initial call
 
         // Initialize: only theme + auth on load. Data loads after login via updateAuthUI.
         window.addEventListener('DOMContentLoaded', () => {
