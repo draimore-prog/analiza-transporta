@@ -26,6 +26,7 @@ export function useAuth() {
       if (stored) {
         setActiveUser(JSON.parse(stored));
       } else {
+        // Početno postaviti superadmina ako nema sačuvanog stanja
         setActiveUser(DEFAULT_SUPERADMIN);
       }
     } catch {
@@ -90,11 +91,49 @@ export function useAuth() {
     };
   }, []);
 
-  const loginAs = useCallback((user) => {
+  const login = useCallback(
+    (identifier, password, rememberMe = true) => {
+      const idClean = (identifier || "").trim().toLowerCase();
+      const passClean = (password || "").trim();
+
+      // Provjera superadmina i ostalih korisnika
+      let foundUser = users.find(
+        (u) =>
+          (u.username && u.username.toLowerCase() === idClean) ||
+          (u.email && u.email.toLowerCase() === idClean)
+      );
+
+      if (!foundUser && DEFAULT_SUPERADMIN.username.toLowerCase() === idClean) {
+        foundUser = DEFAULT_SUPERADMIN;
+      }
+
+      if (foundUser && foundUser.password === passClean) {
+        setActiveUser(foundUser);
+        try {
+          sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(foundUser));
+          if (rememberMe) {
+            localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(foundUser));
+          } else {
+            localStorage.removeItem(SESSION_ACTIVE_USER_KEY);
+          }
+        } catch (e) {
+          console.warn("Storage error:", e);
+        }
+        return { success: true, user: foundUser };
+      }
+
+      return { success: false, error: "Neispravno korisničko ime ili lozinka!" };
+    },
+    [users]
+  );
+
+  const loginAs = useCallback((user, rememberMe = true) => {
     setActiveUser(user);
     try {
       sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(user));
-      localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(user));
+      if (rememberMe) {
+        localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(user));
+      }
     } catch (e) {
       console.warn("Storage error:", e);
     }
@@ -107,7 +146,7 @@ export function useAuth() {
     } catch (e) {
       console.warn("Storage error:", e);
     }
-    setActiveUser(DEFAULT_SUPERADMIN);
+    setActiveUser(null);
   }, []);
 
   const saveUserToFirestore = async (user) => {
@@ -123,9 +162,12 @@ export function useAuth() {
     await setDoc(doc(db, "app_roles", role.roleId), role, { merge: true });
   };
 
-  const currentRole = (activeUser && roles[activeUser.role]) 
-    ? roles[activeUser.role] 
-    : (activeUser?.role === "warehouse_specialist" ? DEFAULT_APP_ROLES.warehouse_specialist : DEFAULT_APP_ROLES.superadmin);
+  const currentRole =
+    activeUser && roles[activeUser.role]
+      ? roles[activeUser.role]
+      : activeUser?.role === "warehouse_specialist"
+      ? DEFAULT_APP_ROLES.warehouse_specialist
+      : DEFAULT_APP_ROLES.superadmin;
 
   return {
     activeUser,
@@ -133,6 +175,7 @@ export function useAuth() {
     roles,
     currentRole,
     isAuthReady,
+    login,
     loginAs,
     logout,
     saveUserToFirestore,

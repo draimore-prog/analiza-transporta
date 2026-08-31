@@ -21,6 +21,7 @@ import { WarehouseSegments } from "@/components/warehouse/WarehouseSegments.jsx"
 import { WarehouseSuppliers } from "@/components/warehouse/WarehouseSuppliers.jsx";
 
 // Modali
+import { LoginModal } from "@/components/modals/LoginModal.jsx";
 import { VehicleCardModal } from "@/components/modals/VehicleCardModal.jsx";
 import { NewCostModal } from "@/components/modals/NewCostModal.jsx";
 import { EditVehicleModal } from "@/components/modals/EditVehicleModal.jsx";
@@ -38,6 +39,7 @@ function DashboardContent() {
     users,
     roles,
     currentRole,
+    login,
     logout,
     saveUserToFirestore,
     deleteUserFromFirestore,
@@ -184,8 +186,14 @@ function DashboardContent() {
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      {/* Sidebar sa zasebnim linkovima za navigaciju */}
+    <div className="flex h-screen w-full overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 relative">
+      {/* Login Screen ako korisnik nije prijavljen */}
+      <LoginModal
+        isOpen={!activeUser}
+        onLogin={login}
+      />
+
+      {/* Sidebar sa navigacijom i odjavom */}
       <Sidebar
         portalMode={portalMode}
         setPortalMode={setPortalMode}
