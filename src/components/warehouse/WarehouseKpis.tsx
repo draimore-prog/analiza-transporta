@@ -1,0 +1,197 @@
+"use client";
+
+import React, { useMemo } from "react";
+import { Vehicle } from "@/types/fleet";
+import { CostItem } from "@/types/cost";
+import { formatKM } from "@/lib/calculations";
+import { Boxes, DollarSign, Calendar, Wrench } from "lucide-react";
+
+interface WarehouseKpisProps {
+  warehouseMasterFleet: Vehicle[];
+  warehouseCostData: CostItem[];
+  onSelectYear: (year: number) => void;
+  onOpenFleetTab: () => void;
+  onOpenVehicleModal: (reg: string) => void;
+}
+
+export function WarehouseKpis({
+  warehouseMasterFleet,
+  warehouseCostData,
+  onSelectYear,
+  onOpenFleetTab,
+  onOpenVehicleModal
+}: WarehouseKpisProps) {
+  // Active warehouse count
+  const activeCount = useMemo(() => {
+    return warehouseMasterFleet.filter((v) => {
+      const st = (v.status || "Aktivno").toLowerCase();
+      return !st.includes("prodat") && !st.includes("rashod") && !st.includes("neaktivno");
+    }).length;
+  }, [warehouseMasterFleet]);
+
+  // Total cost
+  const totalCost = useMemo(() => {
+    return warehouseCostData.reduce((acc, c) => acc + (c.cost || 0), 0);
+  }, [warehouseCostData]);
+
+  // 2026 cost
+  const cost2026 = useMemo(() => {
+    return warehouseCostData
+      .filter((c) => c.year === 2026)
+      .reduce((acc, c) => acc + (c.cost || 0), 0);
+  }, [warehouseCostData]);
+
+  // Total repairs
+  const totalRepairs = warehouseCostData.length;
+
+  // Top 5 Most Repaired Forklifts
+  const topVehicles = useMemo(() => {
+    const costMap = new Map<string, number>();
+    warehouseCostData.forEach((c) => {
+      const reg = (c.reg || "").trim().toUpperCase();
+      if (reg && reg !== "-") {
+        costMap.set(reg, (costMap.get(reg) || 0) + (c.cost || 0));
+      }
+    });
+
+    const sorted = Array.from(costMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    return sorted.map(([reg, cost]) => {
+      const vInfo = warehouseMasterFleet.find((v) => v.reg.toUpperCase() === reg);
+      return {
+        reg,
+        cost,
+        marka: vInfo?.markaVoz || "Viljuškar",
+        model: vInfo?.modelVoz || "",
+        gb: vInfo?.garazniBroj || "-"
+      };
+    });
+  }, [warehouseCostData, warehouseMasterFleet]);
+
+  return (
+    <div className="space-y-6">
+      {/* Top 4 KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Active Forklifts */}
+        <div
+          onClick={onOpenFleetTab}
+          className="bg-white dark:bg-slate-800 p-5 rounded-2xl border-l-4 border-amber-500 border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:shadow-md hover:border-amber-600 transition-all group"
+        >
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Aktivna Mehanizacija
+            </span>
+            <span className="p-2 bg-amber-50 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-xl group-hover:scale-110 transition-transform">
+              <Boxes className="w-5 h-5" />
+            </span>
+          </div>
+          <div className="text-3xl font-black text-slate-900 dark:text-white">
+            {activeCount.toLocaleString("bs-BA")}
+          </div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">
+            Viljuškari, paletari i radne mašine
+          </p>
+        </div>
+
+        {/* Card 2: Total Cost */}
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border-l-4 border-emerald-500 border border-slate-200 dark:border-slate-700 shadow-sm">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Ukupan Utrošak Servisa
+            </span>
+            <span className="p-2 bg-emerald-50 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-xl">
+              <DollarSign className="w-5 h-5" />
+            </span>
+          </div>
+          <div className="text-3xl font-black text-slate-900 dark:text-white">
+            {formatKM(totalCost)}
+          </div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">
+            Konsolidovano (2021 - 2026)
+          </p>
+        </div>
+
+        {/* Card 3: 2026 Cost */}
+        <div
+          onClick={() => onSelectYear(2026)}
+          className="bg-white dark:bg-slate-800 p-5 rounded-2xl border-l-4 border-indigo-500 border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:shadow-md hover:border-indigo-600 transition-all group"
+        >
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Trošak u 2026. Godini
+            </span>
+            <span className="p-2 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-xl group-hover:scale-110 transition-transform">
+              <Calendar className="w-5 h-5" />
+            </span>
+          </div>
+          <div className="text-3xl font-black text-indigo-600 dark:text-indigo-400">
+            {formatKM(cost2026)}
+          </div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">
+            Skladišna mehanizacija 2026
+          </p>
+        </div>
+
+        {/* Card 4: Total Repairs */}
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border-l-4 border-blue-500 border border-slate-200 dark:border-slate-700 shadow-sm">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Evidentiranih Opravki
+            </span>
+            <span className="p-2 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl">
+              <Wrench className="w-5 h-5" />
+            </span>
+          </div>
+          <div className="text-3xl font-black text-slate-900 dark:text-white">
+            {totalRepairs.toLocaleString("bs-BA")}
+          </div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">
+            Zamjene baterija, točkova, servisi
+          </p>
+        </div>
+      </div>
+
+      {/* Top 5 Most Repaired Forklifts Box */}
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+        <h3 className="text-base font-extrabold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+          <span>🚜 Top 5 Mašina sa Najvećim Troškovima Održavanja</span>
+        </h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+          Klik na mašinu otvara karton i kompletnu historiju popravki
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {topVehicles.map((v, idx) => (
+            <div
+              key={v.reg}
+              onClick={() => onOpenVehicleModal(v.reg)}
+              className="p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center cursor-pointer hover:border-amber-400 hover:shadow-sm transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <span className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 font-black text-xs flex items-center justify-center">
+                  {idx + 1}
+                </span>
+                <div>
+                  <p className="font-black text-xs text-slate-900 dark:text-white group-hover:text-amber-600 transition-colors">
+                    {v.reg}
+                  </p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                    {v.marka} {v.model} (GB: {v.gb})
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="font-extrabold text-xs text-amber-700 dark:text-amber-400">
+                  {formatKM(v.cost)}
+                </span>
+                <p className="text-[9px] text-slate-400 group-hover:text-amber-500">Karton →</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -3,12 +3,13 @@
 *.tmp
 .firebase/
 node_modules/
+.next/
+out/
 
 # OS generated files
 .DS_Store
 Thumbs.db
 .env
 .env.*
-
 
 *.xlsx
