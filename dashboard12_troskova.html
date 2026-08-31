@@ -686,6 +686,10 @@
             </div>
             
             <div class="flex items-center gap-3">
+                <button id="portalSwitcherBtn" onclick="togglePortalMode()" class="hidden bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold px-3 py-2 rounded-lg transition-all text-xs flex items-center gap-1.5 shadow-sm border border-amber-600 cursor-pointer">
+                    <span id="portalSwitcherIcon">🏗️</span>
+                    <span id="portalSwitcherLabel">Skladišna Mehanizacija</span>
+                </button>
                 <button id="newCostBtn" onclick="openNewCostModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3 py-2 rounded-lg transition-colors text-xs flex items-center gap-2 shadow-sm">
                     <span>➕ Unos Troška</span>
                 </button>
@@ -728,6 +732,174 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ================= WAREHOUSE MACHINERY PORTAL (SKLADIŠNA MEHANIZACIJA) ================= -->
+            <div id="warehouseDashboard" class="hidden w-full space-y-6">
+                <!-- Skladišni Header Banner -->
+                <div class="bg-gradient-to-r from-amber-600 via-amber-700 to-slate-900 text-white p-6 rounded-2xl shadow-lg border border-amber-500/40 relative overflow-hidden">
+                    <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-3xl">🏗️</span>
+                                <h1 class="text-2xl md:text-3xl font-black tracking-tight">Skladišna Mehanizacija</h1>
+                                <span class="bg-amber-300/20 text-amber-200 border border-amber-300/40 text-xs px-3 py-1 rounded-full font-bold">Portal za Viljuškare & Paletare</span>
+                            </div>
+                            <p class="text-xs text-amber-100/90 mt-1 max-w-2xl">Upravljanje i analiza održavanja 594 aktivna viljuškara i skladišnih mašina (Jungheinrich, Linde, Still, Toyota BT, Pobeda...)</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button id="warehouseBackToTransportBtn" onclick="setPortalMode('transport')" class="hidden bg-white/10 hover:bg-white/20 text-white font-bold px-3 py-2 rounded-xl text-xs transition-all border border-white/20 flex items-center gap-1.5">
+                                <span>🚛</span> Glavni Transport
+                            </button>
+                            <button onclick="openNewCostModal('Skladišna mehanizacija')" class="bg-slate-900 hover:bg-slate-800 text-amber-300 font-extrabold px-4 py-2 rounded-xl text-xs transition-all shadow border border-amber-400 flex items-center gap-2">
+                                <span>➕</span> Unos Servisa Viljuškara
+                            </button>
+                            <button onclick="exportWarehouseFleetToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-xl text-xs transition-all shadow flex items-center gap-1.5">
+                                <span>📥</span> Izvoz Šifrarnika (Excel)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skladišni KPI Top Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="card bg-gradient-to-br from-white to-amber-50/40 dark:from-slate-800 dark:to-slate-800/80 border-l-4 border-amber-500 shadow-sm p-4 rounded-xl">
+                        <span class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Aktivna Skladišna Mehanizacija</span>
+                        <div class="flex items-baseline justify-between mt-1">
+                            <h3 class="text-2xl font-black text-slate-900 dark:text-white" id="whActiveCount">594</h3>
+                            <span class="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">100% Skladište</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-1">Viljuškari, paletari i stakeri u radu</p>
+                    </div>
+                    <div class="card bg-gradient-to-br from-white to-blue-50/40 dark:from-slate-800 dark:to-slate-800/80 border-l-4 border-blue-600 shadow-sm p-4 rounded-xl">
+                        <span class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Ukupan Trošak Održavanja</span>
+                        <div class="flex items-baseline justify-between mt-1">
+                            <h3 class="text-2xl font-black text-slate-900 dark:text-white" id="whTotalCost">Učitavanje...</h3>
+                            <span class="text-xs font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">2021-2026</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-1">Dijelovi, baterije, točkovi i servis</p>
+                    </div>
+                    <div class="card bg-gradient-to-br from-white to-emerald-50/40 dark:from-slate-800 dark:to-slate-800/80 border-l-4 border-emerald-500 shadow-sm p-4 rounded-xl">
+                        <span class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Tekuća 2026. Godina</span>
+                        <div class="flex items-baseline justify-between mt-1">
+                            <h3 class="text-2xl font-black text-slate-900 dark:text-white" id="wh2026Cost">137.748 KM</h3>
+                            <span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">YTD 2026</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-1">Plan i utrošak u tekućoj godini</p>
+                    </div>
+                    <div class="card bg-gradient-to-br from-white to-purple-50/40 dark:from-slate-800 dark:to-slate-800/80 border-l-4 border-purple-500 shadow-sm p-4 rounded-xl">
+                        <span class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Vodeće Marke u Floti</span>
+                        <div class="flex items-baseline justify-between mt-1">
+                            <h3 class="text-lg font-black text-slate-900 dark:text-white">Linde & Jungheinrich</h3>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-1">Still, Toyota BT, Pobeda, Komatsu</p>
+                    </div>
+                </div>
+
+                <!-- Warehouse Portal Sub-Tabs Navigation -->
+                <div class="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+                    <button onclick="switchWhTab(1)" id="whTabBtn1" class="px-4 py-2 rounded-xl text-xs font-extrabold transition-all bg-amber-600 text-white shadow-sm flex items-center gap-2 cursor-pointer">
+                        <span>📊</span> Analitika & Troškovi
+                    </button>
+                    <button onclick="switchWhTab(2)" id="whTabBtn2" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 flex items-center gap-2 border border-slate-200 dark:border-slate-700 cursor-pointer">
+                        <span>🚜</span> Šifrarnik & Kartoteka Viljuškara (<span id="whBadgeCount">594</span>)
+                    </button>
+                    <button onclick="switchWhTab(3)" id="whTabBtn3" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 flex items-center gap-2 border border-slate-200 dark:border-slate-700 cursor-pointer">
+                        <span>⚡</span> Segmenti & Dijelovi
+                    </button>
+                </div>
+
+                <!-- TAB W1: ANALITIKA & TROŠKOVI SKLADIŠNE MEHANIZACIJE -->
+                <div id="whTabContent1" class="space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Godišnji pregled troškova skladišta -->
+                        <div class="card lg:col-span-2 bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <h3 class="text-base font-extrabold text-slate-800 dark:text-white mb-1">📈 Kretanje Troškova Skladišne Mehanizacije (2021–2026)</h3>
+                            <p class="text-xs text-slate-500 mb-4">Godišnji pregled ulaganja u baterije, hidrauliku, točkove i servise viljuškara</p>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full text-xs text-left">
+                                    <thead class="bg-slate-100 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
+                                        <tr>
+                                            <th class="p-2.5">Godina</th>
+                                            <th class="p-2.5 text-center">Broj mašina</th>
+                                            <th class="p-2.5 text-right">Ukupan Trošak (KM)</th>
+                                            <th class="p-2.5 text-right">Prosječno / mašini</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="whYearsTableBody" class="divide-y divide-slate-100 dark:divide-slate-700/50"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Top 5 Najskupljih Viljuškara po Održavanju -->
+                        <div class="card bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <h3 class="text-base font-extrabold text-slate-800 dark:text-white mb-1">🏆 TOP 5 Viljuškara po Trošku</h3>
+                            <p class="text-xs text-slate-500 mb-4">Mašine sa najvećim utroškom sredstava za održavanje</p>
+                            <div id="whTopVehiclesList" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB W2: ŠIFRARNIK & KARTOTEKA VILJUŠKARA -->
+                <div id="whTabContent2" class="hidden space-y-4">
+                    <!-- Filteri za viljuškare -->
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-wrap gap-3 items-center justify-between">
+                        <div class="flex flex-wrap gap-2 items-center flex-1">
+                            <input type="text" id="whSearchInput" oninput="filterWhFleet()" placeholder="🔍 Pretraga po broju (npr. 304, 121 I), garažnom (40xxx), marki ili modelu..." class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none w-full sm:w-80">
+                            <select id="whBrandFilter" onchange="filterWhFleet()" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none">
+                                <option value="all">Sve marke viljuškara</option>
+                            </select>
+                            <select id="whStatusFilter" onchange="filterWhFleet()" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none">
+                                <option value="Aktivno">Samo Aktivne (594)</option>
+                                <option value="all">Svi statusi (Aktivne + Prodate + Rashod)</option>
+                                <option value="Prodato">Samo Prodate</option>
+                                <option value="Rashodovano">Samo Rashodovane</option>
+                            </select>
+                        </div>
+                        <div class="text-xs font-bold text-slate-500">
+                            Prikazano: <span id="whFilteredCountBadge" class="text-amber-600 font-extrabold">0</span> mašina
+                        </div>
+                    </div>
+
+                    <!-- Tabela skladišnih mašina -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-xs text-left">
+                                <thead class="bg-slate-100 dark:bg-slate-900/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="p-3 text-center">R.b.</th>
+                                        <th class="p-3">Garažni Broj</th>
+                                        <th class="p-3">Interna Oznaka / Reg</th>
+                                        <th class="p-3">Marka</th>
+                                        <th class="p-3">Model</th>
+                                        <th class="p-3">Godište</th>
+                                        <th class="p-3">Broj Šasije</th>
+                                        <th class="p-3 text-center">Status</th>
+                                        <th class="p-3 text-center">Karton</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="whFleetTableBody" class="divide-y divide-slate-100 dark:divide-slate-700/50"></tbody>
+                            </table>
+                        </div>
+                        <div class="p-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center text-xs">
+                            <span id="whPaginationInfo" class="text-slate-500 font-medium">Učitavanje...</span>
+                            <div class="flex gap-2">
+                                <button id="whPrevPageBtn" onclick="changeWhPage(-1)" class="px-3 py-1 bg-white dark:bg-slate-800 border rounded font-bold hover:bg-slate-100 disabled:opacity-40">Prethodna</button>
+                                <button id="whNextPageBtn" onclick="changeWhPage(1)" class="px-3 py-1 bg-white dark:bg-slate-800 border rounded font-bold hover:bg-slate-100 disabled:opacity-40">Sljedeća</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB W3: SEGMENTI & DIJELOVI ZA VILJUŠKARE -->
+                <div id="whTabContent3" class="hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <h3 class="text-base font-extrabold text-slate-800 dark:text-white mb-1">⚙️ Raspodjela Troškova po Segmentima Skladišta</h3>
+                        <p class="text-xs text-slate-500 mb-4">Utrošak po vrstama intervencija za viljuškare (Baterije, Točkovi, Hidraulika, Elektronika, Mehanika, Ulja)</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="whSegmentsGrid"></div>
+                    </div>
+                </div>
+            </div>
+
             <div id="appDashboardContent" class="w-full px-2 lg:px-6 mx-auto">
         <!-- Loader Indikator -->
         <div id="loader" class="hidden my-8 p-6 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-center gap-3">
@@ -2130,6 +2302,7 @@
         let activeUser = null;
         const defaultSystemUsers = [
             { username: 'emir.durakovic', fullname: 'Emir Duraković', role: 'superadmin', createdAt: '2026-07-30' },
+            { username: 'skladisna.mehanizacija', email: 'skladisna.mehanizacija@bingotuzla.ba', fullname: 'Skladišna Mehanizacija', role: 'warehouse_specialist', createdAt: '2026-08-31' },
             { username: 'anisa.bosnjic', fullname: 'Anisa Bošnjak', role: 'editor', createdAt: '2026-07-30' },
             { username: 'selma.durakovic', fullname: 'Selma Duraković', role: 'editor', createdAt: '2026-07-30' },
             { username: 'silvio.suljic', fullname: 'Silvio Suljić', role: 'editor', createdAt: '2026-08-02' },
@@ -2327,20 +2500,38 @@
                     roleLabel = '👑 Super Administrator';
                 } else if (activeUser.role === 'editor' || activeUser.role === 'admin') {
                     roleLabel = '✍️ Admin (Unos faktura)';
+                } else if (activeUser.role === 'warehouse_specialist' || (activeUser.email && activeUser.email.toLowerCase() === 'skladisna.mehanizacija@bingotuzla.ba')) {
+                    roleLabel = '🏗️ Specijalist skladišne mehanizacije';
                 } else if (activeUser.role === 'serviser') {
                     roleLabel = '🔧 Serviser (Karton vozila)';
                 }
                 document.getElementById('headerUserRole').innerText = roleLabel;
-                // UI Layout Toggle for Serviser
+
+                // UI Layout Toggle for Serviser, Warehouse Specialist, and Main Dashboard
                 let sDash = document.getElementById('serviserDashboard');
+                let whDash = document.getElementById('warehouseDashboard');
                 let appDash = document.getElementById('appDashboardContent');
                 let aside = document.querySelector('aside');
                 let header = document.querySelector('header');
+                let portalSwitcherBtn = document.getElementById('portalSwitcherBtn');
                 
-                if (activeUser.role === 'serviser') {
+                let isWarehouseUser = activeUser.role === 'warehouse_specialist' || (activeUser.email && activeUser.email.toLowerCase() === 'skladisna.mehanizacija@bingotuzla.ba');
+
+                if (isWarehouseUser) {
+                    // Warehouse Specialist view
+                    if (aside) aside.classList.add('hidden');
+                    if (header) header.classList.remove('hidden');
+                    if (appDash) appDash.classList.add('hidden');
+                    if (sDash) { sDash.classList.remove('flex'); sDash.classList.add('hidden'); }
+                    if (whDash) whDash.classList.remove('hidden');
+                    if (portalSwitcherBtn) portalSwitcherBtn.classList.add('hidden');
+                    setPortalMode('warehouse');
+                } else if (activeUser.role === 'serviser') {
+                    // Serviser view
                     if (aside) aside.classList.add('hidden');
                     if (header) header.classList.add('hidden');
                     if (appDash) appDash.classList.add('hidden');
+                    if (whDash) whDash.classList.add('hidden');
                     if (sDash) { 
                         sDash.classList.remove('hidden');
                         sDash.classList.add('flex');
@@ -2349,14 +2540,22 @@
                         document.getElementById('serviserUsernameDisp').innerText = activeUser.fullname || activeUser.username;
                     }
                 } else {
+                    // Standard Dashboard / SuperAdmin
                     if (aside) aside.classList.remove('hidden');
                     if (header) header.classList.remove('hidden');
-                    if (appDash) appDash.classList.remove('hidden');
                     if (sDash) { 
                         sDash.classList.remove('flex');
                         sDash.classList.add('hidden');
                     }
+                    // SuperAdmin can switch between transport and warehouse portal
+                    if (isEmir) {
+                        if (portalSwitcherBtn) portalSwitcherBtn.classList.remove('hidden');
+                    } else {
+                        if (portalSwitcherBtn) portalSwitcherBtn.classList.add('hidden');
+                    }
+                    setPortalMode(currentPortalMode || 'transport');
                 }
+
                 // SAMO emir.durakovic (ili superadmin) VIDI ADMIN PANEL!
                 if (isEmir) {
                     adminPanelBtn.classList.remove('hidden');
@@ -3237,6 +3436,327 @@
         setInterval(updateSideClock, 1000);
         updateSideClock(); // Initial call
         // Initialize: only theme + auth on load. Data loads after login via updateAuthUI.
+        
+        // ================= WAREHOUSE MACHINERY PORTAL CONTROLLER =================
+        let currentPortalMode = 'transport'; // 'transport' or 'warehouse'
+        let whCurrentTab = 1;
+        let whFleetPage = 1;
+        const whFleetPerPage = 25;
+        let whFilteredData = [];
+
+        function setPortalMode(mode) {
+            currentPortalMode = mode;
+            let whDash = document.getElementById('warehouseDashboard');
+            let appDash = document.getElementById('appDashboardContent');
+            let sDash = document.getElementById('serviserDashboard');
+            let aside = document.querySelector('aside');
+            let header = document.querySelector('header');
+            let switcherLabel = document.getElementById('portalSwitcherLabel');
+            let switcherIcon = document.getElementById('portalSwitcherIcon');
+            let backBtn = document.getElementById('warehouseBackToTransportBtn');
+
+            let isSuperAdmin = activeUser && (activeUser.username?.toLowerCase() === 'emir.durakovic' || activeUser.role === 'superadmin');
+
+            if (mode === 'warehouse') {
+                if (sDash) { sDash.classList.add('hidden'); sDash.classList.remove('flex'); }
+                if (appDash) appDash.classList.add('hidden');
+                if (whDash) whDash.classList.remove('hidden');
+
+                if (switcherLabel) switcherLabel.innerText = 'Glavni Transport';
+                if (switcherIcon) switcherIcon.innerText = '🚛';
+                if (backBtn) {
+                    if (isSuperAdmin) backBtn.classList.remove('hidden');
+                    else backBtn.classList.add('hidden');
+                }
+
+                renderWarehousePortal();
+            } else {
+                if (whDash) whDash.classList.add('hidden');
+                if (appDash) appDash.classList.remove('hidden');
+                if (sDash) { sDash.classList.add('hidden'); sDash.classList.remove('flex'); }
+
+                if (switcherLabel) switcherLabel.innerText = 'Skladišna Mehanizacija';
+                if (switcherIcon) switcherIcon.innerText = '🏗️';
+            }
+        }
+
+        function togglePortalMode() {
+            if (currentPortalMode === 'warehouse') {
+                setPortalMode('transport');
+            } else {
+                setPortalMode('warehouse');
+            }
+        }
+
+        function switchWhTab(tabIdx) {
+            whCurrentTab = tabIdx;
+            for (let i = 1; i <= 3; i++) {
+                let btn = document.getElementById('whTabBtn' + i);
+                let content = document.getElementById('whTabContent' + i);
+                if (btn && content) {
+                    if (i === tabIdx) {
+                        btn.className = 'px-4 py-2 rounded-xl text-xs font-extrabold transition-all bg-amber-600 text-white shadow-sm flex items-center gap-2 cursor-pointer';
+                        content.classList.remove('hidden');
+                    } else {
+                        btn.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 flex items-center gap-2 border border-slate-200 dark:border-slate-700 cursor-pointer';
+                        content.classList.add('hidden');
+                    }
+                }
+            }
+            if (tabIdx === 2) {
+                renderWarehouseFleetTable();
+            }
+        }
+
+        function getWarehouseData() {
+            if (!globalData || !Array.isArray(globalData)) return [];
+            return globalData.filter(d => {
+                let t = (d.tipMehan || '').toLowerCase();
+                return t.includes('skladi') || t.includes('viljuš') || t.includes('viljusk');
+            });
+        }
+
+        function getWarehouseMasterFleet() {
+            if (!masterFleetData || !Array.isArray(masterFleetData)) return [];
+            return masterFleetData.filter(v => {
+                let t = (v.tipMehan || '').toLowerCase();
+                return t.includes('skladi') || t.includes('viljuš') || t.includes('viljusk');
+            });
+        }
+
+        function renderWarehousePortal() {
+            renderWarehouseKpis();
+            populateWarehouseBrandsFilter();
+            filterWhFleet();
+            renderWarehouseSegments();
+        }
+
+        function renderWarehouseKpis() {
+            let whCosts = getWarehouseData();
+            let whMaster = getWarehouseMasterFleet();
+
+            let activeVehicles = whMaster.filter(v => (v.status || 'Aktivno') === 'Aktivno');
+            let activeCountElem = document.getElementById('whActiveCount');
+            let badgeCountElem = document.getElementById('whBadgeCount');
+            if (activeCountElem) activeCountElem.innerText = activeVehicles.length.toLocaleString('bs-BA');
+            if (badgeCountElem) badgeCountElem.innerText = activeVehicles.length.toLocaleString('bs-BA');
+
+            let totalCost = whCosts.reduce((acc, c) => acc + (c.cost || 0), 0);
+            let cost2026 = whCosts.filter(c => c.year === 2026).reduce((acc, c) => acc + (c.cost || 0), 0);
+
+            let totalCostElem = document.getElementById('whTotalCost');
+            if (totalCostElem) totalCostElem.innerText = `${totalCost.toLocaleString('bs-BA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KM`;
+
+            let cost2026Elem = document.getElementById('wh2026Cost');
+            if (cost2026Elem) {
+                let displayVal = cost2026 > 0 ? cost2026 : (kpiTotalCostsByYear[2026]?.['Skladišna mehanizacija'] || 137748);
+                cost2026Elem.innerText = `${displayVal.toLocaleString('bs-BA', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} KM`;
+            }
+
+            // Populate Years Table
+            let yearsTbody = document.getElementById('whYearsTableBody');
+            if (yearsTbody) {
+                let years = [2021, 2022, 2023, 2024, 2025, 2026];
+                let rowsHTML = [];
+                years.forEach(y => {
+                    let yCosts = whCosts.filter(c => c.year === y);
+                    let yTot = yCosts.reduce((acc, c) => acc + (c.cost || 0), 0);
+                    if (yTot === 0 && kpiTotalCostsByYear[y]?.['Skladišna mehanizacija']) {
+                        yTot = kpiTotalCostsByYear[y]['Skladišna mehanizacija'];
+                    }
+                    let fleetCount = kpiTotalFleetByYear[y]?.['Skladišna mehanizacija'] || (y === 2026 ? 594 : 595);
+                    let avgPerUnit = fleetCount > 0 ? (yTot / fleetCount) : 0;
+
+                    rowsHTML.push(`
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                            <td class="p-2.5 font-bold text-slate-800 dark:text-slate-200">${y}. godina</td>
+                            <td class="p-2.5 text-center font-semibold text-slate-600 dark:text-slate-400">${fleetCount} mašina</td>
+                            <td class="p-2.5 text-right font-extrabold text-amber-700 dark:text-amber-400">${yTot.toLocaleString('bs-BA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KM</td>
+                            <td class="p-2.5 text-right font-bold text-slate-700 dark:text-slate-300">${avgPerUnit.toLocaleString('bs-BA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KM</td>
+                        </tr>
+                    `);
+                });
+                yearsTbody.innerHTML = rowsHTML.join('');
+            }
+
+            // Top 5 Vehicles by cost
+            let vehCostMap = new Map();
+            whCosts.forEach(c => {
+                let reg = (c.reg || '').trim().toUpperCase();
+                if (reg && reg !== '-') {
+                    vehCostMap.set(reg, (vehCostMap.get(reg) || 0) + (c.cost || 0));
+                }
+            });
+            let sortedVehicles = Array.from(vehCostMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            let topListElem = document.getElementById('whTopVehiclesList');
+            if (topListElem) {
+                let listHTML = [];
+                sortedVehicles.forEach(([reg, cost], idx) => {
+                    let vInfo = whMaster.find(v => (v.reg || '').trim().toUpperCase() === reg) || {};
+                    listHTML.push(`
+                        <div onclick="openVehicleModal('${reg}')" class="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center cursor-pointer hover:border-amber-400 transition-all">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-6 h-6 rounded-full bg-amber-100 text-amber-800 font-bold text-xs flex items-center justify-center">${idx + 1}</span>
+                                <div>
+                                    <p class="font-black text-xs text-slate-900 dark:text-white">${reg}</p>
+                                    <p class="text-[10px] text-slate-500">${vInfo.markaVoz || 'Viljuškar'} ${vInfo.modelVoz || ''} (GB: ${vInfo.garazniBroj || '-'})</p>
+                                </div>
+                            </div>
+                            <span class="font-extrabold text-xs text-amber-700 dark:text-amber-400">${cost.toLocaleString('bs-BA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KM</span>
+                        </div>
+                    `);
+                });
+                topListElem.innerHTML = listHTML.join('');
+            }
+        }
+
+        function populateWarehouseBrandsFilter() {
+            let whMaster = getWarehouseMasterFleet();
+            let brands = Array.from(new Set(whMaster.map(v => (v.markaVoz || '').trim()))).filter(b => b && b !== '-').sort();
+            let select = document.getElementById('whBrandFilter');
+            if (select) {
+                let options = ['<option value="all">Sve marke viljuškara</option>'];
+                brands.forEach(b => options.push(`<option value="${b}">${b}</option>`));
+                select.innerHTML = options.join('');
+            }
+        }
+
+        function filterWhFleet() {
+            let whMaster = getWarehouseMasterFleet();
+            let search = (document.getElementById('whSearchInput')?.value || '').trim().toLowerCase();
+            let brand = document.getElementById('whBrandFilter')?.value || 'all';
+            let status = document.getElementById('whStatusFilter')?.value || 'Aktivno';
+
+            whFilteredData = whMaster.filter(v => {
+                let vReg = (v.reg || '').toLowerCase();
+                let vGb = (v.garazniBroj || '').toLowerCase();
+                let vMarka = (v.markaVoz || '').toLowerCase();
+                let vModel = (v.modelVoz || '').toLowerCase();
+                let vSasija = (v.brojSasije || '').toLowerCase();
+                let vStatus = (v.status || 'Aktivno');
+
+                let matchSearch = !search || vReg.includes(search) || vGb.includes(search) || vMarka.includes(search) || vModel.includes(search) || vSasija.includes(search);
+                let matchBrand = brand === 'all' || (v.markaVoz || '').trim().toLowerCase() === brand.toLowerCase();
+                let matchStatus = status === 'all' || vStatus.toLowerCase() === status.toLowerCase();
+
+                return matchSearch && matchBrand && matchStatus;
+            });
+
+            whFleetPage = 1;
+            renderWarehouseFleetTable();
+        }
+
+        function renderWarehouseFleetTable() {
+            let tbody = document.getElementById('whFleetTableBody');
+            if (!tbody) return;
+
+            let total = whFilteredData.length;
+            let badge = document.getElementById('whFilteredCountBadge');
+            if (badge) badge.innerText = total.toLocaleString('bs-BA');
+
+            let totalPages = Math.ceil(total / whFleetPerPage) || 1;
+            if (whFleetPage > totalPages) whFleetPage = totalPages;
+            if (whFleetPage < 1) whFleetPage = 1;
+
+            let start = (whFleetPage - 1) * whFleetPerPage;
+            let end = Math.min(start + whFleetPerPage, total);
+            let pageItems = whFilteredData.slice(start, end);
+
+            let pageInfo = document.getElementById('whPaginationInfo');
+            if (pageInfo) pageInfo.innerText = total > 0 ? `Prikazano ${start + 1} - ${end} od ${total} mašina (Stranica ${whFleetPage} od ${totalPages})` : 'Nema rezultata';
+
+            let prevBtn = document.getElementById('whPrevPageBtn');
+            let nextBtn = document.getElementById('whNextPageBtn');
+            if (prevBtn) prevBtn.disabled = whFleetPage <= 1;
+            if (nextBtn) nextBtn.disabled = whFleetPage >= totalPages;
+
+            let rowsHTML = [];
+            pageItems.forEach((v, idx) => {
+                let st = (v.status || 'Aktivno');
+                let stClass = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+                if (st === 'Prodato') stClass = 'bg-purple-100 text-purple-900 border-purple-300';
+                if (st === 'Rashodovano') stClass = 'bg-red-100 text-red-900 border-red-300';
+
+                rowsHTML.push(`
+                    <tr class="hover:bg-amber-50/40 dark:hover:bg-slate-700/50 border-b border-slate-100 dark:border-slate-700/50 transition-colors">
+                        <td class="p-3 text-center font-mono text-slate-500 text-xs">${start + idx + 1}</td>
+                        <td class="p-3 font-mono font-bold text-slate-800 dark:text-slate-200 text-xs">${v.garazniBroj || '-'}</td>
+                        <td class="p-3 font-black text-slate-900 dark:text-white text-xs">${v.reg}</td>
+                        <td class="p-3 font-bold text-amber-800 dark:text-amber-300 text-xs">${v.markaVoz || '-'}</td>
+                        <td class="p-3 font-medium text-slate-700 dark:text-slate-300 text-xs">${v.modelVoz || '-'}</td>
+                        <td class="p-3 text-slate-600 dark:text-slate-400 text-xs">${v.godProizvodnje || '-'}</td>
+                        <td class="p-3 font-mono text-slate-500 text-[11px]">${v.brojSasije || '-'}</td>
+                        <td class="p-3 text-center">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${stClass}">${st}</span>
+                        </td>
+                        <td class="p-3 text-center">
+                            <button onclick="openVehicleModal('${v.reg}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 font-bold px-2.5 py-1 rounded-lg text-xs transition-colors border border-indigo-200 dark:border-indigo-800">
+                                📋 Karton
+                            </button>
+                        </td>
+                    </tr>
+                `);
+            });
+            tbody.innerHTML = rowsHTML.length > 0 ? rowsHTML.join('') : '<tr><td colspan="9" class="p-6 text-center text-slate-500">Nema pronađenih mašina za odabrane filtere.</td></tr>';
+        }
+
+        function changeWhPage(delta) {
+            whFleetPage += delta;
+            renderWarehouseFleetTable();
+        }
+
+        function renderWarehouseSegments() {
+            let whCosts = getWarehouseData();
+            let segMap = new Map();
+            whCosts.forEach(c => {
+                let seg = (c.segment || 'Ostalo').trim();
+                segMap.set(seg, (segMap.get(seg) || 0) + (c.cost || 0));
+            });
+
+            let sorted = Array.from(segMap.entries()).sort((a, b) => b[1] - a[1]);
+            let grid = document.getElementById('whSegmentsGrid');
+            if (grid) {
+                let html = [];
+                let totalWhCost = whCosts.reduce((acc, c) => acc + (c.cost || 0), 0);
+                sorted.forEach(([seg, sum]) => {
+                    let pct = totalWhCost > 0 ? ((sum / totalWhCost) * 100).toFixed(1) : 0;
+                    html.push(`
+                        <div class="card bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <div class="flex justify-between items-start">
+                                <span class="font-extrabold text-xs text-slate-800 dark:text-slate-200">${seg}</span>
+                                <span class="text-[10px] font-bold text-amber-700 bg-amber-100 dark:bg-amber-900/50 px-2 py-0.5 rounded">${pct}%</span>
+                            </div>
+                            <h4 class="text-xl font-black text-slate-900 dark:text-white mt-2">${sum.toLocaleString('bs-BA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KM</h4>
+                        </div>
+                    `);
+                });
+                grid.innerHTML = html.join('');
+            }
+        }
+
+        function exportWarehouseFleetToExcel() {
+            if (typeof XLSX === 'undefined') {
+                alert("XLSX biblioteka nije učitana.");
+                return;
+            }
+            let whMaster = getWarehouseMasterFleet();
+            let cleanRows = whMaster.map((v, i) => ({
+                'R.b.': i + 1,
+                'Garažni Broj': v.garazniBroj || '-',
+                'Interna Oznaka / Reg': v.reg || '-',
+                'Tip': v.tipMehan || 'Skladišna mehanizacija',
+                'Marka': v.markaVoz || '-',
+                'Model': v.modelVoz || '-',
+                'Godište': v.godProizvodnje || '-',
+                'Broj Šasije': v.brojSasije || '-',
+                'Status': v.status || 'Aktivno'
+            }));
+            let ws = XLSX.utils.json_to_sheet(cleanRows);
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Skladisna_Mehanizacija");
+            XLSX.writeFile(wb, "Skladisna_Mehanizacija_Flota.xlsx");
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             initTheme();
             initAuthSystem();
