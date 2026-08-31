@@ -2487,6 +2487,7 @@
                         if (parsed && parsed.username) {
                             activeUser = { ...parsed, uid: firebaseUser.uid, email: firebaseUser.email };
                             updateAuthUI();
+                            setupActiveUserRealtimeListener(activeUser.username, activeUser.email);
                         }
 
                         // Background sync role from Firestore to guarantee accuracy
@@ -2512,9 +2513,12 @@
                                 window[key].setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
                                 updateAuthUI();
                             }
+                            setupActiveUserRealtimeListener(uname, emailLower);
                         } catch(e) {}
                     } else {
                         activeUser = null;
+                        _activeUserUnsubscribe.forEach(unsub => { try { if (typeof unsub === 'function') unsub(); } catch(e) {} });
+                        _activeUserUnsubscribe = [];
                         updateAuthUI();
                     }
                 });
@@ -2584,6 +2588,7 @@
                     activeUser = { ...userObj, uid: user.uid };
                     sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
                     updateAuthUI();
+                    setupActiveUserRealtimeListener(activeUser.username, activeUser.email);
                 }
             } catch (err) {
                 console.error("Google Auth error:", err);
@@ -2651,6 +2656,7 @@
                     
                     if (errDiv) errDiv.classList.add('hidden');
                     updateAuthUI();
+                    setupActiveUserRealtimeListener(activeUser.username, activeUser.email);
 
                     // Immediately fetch exact role from Firestore in background (failsafe)
                     setTimeout(async () => {
@@ -2704,6 +2710,7 @@
                             
                             if (errDiv) errDiv.classList.add('hidden');
                             updateAuthUI();
+                            setupActiveUserRealtimeListener(activeUser.username, activeUser.email);
 
                             return;
                         }
@@ -2737,6 +2744,8 @@
 
         function handleLogout() {
             activeUser = null;
+            _activeUserUnsubscribe.forEach(unsub => { try { if (typeof unsub === 'function') unsub(); } catch(e) {} });
+            _activeUserUnsubscribe = [];
             sessionStorage.removeItem(SESSION_ACTIVE_USER_KEY);
             localStorage.removeItem(SESSION_ACTIVE_USER_KEY);
             localStorage.removeItem('saved_login_creds');
