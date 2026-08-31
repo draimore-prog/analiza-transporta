@@ -706,7 +706,7 @@
         <!-- Topbar -->
         <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-3 flex justify-between items-center z-10 flex-shrink-0 shadow-sm">
             <div>
-                <p id="headerSubtitle" class="text-xs text-slate-500 dark:text-slate-400 font-medium">KPI Total Struktura (964 vozila u 2026.)</p>
+                <p id="headerSubtitle" class="text-xs text-slate-500 dark:text-slate-400 font-medium">KPI Total Struktura (938 aktivnih vozila u 2026.)</p>
             </div>
             
             <div class="flex items-center gap-3">
@@ -1066,8 +1066,6 @@
                     </div>
                 </div>
             </div>
-                </div>
-            </div>
 
             <div id="appDashboardContent" class="hidden w-full px-2 lg:px-6 mx-auto">
         <!-- Loader Indikator -->
@@ -1240,7 +1238,7 @@
                     <!-- Prekidač Flote: KPI Total (964 vozila) vs Intervencije -->
                     <div class="bg-white/10 p-1 rounded-lg border border-white/20 flex items-center text-xs">
                         <button id="fleetModeMasterBtn" onclick="setFleetMode('master')" class="px-3 py-1.5 rounded-md font-bold transition-all bg-white text-blue-950 shadow">
-                            Flota iz KPI Total (<span id="masterFleetCountBadge">964</span>)
+                            Flota iz KPI Total (<span id="masterFleetCountBadge">938</span>)
                         </button>
                         <button id="fleetModeActiveBtn" onclick="setFleetMode('active')" class="px-3 py-1.5 rounded-md font-semibold text-blue-100 hover:text-white transition-all">
                             Samo Servisirana Vozila
@@ -3582,7 +3580,7 @@
             document.getElementById('filter-section')?.classList.remove('hidden');
             document.getElementById('tabs-navigation')?.classList.remove('hidden');
             let latestYear = Math.max(...Object.keys(kpiTotalFleetByYear).map(y => parseInt(y)));
-            let masterCount = kpiTotalFleetByYear[latestYear] ? kpiTotalFleetByYear[latestYear].Total : 964;
+            let masterCount = kpiTotalFleetByYear[latestYear] ? kpiTotalFleetByYear[latestYear].Total : 938;
             const statusSub = document.getElementById('uploadStatusSubtitle');
             if (statusSub) statusSub.innerText = `☁️ Firestore: ${masterCount} vozila | ${globalData.length.toLocaleString('bs-BA')} troškova učitano`;
             switchTab(1);
@@ -3696,7 +3694,7 @@
                     sideTitle.innerHTML = 'Servis motornih vozila<span id="sidebarAppSubtitle" class="block text-blue-600 dark:text-blue-400 text-sm mt-1">Održavanje voznog parka</span>';
                 }
                 if (headerSub) {
-                    headerSub.innerText = 'KPI Total Struktura (964 vozila u 2026.)';
+                    headerSub.innerText = 'KPI Total Struktura (938 aktivnih vozila u 2026.)';
                 }
 
                 if (switcherLabel) switcherLabel.innerText = 'Skladišna Mehanizacija';
@@ -4615,7 +4613,7 @@
                         }
                         // Update master fleet count badge (2026 total)
                         let latestYear = Math.max(...Object.keys(kpiTotalFleetByYear).map(y => parseInt(y)));
-                        let masterCount2026 = (kpiTotalFleetByYear[latestYear] && kpiTotalFleetByYear[latestYear].Total) ? kpiTotalFleetByYear[latestYear].Total : 964;
+                        let masterCount2026 = (kpiTotalFleetByYear[latestYear] && kpiTotalFleetByYear[latestYear].Total) ? kpiTotalFleetByYear[latestYear].Total : 938;
                         document.getElementById('masterFleetCountBadge').innerText = masterCount2026.toLocaleString('bs-BA');
                         // 2. PARSIRANJE TRANSAKCIJSKIH DOKUMENATA (FINALDATA SHEETOVI 2021-2026)
                         let sheetNames = workbook.SheetNames;
@@ -4759,7 +4757,7 @@
                         document.getElementById('loader').classList.add('hidden');
                         document.getElementById('filter-section').classList.remove('hidden');
                         document.getElementById('tabs-navigation').classList.remove('hidden');
-                        document.getElementById('uploadStatusSubtitle').innerText = `Flota: ${masterCount2026} vozila | Učitano ${globalData.length.toLocaleString('bs-BA')} servisa`;
+                        document.getElementById('uploadStatusSubtitle').innerText = `Flota: ${masterCount2026 || 938} vozila | Učitano ${globalData.length.toLocaleString('bs-BA')} servisa`;
                         
                         switchTab(1);
                         resetDrillDown();
@@ -5271,7 +5269,7 @@
             // Fleets i Costs po godinama iz KPI Total
             let yearKpiFleet = kpiTotalFleetByYear[periodInfo.targetYear] || {};
             let yearKpiCosts = kpiTotalCostsByYear[periodInfo.targetYear] || {};
-            let yearTotalFleetCount = yearKpiFleet.Total || 964;
+            let yearTotalFleetCount = yearKpiFleet.Total || 938;
             document.getElementById('tab2DailyTitle').innerHTML = `<span>Prosječan Trošak PO JEDINICI (Vozilu) – za ${periodInfo.periodLabel}</span>`;
             document.getElementById('tab2PeriodSubtitle').innerText = `Detektovano ${periodInfo.monthsCount} mj. / ${periodInfo.daysCount} dana u ${periodInfo.targetYear}. g. (Struktura iz tabele KPI Total)`;
             document.getElementById('masterFleetCountBadge').innerText = yearTotalFleetCount.toLocaleString('bs-BA');
