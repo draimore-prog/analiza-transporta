@@ -5797,7 +5797,7 @@
 
             if (!loadedFromCache) {
                 try {
-                    const res = await fetch('fleet_master.json?v=' + Date.now());
+                    const res = await fetch('fleet_master.json');
                     if (res.ok) {
                         const data = await res.json();
                         if (data && Array.isArray(data) && data.length > 0) {
