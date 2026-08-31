@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { PlusCircle, Search, ExternalLink, Sparkles, X, ChevronRight } from "lucide-react";
+import { PlusCircle, Search, ExternalLink, Sparkles, X, ChevronRight, Sun, Moon } from "lucide-react";
 
 export function Header({
   portalMode,
   setPortalMode,
   currentRole,
   masterFleet = [],
+  isDarkMode,
+  setIsDarkMode,
   onOpenVehicleModal,
   onOpenNewCostModal,
   onOpenNewVehicleModal
@@ -257,6 +259,17 @@ export function Header({
           >
             <PlusCircle className="w-4 h-4" />
             <span>Unos Troška</span>
+          </button>
+        )}
+
+        {/* Theme Toggle u Headeru */}
+        {setIsDarkMode && (
+          <button
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-amber-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 shadow-xs cursor-pointer"
+            title={isDarkMode ? "Prebaci na svijetlu temu" : "Prebaci na tamnu temu"}
+          >
+            {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
         )}
       </div>

@@ -195,12 +195,30 @@ function DashboardContent() {
   const [supplierModalTarget, setSupplierModalTarget] = useState(null);
   const [segmentModalTarget, setSegmentModalTarget] = useState(null);
 
-  // Dark mode klasa na dokumentu
+  // Inicijalizacija i sinhronizacija Dark Mode teme
+  useEffect(() => {
+    try {
+      const savedTheme = localStorage.getItem("theme");
+      if (savedTheme === "dark") {
+        setIsDarkMode(true);
+        document.documentElement.classList.add("dark");
+      } else if (savedTheme === "light") {
+        setIsDarkMode(false);
+        document.documentElement.classList.remove("dark");
+      } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        setIsDarkMode(true);
+        document.documentElement.classList.add("dark");
+      }
+    } catch (e) {}
+  }, []);
+
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
+      try { localStorage.setItem("theme", "dark"); } catch (e) {}
     } else {
       document.documentElement.classList.remove("dark");
+      try { localStorage.setItem("theme", "light"); } catch (e) {}
     }
   }, [isDarkMode]);
 
@@ -313,6 +331,8 @@ function DashboardContent() {
           setPortalMode={setPortalMode}
           currentRole={currentRole}
           masterFleet={masterFleet}
+          isDarkMode={isDarkMode}
+          setIsDarkMode={setIsDarkMode}
           onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
           onOpenNewCostModal={() => setIsNewCostOpen(true)}
           onOpenNewVehicleModal={() => {
