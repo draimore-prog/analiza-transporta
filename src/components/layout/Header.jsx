@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { PlusCircle, Search, UploadCloud } from "lucide-react";
+import { PlusCircle, Search, ExternalLink, Sparkles } from "lucide-react";
 
 export function Header({
   portalMode,
@@ -21,6 +21,10 @@ export function Header({
     }
   };
 
+  const handleOpenV1 = () => {
+    window.location.href = "/v1.html";
+  };
+
   return (
     <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 z-10 flex-shrink-0 shadow-xs">
       <div>
@@ -32,6 +36,17 @@ export function Header({
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
+        {/* DUGME ZA KLASIČNI V1 PREGLED */}
+        <button
+          onClick={handleOpenV1}
+          title="Otvara originalni, neizmijenjeni V1 HTML pregled sa kompletnom bazom"
+          className="bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-600 hover:to-indigo-700 text-white font-extrabold px-3 py-1.5 rounded-lg transition-all text-xs flex items-center gap-1.5 shadow-xs border border-indigo-600 cursor-pointer"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+          <span>🏛️ V1 Originalni Pregled</span>
+          <ExternalLink className="w-3 h-3 opacity-70" />
+        </button>
+
         {/* Brza Pretraga Kartona */}
         <form onSubmit={handleSearchSubmit} className="relative w-full sm:w-56">
           <input
