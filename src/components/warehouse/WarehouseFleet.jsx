@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { exportMasterFleetToExcel } from "@/lib/exportExcel.js";
-import { Download, RotateCcw, ArrowDown as ScrollDown, CheckCircle2, Loader2, Edit3 } from "lucide-react";
+import { Download, RotateCcw, ArrowDown as ScrollDown, CheckCircle2, Loader2, Edit3, FilterX } from "lucide-react";
 
 export function WarehouseFleet({
   warehouseMasterFleet,
@@ -10,9 +10,13 @@ export function WarehouseFleet({
   onOpenEditVehicle,
   currentRole
 }) {
-  const [statusFilter, setStatusFilter] = useState("Aktivno");
-  const [brandFilter, setBrandFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [colFilterGarazni, setColFilterGarazni] = useState("");
+  const [colFilterReg, setColFilterReg] = useState("");
+  const [colFilterBrand, setColFilterBrand] = useState("all");
+  const [colFilterModel, setColFilterModel] = useState("");
+  const [colFilterYear, setColFilterYear] = useState("");
+  const [colFilterVin, setColFilterVin] = useState("");
+  const [colFilterStatus, setColFilterStatus] = useState("Aktivno");
 
   const [visibleCount, setVisibleCount] = useState(60);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -29,35 +33,54 @@ export function WarehouseFleet({
       .sort();
   }, [warehouseMasterFleet]);
 
-  // Filter
+  // Filtrirani podaci na osnovu kolonskih filtera
   const filteredData = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
+    const gbTerm = colFilterGarazni.trim().toLowerCase();
+    const regTerm = colFilterReg.trim().toLowerCase();
+    const modelTerm = colFilterModel.trim().toLowerCase();
+    const yearTerm = colFilterYear.trim().toLowerCase();
+    const vinTerm = colFilterVin.trim().toLowerCase();
 
     return warehouseMasterFleet.filter((v) => {
       const vStatus = v.status || "Aktivno";
       const matchStatus =
-        statusFilter === "all" ||
-        vStatus.toLowerCase() === statusFilter.toLowerCase() ||
-        (statusFilter === "Aktivno" && !vStatus.toLowerCase().includes("prodat") && !vStatus.toLowerCase().includes("rashod"));
+        colFilterStatus === "all" ||
+        vStatus.toLowerCase() === colFilterStatus.toLowerCase() ||
+        (colFilterStatus === "Aktivno" && !vStatus.toLowerCase().includes("prodat") && !vStatus.toLowerCase().includes("rashod"));
 
       const matchBrand =
-        brandFilter === "all" || (v.markaVoz || "").trim().toLowerCase() === brandFilter.toLowerCase();
+        colFilterBrand === "all" || (v.markaVoz || "").trim().toLowerCase() === colFilterBrand.toLowerCase();
 
-      const matchSearch =
-        !term ||
-        (v.reg && v.reg.toLowerCase().includes(term)) ||
-        (v.garazniBroj && v.garazniBroj.toLowerCase().includes(term)) ||
-        (v.markaVoz && v.markaVoz.toLowerCase().includes(term)) ||
-        (v.modelVoz && v.modelVoz.toLowerCase().includes(term)) ||
-        (v.brojSasije && v.brojSasije.toLowerCase().includes(term));
+      const matchGb = !gbTerm || (v.garazniBroj && v.garazniBroj.toLowerCase().includes(gbTerm));
+      const matchReg = !regTerm || (v.reg && v.reg.toLowerCase().includes(regTerm));
+      const matchModel = !modelTerm || (v.modelVoz && v.modelVoz.toLowerCase().includes(modelTerm));
+      const matchYear = !yearTerm || (v.godProizvodnje && v.godProizvodnje.toString().toLowerCase().includes(yearTerm));
+      const matchVin = !vinTerm || (v.brojSasije && v.brojSasije.toLowerCase().includes(vinTerm));
 
-      return matchStatus && matchBrand && matchSearch;
+      return matchStatus && matchBrand && matchGb && matchReg && matchModel && matchYear && matchVin;
     });
-  }, [warehouseMasterFleet, statusFilter, brandFilter, searchTerm]);
+  }, [
+    warehouseMasterFleet,
+    colFilterStatus,
+    colFilterBrand,
+    colFilterGarazni,
+    colFilterReg,
+    colFilterModel,
+    colFilterYear,
+    colFilterVin
+  ]);
 
   useEffect(() => {
     setVisibleCount(BATCH_SIZE);
-  }, [statusFilter, brandFilter, searchTerm]);
+  }, [
+    colFilterStatus,
+    colFilterBrand,
+    colFilterGarazni,
+    colFilterReg,
+    colFilterModel,
+    colFilterYear,
+    colFilterVin
+  ]);
 
   const visibleItems = useMemo(() => {
     return filteredData.slice(0, visibleCount);
@@ -105,13 +128,37 @@ export function WarehouseFleet({
     }
   }, [hasMore, isLoadingMore, loadMore]);
 
-  const canEditVehicle = currentRole?.permissions?.canRegisterVehicle || currentRole?.permissions?.canEditCosts || currentRole?.roleId === "superadmin" || currentRole?.roleId === "warehouse_specialist";
+  const isAnyFilterActive =
+    colFilterStatus !== "Aktivno" ||
+    colFilterBrand !== "all" ||
+    colFilterGarazni !== "" ||
+    colFilterReg !== "" ||
+    colFilterModel !== "" ||
+    colFilterYear !== "" ||
+    colFilterVin !== "";
+
+  const resetAllFilters = () => {
+    setColFilterStatus("Aktivno");
+    setColFilterBrand("all");
+    setColFilterGarazni("");
+    setColFilterReg("");
+    setColFilterModel("");
+    setColFilterYear("");
+    setColFilterVin("");
+    setVisibleCount(BATCH_SIZE);
+  };
+
+  const canEditVehicle =
+    currentRole?.permissions?.canRegisterVehicle ||
+    currentRole?.permissions?.canEditCosts ||
+    currentRole?.roleId === "superadmin" ||
+    currentRole?.roleId === "warehouse_specialist";
 
   return (
     <div className="space-y-6">
       {/* Header Kartica */}
       <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
               <span>🚜</span> Šifrarnik Skladišne Mehanizacije
@@ -119,23 +166,20 @@ export function WarehouseFleet({
                 {visibleItems.length} / {filteredData.length} jedinica
               </span>
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Matični podaci svih viljuškara (elektro, diesel, plin), paletara i prateće mehanizacije
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Matični podaci svih viljuškara i paletara sa ugrađenim filterima u kolonama tabele
             </p>
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <button
-              onClick={() => {
-                setStatusFilter("Aktivno");
-                setBrandFilter("all");
-                setSearchTerm("");
-                setVisibleCount(BATCH_SIZE);
-              }}
-              className="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1"
-            >
-              <RotateCcw className="w-3.5 h-3.5" /> Reset
-            </button>
+            {isAnyFilterActive && (
+              <button
+                onClick={resetAllFilters}
+                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+              >
+                <FilterX className="w-3.5 h-3.5" /> Poništi filtere
+              </button>
+            )}
             <button
               onClick={() => exportMasterFleetToExcel(filteredData, "Skladisna_Mehanizacija_Sifrarnik.xlsx")}
               className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-slate-950 text-xs font-extrabold rounded-lg transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
@@ -144,88 +188,146 @@ export function WarehouseFleet({
             </button>
           </div>
         </div>
-
-        {/* Filter Kontrole */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
-            <label className="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">
-              Status Mašina
-            </label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-xs font-bold text-slate-800 dark:text-white outline-none"
-            >
-              <option value="Aktivno">🟢 Aktivne Mašine (594)</option>
-              <option value="Rashodovano">🔴 Samo Rashodovane</option>
-              <option value="Prodato">🟣 Samo Prodate</option>
-              <option value="all">Svi statusi (Aktivne + Prodate + Rashod)</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">
-              Marka Viljuškara
-            </label>
-            <select
-              value={brandFilter}
-              onChange={(e) => setBrandFilter(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-xs font-bold text-slate-800 dark:text-white outline-none"
-            >
-              <option value="all">Sve marke viljuškara</option>
-              {distinctBrands.map((b) => (
-                <option key={b} value={b}>
-                  {b}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">
-              Pretraga
-            </label>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="🔍 Pretraži po oznaci, serijskom broju..."
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-xs font-bold text-slate-800 dark:text-white outline-none"
-            />
-          </div>
-        </div>
       </div>
 
-      {/* Tabela */}
+      {/* Tabela sa Inkrementalnim Skrolom i In-Table Filterima */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
         <div
           ref={containerRef}
           onScroll={handleScroll}
-          className="overflow-x-auto overflow-y-auto max-h-[620px] scroll-smooth"
+          className="overflow-x-auto overflow-y-auto max-h-[640px] scroll-smooth"
         >
           <table className="min-w-full text-xs text-left">
-            <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10 shadow-xs">
+            <thead className="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700 sticky top-0 z-20 shadow-xs">
+              {/* 1. RED: Nazivi kolona */}
               <tr>
-                <th className="p-3 text-center">R.b.</th>
-                <th className="p-3">Garažni Br.</th>
-                <th className="p-3">Interna Oznaka / Reg</th>
-                <th className="p-3">Marka</th>
-                <th className="p-3">Model / Tip</th>
-                <th className="p-3">Godište</th>
-                <th className="p-3">Broj Šasije</th>
-                <th className="p-3 text-center">Status</th>
-                <th className="p-3 text-center">Akcije</th>
+                <th className="p-2.5 text-center w-12">R.b.</th>
+                <th className="p-2.5 w-28">Garažni Br.</th>
+                <th className="p-2.5 w-32">Interna Oznaka / Reg</th>
+                <th className="p-2.5 w-36">Marka</th>
+                <th className="p-2.5 w-36">Model / Tip</th>
+                <th className="p-2.5 w-24">Godište</th>
+                <th className="p-2.5 w-44">Broj Šasije</th>
+                <th className="p-2.5 text-center w-32">Status</th>
+                <th className="p-2.5 text-center w-36">Akcije</th>
+              </tr>
+
+              {/* 2. RED: In-Table Filteri */}
+              <tr className="bg-slate-200/90 dark:bg-slate-950 border-t border-slate-300 dark:border-slate-800 font-normal">
+                <th className="p-1.5 text-center">
+                  <span className="text-[10px] text-slate-400 font-mono">#</span>
+                </th>
+
+                {/* GB filter */}
+                <th className="p-1.5">
+                  <input
+                    type="text"
+                    value={colFilterGarazni}
+                    onChange={(e) => setColFilterGarazni(e.target.value)}
+                    placeholder="🔍 GB..."
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white"
+                  />
+                </th>
+
+                {/* Reg filter */}
+                <th className="p-1.5">
+                  <input
+                    type="text"
+                    value={colFilterReg}
+                    onChange={(e) => setColFilterReg(e.target.value)}
+                    placeholder="🔍 Reg..."
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-bold uppercase outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white"
+                  />
+                </th>
+
+                {/* Marka select filter */}
+                <th className="p-1.5">
+                  <select
+                    value={colFilterBrand}
+                    onChange={(e) => setColFilterBrand(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white cursor-pointer"
+                  >
+                    <option value="all">Sve marke</option>
+                    {distinctBrands.map((b) => (
+                      <option key={b} value={b}>
+                        {b}
+                      </option>
+                    ))}
+                  </select>
+                </th>
+
+                {/* Model filter */}
+                <th className="p-1.5">
+                  <input
+                    type="text"
+                    value={colFilterModel}
+                    onChange={(e) => setColFilterModel(e.target.value)}
+                    placeholder="🔍 Model..."
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white"
+                  />
+                </th>
+
+                {/* Godište filter */}
+                <th className="p-1.5">
+                  <input
+                    type="text"
+                    value={colFilterYear}
+                    onChange={(e) => setColFilterYear(e.target.value)}
+                    placeholder="🔍 God..."
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white"
+                  />
+                </th>
+
+                {/* Šasija filter */}
+                <th className="p-1.5">
+                  <input
+                    type="text"
+                    value={colFilterVin}
+                    onChange={(e) => setColFilterVin(e.target.value)}
+                    placeholder="🔍 Šasija..."
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-mono outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white"
+                  />
+                </th>
+
+                {/* Status select filter */}
+                <th className="p-1.5">
+                  <select
+                    value={colFilterStatus}
+                    onChange={(e) => setColFilterStatus(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white cursor-pointer"
+                  >
+                    <option value="Aktivno">🟢 Aktivne</option>
+                    <option value="Prodato">🟣 Prodate</option>
+                    <option value="Rashodovano">🔴 Rashod</option>
+                    <option value="all">Svi statusi</option>
+                  </select>
+                </th>
+
+                {/* Reset button */}
+                <th className="p-1.5 text-center">
+                  <button
+                    onClick={resetAllFilters}
+                    title="Poništi sve filtere"
+                    className="px-2 py-1 bg-slate-100 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1 w-full"
+                  >
+                    <RotateCcw className="w-3 h-3" /> Reset
+                  </button>
+                </th>
               </tr>
             </thead>
+
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50 bg-white dark:bg-slate-900">
               {visibleItems.length > 0 ? (
                 visibleItems.map((v, idx) => {
                   const st = v.status || "Aktivno";
-                  let stClass = "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300";
+                  let stClass =
+                    "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300";
                   if (st === "Prodato") {
-                    stClass = "bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-950 dark:text-purple-300";
+                    stClass =
+                      "bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-950 dark:text-purple-300";
                   } else if (st === "Rashodovano") {
-                    stClass = "bg-red-100 text-red-900 border-red-300 dark:bg-red-950 dark:text-red-300";
+                    stClass =
+                      "bg-red-100 text-red-900 border-red-300 dark:bg-red-950 dark:text-red-300";
                   }
 
                   return (
@@ -287,7 +389,7 @@ export function WarehouseFleet({
               ) : (
                 <tr>
                   <td colSpan={9} className="p-8 text-center text-slate-400 font-medium italic">
-                    Nema pronađene skladišne mehanizacije za odabrane filtere.
+                    Nema pronađene skladišne mehanizacije za odabrane kolonske filtere.
                   </td>
                 </tr>
               )}
