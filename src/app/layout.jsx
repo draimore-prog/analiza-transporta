@@ -2,16 +2,13 @@ import "./globals.css";
 
 export const metadata = {
   title: "Servis motornih vozila - Održavanje voznog parka",
-  description: "Konsolidovani analitički portal za održavanje motornih vozila i skladišne mehanizacije kompanije Bingo d.o.o.",
+  description: "Interaktivna analitika održavanja voznog parka, skladišne mehanizacije i KPI komparacija"
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="bs">
       <head>
-        <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-        <meta httpEquiv="Pragma" content="no-cache" />
-        <meta httpEquiv="Expires" content="0" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -19,7 +16,7 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body className="flex h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-indigo-50/40 to-blue-50/50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-slate-800 dark:text-slate-100 font-sans antialiased">
+      <body className="bg-gradient-to-br from-slate-50 via-indigo-50/40 to-blue-50/50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-slate-800 dark:text-slate-100 font-sans antialiased min-h-screen">
         {children}
       </body>
     </html>

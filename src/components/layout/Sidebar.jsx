@@ -4,10 +4,6 @@ import React from "react";
 import { ClockWidget } from "./ClockWidget.jsx";
 import {
   Truck,
-  Layers,
-  Calendar,
-  Wrench,
-  Warehouse,
   Shield,
   Key,
   Sun,
@@ -57,7 +53,7 @@ export function Sidebar({
       {/* Navigacija */}
       <nav className="flex-1 overflow-y-auto px-4 space-y-1">
         {portalMode === "transport" ? (
-          /* Glavni Transport Meni */
+          /* Glavni Transport Meni - V1 Originalni Nazivi */
           <>
             <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
               Nadzorna ploča
@@ -73,10 +69,10 @@ export function Sidebar({
               }`}
             >
               <span className="text-base">📊</span>
-              <span>KPI Struktura</span>
+              <span>KPI Pregled</span>
             </button>
 
-            {/* Tab 2: Struktura Troškova */}
+            {/* Tab 2: Analiza Održavanja */}
             <button
               onClick={() => setActiveTab(2)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all cursor-pointer ${
@@ -86,10 +82,10 @@ export function Sidebar({
               }`}
             >
               <span className="text-base">📈</span>
-              <span>Kategorije & Marke</span>
+              <span>Analiza Održavanja</span>
             </button>
 
-            {/* Tab 3: Dugoročni KPI (2021-2026) */}
+            {/* Tab 3: YoY Komparacija & KPI Mjesečni */}
             <button
               onClick={() => setActiveTab(3)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all cursor-pointer ${
@@ -99,7 +95,7 @@ export function Sidebar({
               }`}
             >
               <span className="text-base">⚖️</span>
-              <span>Dugoročni KPI (YoY)</span>
+              <span>YoY Komparacija & KPI Mjesečni</span>
             </button>
 
             {/* Tab 4: Tabela Servisa */}
@@ -112,10 +108,10 @@ export function Sidebar({
               }`}
             >
               <span className="text-base">📋</span>
-              <span>Evidencija Servisa</span>
+              <span>Tabela Servisa</span>
             </button>
 
-            {/* Tab 5: Matična Baza Flote */}
+            {/* Tab 5: Matična baza podataka voznog parka */}
             <button
               onClick={() => setActiveTab(5)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all cursor-pointer ${
@@ -125,7 +121,7 @@ export function Sidebar({
               }`}
             >
               <span className="text-base">🏢</span>
-              <span>Matični Šifrarnik Flote</span>
+              <span>Matična baza podataka voznog parka</span>
             </button>
 
             {/* Skladišna Mehanizacija Prečica */}
@@ -143,7 +139,7 @@ export function Sidebar({
             </div>
           </>
         ) : (
-          /* Skladišna Mehanizacija Meni */
+          /* Skladišna Mehanizacija Meni - V1 Originalni Nazivi */
           <div className="space-y-1">
             <div className="text-[10px] font-bold text-amber-500 dark:text-amber-400 uppercase tracking-wider mb-2">
               Skladišna Mehanizacija
