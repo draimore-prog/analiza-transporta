@@ -195,16 +195,16 @@ export function SupplierDetailModal({
 
   return (
     <div onClick={onClose} className="fixed inset-0 bg-slate-900/80 flex justify-center items-center z-[75] backdrop-blur-xs p-3 sm:p-5 animate-in fade-in zoom-in-95 duration-200 cursor-pointer">
-      <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[94vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 cursor-default">
+      <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-5xl h-[92vh] max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 cursor-default">
         {/* Header */}
-        <div className="flex justify-between items-center p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white">
+        <div className="flex justify-between items-center p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md text-2xl">
+            <div className="p-2.5 bg-white/10 rounded-2xl backdrop-blur-md text-xl">
               🏢
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg sm:text-xl font-black tracking-tight truncate max-w-md">
+                <h2 className="text-lg font-black tracking-tight truncate max-w-md">
                   Dobavljač / Serviser: {supplierName}
                 </h2>
                 <span className="bg-indigo-500/30 border border-indigo-400 text-indigo-200 text-[10px] px-2.5 py-0.5 rounded-full font-bold">
@@ -224,111 +224,97 @@ export function SupplierDetailModal({
           </button>
         </div>
 
-        {/* Sadržaj */}
-        <div className="p-5 overflow-y-auto space-y-4 flex-1 bg-slate-50 dark:bg-slate-900/50 text-xs">
+        {/* Sadržaj - Fiksna baza bez outer scrollbara */}
+        <div className="p-4 sm:p-5 flex flex-col flex-1 min-h-0 overflow-hidden space-y-3 bg-slate-50 dark:bg-slate-900/50 text-xs">
           {/* 4 KPI Kartice */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs">
-              <p className="text-[10px] uppercase font-bold text-slate-400">Ukupan Promet / Trošak</p>
-              <h3 className="text-xl font-black text-indigo-600 dark:text-indigo-400 mt-1">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 shrink-0">
+            <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
+              <p className="text-[9px] uppercase font-bold text-slate-400">Ukupan Promet / Trošak</p>
+              <h3 className="text-lg font-black text-indigo-600 dark:text-indigo-400 mt-0.5">
                 {formatKM(totalCost)}
               </h3>
-              <p className="text-[10px] text-slate-500 mt-0.5">
-                {supplierShare}% ukupnog budžeta flote
+              <p className="text-[9px] text-slate-500">
+                {supplierShare}% ukupnog budžeta
               </p>
             </div>
 
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs">
-              <p className="text-[10px] uppercase font-bold text-slate-400">Broj Servisa / Faktura</p>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white mt-1">
+            <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
+              <p className="text-[9px] uppercase font-bold text-slate-400">Broj Servisa / Faktura</p>
+              <h3 className="text-lg font-black text-slate-900 dark:text-white mt-0.5">
                 {supplierTransactions.length.toLocaleString("bs-BA")}
               </h3>
-              <p className="text-[10px] text-slate-500 mt-0.5">
-                Realizovanih intervencija
+              <p className="text-[9px] text-slate-500">
+                Realizovanih naloga
               </p>
             </div>
 
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs">
-              <p className="text-[10px] uppercase font-bold text-slate-400">Prosjek po Servisu</p>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white mt-1">
+            <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
+              <p className="text-[9px] uppercase font-bold text-slate-400">Prosjek po Servisu</p>
+              <h3 className="text-lg font-black text-slate-900 dark:text-white mt-0.5">
                 {formatKM(avgPerIntervention)}
               </h3>
-              <p className="text-[10px] text-slate-500 mt-0.5">
-                Prosječna cijena po nalogu
+              <p className="text-[9px] text-slate-500">
+                Po nalogu
               </p>
             </div>
 
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs">
-              <p className="text-[10px] uppercase font-bold text-slate-400">Servisiranih Vozila</p>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white mt-1">
+            <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
+              <p className="text-[9px] uppercase font-bold text-slate-400">Servisiranih Vozila</p>
+              <h3 className="text-lg font-black text-slate-900 dark:text-white mt-0.5">
                 {distinctVehicles.toLocaleString("bs-BA")}
               </h3>
-              <p className="text-[10px] text-slate-500 mt-0.5">
-                Različitih voznih jedinica
+              <p className="text-[9px] text-slate-500">
+                Voznih jedinica
               </p>
             </div>
           </div>
 
-          {/* Godišnja Dinamika - Klikom se bira godina */}
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs">
-            <h4 className="font-extrabold text-slate-900 dark:text-white mb-2.5 text-xs flex items-center justify-between">
-              <span>📅 Godišnja realizacija za {supplierName} (Klikni za filter)</span>
+          {/* Godišnja Dinamika + Segment Bedževi (Kompaktno) */}
+          <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs shrink-0 space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-1.5">
+              <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
+                <span className="text-[10px] font-extrabold uppercase text-slate-500 mr-1">Godina:</span>
+                {[2021, 2022, 2023, 2024, 2025, 2026].map((y) => (
+                  <button
+                    key={y}
+                    onClick={() => {
+                      setSelectedYear(selectedYear === y.toString() ? "all" : y.toString());
+                    }}
+                    className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                      selectedYear === y.toString()
+                        ? "bg-indigo-600 text-white shadow-xs"
+                        : "bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-300 hover:bg-slate-200"
+                    }`}
+                  >
+                    {y}. ({formatKM(yearlyBreakdown[y]?.cost || 0)})
+                  </button>
+                ))}
+              </div>
               {selectedYear !== "all" && (
                 <button
                   onClick={() => setSelectedYear("all")}
                   className="text-[10px] text-amber-600 font-bold hover:underline cursor-pointer flex items-center gap-0.5"
                 >
-                  <FilterX className="w-3 h-3" /> Poništi ({selectedYear}.)
+                  <FilterX className="w-3 h-3" /> Poništi godinu
                 </button>
               )}
-            </h4>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-              {[2021, 2022, 2023, 2024, 2025, 2026].map((y) => (
-                <div
-                  key={y}
-                  onClick={() => {
-                    setSelectedYear(selectedYear === y.toString() ? "all" : y.toString());
-                  }}
-                  className={`p-2.5 rounded-xl border text-center cursor-pointer transition-all ${
-                    selectedYear === y.toString()
-                      ? "bg-indigo-600 text-white border-indigo-700 font-bold shadow-xs scale-102"
-                      : "bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-indigo-400"
-                  }`}
-                >
-                  <p className="text-[10px] font-bold opacity-80">{y}.</p>
-                  <p className="text-xs font-black mt-0.5">{formatKM(yearlyBreakdown[y]?.cost || 0)}</p>
-                  <p className="text-[9px] opacity-75">{yearlyBreakdown[y]?.count || 0} naloga</p>
-                </div>
-              ))}
             </div>
-          </div>
 
-          {/* Interaktivni Klik-Tagovi Segmenta */}
-          {distinctSegments.length > 0 && (
-            <div className="bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                <span className="text-[11px] font-extrabold uppercase text-slate-500 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-indigo-500" /> Brzi filter po segmentu usluge:
+            {/* Segmenti */}
+            {distinctSegments.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-700/50">
+                <span className="text-[10px] font-extrabold uppercase text-slate-500 flex items-center gap-1 mr-1">
+                  <Layers className="w-3 h-3 text-indigo-500" /> Segment:
                 </span>
-                {colFilterSegment !== "all" && (
-                  <button
-                    onClick={() => setColFilterSegment("all")}
-                    className="text-[10px] text-amber-600 font-bold hover:underline cursor-pointer flex items-center gap-0.5"
-                  >
-                    <FilterX className="w-3 h-3" /> Prikaz svih segmenata
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-1.5">
                 <button
                   onClick={() => setColFilterSegment("all")}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                  className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
                     colFilterSegment === "all"
                       ? "bg-indigo-600 text-white shadow-xs"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                      : "bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
                   }`}
                 >
-                  Svi segmenti ({supplierTransactions.length})
+                  Svi ({supplierTransactions.length})
                 </button>
                 {distinctSegments.map((seg) => {
                   const count = supplierTransactions.filter((c) => (c.segment || "").trim() === seg).length;
@@ -336,31 +322,31 @@ export function SupplierDetailModal({
                     <button
                       key={seg}
                       onClick={() => setColFilterSegment(colFilterSegment === seg ? "all" : seg)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                      className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
                         colFilterSegment === seg
                           ? "bg-indigo-600 text-white shadow-xs scale-102"
-                          : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                          : "bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
                       }`}
                     >
                       <span>{seg}</span>
-                      <span className="text-[10px] opacity-75 font-mono">({count})</span>
+                      <span className="opacity-75 font-mono">({count})</span>
                     </button>
                   );
                 })}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* Tabela transakcija sa kolonskim filterima */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs">
-            <div className="p-3.5 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex flex-wrap justify-between items-center gap-3">
+          {/* Tabela transakcija sa kolonskim filterima - JEDINI SKROLABILNI DIO */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs flex-1 min-h-0 flex flex-col">
+            <div className="p-2.5 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex flex-wrap justify-between items-center gap-2 shrink-0">
               <div className="flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-indigo-600" />
-                <h4 className="font-extrabold text-slate-900 dark:text-white">
-                  Spisak Računa i Popravki ({filteredData.length.toLocaleString("bs-BA")} / {supplierTransactions.length.toLocaleString("bs-BA")})
+                <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+                <h4 className="font-extrabold text-slate-900 dark:text-white text-xs">
+                  Spisak Računa ({filteredData.length.toLocaleString("bs-BA")} / {supplierTransactions.length.toLocaleString("bs-BA")})
                 </h4>
                 {isAnyFilterActive && (
-                  <span className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-[9px] bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                     <Sparkles className="w-3 h-3" /> Filtrirano ({formatKM(filteredTotalCost)})
                   </span>
                 )}
@@ -370,16 +356,16 @@ export function SupplierDetailModal({
                 {isAnyFilterActive && (
                   <button
                     onClick={resetAllFilters}
-                    className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg font-black text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                    className="px-2.5 py-0.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg font-black text-[11px] flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
                   >
-                    <FilterX className="w-3.5 h-3.5" /> Poništi sve filtere
+                    <FilterX className="w-3 h-3" /> Poništi
                   </button>
                 )}
                 <button
                   onClick={() => exportTransactionsToExcel(filteredData, `Dobavljac_${supplierName}.xlsx`)}
-                  className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                  className="px-2.5 py-0.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-[11px] flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
                 >
-                  <Download className="w-3.5 h-3.5" /> Izvoz
+                  <Download className="w-3 h-3" /> Izvoz
                 </button>
               </div>
             </div>
@@ -388,7 +374,7 @@ export function SupplierDetailModal({
             <div
               ref={containerRef}
               onScroll={handleScroll}
-              className="overflow-x-auto overflow-y-auto max-h-[420px] scroll-smooth"
+              className="overflow-x-auto overflow-y-auto flex-1 min-h-0 scroll-smooth"
             >
               <table className="min-w-full text-xs text-left">
                 <thead className="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700 sticky top-0 z-20 shadow-xs">

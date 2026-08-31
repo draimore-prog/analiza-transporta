@@ -264,7 +264,7 @@ export function WarehouseRepairs({
           <div
             ref={containerRef}
             onScroll={handleScroll}
-            className="overflow-x-auto overflow-y-auto min-h-[560px] max-h-[calc(100vh-250px)] scroll-smooth"
+            className="overflow-x-auto overflow-y-auto min-h-[380px] max-h-[calc(100vh-310px)] scroll-smooth"
           >
             <table className="min-w-full text-xs text-left">
               <thead className="bg-slate-100 dark:bg-slate-900 sticky top-0 font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 z-20 shadow-xs">

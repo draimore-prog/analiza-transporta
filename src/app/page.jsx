@@ -227,6 +227,32 @@ function DashboardContent() {
     setActiveTab(4);
   }, [setActiveTab]);
 
+  // Zaključavanje pozadinskog skrola kada je bilo koji modal otvoren
+  const isAnyModalOpen = Boolean(
+    vehicleModalReg ||
+    isNewCostOpen ||
+    isNewVehicleOpen ||
+    editingVehicle ||
+    isAdminPanelOpen ||
+    isPasswordModalOpen ||
+    editingRole ||
+    editingUser ||
+    intExtModalTarget ||
+    supplierModalTarget ||
+    segmentModalTarget
+  );
+
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isAnyModalOpen]);
+
   // Čekanje inicijalizacije autentifikacije
   if (!isAuthReady) {
     return (
@@ -296,7 +322,7 @@ function DashboardContent() {
         />
 
         {/* Skrolabilni Body Dashboarda - 100% širina */}
-        <main className="flex-1 overflow-y-auto w-full p-4 sm:p-6 lg:p-8 space-y-6">
+        <main className="flex-1 overflow-y-auto w-full p-3 sm:p-5 lg:p-6 space-y-4">
           {portalMode === "transport" ? (
             /* Glavni Transport Tabovi */
             <>

@@ -345,11 +345,11 @@ export function VehicleCardModal({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 bg-slate-900/80 flex justify-center items-center z-[70] backdrop-blur-xs p-4 cursor-pointer print:p-0 print:bg-white"
+      className="fixed inset-0 bg-slate-900/80 flex justify-center items-center z-[70] backdrop-blur-xs p-3 sm:p-5 cursor-pointer print:p-0 print:bg-white"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 cursor-default print:border-none print:shadow-none print:max-h-none print:w-full print:rounded-none"
+        className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-5xl h-[92vh] max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 cursor-default print:border-none print:shadow-none print:h-auto print:max-h-none print:w-full print:rounded-none"
       >
         {/* Print Only Header */}
         <div className="hidden print:block p-4 border-b-2 border-slate-800 mb-4">
@@ -374,14 +374,14 @@ export function VehicleCardModal({
         </div>
 
         {/* Header Modala */}
-        <div className="p-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white flex justify-between items-start print:bg-slate-100 print:text-slate-900 print:p-4 print:rounded-lg print:border print:border-slate-300">
+        <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white flex justify-between items-start print:bg-slate-100 print:text-slate-900 print:p-4 print:rounded-lg print:border print:border-slate-300">
           <div>
             <div className="flex items-center gap-3">
-              <span className="p-2.5 bg-white/10 rounded-2xl border border-white/20 text-2xl print:hidden">
+              <span className="p-2 bg-white/10 rounded-xl border border-white/20 text-xl print:hidden">
                 🚛
               </span>
               <div>
-                <h3 className="text-2xl font-black tracking-tight flex items-center gap-2 print:text-xl">
+                <h3 className="text-xl font-black tracking-tight flex items-center gap-2 print:text-lg">
                   <span>{vehicleInfo.reg}</span>
                   <span className="text-xs bg-indigo-500/40 text-indigo-200 border border-indigo-400/50 px-2.5 py-0.5 rounded-full font-mono print:border-slate-400 print:text-slate-800 print:bg-slate-200">
                     GB: {vehicleInfo.garazniBroj || "-"}
@@ -390,7 +390,7 @@ export function VehicleCardModal({
                     {vehicleInfo.status || "Aktivno"}
                   </span>
                 </h3>
-                <p className="text-xs text-indigo-200 mt-1 print:text-slate-700 font-semibold">
+                <p className="text-xs text-indigo-200 mt-0.5 print:text-slate-700 font-semibold">
                   {vehicleInfo.markaVoz} {vehicleInfo.modelVoz} • {vehicleInfo.tipMehan} • Godište: {vehicleInfo.godProizvodnje}
                 </p>
               </div>
@@ -426,15 +426,15 @@ export function VehicleCardModal({
           </div>
         </div>
 
-        {/* Sadržaj */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-slate-50 dark:bg-slate-900/50 text-xs print:p-0 print:space-y-4 print:bg-white print:overflow-visible">
+        {/* Sadržaj Modala - Nema outer scrollbar, baza je fiksna */}
+        <div className="p-4 sm:p-5 flex flex-col flex-1 min-h-0 overflow-hidden space-y-3.5 bg-slate-50 dark:bg-slate-900/50 text-xs print:p-0 print:space-y-4 print:bg-white print:overflow-visible">
           {/* Statistika */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 print:grid-cols-3">
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs print:border-slate-300 print:p-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 print:grid-cols-3 shrink-0">
+            <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs print:border-slate-300">
               <span className="text-[10px] uppercase font-bold text-slate-400 print:text-slate-600 block">
                 Ukupno Uloženo u Održavanje
               </span>
-              <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5 block print:text-slate-900 print:text-lg">
+              <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 mt-0.5 block print:text-slate-900">
                 {formatKM(totalCost)}
               </span>
               {isAnyFilterActive && (
@@ -443,11 +443,11 @@ export function VehicleCardModal({
                 </span>
               )}
             </div>
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs print:border-slate-300 print:p-3">
+            <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs print:border-slate-300">
               <span className="text-[10px] uppercase font-bold text-slate-400 print:text-slate-600 block">
                 Broj Evidentiranih Servisa
               </span>
-              <span className="text-xl font-black text-blue-600 dark:text-blue-400 mt-0.5 block print:text-slate-900 print:text-lg">
+              <span className="text-lg font-black text-blue-600 dark:text-blue-400 mt-0.5 block print:text-slate-900">
                 {history.length.toLocaleString("bs-BA")} naloga
               </span>
               {isAnyFilterActive && (
@@ -456,7 +456,7 @@ export function VehicleCardModal({
                 </span>
               )}
             </div>
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs print:border-slate-300 print:p-3">
+            <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs print:border-slate-300">
               <span className="text-[10px] uppercase font-bold text-slate-400 print:text-slate-600 block">
                 Broj Šasije (VIN)
               </span>
@@ -467,11 +467,11 @@ export function VehicleCardModal({
           </div>
 
           {/* DVA INTERAKTIVNA GRAFIKONA SA KLIKOM ZA CROSS-FILTERING */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 print:hidden">
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
-              <div className="flex justify-between items-center mb-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 print:hidden shrink-0">
+            <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
+              <div className="flex justify-between items-center mb-1">
                 <span className="text-[11px] font-extrabold uppercase text-slate-500 flex items-center gap-1.5">
-                  <BarChart2 className="w-4 h-4 text-indigo-600" /> Utrošak po Godinama (Klik za filter)
+                  <BarChart2 className="w-3.5 h-3.5 text-indigo-600" /> Utrošak po Godinama (Klik za filter)
                 </span>
                 {selectedYearFilter !== "all" && (
                   <button
@@ -482,15 +482,15 @@ export function VehicleCardModal({
                   </button>
                 )}
               </div>
-              <div className="h-[140px] w-full relative">
+              <div className="h-[105px] w-full relative">
                 <canvas ref={chartYearRef} />
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
-              <div className="flex justify-between items-center mb-2">
+            <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
+              <div className="flex justify-between items-center mb-1">
                 <span className="text-[11px] font-extrabold uppercase text-slate-500 flex items-center gap-1.5">
-                  <BarChart2 className="w-4 h-4 text-sky-500" /> Utrošak po Mjesecima (Klik za filter)
+                  <BarChart2 className="w-3.5 h-3.5 text-sky-500" /> Utrošak po Mjesecima (Klik za filter)
                 </span>
                 {selectedMonthFilter !== "all" && (
                   <button
@@ -502,15 +502,15 @@ export function VehicleCardModal({
                   </button>
                 )}
               </div>
-              <div className="h-[140px] w-full relative">
+              <div className="h-[105px] w-full relative">
                 <canvas ref={chartMonthRef} />
               </div>
             </div>
           </div>
 
-          {/* Tabela historije servisa sa ugrađenim in-table filterima */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs print:border-slate-300 print:rounded-none">
-            <div className="p-3.5 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex flex-wrap justify-between items-center gap-2 print:bg-slate-100">
+          {/* Tabela historije servisa sa ugrađenim in-table filterima - JEDINI SKROLABILNI DIO */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs print:border-slate-300 print:rounded-none flex-1 min-h-0 flex flex-col">
+            <div className="p-3 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex flex-wrap justify-between items-center gap-2 print:bg-slate-100 shrink-0">
               <div className="flex items-center gap-2">
                 <h4 className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5 print:text-slate-900">
                   <Wrench className="w-4 h-4 text-blue-600 print:hidden" /> Hronološki Pregled Svih Servisa & Računa ({filteredHistory.length} / {history.length})
@@ -532,7 +532,7 @@ export function VehicleCardModal({
               )}
             </div>
 
-            <div className="overflow-x-auto max-h-[350px] print:max-h-none print:overflow-visible">
+            <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 print:max-h-none print:overflow-visible">
               <table className="min-w-full text-xs text-left">
                 <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700 sticky top-0 print:bg-slate-100 print:text-slate-900 z-10 shadow-xs">
                   {/* 1. RED */}
