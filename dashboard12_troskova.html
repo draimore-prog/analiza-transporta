@@ -2462,6 +2462,264 @@
                 console.warn("Notice setting up active user listener:", e);
             }
         }
+        
+        // ================= FIRESTORE ROLES & NAVIGATION PERMISSIONS CONTROLLER =================
+        const DEFAULT_APP_ROLES = {
+            superadmin: {
+                roleId: 'superadmin',
+                roleName: 'Super Administrator',
+                roleIcon: '👑',
+                roleBadge: '👑 Super Administrator',
+                description: 'Potpuni pristup svim ograncima (Glavni Transport, Skladišna Mehanizacija, Serviser), administraciji korisnika i Firestore ulogama.',
+                defaultPortal: 'transport',
+                allowedPortals: ['transport', 'warehouse', 'serviser'],
+                navigationPanels: [
+                    { id: 'tab1', name: 'Pregled Flote & KPI', portal: 'transport', icon: '📊', tabId: 1 },
+                    { id: 'tab2', name: 'Analiza Održavanja', portal: 'transport', icon: '📈', tabId: 2 },
+                    { id: 'tab3', name: 'YoY Komparacija', portal: 'transport', icon: '🔄', tabId: 3 },
+                    { id: 'tab4', name: 'Tabela Servisa', portal: 'transport', icon: '🔧', tabId: 4 },
+                    { id: 'tab5', name: 'Matična baza podataka', portal: 'transport', icon: '🚛', tabId: 5 },
+                    { id: 'wh1', name: 'Analitika & Finansije', portal: 'warehouse', icon: '📊', tabId: 1 },
+                    { id: 'wh2', name: 'Šifrarnik Flote (594)', portal: 'warehouse', icon: '🚜', tabId: 2 },
+                    { id: 'wh3', name: 'Pregled Svih Opravki', portal: 'warehouse', icon: '🔧', tabId: 3 },
+                    { id: 'wh4', name: 'Segmenti & Dijelovi', portal: 'warehouse', icon: '⚡', tabId: 4 },
+                    { id: 'wh5', name: 'Serviseri & Dobavljači', portal: 'warehouse', icon: '🏢', tabId: 5 },
+                    { id: 'serviserSearch', name: 'Karton Vozila / Pretraga', portal: 'serviser', icon: '🔍', tabId: 1 }
+                ],
+                permissions: {
+                    canUploadExcel: true,
+                    canInputCost: true,
+                    canRegisterVehicle: true,
+                    canAccessAdminPanel: true,
+                    canSwitchPortal: true,
+                    canExportExcel: true,
+                    canEditCost: true,
+                    canDeleteCost: true
+                }
+            },
+            warehouse_specialist: {
+                roleId: 'warehouse_specialist',
+                roleName: 'Specijalist skladišne mehanizacije',
+                roleIcon: '🏗️',
+                roleBadge: '🏗️ Specijalist skladišne mehanizacije',
+                description: 'Namjenski pristup isključivo ogranku za Skladišnu Mehanizaciju (viljuškari, paletari, analitika, opravke, baterije, serviseri).',
+                defaultPortal: 'warehouse',
+                allowedPortals: ['warehouse'],
+                navigationPanels: [
+                    { id: 'wh1', name: 'Analitika & Finansije', portal: 'warehouse', icon: '📊', tabId: 1 },
+                    { id: 'wh2', name: 'Šifrarnik Flote (594)', portal: 'warehouse', icon: '🚜', tabId: 2 },
+                    { id: 'wh3', name: 'Pregled Svih Opravki', portal: 'warehouse', icon: '🔧', tabId: 3 },
+                    { id: 'wh4', name: 'Segmenti & Dijelovi', portal: 'warehouse', icon: '⚡', tabId: 4 },
+                    { id: 'wh5', name: 'Serviseri & Dobavljači', portal: 'warehouse', icon: '🏢', tabId: 5 }
+                ],
+                permissions: {
+                    canUploadExcel: false,
+                    canInputCost: false,
+                    canRegisterVehicle: false,
+                    canAccessAdminPanel: false,
+                    canSwitchPortal: false,
+                    canExportExcel: true,
+                    canEditCost: false,
+                    canDeleteCost: false
+                }
+            },
+            editor: {
+                roleId: 'editor',
+                roleName: 'Admin (Unos faktura)',
+                roleIcon: '✍️',
+                roleBadge: '✍️ Admin (Unos faktura)',
+                description: 'Pristup Glavnom Transportnom portalu sa pravima unosa troškova, upload-a Excel evidencija i registracije vozila.',
+                defaultPortal: 'transport',
+                allowedPortals: ['transport'],
+                navigationPanels: [
+                    { id: 'tab1', name: 'Pregled Flote & KPI', portal: 'transport', icon: '📊', tabId: 1 },
+                    { id: 'tab2', name: 'Analiza Održavanja', portal: 'transport', icon: '📈', tabId: 2 },
+                    { id: 'tab3', name: 'YoY Komparacija', portal: 'transport', icon: '🔄', tabId: 3 },
+                    { id: 'tab4', name: 'Tabela Servisa', portal: 'transport', icon: '🔧', tabId: 4 },
+                    { id: 'tab5', name: 'Matična baza podataka', portal: 'transport', icon: '🚛', tabId: 5 }
+                ],
+                permissions: {
+                    canUploadExcel: true,
+                    canInputCost: true,
+                    canRegisterVehicle: true,
+                    canAccessAdminPanel: false,
+                    canSwitchPortal: false,
+                    canExportExcel: true,
+                    canEditCost: true,
+                    canDeleteCost: false
+                }
+            },
+            viewer: {
+                roleId: 'viewer',
+                roleName: 'Analitičar (Samo pregled)',
+                roleIcon: '📊',
+                roleBadge: '📊 Analitičar (Samo pregled)',
+                description: 'Pristup Glavnom Transportnom portalu u režimu samo za čitanje i analizu (bez mogućnosti unosa i brisanja).',
+                defaultPortal: 'transport',
+                allowedPortals: ['transport'],
+                navigationPanels: [
+                    { id: 'tab1', name: 'Pregled Flote & KPI', portal: 'transport', icon: '📊', tabId: 1 },
+                    { id: 'tab2', name: 'Analiza Održavanja', portal: 'transport', icon: '📈', tabId: 2 },
+                    { id: 'tab3', name: 'YoY Komparacija', portal: 'transport', icon: '🔄', tabId: 3 },
+                    { id: 'tab4', name: 'Tabela Servisa', portal: 'transport', icon: '🔧', tabId: 4 },
+                    { id: 'tab5', name: 'Matična baza podataka', portal: 'transport', icon: '🚛', tabId: 5 }
+                ],
+                permissions: {
+                    canUploadExcel: false,
+                    canInputCost: false,
+                    canRegisterVehicle: false,
+                    canAccessAdminPanel: false,
+                    canSwitchPortal: false,
+                    canExportExcel: true,
+                    canEditCost: false,
+                    canDeleteCost: false
+                }
+            },
+            serviser: {
+                roleId: 'serviser',
+                roleName: 'Serviser (Karton vozila)',
+                roleIcon: '🔧',
+                roleBadge: '🔧 Serviser',
+                description: 'Namjenski pristup isključivo pretrazi kartona i servisne historije pojedinačnih motornih vozila.',
+                defaultPortal: 'serviser',
+                allowedPortals: ['serviser'],
+                navigationPanels: [
+                    { id: 'serviserSearch', name: 'Karton Vozila / Pretraga', portal: 'serviser', icon: '🔍', tabId: 1 }
+                ],
+                permissions: {
+                    canUploadExcel: false,
+                    canInputCost: false,
+                    canRegisterVehicle: false,
+                    canAccessAdminPanel: false,
+                    canSwitchPortal: false,
+                    canExportExcel: false,
+                    canEditCost: false,
+                    canDeleteCost: false
+                }
+            }
+        };
+
+        let rolesDB = JSON.parse(JSON.stringify(DEFAULT_APP_ROLES));
+
+        async function syncFirestoreRoles() {
+            if (!window.db) return;
+            try {
+                let snapshot = await window.db.collection('app_roles').get();
+                if (!snapshot.empty) {
+                    snapshot.forEach(doc => {
+                        let rData = doc.data();
+                        let rId = doc.id;
+                        if (rData) {
+                            rolesDB[rId] = { ...DEFAULT_APP_ROLES[rId], ...rData, roleId: rId };
+                        }
+                    });
+                    console.log("🔥 Firestore app_roles loaded successfully:", Object.keys(rolesDB));
+                } else {
+                    // Seed Firestore app_roles if empty
+                    await seedAllFirestoreRoles();
+                }
+                renderRolesTable();
+            } catch (err) {
+                console.warn("Notice syncing Firestore roles:", err);
+            }
+        }
+
+        async function seedAllFirestoreRoles() {
+            if (!window.db) return;
+            try {
+                const batch = window.db.batch();
+                Object.keys(DEFAULT_APP_ROLES).forEach(rId => {
+                    const docRef = window.db.collection('app_roles').doc(rId);
+                    batch.set(docRef, DEFAULT_APP_ROLES[rId], { merge: true });
+                });
+                await batch.commit();
+                console.log("✅ Seeded all app_roles into Firestore collection 'app_roles'");
+            } catch (err) {
+                console.error("Error seeding app_roles:", err);
+            }
+        }
+
+        async function reseedFirestoreRoles(btn) {
+            if (btn) btn.innerText = "Sinhronizujem...";
+            await seedAllFirestoreRoles();
+            await syncFirestoreRoles();
+            if (btn) btn.innerText = "✅ Sinhronizovano!";
+            setTimeout(() => { if (btn) btn.innerText = "🔄 Sinhronizuj / Resetuj Uloge u Firebase"; }, 2500);
+            alert("Kolekcija 'app_roles' na Firestore-u je uspješno sinhronizovana i osvježena!");
+        }
+
+        function switchAdminPanelTab(tab) {
+            const btnUsers = document.getElementById('adminTabBtnUsers');
+            const btnRoles = document.getElementById('adminTabBtnRoles');
+            const secUsers = document.getElementById('adminSectionUsers');
+            const secRoles = document.getElementById('adminSectionRoles');
+            if (tab === 'users') {
+                btnUsers.className = "px-4 py-2 text-xs font-bold border-b-2 border-indigo-600 text-indigo-600 flex items-center gap-1.5 transition-colors";
+                btnRoles.className = "px-4 py-2 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition-colors";
+                secUsers.classList.remove('hidden');
+                secRoles.classList.add('hidden');
+            } else {
+                btnRoles.className = "px-4 py-2 text-xs font-bold border-b-2 border-indigo-600 text-indigo-600 flex items-center gap-1.5 transition-colors";
+                btnUsers.className = "px-4 py-2 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition-colors";
+                secRoles.classList.remove('hidden');
+                secUsers.classList.add('hidden');
+                renderRolesTable();
+            }
+        }
+
+        function renderRolesTable() {
+            const container = document.getElementById('adminRolesCardsContainer');
+            if (!container) return;
+            let html = [];
+            Object.keys(rolesDB).forEach(rKey => {
+                let role = rolesDB[rKey] || DEFAULT_APP_ROLES[rKey];
+                let panelsHTML = (role.navigationPanels || []).map(p => {
+                    let badgeClass = p.portal === 'warehouse' ? 'bg-amber-100 text-amber-900 border-amber-300' : (p.portal === 'serviser' ? 'bg-slate-100 text-slate-800 border-slate-300' : 'bg-blue-100 text-blue-900 border-blue-300');
+                    return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${badgeClass}">${p.icon || '📌'} ${p.name}</span>`;
+                }).join(' ');
+
+                let perms = role.permissions || {};
+                let permBadges = [
+                    perms.canUploadExcel ? '<span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-200">✅ Excel Upload</span>' : '<span class="text-slate-400 bg-slate-50 px-2 py-0.5 rounded text-[10px] font-medium">❌ Excel Upload</span>',
+                    perms.canInputCost ? '<span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-200">✅ Unos Troška</span>' : '<span class="text-slate-400 bg-slate-50 px-2 py-0.5 rounded text-[10px] font-medium">❌ Unos Troška</span>',
+                    perms.canRegisterVehicle ? '<span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-200">✅ Registracija Vozila</span>' : '<span class="text-slate-400 bg-slate-50 px-2 py-0.5 rounded text-[10px] font-medium">❌ Registracija Vozila</span>',
+                    perms.canAccessAdminPanel ? '<span class="text-purple-700 bg-purple-50 px-2 py-0.5 rounded text-[10px] font-bold border border-purple-200">✅ Admin Panel</span>' : '<span class="text-slate-400 bg-slate-50 px-2 py-0.5 rounded text-[10px] font-medium">❌ Admin Panel</span>',
+                    perms.canSwitchPortal ? '<span class="text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-[10px] font-bold border border-amber-200">✅ Portal Switcher</span>' : '<span class="text-slate-400 bg-slate-50 px-2 py-0.5 rounded text-[10px] font-medium">❌ Portal Switcher</span>',
+                    perms.canExportExcel ? '<span class="text-blue-700 bg-blue-50 px-2 py-0.5 rounded text-[10px] font-bold border border-blue-200">✅ Excel Export</span>' : '<span class="text-slate-400 bg-slate-50 px-2 py-0.5 rounded text-[10px] font-medium">❌ Excel Export</span>'
+                ].join(' ');
+
+                html.push(`
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-300 transition-all">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-100">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">${role.roleIcon || '🛡️'}</span>
+                                <div>
+                                    <h4 class="font-extrabold text-sm text-slate-900">${role.roleName} <code class="text-[11px] font-mono text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded font-normal">id: ${role.roleId}</code></h4>
+                                    <p class="text-xs text-slate-500 mt-0.5">${role.description || '-'}</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full uppercase tracking-wider">Default: ${role.defaultPortal}</span>
+                        </div>
+                        
+                        <!-- Navigacijski Paneli -->
+                        <div class="mt-3">
+                            <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5">Dozvoljeni Navigacijski Paneli / Tabovi:</p>
+                            <div class="flex flex-wrap gap-1.5">
+                                ${panelsHTML}
+                            </div>
+                        </div>
+
+                        <!-- Dozvole / Permisije -->
+                        <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap gap-1.5 items-center">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mr-2">Prava:</span>
+                            ${permBadges}
+                        </div>
+                    </div>
+                `);
+            });
+            container.innerHTML = html.join('');
+        }
+
         // ================= AUTHENTICATION & USER MANAGEMENT (V19) =================
         const LOCAL_STORAGE_USERS_KEY = 'transport_app_users_v20';
         const SESSION_ACTIVE_USER_KEY = 'transport_app_active_user';
@@ -2510,6 +2768,7 @@
             }
             updateAuthUI();
             setTimeout(syncFirestoreUsers, 100);
+            setTimeout(syncFirestoreRoles, 200);
             setTimeout(initFirebaseAuthListener, 150);
         }
         function resetAuthCredentials(skipConfirm = false) {
