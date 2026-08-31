@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { exportMasterFleetToExcel } from "@/lib/exportExcel.js";
-import { Download, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import { Download, RotateCcw, ArrowDown as ScrollDown, CheckCircle2, Loader2 } from "lucide-react";
 
 export function WarehouseFleet({
   warehouseMasterFleet,
@@ -11,8 +11,14 @@ export function WarehouseFleet({
   const [statusFilter, setStatusFilter] = useState("Aktivno");
   const [brandFilter, setBrandFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 50;
+
+  const [visibleCount, setVisibleCount] = useState(60);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const containerRef = useRef(null);
+  const sentinelRef = useRef(null);
+
+  const BATCH_SIZE = 60;
 
   // Unikatne marke
   const distinctBrands = useMemo(() => {
@@ -47,10 +53,55 @@ export function WarehouseFleet({
     });
   }, [warehouseMasterFleet, statusFilter, brandFilter, searchTerm]);
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
-  const safePage = Math.min(Math.max(currentPage, 1), totalPages);
-  const startIdx = (safePage - 1) * itemsPerPage;
-  const pageItems = filteredData.slice(startIdx, startIdx + itemsPerPage);
+  useEffect(() => {
+    setVisibleCount(BATCH_SIZE);
+  }, [statusFilter, brandFilter, searchTerm]);
+
+  const visibleItems = useMemo(() => {
+    return filteredData.slice(0, visibleCount);
+  }, [filteredData, visibleCount]);
+
+  const hasMore = visibleCount < filteredData.length;
+
+  const loadMore = useCallback(() => {
+    if (!hasMore || isLoadingMore) return;
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((prev) => Math.min(prev + BATCH_SIZE, filteredData.length));
+      setIsLoadingMore(false);
+    }, 150);
+  }, [hasMore, isLoadingMore, filteredData.length]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+          loadMore();
+        }
+      },
+      {
+        root: containerRef.current,
+        rootMargin: "300px",
+        threshold: 0.1
+      }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingMore, loadMore]);
+
+  const handleScroll = useCallback(() => {
+    const el = containerRef.current;
+    if (!el || !hasMore || isLoadingMore) return;
+
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 400;
+    if (nearBottom) {
+      loadMore();
+    }
+  }, [hasMore, isLoadingMore, loadMore]);
 
   return (
     <div className="space-y-6">
@@ -61,7 +112,7 @@ export function WarehouseFleet({
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
               <span>🚜</span> Šifrarnik Skladišne Mehanizacije
               <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 font-bold px-2.5 py-0.5 rounded-full">
-                {filteredData.length} jedinica
+                {visibleItems.length} / {filteredData.length} jedinica
               </span>
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -75,7 +126,7 @@ export function WarehouseFleet({
                 setStatusFilter("Aktivno");
                 setBrandFilter("all");
                 setSearchTerm("");
-                setCurrentPage(1);
+                setVisibleCount(BATCH_SIZE);
               }}
               className="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1"
             >
@@ -98,10 +149,7 @@ export function WarehouseFleet({
             </label>
             <select
               value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => setStatusFilter(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-xs font-bold text-slate-800 dark:text-white outline-none"
             >
               <option value="Aktivno">🟢 Aktivne Mašine (594)</option>
@@ -117,10 +165,7 @@ export function WarehouseFleet({
             </label>
             <select
               value={brandFilter}
-              onChange={(e) => {
-                setBrandFilter(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => setBrandFilter(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-xs font-bold text-slate-800 dark:text-white outline-none"
             >
               <option value="all">Sve marke viljuškara</option>
@@ -139,10 +184,7 @@ export function WarehouseFleet({
             <input
               type="text"
               value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="🔍 Pretraži po oznaci, serijskom broju..."
               className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-xs font-bold text-slate-800 dark:text-white outline-none"
             />
@@ -150,11 +192,15 @@ export function WarehouseFleet({
         </div>
       </div>
 
-      {/* Tabela */}
+      {/* Tabela sa Inkrementalnim Skrolom */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto max-h-[600px]">
+        <div
+          ref={containerRef}
+          onScroll={handleScroll}
+          className="overflow-x-auto overflow-y-auto max-h-[620px] scroll-smooth"
+        >
           <table className="min-w-full text-xs text-left">
-            <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
+            <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10 shadow-xs">
               <tr>
                 <th className="p-3 text-center">R.b.</th>
                 <th className="p-3">Garažni Br.</th>
@@ -167,9 +213,9 @@ export function WarehouseFleet({
                 <th className="p-3 text-center">Karton</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-              {pageItems.length > 0 ? (
-                pageItems.map((v, idx) => {
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50 bg-white dark:bg-slate-900">
+              {visibleItems.length > 0 ? (
+                visibleItems.map((v, idx) => {
                   const st = v.status || "Aktivno";
                   let stClass = "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300";
                   if (st === "Prodato") {
@@ -184,7 +230,7 @@ export function WarehouseFleet({
                       className="hover:bg-amber-50/40 dark:hover:bg-slate-700/50 border-b border-slate-100 dark:border-slate-700/50 transition-colors"
                     >
                       <td className="p-3 text-center font-mono text-slate-500 text-xs">
-                        {startIdx + idx + 1}
+                        {idx + 1}
                       </td>
                       <td className="p-3 font-mono font-bold text-slate-800 dark:text-slate-200">
                         {v.garazniBroj || "-"}
@@ -232,28 +278,47 @@ export function WarehouseFleet({
               )}
             </tbody>
           </table>
+
+          {/* Sentinel element za automatski infinite scroll */}
+          <div ref={sentinelRef} className="h-4 w-full" />
         </div>
 
-        {/* Paginacija */}
-        <div className="p-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center text-xs">
-          <span className="text-slate-500 font-medium">
-            Prikazano {pageItems.length > 0 ? startIdx + 1 : 0} - {Math.min(startIdx + itemsPerPage, filteredData.length)} od {filteredData.length} mašina (Stranica {safePage} od {totalPages})
-          </span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-              disabled={safePage <= 1}
-              className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md font-bold hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 cursor-pointer flex items-center gap-1"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" /> Prethodna
-            </button>
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-              disabled={safePage >= totalPages}
-              className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md font-bold hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 cursor-pointer flex items-center gap-1"
-            >
-              Sljedeća <ChevronRight className="w-3.5 h-3.5" />
-            </button>
+        {/* Traka statusa inkrementalnog učitavanja */}
+        <div className="p-3 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-center text-xs gap-3">
+          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+            <span className="font-bold text-slate-900 dark:text-white">
+              Prikazano: {visibleItems.length.toLocaleString("bs-BA")} od {filteredData.length.toLocaleString("bs-BA")} mašina
+            </span>
+            <span className="text-[11px] text-slate-400">
+              ({((visibleItems.length / (filteredData.length || 1)) * 100).toFixed(0)}%)
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {hasMore ? (
+              <button
+                onClick={loadMore}
+                disabled={isLoadingMore}
+                className="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-slate-950 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isLoadingMore ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Učitavam starije mašine...</span>
+                  </>
+                ) : (
+                  <>
+                    <ScrollDown className="w-3.5 h-3.5" />
+                    <span>Učitaj još {BATCH_SIZE} mašina</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-extrabold">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Sva skladišna mehanizacija je uspješno učitana</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
