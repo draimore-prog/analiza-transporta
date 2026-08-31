@@ -472,7 +472,206 @@
             </form>
         </div>
     </div>
-    <!-- ================= MODAL ZA UNOS NOVOG TROŠKA / SERVISNOG NALOGA ================= -->
+
+    <!-- ================= MODAL ZA DINAMIČKO UREĐIVANJE ULOGA I PRAVA (FIRESTORE app_roles) ================= -->
+    <div id="editRoleModal" class="fixed inset-0 bg-slate-900/80 hidden flex justify-center items-center z-[70] backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-100">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white">
+                <div class="flex items-center gap-3">
+                    <span id="editRoleModalIcon" class="text-3xl">🛡️</span>
+                    <div>
+                        <h3 class="text-lg font-extrabold tracking-tight flex items-center gap-2">
+                            <span>Uređivanje Uloge & Prava: <span id="editRoleModalTitle" class="text-amber-400">Uloga</span></span>
+                        </h3>
+                        <p class="text-xs text-indigo-200 mt-0.5">Dinamičko podešavanje navigacijskih panela i akcija na Firestore bazi</p>
+                    </div>
+                </div>
+                <button onclick="closeEditRoleModal()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-lg w-9 h-9 flex items-center justify-center text-2xl font-light transition-colors cursor-pointer">&times;</button>
+            </div>
+            
+            <form onsubmit="handleSaveRolePermissions(event)" class="p-6 overflow-y-auto space-y-5 text-xs flex-1 bg-slate-50">
+                <input type="hidden" id="editRoleId">
+                
+                <!-- Osnovne informacije o ulozi -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="sm:col-span-2">
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Naziv Uloge</label>
+                        <input type="text" id="editRoleName" required class="w-full border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Ikonica (Emoji)</label>
+                        <input type="text" id="editRoleIcon" required class="w-full border border-slate-300 rounded-lg p-2.5 font-bold text-center outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Opis Uloge</label>
+                        <input type="text" id="editRoleDesc" required class="w-full border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Default Portal</label>
+                        <select id="editRoleDefaultPortal" class="w-full border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                            <option value="transport">🚛 Glavni Transport</option>
+                            <option value="warehouse">🏗️ Skladišna Mehanizacija</option>
+                            <option value="serviser">🔧 Serviser (Karton)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Dozvoljeni Navigacijski Paneli / Tabovi -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                        <h4 class="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
+                            <span>📑 Dozvoljeni Navigacijski Paneli & Tabovi</span>
+                        </h4>
+                        <span class="text-[10px] text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded">Odaberite tabove vidljive ovoj ulozi</span>
+                    </div>
+
+                    <!-- Transport Tabovi -->
+                    <div>
+                        <p class="text-[10px] font-extrabold text-blue-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">🚛 Glavni Transportni Portal:</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                <input type="checkbox" id="panel_tab1" class="rounded text-indigo-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">📊 Tab 1: Pregled Flote & KPI</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                <input type="checkbox" id="panel_tab2" class="rounded text-indigo-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">📈 Tab 2: Analiza Održavanja</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                <input type="checkbox" id="panel_tab3" class="rounded text-indigo-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">🔄 Tab 3: YoY Komparacija</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                <input type="checkbox" id="panel_tab4" class="rounded text-indigo-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">🔧 Tab 4: Tabela Servisa</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer sm:col-span-2">
+                                <input type="checkbox" id="panel_tab5" class="rounded text-indigo-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">🚛 Tab 5: Matična baza podataka voznog parka (938)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Skladišna Mehanizacija Tabovi -->
+                    <div class="pt-2 border-t border-slate-100">
+                        <p class="text-[10px] font-extrabold text-amber-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">🏗️ Skladišna Mehanizacija:</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                <input type="checkbox" id="panel_wh1" class="rounded text-amber-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">📊 Tab 1: Analitika & Finansije</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                <input type="checkbox" id="panel_wh2" class="rounded text-amber-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">🚜 Tab 2: Šifrarnik Flote (594)</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                <input type="checkbox" id="panel_wh3" class="rounded text-amber-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">🔧 Tab 3: Pregled Svih Opravki</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                <input type="checkbox" id="panel_wh4" class="rounded text-amber-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">⚡ Tab 4: Segmenti & Dijelovi</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer sm:col-span-2">
+                                <input type="checkbox" id="panel_wh5" class="rounded text-amber-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">🏢 Tab 5: Serviseri & Dobavljači</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Serviser Tab -->
+                    <div class="pt-2 border-t border-slate-100">
+                        <p class="text-[10px] font-extrabold text-slate-600 uppercase tracking-wider mb-1.5 flex items-center gap-1">🔧 Servisna Radionica:</p>
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="panel_serviserSearch" class="rounded text-indigo-600 w-4 h-4">
+                            <span class="font-bold text-slate-800">🔍 Karton Vozila (Pretraga historije opravki)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Akcijske Dozvole & Permisije -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                        <h4 class="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
+                            <span>⚡ Akcijska Prava & Permisije</span>
+                        </h4>
+                        <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded">Prava izmjena i unosa</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="perm_canUploadExcel" class="rounded text-indigo-600 w-4 h-4">
+                            <div>
+                                <span class="font-bold text-slate-800 block">📥 Excel Upload</span>
+                                <span class="text-[10px] text-slate-500">Mogućnost uvoza Excel evidencija</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="perm_canInputCost" class="rounded text-indigo-600 w-4 h-4">
+                            <div>
+                                <span class="font-bold text-slate-800 block">➕ Unos Troška</span>
+                                <span class="text-[10px] text-slate-500">Ručni unos naloga i popravki</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="perm_canRegisterVehicle" class="rounded text-indigo-600 w-4 h-4">
+                            <div>
+                                <span class="font-bold text-slate-800 block">🚛 Registracija Vozila</span>
+                                <span class="text-[10px] text-slate-500">Unos novog vozila u bazu</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="perm_canAccessAdminPanel" class="rounded text-indigo-600 w-4 h-4">
+                            <div>
+                                <span class="font-bold text-slate-800 block">⚙️ Pristup Admin Panelu</span>
+                                <span class="text-[10px] text-slate-500">Upravljanje nalozima i ulogama</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="perm_canSwitchPortal" class="rounded text-indigo-600 w-4 h-4">
+                            <div>
+                                <span class="font-bold text-slate-800 block">🔄 Portal Switcher</span>
+                                <span class="text-[10px] text-slate-500">Prebacivanje Transport / Skladište</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="perm_canExportExcel" class="rounded text-indigo-600 w-4 h-4">
+                            <div>
+                                <span class="font-bold text-slate-800 block">📊 Excel Export</span>
+                                <span class="text-[10px] text-slate-500">Preuzimanje tabela u XLSX</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="perm_canEditCost" class="rounded text-indigo-600 w-4 h-4">
+                            <div>
+                                <span class="font-bold text-slate-800 block">✏️ Uređivanje Troškova</span>
+                                <span class="text-[10px] text-slate-500">Izmjena unesenih servisa</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="perm_canDeleteCost" class="rounded text-indigo-600 w-4 h-4">
+                            <div>
+                                <span class="font-bold text-slate-800 block">🗑️ Brisanje Troškova</span>
+                                <span class="text-[10px] text-slate-500">Uklanjanje stavki iz baze</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pt-3 flex justify-end gap-2 border-t border-slate-200">
+                    <button type="button" onclick="closeEditRoleModal()" class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all cursor-pointer">
+                        Odustani
+                    </button>
+                    <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer">
+                        <span>💾 Sačuvaj Dozvole u Firebase</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+        <!-- ================= MODAL ZA UNOS NOVOG TROŠKA / SERVISNOG NALOGA ================= -->
     <div id="newCostModal" class="fixed inset-0 bg-slate-900/70 hidden flex justify-center items-center z-50 backdrop-blur-sm p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-100">
             <div class="flex justify-between items-center p-5 bg-gradient-to-r from-emerald-800 to-teal-900 text-white">
@@ -2704,6 +2903,118 @@
             }
         }
 
+        
+        const ALL_AVAILABLE_PANELS = [
+            { id: 'tab1', name: 'Pregled Flote & KPI', portal: 'transport', icon: '📊', tabId: 1 },
+            { id: 'tab2', name: 'Analiza Održavanja', portal: 'transport', icon: '📈', tabId: 2 },
+            { id: 'tab3', name: 'YoY Komparacija', portal: 'transport', icon: '🔄', tabId: 3 },
+            { id: 'tab4', name: 'Tabela Servisa', portal: 'transport', icon: '🔧', tabId: 4 },
+            { id: 'tab5', name: 'Matična baza podataka', portal: 'transport', icon: '🚛', tabId: 5 },
+            { id: 'wh1', name: 'Analitika & Finansije', portal: 'warehouse', icon: '📊', tabId: 1 },
+            { id: 'wh2', name: 'Šifrarnik Flote (594)', portal: 'warehouse', icon: '🚜', tabId: 2 },
+            { id: 'wh3', name: 'Pregled Svih Opravki', portal: 'warehouse', icon: '🔧', tabId: 3 },
+            { id: 'wh4', name: 'Segmenti & Dijelovi', portal: 'warehouse', icon: '⚡', tabId: 4 },
+            { id: 'wh5', name: 'Serviseri & Dobavljači', portal: 'warehouse', icon: '🏢', tabId: 5 },
+            { id: 'serviserSearch', name: 'Karton Vozila / Pretraga', portal: 'serviser', icon: '🔍', tabId: 1 }
+        ];
+
+        function openEditRoleModal(roleId) {
+            let role = rolesDB[roleId] || DEFAULT_APP_ROLES[roleId];
+            if (!role) return;
+
+            document.getElementById('editRoleId').value = roleId;
+            document.getElementById('editRoleName').value = role.roleName || '';
+            document.getElementById('editRoleIcon').value = role.roleIcon || '🛡️';
+            document.getElementById('editRoleDesc').value = role.description || '';
+            document.getElementById('editRoleDefaultPortal').value = role.defaultPortal || 'transport';
+
+            document.getElementById('editRoleModalIcon').innerText = role.roleIcon || '🛡️';
+            document.getElementById('editRoleModalTitle').innerText = role.roleName || roleId;
+
+            // Check panel checkboxes
+            let activePanelIds = new Set((role.navigationPanels || []).map(p => p.id));
+            ALL_AVAILABLE_PANELS.forEach(p => {
+                let cb = document.getElementById('panel_' + p.id);
+                if (cb) cb.checked = activePanelIds.has(p.id);
+            });
+
+            // Check permission checkboxes
+            let perms = role.permissions || {};
+            ['canUploadExcel', 'canInputCost', 'canRegisterVehicle', 'canAccessAdminPanel', 'canSwitchPortal', 'canExportExcel', 'canEditCost', 'canDeleteCost'].forEach(k => {
+                let cb = document.getElementById('perm_' + k);
+                if (cb) cb.checked = !!perms[k];
+            });
+
+            document.getElementById('editRoleModal').classList.remove('hidden');
+        }
+
+        function closeEditRoleModal() {
+            document.getElementById('editRoleModal').classList.add('hidden');
+        }
+
+        async function handleSaveRolePermissions(e) {
+            e.preventDefault();
+            let roleId = document.getElementById('editRoleId').value;
+            if (!roleId) return;
+
+            let updatedRole = {
+                ...(rolesDB[roleId] || DEFAULT_APP_ROLES[roleId] || {}),
+                roleId: roleId,
+                roleName: document.getElementById('editRoleName').value.trim(),
+                roleIcon: document.getElementById('editRoleIcon').value.trim(),
+                roleBadge: (document.getElementById('editRoleIcon').value.trim() + ' ' + document.getElementById('editRoleName').value.trim()),
+                description: document.getElementById('editRoleDesc').value.trim(),
+                defaultPortal: document.getElementById('editRoleDefaultPortal').value,
+                allowedPortals: [],
+                navigationPanels: [],
+                permissions: {}
+            };
+
+            // Gather selected panels
+            let allowedPortalsSet = new Set();
+            ALL_AVAILABLE_PANELS.forEach(p => {
+                let cb = document.getElementById('panel_' + p.id);
+                if (cb && cb.checked) {
+                    updatedRole.navigationPanels.push(p);
+                    allowedPortalsSet.add(p.portal);
+                }
+            });
+            updatedRole.allowedPortals = Array.from(allowedPortalsSet);
+            if (updatedRole.allowedPortals.length === 0) {
+                updatedRole.allowedPortals.push(updatedRole.defaultPortal);
+            }
+
+            // Gather permissions
+            ['canUploadExcel', 'canInputCost', 'canRegisterVehicle', 'canAccessAdminPanel', 'canSwitchPortal', 'canExportExcel', 'canEditCost', 'canDeleteCost'].forEach(k => {
+                let cb = document.getElementById('perm_' + k);
+                updatedRole.permissions[k] = cb ? cb.checked : false;
+            });
+
+            // Update in-memory DB
+            rolesDB[roleId] = updatedRole;
+
+            // Save to Firestore app_roles collection
+            if (window.db) {
+                try {
+                    await window.db.collection('app_roles').doc(roleId).set(updatedRole, { merge: true });
+                    console.log("🔥 Firestore app_roles updated successfully for:", roleId);
+                } catch(err) {
+                    console.error("Error saving role to Firestore:", err);
+                    alert("Greška pri snimanju na Firebase: " + err.message);
+                    return;
+                }
+            }
+
+            renderRolesTable();
+            closeEditRoleModal();
+            alert(`Uloga "${updatedRole.roleName}" i njena prava pristupa su uspješno ažurirani i sačuvani na Firestore bazi!`);
+
+            // If active user has this role, refresh UI immediately
+            if (activeUser && activeUser.role === roleId) {
+                updateAuthUI();
+            }
+        }
+
         function renderRolesTable() {
             const container = document.getElementById('adminRolesCardsContainer');
             if (!container) return;
@@ -2729,13 +3040,18 @@
                     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-300 transition-all">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-100">
                             <div class="flex items-center gap-3">
-                                <span class="text-2xl">${role.roleIcon || '🛡️'}</span>
+                                <span class="text-3xl p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">${role.roleIcon || '🛡️'}</span>
                                 <div>
-                                    <h4 class="font-extrabold text-sm text-slate-900">${role.roleName} <code class="text-[11px] font-mono text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded font-normal">id: ${role.roleId}</code></h4>
-                                    <p class="text-xs text-slate-500 mt-0.5">${role.description || '-'}</p>
+                                    <h4 class="font-extrabold text-sm text-slate-900 dark:text-white">${role.roleName} <code class="text-[11px] font-mono text-indigo-600 bg-indigo-50 dark:bg-indigo-900/50 dark:text-indigo-300 px-2 py-0.5 rounded font-bold">id: ${role.roleId}</code></h4>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${role.description || '-'}</p>
                                 </div>
                             </div>
-                            <span class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full uppercase tracking-wider">Default: ${role.defaultPortal}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[11px] font-extrabold text-slate-600 bg-slate-100 dark:bg-slate-700 dark:text-slate-300 px-3 py-1 rounded-full uppercase tracking-wider">Default: ${role.defaultPortal}</span>
+                                <button onclick="openEditRoleModal('${role.roleId}')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-3 py-1.5 rounded-lg text-xs transition-all shadow-sm flex items-center gap-1 cursor-pointer">
+                                    <span>✏️ Uredi Dozvole</span>
+                                </button>
+                            </div>
                         </div>
                         
                         <!-- Navigacijski Paneli -->
