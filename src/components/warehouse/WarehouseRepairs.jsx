@@ -502,6 +502,5 @@ export function WarehouseRepairs({
           </div>
         </div>
       </div>
-    </div>
   );
 }

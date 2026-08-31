@@ -549,6 +549,5 @@ export function ServiceTable({
           </div>
         </div>
       </div>
-    </div>
   );
 }
