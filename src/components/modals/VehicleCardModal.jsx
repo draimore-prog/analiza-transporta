@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useRef, useEffect } from "react";
+import ChartJS from "@/lib/chartSetup.js";
 import { formatDate, formatKM } from "@/lib/calculations.js";
-import { X, Printer, Wrench } from "lucide-react";
+import { X, Printer, Wrench, BarChart2 } from "lucide-react";
 
 export function VehicleCardModal({
   isOpen,
@@ -11,9 +12,12 @@ export function VehicleCardModal({
   masterFleet,
   costData
 }) {
-  if (!isOpen || !reg) return null;
+  const chartYearRef = useRef(null);
+  const chartMonthRef = useRef(null);
+  const chartInstances = useRef({});
 
   const vehicleInfo = useMemo(() => {
+    if (!reg) return null;
     return masterFleet.find((v) => v.reg.toUpperCase() === reg.toUpperCase()) || {
       reg: reg,
       garazniBroj: "-",
@@ -28,12 +32,13 @@ export function VehicleCardModal({
 
   // Sva historija servisa za ovo vozilo
   const history = useMemo(() => {
+    if (!reg) return [];
     return costData
       .filter((c) => (c.reg || "").trim().toUpperCase() === reg.toUpperCase())
       .sort((a, b) => (b.datumObj?.getTime() || 0) - (a.datumObj?.getTime() || 0));
   }, [costData, reg]);
 
-  // Ukupan trošak za čitav vijek trajanja
+  // Ukupan trošak
   const totalCost = useMemo(() => {
     return history.reduce((acc, c) => acc + (c.cost || 0), 0);
   }, [history]);
@@ -46,6 +51,97 @@ export function VehicleCardModal({
     });
     return Array.from(map.entries()).sort((a, b) => b[0] - a[0]);
   }, [history]);
+
+  // Crtanje grafikona unutar kartona
+  useEffect(() => {
+    if (!isOpen || !reg) return;
+
+    // 1. Godišnji troškovi
+    if (chartYearRef.current) {
+      if (chartInstances.current.year) chartInstances.current.year.destroy();
+      const years = [2021, 2022, 2023, 2024, 2025, 2026];
+      const yearValues = years.map((y) => {
+        const found = yearlyStats.find(([yr]) => yr === y);
+        return found ? found[1] : 0;
+      });
+
+      chartInstances.current.year = new ChartJS(chartYearRef.current.getContext("2d"), {
+        type: "bar",
+        data: {
+          labels: years.map((y) => y.toString()),
+          datasets: [{
+            label: "Godišnji utrošak (KM)",
+            data: yearValues,
+            backgroundColor: "#4f46e5",
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` Utrošak: ${formatKM(ctx.raw)}`
+              }
+            }
+          },
+          scales: {
+            y: { beginAtZero: true },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    // 2. Mjesečni troškovi
+    if (chartMonthRef.current) {
+      if (chartInstances.current.month) chartInstances.current.month.destroy();
+      const monthTotals = Array(12).fill(0);
+      history.forEach((c) => {
+        const m = c.month || (c.datumObj ? c.datumObj.getMonth() + 1 : null);
+        if (m && m >= 1 && m <= 12) {
+          monthTotals[m - 1] += c.cost || 0;
+        }
+      });
+
+      chartInstances.current.month = new ChartJS(chartMonthRef.current.getContext("2d"), {
+        type: "bar",
+        data: {
+          labels: ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"],
+          datasets: [{
+            label: "Mjesečni utrošak (KM)",
+            data: monthTotals,
+            backgroundColor: "#0ea5e9",
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` Utrošak: ${formatKM(ctx.raw)}`
+              }
+            }
+          },
+          scales: {
+            y: { beginAtZero: true },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    return () => {
+      Object.values(chartInstances.current).forEach((inst) => inst?.destroy());
+    };
+  }, [isOpen, reg, history, yearlyStats]);
+
+  if (!isOpen || !reg || !vehicleInfo) return null;
 
   const handlePrint = () => {
     window.print();
@@ -119,20 +215,26 @@ export function VehicleCardModal({
             </div>
           </div>
 
-          {/* Trošak po godinama */}
-          {yearlyStats.length > 0 && (
+          {/* DVA GRAFIKONA ZA KARTON VOZILA */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block mb-2">Utrošak po Godinama:</span>
-              <div className="flex flex-wrap gap-2">
-                {yearlyStats.map(([y, cost]) => (
-                  <div key={y} className="bg-slate-100 dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                    <span className="font-bold text-slate-600 dark:text-slate-400 mr-1.5">{y}:</span>
-                    <strong className="text-slate-900 dark:text-white">{formatKM(cost)}</strong>
-                  </div>
-                ))}
+              <span className="text-[11px] font-extrabold uppercase text-slate-500 mb-2 flex items-center gap-1.5">
+                <BarChart2 className="w-4 h-4 text-indigo-600" /> Utrošak po Godinama
+              </span>
+              <div className="h-[140px] w-full relative">
+                <canvas ref={chartYearRef} />
               </div>
             </div>
-          )}
+
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
+              <span className="text-[11px] font-extrabold uppercase text-slate-500 mb-2 flex items-center gap-1.5">
+                <BarChart2 className="w-4 h-4 text-sky-500" /> Utrošak po Mjesecima
+              </span>
+              <div className="h-[140px] w-full relative">
+                <canvas ref={chartMonthRef} />
+              </div>
+            </div>
+          </div>
 
           {/* Tabela historije servisa */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs">

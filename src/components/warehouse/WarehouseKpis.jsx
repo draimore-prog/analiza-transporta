@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useRef, useEffect } from "react";
+import ChartJS from "@/lib/chartSetup.js";
 import { formatKM } from "@/lib/calculations.js";
-import { Boxes, DollarSign, Calendar, Wrench } from "lucide-react";
+import { Boxes, DollarSign, Calendar, Wrench, Layers, Building2 } from "lucide-react";
 
 export function WarehouseKpis({
   warehouseMasterFleet,
@@ -11,6 +12,10 @@ export function WarehouseKpis({
   onOpenFleetTab,
   onOpenVehicleModal
 }) {
+  const segCanvasRef = useRef(null);
+  const supCanvasRef = useRef(null);
+  const chartInstances = useRef({});
+
   // Aktivne mašine
   const activeCount = useMemo(() => {
     return warehouseMasterFleet.filter((v) => {
@@ -59,6 +64,86 @@ export function WarehouseKpis({
       };
     });
   }, [warehouseCostData, warehouseMasterFleet]);
+
+  // Crtanje skladišnih grafikona
+  useEffect(() => {
+    // 1. Segmenti skladišta
+    if (segCanvasRef.current) {
+      if (chartInstances.current.seg) chartInstances.current.seg.destroy();
+      const segMap = new Map();
+      warehouseCostData.forEach((c) => {
+        const seg = c.segment || "Ostalo";
+        segMap.set(seg, (segMap.get(seg) || 0) + (c.cost || 0));
+      });
+      const sortedSegs = Array.from(segMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 6);
+      const colors = ["#f59e0b", "#3b82f6", "#10b981", "#ef4444", "#8b5cf6", "#64748b"];
+
+      chartInstances.current.seg = new ChartJS(segCanvasRef.current.getContext("2d"), {
+        type: "doughnut",
+        data: {
+          labels: sortedSegs.map((s) => s[0]),
+          datasets: [{
+            data: sortedSegs.map((s) => s[1]),
+            backgroundColor: colors.slice(0, sortedSegs.length),
+            borderWidth: 2,
+            borderColor: document.documentElement.classList.contains("dark") ? "#1e293b" : "#ffffff"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "right", labels: { font: { weight: "bold", size: 10 } } },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${ctx.label}: ${formatKM(ctx.raw)}`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 2. Serviseri mehanizacije
+    if (supCanvasRef.current) {
+      if (chartInstances.current.sup) chartInstances.current.sup.destroy();
+      const supMap = new Map();
+      warehouseCostData.forEach((c) => {
+        const sup = (c.dobavljacOrig || c.dobavljac || "Vlastita Radionica").trim();
+        supMap.set(sup, (supMap.get(sup) || 0) + (c.cost || 0));
+      });
+      const sortedSups = Array.from(supMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 6);
+
+      chartInstances.current.sup = new ChartJS(supCanvasRef.current.getContext("2d"), {
+        type: "bar",
+        data: {
+          labels: sortedSups.map((s) => s[0]),
+          datasets: [{
+            label: "Trošak (KM)",
+            data: sortedSups.map((s) => s[1]),
+            backgroundColor: "#f59e0b",
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` Iznos: ${formatKM(ctx.raw)}`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    return () => {
+      Object.values(chartInstances.current).forEach((inst) => inst?.destroy());
+    };
+  }, [warehouseCostData]);
 
   return (
     <div className="space-y-6">
@@ -140,6 +225,27 @@ export function WarehouseKpis({
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">
             Zamjene baterija, točkova, servisi
           </p>
+        </div>
+      </div>
+
+      {/* DVA GRAFIKONA ZA SKLADIŠNU MEHANIZACIJU */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
+          <h4 className="text-sm font-extrabold text-slate-900 dark:text-white mb-3 flex items-center gap-1.5">
+            <Layers className="w-4 h-4 text-amber-500" /> Raspodjela Troškova po Segmentima
+          </h4>
+          <div className="h-[260px] w-full relative flex items-center justify-center">
+            <canvas ref={segCanvasRef} />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
+          <h4 className="text-sm font-extrabold text-slate-900 dark:text-white mb-3 flex items-center gap-1.5">
+            <Building2 className="w-4 h-4 text-amber-600" /> Glavni Partneri i Serviseri
+          </h4>
+          <div className="h-[260px] w-full relative">
+            <canvas ref={supCanvasRef} />
+          </div>
         </div>
       </div>
 

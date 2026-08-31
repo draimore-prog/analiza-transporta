@@ -1,19 +1,41 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useRef, useEffect, useState } from "react";
+import ChartJS from "@/lib/chartSetup.js";
 import { calculateFleetByYear, calculateDynamic2026, formatKM } from "@/lib/calculations.js";
-import { Truck, DollarSign, Calendar, TrendingDown } from "lucide-react";
+import { Truck, DollarSign, Calendar, TrendingDown, Layers, Building2, BarChart2 } from "lucide-react";
 
 export function TransportKpis({
   masterFleet,
   costData,
   onSelectYear,
-  onOpenFleetTab
+  onOpenFleetTab,
+  onOpenVehicleModal
 }) {
   const dynamic2026 = useMemo(() => calculateDynamic2026(masterFleet), [masterFleet]);
   const fleetByYear = useMemo(() => calculateFleetByYear(masterFleet), [masterFleet]);
 
-  // Izračun troškova po godinama
+  // Stanje filtera unutar Tab 1
+  const [selectedYearFilter, setSelectedYearFilter] = useState("all");
+  const [trendMode, setTrendMode] = useState("yoy"); // 'yoy', 'monthly'
+
+  // Canvas ref-ovi
+  const trendCanvasRef = useRef(null);
+  const intExtCanvasRef = useRef(null);
+  const vehiclesCanvasRef = useRef(null);
+  const segmentsCanvasRef = useRef(null);
+  const suppliersCanvasRef = useRef(null);
+
+  // Instanca chartova
+  const chartInstances = useRef({});
+
+  // Filtrirani podaci za Tab 1
+  const filteredCostData = useMemo(() => {
+    if (selectedYearFilter === "all") return costData;
+    return costData.filter((c) => c.year === parseInt(selectedYearFilter));
+  }, [costData, selectedYearFilter]);
+
+  // Godišnje statistike
   const yearlyStats = useMemo(() => {
     const years = [2021, 2022, 2023, 2024, 2025, 2026];
     const stats = {};
@@ -35,6 +57,270 @@ export function TransportKpis({
 
   const cost2026 = yearlyStats[2026]?.cost || 0;
   const avgCostPerUnit2026 = dynamic2026.total > 0 ? cost2026 / dynamic2026.total : 0;
+
+  // Crtanje svih 5 grafikona
+  useEffect(() => {
+    // 1. Trend Grafikon
+    if (trendCanvasRef.current) {
+      if (chartInstances.current.trend) chartInstances.current.trend.destroy();
+      const ctx = trendCanvasRef.current.getContext("2d");
+
+      if (trendMode === "yoy" || selectedYearFilter === "all") {
+        const years = [2021, 2022, 2023, 2024, 2025, 2026];
+        const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+        
+        const datasets = years.map((y, idx) => {
+          const monthData = Array(12).fill(0);
+          costData.forEach((c) => {
+            if (c.year === y) {
+              const m = c.month || (c.datumObj ? c.datumObj.getMonth() + 1 : null);
+              if (m && m >= 1 && m <= 12) {
+                monthData[m - 1] += c.cost || 0;
+              }
+            }
+          });
+          return {
+            label: `${y}. godina`,
+            data: monthData,
+            borderColor: colors[idx % colors.length],
+            backgroundColor: "transparent",
+            tension: 0.3,
+            borderWidth: 2.5
+          };
+        });
+
+        chartInstances.current.trend = new ChartJS(ctx, {
+          type: "line",
+          data: {
+            labels: ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"],
+            datasets
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: "bottom", labels: { font: { size: 11, weight: "bold" } } },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => ` ${ctx.dataset.label}: ${formatKM(ctx.raw)}`
+                }
+              }
+            }
+          }
+        });
+      } else {
+        // Mjesečni trend za odabranu godinu (Interno vs Eksterno)
+        const monthInterno = Array(12).fill(0);
+        const monthEksterno = Array(12).fill(0);
+
+        filteredCostData.forEach((c) => {
+          const m = c.month || (c.datumObj ? c.datumObj.getMonth() + 1 : null);
+          if (m && m >= 1 && m <= 12) {
+            const isInt = (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("bingo") || (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("vlastit");
+            if (isInt) monthInterno[m - 1] += c.cost || 0;
+            else monthEksterno[m - 1] += c.cost || 0;
+          }
+        });
+
+        chartInstances.current.trend = new ChartJS(ctx, {
+          type: "bar",
+          data: {
+            labels: ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"],
+            datasets: [
+              { label: "Interno Održavanje", data: monthInterno, backgroundColor: "#2563eb", borderRadius: 4 },
+              { label: "Eksterno Održavanje", data: monthEksterno, backgroundColor: "#f59e0b", borderRadius: 4 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { x: { stacked: true }, y: { stacked: true } },
+            plugins: {
+              legend: { position: "bottom" },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => ` ${ctx.dataset.label}: ${formatKM(ctx.raw)}`
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // 2. Interno vs Eksterno Doughnut
+    if (intExtCanvasRef.current) {
+      if (chartInstances.current.intExt) chartInstances.current.intExt.destroy();
+      const ctx = intExtCanvasRef.current.getContext("2d");
+
+      let intCost = 0, extCost = 0;
+      filteredCostData.forEach((c) => {
+        const isInt = (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("bingo") || (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("vlastit");
+        if (isInt) intCost += c.cost || 0;
+        else extCost += c.cost || 0;
+      });
+
+      const total = intCost + extCost;
+      const intPerc = total > 0 ? ((intCost / total) * 100).toFixed(1) : "0";
+      const extPerc = total > 0 ? ((extCost / total) * 100).toFixed(1) : "0";
+
+      chartInstances.current.intExt = new ChartJS(ctx, {
+        type: "doughnut",
+        data: {
+          labels: [`Interno (${intPerc}%)`, `Eksterno (${extPerc}%)`],
+          datasets: [{
+            data: [intCost, extCost],
+            backgroundColor: ["#2563eb", "#f59e0b"],
+            borderWidth: 2,
+            borderColor: document.documentElement.classList.contains("dark") ? "#1e293b" : "#ffffff"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "bottom", labels: { font: { weight: "bold", size: 11 } } },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${ctx.label}: ${formatKM(ctx.raw)}`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 3. Top 10 Vozila po Trošku
+    if (vehiclesCanvasRef.current) {
+      if (chartInstances.current.vehicles) chartInstances.current.vehicles.destroy();
+      const ctx = vehiclesCanvasRef.current.getContext("2d");
+
+      const vehMap = new Map();
+      filteredCostData.forEach((c) => {
+        const reg = (c.reg || "").trim().toUpperCase();
+        if (reg && reg !== "-") {
+          vehMap.set(reg, (vehMap.get(reg) || 0) + (c.cost || 0));
+        }
+      });
+
+      const sortedVehicles = Array.from(vehMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+      chartInstances.current.vehicles = new ChartJS(ctx, {
+        type: "bar",
+        data: {
+          labels: sortedVehicles.map((v) => v[0]),
+          datasets: [{
+            label: "Trošak (KM)",
+            data: sortedVehicles.map((v) => v[1]),
+            backgroundColor: "#ef4444",
+            borderRadius: 4
+          }]
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` Trošak: ${formatKM(ctx.raw)}`
+              }
+            }
+          },
+          onClick: (e, els, ch) => {
+            if (els.length > 0 && onOpenVehicleModal) {
+              const clickedReg = ch.data.labels[els[0].index];
+              onOpenVehicleModal(clickedReg);
+            }
+          }
+        }
+      });
+    }
+
+    // 4. Segmenti Doughnut
+    if (segmentsCanvasRef.current) {
+      if (chartInstances.current.segments) chartInstances.current.segments.destroy();
+      const ctx = segmentsCanvasRef.current.getContext("2d");
+
+      const segMap = new Map();
+      filteredCostData.forEach((c) => {
+        const seg = c.segment || "Ostalo";
+        segMap.set(seg, (segMap.get(seg) || 0) + (c.cost || 0));
+      });
+
+      const sortedSegs = Array.from(segMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 7);
+      const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#64748b"];
+
+      chartInstances.current.segments = new ChartJS(ctx, {
+        type: "doughnut",
+        data: {
+          labels: sortedSegs.map((s) => s[0]),
+          datasets: [{
+            data: sortedSegs.map((s) => s[1]),
+            backgroundColor: colors.slice(0, sortedSegs.length),
+            borderWidth: 2,
+            borderColor: document.documentElement.classList.contains("dark") ? "#1e293b" : "#ffffff"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "right", labels: { font: { weight: "bold", size: 10 } } },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${ctx.label}: ${formatKM(ctx.raw)}`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 5. Top Dobavljači / Serviseri
+    if (suppliersCanvasRef.current) {
+      if (chartInstances.current.suppliers) chartInstances.current.suppliers.destroy();
+      const ctx = suppliersCanvasRef.current.getContext("2d");
+
+      const supMap = new Map();
+      filteredCostData.forEach((c) => {
+        const sup = (c.dobavljacOrig || c.dobavljac || "Vlastita Radionica").trim();
+        supMap.set(sup, (supMap.get(sup) || 0) + (c.cost || 0));
+      });
+
+      const sortedSups = Array.from(supMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 7);
+
+      chartInstances.current.suppliers = new ChartJS(ctx, {
+        type: "bar",
+        data: {
+          labels: sortedSups.map((s) => s[0]),
+          datasets: [{
+            label: "Ukupan iznos popravki (KM)",
+            data: sortedSups.map((s) => s[1]),
+            backgroundColor: "#6366f1",
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` Iznos: ${formatKM(ctx.raw)}`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    return () => {
+      Object.values(chartInstances.current).forEach((inst) => inst?.destroy());
+    };
+  }, [filteredCostData, trendMode, selectedYearFilter, onOpenVehicleModal]);
 
   return (
     <div className="space-y-6">
@@ -116,6 +402,116 @@ export function TransportKpis({
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">
             Na bazi {dynamic2026.total} aktivnih jedinica
           </p>
+        </div>
+      </div>
+
+      {/* FILTER TRAKA ZA GRAFIKONE */}
+      <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-wrap justify-between items-center gap-3">
+        <div className="flex items-center gap-2">
+          <BarChart2 className="w-5 h-5 text-blue-600" />
+          <span className="font-extrabold text-sm text-slate-900 dark:text-white">
+            Interaktivni Analitički Grafikoni
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div>
+            <label className="text-[10px] font-bold uppercase text-slate-400 mr-2">Godina:</label>
+            <select
+              value={selectedYearFilter}
+              onChange={(e) => setSelectedYearFilter(e.target.value)}
+              className="text-xs border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-1.5 font-bold bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white outline-none"
+            >
+              <option value="all">Sve godine (2021-2026)</option>
+              <option value="2026">2026. godina</option>
+              <option value="2025">2025. godina</option>
+              <option value="2024">2024. godina</option>
+              <option value="2023">2023. godina</option>
+              <option value="2022">2022. godina</option>
+              <option value="2021">2021. godina</option>
+            </select>
+          </div>
+
+          <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold">
+            <button
+              onClick={() => setTrendMode("yoy")}
+              className={`px-3 py-1 rounded-md transition-all ${
+                trendMode === "yoy" ? "bg-white dark:bg-slate-800 text-blue-600 shadow-xs font-black" : "text-slate-500"
+              }`}
+            >
+              YoY Trend
+            </button>
+            <button
+              onClick={() => setTrendMode("monthly")}
+              className={`px-3 py-1 rounded-md transition-all ${
+                trendMode === "monthly" ? "bg-white dark:bg-slate-800 text-blue-600 shadow-xs font-black" : "text-slate-500"
+              }`}
+            >
+              Interno / Eksterno
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* GLAVNI RED GRAFIKONA: Trend + Interno vs Eksterno */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Trend grafik (2 kolone) */}
+        <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
+          <h4 className="text-sm font-extrabold text-slate-900 dark:text-white mb-3 flex items-center justify-between">
+            <span>📈 Mjesečna Dinamika Troškova</span>
+            <span className="text-[10px] text-slate-400 font-mono">Chart.js</span>
+          </h4>
+          <div className="h-[280px] w-full relative">
+            <canvas ref={trendCanvasRef} />
+          </div>
+        </div>
+
+        {/* Interno vs Eksterno (1 kolona) */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
+          <h4 className="text-sm font-extrabold text-slate-900 dark:text-white mb-3">
+            ⚖️ Interno vs Eksterno Održavanje
+          </h4>
+          <div className="h-[280px] w-full relative flex items-center justify-center">
+            <canvas ref={intExtCanvasRef} />
+          </div>
+        </div>
+      </div>
+
+      {/* DRUGI RED GRAFIKONA: Top 10 Vozila + Segmenti + Dobavljači */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Top 10 Vozila (Horizontal Bar) */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <Truck className="w-4 h-4 text-red-500" /> Top 10 Vozila po Trošku
+            </h4>
+            <span className="text-[10px] text-indigo-500 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded font-bold">
+              Klik na bar otvara karton
+            </span>
+          </div>
+          <div className="h-[280px] w-full relative">
+            <canvas ref={vehiclesCanvasRef} />
+          </div>
+        </div>
+
+        {/* Segmenti Doughnut */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
+          <h4 className="text-sm font-extrabold text-slate-900 dark:text-white mb-3 flex items-center gap-1.5">
+            <Layers className="w-4 h-4 text-blue-500" /> Trošak po Segmentima
+          </h4>
+          <div className="h-[280px] w-full relative flex items-center justify-center">
+            <canvas ref={segmentsCanvasRef} />
+          </div>
+        </div>
+
+        {/* Top 7 Dobavljača / Servisera */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
+          <h4 className="text-sm font-extrabold text-slate-900 dark:text-white mb-3 flex items-center gap-1.5">
+            <Building2 className="w-4 h-4 text-indigo-500" /> Top Dobavljači & Serviseri
+          </h4>
+          <div className="h-[280px] w-full relative">
+            <canvas ref={suppliersCanvasRef} />
+          </div>
         </div>
       </div>
 
