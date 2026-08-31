@@ -3,7 +3,18 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { formatDate, formatKM } from "@/lib/calculations.js";
 import { exportTransactionsToExcel } from "@/lib/exportExcel.js";
-import { X, Download, Wrench, ArrowDown as ScrollDown, CheckCircle2, Loader2, RotateCcw, FilterX } from "lucide-react";
+import {
+  X,
+  Download,
+  Wrench,
+  ArrowDown as ScrollDown,
+  CheckCircle2,
+  Loader2,
+  RotateCcw,
+  FilterX,
+  Layers,
+  Sparkles
+} from "lucide-react";
 
 export function IntExtRecapModal({
   isOpen,
@@ -107,6 +118,10 @@ export function IntExtRecapModal({
       return matchYear && matchSegment && matchReg && matchGb && matchSup && matchOpis;
     });
   }, [allTypeTransactions, selectedYear, colFilterSegment, colFilterReg, colFilterGb, colFilterSupplier, colFilterOpis]);
+
+  const filteredTotalCost = useMemo(() => {
+    return filteredData.reduce((acc, c) => acc + (c.cost || 0), 0);
+  }, [filteredData]);
 
   useEffect(() => {
     setVisibleCount(BATCH_SIZE);
@@ -214,7 +229,7 @@ export function IntExtRecapModal({
         </div>
 
         {/* Body Content */}
-        <div className="p-5 overflow-y-auto space-y-5 flex-1 bg-slate-50 dark:bg-slate-900/50 text-xs">
+        <div className="p-5 overflow-y-auto space-y-4 flex-1 bg-slate-50 dark:bg-slate-900/50 text-xs">
           {/* Top 4 KPI Kartice */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs">
@@ -258,11 +273,18 @@ export function IntExtRecapModal({
             </div>
           </div>
 
-          {/* Višegodišnji pregled (2021-2026) */}
+          {/* Višegodišnji pregled (2021-2026) - Klikabilan */}
           <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs">
-            <h4 className="font-extrabold text-slate-900 dark:text-white mb-3 text-xs flex items-center justify-between">
-              <span>📅 Godišnja dinamika ({targetType})</span>
-              <span className="text-[10px] text-slate-400 font-mono">2021 - 2026</span>
+            <h4 className="font-extrabold text-slate-900 dark:text-white mb-2.5 text-xs flex items-center justify-between">
+              <span>📅 Godišnja dinamika ({targetType}) - Klikni za filter</span>
+              {selectedYear !== "all" && (
+                <button
+                  onClick={() => setSelectedYear("all")}
+                  className="text-[10px] text-blue-600 dark:text-blue-400 font-bold hover:underline cursor-pointer flex items-center gap-0.5"
+                >
+                  <FilterX className="w-3 h-3" /> Poništi ({selectedYear}.)
+                </button>
+              )}
             </h4>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
               {[2021, 2022, 2023, 2024, 2025, 2026].map((y) => (
@@ -285,14 +307,67 @@ export function IntExtRecapModal({
             </div>
           </div>
 
+          {/* Interaktivni Klik-Tagovi Segmenta */}
+          {distinctSegments.length > 0 && (
+            <div className="bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <span className="text-[11px] font-extrabold uppercase text-slate-500 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-blue-500" /> Brzi filter po segmentu održavanja:
+                </span>
+                {colFilterSegment !== "all" && (
+                  <button
+                    onClick={() => setColFilterSegment("all")}
+                    className="text-[10px] text-amber-600 font-bold hover:underline cursor-pointer flex items-center gap-0.5"
+                  >
+                    <FilterX className="w-3 h-3" /> Prikaz svih segmenata
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => setColFilterSegment("all")}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                    colFilterSegment === "all"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                  }`}
+                >
+                  Svi segmenti ({allTypeTransactions.length})
+                </button>
+                {distinctSegments.map((seg) => {
+                  const count = allTypeTransactions.filter((c) => (c.segment || "").trim() === seg).length;
+                  return (
+                    <button
+                      key={seg}
+                      onClick={() => setColFilterSegment(colFilterSegment === seg ? "all" : seg)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                        colFilterSegment === seg
+                          ? "bg-blue-600 text-white shadow-xs scale-102"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                      }`}
+                    >
+                      <span>{seg}</span>
+                      <span className="text-[10px] opacity-75 font-mono">({count})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Tabela transakcija sa ugrađenim in-table filterima */}
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs">
             <div className="p-3.5 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex flex-wrap justify-between items-center gap-3">
               <div className="flex items-center gap-2">
                 <Wrench className="w-4 h-4 text-blue-600" />
                 <h4 className="font-extrabold text-slate-900 dark:text-white">
-                  Spisak Servisnih Naloga ({filteredData.length.toLocaleString("bs-BA")})
+                  Spisak Servisnih Naloga ({filteredData.length.toLocaleString("bs-BA")} / {allTypeTransactions.length.toLocaleString("bs-BA")})
                 </h4>
+                {isAnyFilterActive && (
+                  <span className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" /> Filtrirano ({formatKM(filteredTotalCost)})
+                  </span>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
@@ -301,7 +376,7 @@ export function IntExtRecapModal({
                     onClick={resetAllFilters}
                     className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg font-black text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
                   >
-                    <FilterX className="w-3.5 h-3.5" /> Poništi filtere
+                    <FilterX className="w-3.5 h-3.5" /> Poništi sve filtere
                   </button>
                 )}
                 <button
@@ -343,7 +418,7 @@ export function IntExtRecapModal({
                       <select
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1 py-0.5 text-[11px] font-bold outline-none"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1 py-0.5 text-[11px] font-bold outline-none cursor-pointer"
                       >
                         <option value="all">Sve god.</option>
                         {availableYears.map((y) => (
@@ -378,7 +453,7 @@ export function IntExtRecapModal({
                       <select
                         value={colFilterSegment}
                         onChange={(e) => setColFilterSegment(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1 py-0.5 text-[11px] font-bold outline-none"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1 py-0.5 text-[11px] font-bold outline-none cursor-pointer"
                       >
                         <option value="all">Svi segmenti</option>
                         {distinctSegments.map((s) => (
@@ -464,6 +539,18 @@ export function IntExtRecapModal({
                     </tr>
                   )}
                 </tbody>
+                {filteredData.length > 0 && (
+                  <tfoot className="bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700">
+                    <tr>
+                      <td colSpan={7} className="p-2.5 text-right font-black uppercase text-xs">
+                        Zbir prikazanih stavki:
+                      </td>
+                      <td className="p-2.5 text-right font-black text-xs whitespace-nowrap">
+                        {formatKM(filteredTotalCost)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                )}
               </table>
 
               {/* Sentinel element */}

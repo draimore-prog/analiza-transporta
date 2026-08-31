@@ -1,10 +1,20 @@
 "use client";
 
-import React, { useEffect, useRef, useMemo } from "react";
+import React, { useEffect, useRef, useMemo, useState } from "react";
 import { formatKM, formatDate } from "@/lib/calculations.js";
 import { Chart, registerables } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-import { X, Printer, Wrench, BarChart2, Edit3, Building2 } from "lucide-react";
+import {
+  X,
+  Printer,
+  Wrench,
+  BarChart2,
+  Edit3,
+  RotateCcw,
+  FilterX,
+  Calendar,
+  Sparkles
+} from "lucide-react";
 
 Chart.register(...registerables, ChartDataLabels);
 
@@ -22,6 +32,13 @@ export function VehicleCardModal({
   const chartYearInstance = useRef(null);
   const chartMonthInstance = useRef(null);
 
+  // Interaktivni filteri unutar kartona vozila
+  const [selectedYearFilter, setSelectedYearFilter] = useState("all");
+  const [selectedMonthFilter, setSelectedMonthFilter] = useState("all");
+  const [colFilterSegment, setColFilterSegment] = useState("all");
+  const [colFilterOpis, setColFilterOpis] = useState("");
+  const [colFilterSupplier, setColFilterSupplier] = useState("");
+
   // Pronađi osnovne podatke o vozilu
   const vehicleInfo = useMemo(() => {
     if (!reg) return null;
@@ -29,7 +46,9 @@ export function VehicleCardModal({
 
     // 1. Potraži u matičnoj bazi voznog parka
     const inMaster = masterFleet.find(
-      (v) => (v.reg || "").trim().toUpperCase() === cleanReg || (v.garazniBroj && v.garazniBroj.toString().trim() === cleanReg)
+      (v) =>
+        (v.reg || "").trim().toUpperCase() === cleanReg ||
+        (v.garazniBroj && v.garazniBroj.toString().trim() === cleanReg)
     );
     if (inMaster) return inMaster;
 
@@ -74,10 +93,48 @@ export function VehicleCardModal({
       });
   }, [reg, costData]);
 
-  // Ukupno uloženo
+  // Unikatni segmenti za ovo vozilo
+  const distinctSegments = useMemo(() => {
+    return Array.from(new Set(history.map((c) => (c.segment || "").trim()).filter(Boolean))).sort();
+  }, [history]);
+
+  // Filtrirani servisi na osnovu klikova na grafikone ili in-table filtere
+  const filteredHistory = useMemo(() => {
+    const opisTerm = colFilterOpis.trim().toLowerCase();
+    const supTerm = colFilterSupplier.trim().toLowerCase();
+
+    return history.filter((c) => {
+      const matchYear =
+        selectedYearFilter === "all" || c.year === parseInt(selectedYearFilter);
+      const matchMonth =
+        selectedMonthFilter === "all" || c.month === parseInt(selectedMonthFilter);
+      const matchSegment =
+        colFilterSegment === "all" ||
+        (c.segment || "").trim().toLowerCase() === colFilterSegment.toLowerCase();
+
+      const matchOpis =
+        !opisTerm ||
+        (c.opisPopravke && c.opisPopravke.toLowerCase().includes(opisTerm)) ||
+        (c.opisRadova && c.opisRadova.toLowerCase().includes(opisTerm)) ||
+        (c.opis && c.opis.toLowerCase().includes(opisTerm));
+
+      const matchSup =
+        !supTerm ||
+        (c.dobavljacOrig && c.dobavljacOrig.toLowerCase().includes(supTerm)) ||
+        (c.dobavljac && c.dobavljac.toLowerCase().includes(supTerm));
+
+      return matchYear && matchMonth && matchSegment && matchOpis && matchSup;
+    });
+  }, [history, selectedYearFilter, selectedMonthFilter, colFilterSegment, colFilterOpis, colFilterSupplier]);
+
+  // Ukupno uloženo (ukupno i za filtrirane)
   const totalCost = useMemo(() => {
     return history.reduce((sum, item) => sum + (item.cost || 0), 0);
   }, [history]);
+
+  const filteredTotalCost = useMemo(() => {
+    return filteredHistory.reduce((sum, item) => sum + (item.cost || 0), 0);
+  }, [filteredHistory]);
 
   // Podaci po godinama za chart
   const yearlyData = useMemo(() => {
@@ -88,34 +145,57 @@ export function VehicleCardModal({
         .reduce((sum, item) => sum + (item.cost || 0), 0);
       return yearCost;
     });
-    return { labels: years.map((y) => `${y}.`), data };
+    return { labels: years.map((y) => `${y}.`), years, data };
   }, [history]);
 
-  // Podaci po mjesecima za chart (za sve godine zbirno ili po dinamici)
+  // Podaci po mjesecima za chart
   const monthlyData = useMemo(() => {
-    const months = [
+    const monthNames = [
       "Jan", "Feb", "Mar", "Apr", "Maj", "Jun",
       "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"
     ];
     const data = Array(12).fill(0);
 
-    history.forEach((c) => {
+    // Ako je odabrana godina, prikaži mjesece samo za tu godinu, inače zbirno
+    const relevantHistory =
+      selectedYearFilter === "all"
+        ? history
+        : history.filter((c) => c.year === parseInt(selectedYearFilter));
+
+    relevantHistory.forEach((c) => {
       if (c.month >= 1 && c.month <= 12) {
         data[c.month - 1] += c.cost || 0;
       }
     });
 
-    return { labels: months, data };
-  }, [history]);
+    return { labels: monthNames, data };
+  }, [history, selectedYearFilter]);
 
-  // Inicijalizacija grafikona
+  // Resetovanje filtera pri otvaranju novog vozila
+  useEffect(() => {
+    setSelectedYearFilter("all");
+    setSelectedMonthFilter("all");
+    setColFilterSegment("all");
+    setColFilterOpis("");
+    setColFilterSupplier("");
+  }, [reg]);
+
+  // Inicijalizacija i ažuriranje interaktivnih grafikona
   useEffect(() => {
     if (!isOpen || !vehicleInfo) return;
 
-    // Chart po godinama
+    // 1. Chart po godinama sa interaktivnim klikom
     if (chartYearRef.current) {
       if (chartYearInstance.current) chartYearInstance.current.destroy();
       const ctx = chartYearRef.current.getContext("2d");
+
+      // Pozadinske boje - istakni selektovanu godinu
+      const bgColors = yearlyData.years.map((y) => {
+        if (selectedYearFilter === "all") return "rgba(79, 70, 229, 0.85)";
+        return selectedYearFilter === y.toString()
+          ? "rgba(245, 158, 11, 1)" // Amber za odabranu
+          : "rgba(79, 70, 229, 0.25)"; // Izblijedi ostale
+      });
 
       chartYearInstance.current = new Chart(ctx, {
         type: "bar",
@@ -125,21 +205,43 @@ export function VehicleCardModal({
             {
               label: "Trošak (KM)",
               data: yearlyData.data,
-              backgroundColor: "rgba(79, 70, 229, 0.85)",
-              hoverBackgroundColor: "rgba(99, 102, 241, 1)",
-              borderRadius: 6
+              backgroundColor: bgColors,
+              borderColor: yearlyData.years.map((y) =>
+                selectedYearFilter === y.toString() ? "#b45309" : "#4338ca"
+              ),
+              borderWidth: yearlyData.years.map((y) =>
+                selectedYearFilter === y.toString() ? 2 : 0
+              ),
+              borderRadius: 6,
+              hoverBackgroundColor: "rgba(245, 158, 11, 0.9)"
             }
           ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          cursor: "pointer",
+          onClick: (event, elements) => {
+            if (elements && elements.length > 0) {
+              const index = elements[0].index;
+              const clickedYear = yearlyData.years[index].toString();
+              setSelectedYearFilter((prev) => (prev === clickedYear ? "all" : clickedYear));
+            }
+          },
           plugins: {
             legend: { display: false },
+            tooltip: {
+              callbacks: {
+                afterLabel: () => "💡 Klikni za filtriranje tabele"
+              }
+            },
             datalabels: {
               anchor: "end",
               align: "top",
-              color: "#4f46e5",
+              color: (context) => {
+                const y = yearlyData.years[context.dataIndex].toString();
+                return selectedYearFilter === y ? "#b45309" : "#4f46e5";
+              },
               font: { weight: "bold", size: 9 },
               formatter: (value) => (value > 0 ? formatKM(value) : "")
             }
@@ -152,39 +254,52 @@ export function VehicleCardModal({
       });
     }
 
-    // Chart po mjesecima
+    // 2. Chart po mjesecima sa interaktivnim klikom
     if (chartMonthRef.current) {
       if (chartMonthInstance.current) chartMonthInstance.current.destroy();
       const ctx = chartMonthRef.current.getContext("2d");
 
       chartMonthInstance.current = new Chart(ctx, {
-        type: "line",
+        type: "bar",
         data: {
           labels: monthlyData.labels,
           datasets: [
             {
               label: "Mjesečni Utrošak (KM)",
               data: monthlyData.data,
-              borderColor: "rgba(14, 165, 233, 1)",
-              backgroundColor: "rgba(14, 165, 233, 0.15)",
-              borderWidth: 2,
-              fill: true,
-              tension: 0.35,
-              pointBackgroundColor: "rgba(14, 165, 233, 1)",
-              pointRadius: 3
+              backgroundColor: monthlyData.labels.map((_, idx) => {
+                const m = (idx + 1).toString();
+                if (selectedMonthFilter === "all") return "rgba(14, 165, 233, 0.75)";
+                return selectedMonthFilter === m
+                  ? "rgba(16, 185, 129, 1)" // Emerald za odabrani mjesec
+                  : "rgba(14, 165, 233, 0.25)";
+              }),
+              borderRadius: 4
             }
           ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          onClick: (event, elements) => {
+            if (elements && elements.length > 0) {
+              const index = elements[0].index;
+              const clickedMonth = (index + 1).toString();
+              setSelectedMonthFilter((prev) => (prev === clickedMonth ? "all" : clickedMonth));
+            }
+          },
           plugins: {
             legend: { display: false },
+            tooltip: {
+              callbacks: {
+                afterLabel: () => "💡 Klikni za filtriranje tabele"
+              }
+            },
             datalabels: { display: false }
           },
           scales: {
             y: { beginAtZero: true, display: false },
-            x: { grid: { display: false }, ticks: { font: { size: 9 } } }
+            x: { grid: { display: false }, ticks: { font: { size: 9, weight: "bold" } } }
           }
         }
       });
@@ -194,13 +309,33 @@ export function VehicleCardModal({
       if (chartYearInstance.current) chartYearInstance.current.destroy();
       if (chartMonthInstance.current) chartMonthInstance.current.destroy();
     };
-  }, [isOpen, vehicleInfo, yearlyData, monthlyData]);
+  }, [isOpen, vehicleInfo, yearlyData, monthlyData, selectedYearFilter, selectedMonthFilter]);
 
   if (!isOpen || !reg || !vehicleInfo) return null;
 
   const handlePrint = () => {
     window.print();
   };
+
+  const isAnyFilterActive =
+    selectedYearFilter !== "all" ||
+    selectedMonthFilter !== "all" ||
+    colFilterSegment !== "all" ||
+    colFilterOpis !== "" ||
+    colFilterSupplier !== "";
+
+  const resetAllCardFilters = () => {
+    setSelectedYearFilter("all");
+    setSelectedMonthFilter("all");
+    setColFilterSegment("all");
+    setColFilterOpis("");
+    setColFilterSupplier("");
+  };
+
+  const monthNamesFull = [
+    "Januar", "Februar", "Mart", "April", "Maj", "Juni",
+    "Juli", "August", "Septembar", "Oktobar", "Novembar", "Decembar"
+  ];
 
   const canEditVehicle =
     currentRole?.permissions?.canRegisterVehicle ||
@@ -302,6 +437,11 @@ export function VehicleCardModal({
               <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5 block print:text-slate-900 print:text-lg">
                 {formatKM(totalCost)}
               </span>
+              {isAnyFilterActive && (
+                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 block mt-0.5">
+                  Odabrano: {formatKM(filteredTotalCost)}
+                </span>
+              )}
             </div>
             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs print:border-slate-300 print:p-3">
               <span className="text-[10px] uppercase font-bold text-slate-400 print:text-slate-600 block">
@@ -310,6 +450,11 @@ export function VehicleCardModal({
               <span className="text-xl font-black text-blue-600 dark:text-blue-400 mt-0.5 block print:text-slate-900 print:text-lg">
                 {history.length.toLocaleString("bs-BA")} naloga
               </span>
+              {isAnyFilterActive && (
+                <span className="text-[10px] font-bold text-blue-500 block mt-0.5">
+                  Filtrirano: {filteredHistory.length} naloga
+                </span>
+              )}
             </div>
             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs print:border-slate-300 print:p-3">
               <span className="text-[10px] uppercase font-bold text-slate-400 print:text-slate-600 block">
@@ -321,38 +466,76 @@ export function VehicleCardModal({
             </div>
           </div>
 
-          {/* DVA GRAFIKONA ZA KARTON VOZILA */}
+          {/* DVA INTERAKTIVNA GRAFIKONA SA KLIKOM ZA CROSS-FILTERING */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 print:hidden">
             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
-              <span className="text-[11px] font-extrabold uppercase text-slate-500 mb-2 flex items-center gap-1.5">
-                <BarChart2 className="w-4 h-4 text-indigo-600" /> Utrošak po Godinama
-              </span>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-[11px] font-extrabold uppercase text-slate-500 flex items-center gap-1.5">
+                  <BarChart2 className="w-4 h-4 text-indigo-600" /> Utrošak po Godinama (Klik za filter)
+                </span>
+                {selectedYearFilter !== "all" && (
+                  <button
+                    onClick={() => setSelectedYearFilter("all")}
+                    className="text-[10px] text-amber-600 font-bold hover:underline cursor-pointer flex items-center gap-0.5"
+                  >
+                    <FilterX className="w-3 h-3" /> Poništi ({selectedYearFilter}.)
+                  </button>
+                )}
+              </div>
               <div className="h-[140px] w-full relative">
                 <canvas ref={chartYearRef} />
               </div>
             </div>
 
             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
-              <span className="text-[11px] font-extrabold uppercase text-slate-500 mb-2 flex items-center gap-1.5">
-                <BarChart2 className="w-4 h-4 text-sky-500" /> Utrošak po Mjesecima
-              </span>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-[11px] font-extrabold uppercase text-slate-500 flex items-center gap-1.5">
+                  <BarChart2 className="w-4 h-4 text-sky-500" /> Utrošak po Mjesecima (Klik za filter)
+                </span>
+                {selectedMonthFilter !== "all" && (
+                  <button
+                    onClick={() => setSelectedMonthFilter("all")}
+                    className="text-[10px] text-emerald-600 font-bold hover:underline cursor-pointer flex items-center gap-0.5"
+                  >
+                    <FilterX className="w-3 h-3" /> Poništi (
+                    {monthNamesFull[parseInt(selectedMonthFilter) - 1]})
+                  </button>
+                )}
+              </div>
               <div className="h-[140px] w-full relative">
                 <canvas ref={chartMonthRef} />
               </div>
             </div>
           </div>
 
-          {/* Tabela historije servisa */}
+          {/* Tabela historije servisa sa ugrađenim in-table filterima */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs print:border-slate-300 print:rounded-none">
-            <div className="p-3.5 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center print:bg-slate-100">
-              <h4 className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5 print:text-slate-900">
-                <Wrench className="w-4 h-4 text-blue-600 print:hidden" /> Hronološki Pregled Svih Servisa & Računa ({history.length})
-              </h4>
+            <div className="p-3.5 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex flex-wrap justify-between items-center gap-2 print:bg-slate-100">
+              <div className="flex items-center gap-2">
+                <h4 className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5 print:text-slate-900">
+                  <Wrench className="w-4 h-4 text-blue-600 print:hidden" /> Hronološki Pregled Svih Servisa & Računa ({filteredHistory.length} / {history.length})
+                </h4>
+                {isAnyFilterActive && (
+                  <span className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" /> Filtrirano ({filteredHistory.length})
+                  </span>
+                )}
+              </div>
+
+              {isAnyFilterActive && (
+                <button
+                  onClick={resetAllCardFilters}
+                  className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer print:hidden"
+                >
+                  <FilterX className="w-3.5 h-3.5" /> Poništi sve filtere
+                </button>
+              )}
             </div>
 
             <div className="overflow-x-auto max-h-[350px] print:max-h-none print:overflow-visible">
               <table className="min-w-full text-xs text-left">
-                <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700 sticky top-0 print:bg-slate-100 print:text-slate-900">
+                <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700 sticky top-0 print:bg-slate-100 print:text-slate-900 z-10 shadow-xs">
+                  {/* 1. RED */}
                   <tr>
                     <th className="p-2.5 w-24">Datum</th>
                     <th className="p-2.5 w-32">Segment</th>
@@ -360,10 +543,78 @@ export function VehicleCardModal({
                     <th className="p-2.5 w-40">Serviser</th>
                     <th className="p-2.5 text-right w-28">Iznos (KM)</th>
                   </tr>
+
+                  {/* 2. RED: In-table Filteri (sakriveni u printu) */}
+                  <tr className="bg-slate-200/90 dark:bg-slate-950 border-t border-slate-300 dark:border-slate-800 font-normal print:hidden">
+                    {/* Datum / Godina filter */}
+                    <th className="p-1">
+                      <select
+                        value={selectedYearFilter}
+                        onChange={(e) => setSelectedYearFilter(e.target.value)}
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-0.5 text-[11px] font-bold outline-none cursor-pointer"
+                      >
+                        <option value="all">Sve god.</option>
+                        {yearlyData.years.map((y) => (
+                          <option key={y} value={y.toString()}>
+                            {y}.
+                          </option>
+                        ))}
+                      </select>
+                    </th>
+
+                    {/* Segment filter */}
+                    <th className="p-1">
+                      <select
+                        value={colFilterSegment}
+                        onChange={(e) => setColFilterSegment(e.target.value)}
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-0.5 text-[11px] font-bold outline-none cursor-pointer"
+                      >
+                        <option value="all">Svi segmenti</option>
+                        {distinctSegments.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </th>
+
+                    {/* Opis filter */}
+                    <th className="p-1">
+                      <input
+                        type="text"
+                        value={colFilterOpis}
+                        onChange={(e) => setColFilterOpis(e.target.value)}
+                        placeholder="🔍 Opis radova..."
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-0.5 text-[11px] font-medium outline-none"
+                      />
+                    </th>
+
+                    {/* Serviser filter */}
+                    <th className="p-1">
+                      <input
+                        type="text"
+                        value={colFilterSupplier}
+                        onChange={(e) => setColFilterSupplier(e.target.value)}
+                        placeholder="🔍 Serviser..."
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-0.5 text-[11px] font-medium outline-none"
+                      />
+                    </th>
+
+                    {/* Reset */}
+                    <th className="p-1 text-center">
+                      <button
+                        onClick={resetAllCardFilters}
+                        title="Poništi filtere"
+                        className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1 w-full"
+                      >
+                        <RotateCcw className="w-3 h-3" /> Reset
+                      </button>
+                    </th>
+                  </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50 print:divide-slate-300">
-                  {history.length > 0 ? (
-                    history.map((c, idx) => (
+                  {filteredHistory.length > 0 ? (
+                    filteredHistory.map((c, idx) => (
                       <tr
                         key={c.id || idx}
                         className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors print:hover:bg-transparent"
@@ -391,19 +642,19 @@ export function VehicleCardModal({
                   ) : (
                     <tr>
                       <td colSpan={5} className="p-6 text-center text-slate-400 italic">
-                        Nema zabilježenih servisa za ovo vozilo.
+                        Nema zabilježenih servisa za odabrane filtere.
                       </td>
                     </tr>
                   )}
                 </tbody>
-                {history.length > 0 && (
-                  <tfoot className="bg-slate-100 font-bold text-slate-900 border-t-2 border-slate-300">
+                {filteredHistory.length > 0 && (
+                  <tfoot className="bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700">
                     <tr>
                       <td colSpan={4} className="p-2.5 text-right font-black uppercase text-xs">
-                        Ukupan zbir svih intervencija:
+                        Zbir prikazanih stavki:
                       </td>
                       <td className="p-2.5 text-right font-black text-xs whitespace-nowrap">
-                        {formatKM(totalCost)}
+                        {formatKM(filteredTotalCost)}
                       </td>
                     </tr>
                   </tfoot>
