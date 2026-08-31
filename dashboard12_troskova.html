@@ -3340,7 +3340,7 @@
                     _costsRealtimeUnsubscribe = null;
                 }
 
-                _costsRealtimeUnsubscribe = window.db.collection('fleet_costs').onSnapshot(snapshot => {
+                _costsRealtimeUnsubscribe = window.db.collection('fleet_costs').where('isNewCustom', '==', true).onSnapshot(snapshot => {
                     let hasChanges = false;
                     let changes = snapshot.docChanges();
                     if (!changes || changes.length === 0) return;
@@ -5563,7 +5563,7 @@
                 if (window.db) {
                     try {
                         let safeDocId = reg.replace(/[\/\\#\?]/g, '_');
-                        window.db.collection('fleet_master').doc(safeDocId).set({ photoUrl: photoUrl }, { merge: true });
+                        window.db.collection('fleet_master').doc(safeDocId).set({ photoUrl: photoUrl, isCustomEdit: true }, { merge: true });
                     } catch(e){}
                 }
             }
@@ -5831,7 +5831,7 @@
                     _masterRealtimeUnsubscribe();
                     _masterRealtimeUnsubscribe = null;
                 }
-                _masterRealtimeUnsubscribe = window.db.collection('fleet_master').onSnapshot(snapshot => {
+                _masterRealtimeUnsubscribe = window.db.collection('fleet_master').where('isCustomEdit', '==', true).onSnapshot(snapshot => {
                     let hasChanges = false;
                     let changes = snapshot.docChanges();
                     if (!changes || changes.length === 0) return;
@@ -6310,7 +6310,7 @@
                     (async () => {
                         try {
                             let safeDocId = reg.replace(/[\/\\#\?]/g, '_');
-                            await window.db.collection('fleet_master').doc(safeDocId).set(vehicleObj, { merge: true });
+                            await window.db.collection('fleet_master').doc(safeDocId).set({ ...vehicleObj, isCustomEdit: true }, { merge: true });
                         } catch(e) { console.warn('Notice saving vehicle to Firestore:', e); }
                     })();
                 }
@@ -6755,7 +6755,7 @@
                     if (window.db) {
                         try {
                             let safeDocId = reg.replace(/[\/\\#\?]/g, '_');
-                            window.db.collection('fleet_master').doc(safeDocId).set(newVehObj, { merge: true });
+                            window.db.collection('fleet_master').doc(safeDocId).set({ ...newVehObj, isCustomEdit: true }, { merge: true });
                         } catch(e) {}
                     }
                 }
