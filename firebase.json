@@ -10,12 +10,17 @@
     "ignore": [
       "firebase.json",
       "**/.*",
+      ".git/**",
+      ".agents/**",
       "**/scratch/**",
       "node_modules/**",
       "scripts/**",
       "backups/**",
       "*.zip",
       "**/*.zip",
+      "*.py",
+      "*.txt",
+      "*.js",
       "package*.json",
       "**/*.xlsx",
       "*.xlsx"
