@@ -286,6 +286,7 @@ function DashboardContent() {
           portalMode={portalMode}
           setPortalMode={setPortalMode}
           currentRole={currentRole}
+          masterFleet={masterFleet}
           onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
           onOpenNewCostModal={() => setIsNewCostOpen(true)}
           onOpenNewVehicleModal={() => {

@@ -18,14 +18,22 @@ export function useFleetData() {
     try {
       const cached = await IDBCache.get(MASTER_CACHE_KEY);
       if (cached && Array.isArray(cached) && cached.length > 0) {
-        setMasterFleet(cached);
+        const cleaned = cached.map((v) => ({
+          ...v,
+          tipMehan: cleanVehicleType(v.tipMehan)
+        }));
+        setMasterFleet(cleaned);
       } else {
         const res = await fetch("/fleet_master.json");
         if (res.ok) {
           const raw = await res.json();
           const list = Array.isArray(raw) ? raw : (raw.records || []);
-          setMasterFleet(list);
-          IDBCache.set(MASTER_CACHE_KEY, list);
+          const cleaned = list.map((v) => ({
+            ...v,
+            tipMehan: cleanVehicleType(v.tipMehan)
+          }));
+          setMasterFleet(cleaned);
+          IDBCache.set(MASTER_CACHE_KEY, cleaned);
         }
       }
     } catch (e) {
@@ -44,7 +52,8 @@ export function useFleetData() {
           datumObj: c.datum ? new Date(c.datum) : (c.datumObj ? new Date(c.datumObj) : null),
           cost: parseFloat(c.cost || 0) || 0,
           year: parseInt(c.year) || 2026,
-          month: parseInt(c.month) || 1
+          month: parseInt(c.month) || 1,
+          tipMehan: cleanVehicleType(c.tipMehan)
         }));
         setCostData(revived);
       } else {
@@ -107,6 +116,7 @@ export function useFleetData() {
               item.cost = parseFloat(item.cost || 0) || 0;
               item.year = parseInt(item.year) || (item.datumObj ? item.datumObj.getFullYear() : 2026);
               item.month = parseInt(item.month) || (item.datumObj ? item.datumObj.getMonth() + 1 : 1);
+              item.tipMehan = cleanVehicleType(item.tipMehan);
 
               if (change.type === "added") {
                 if (!updated.some((c) => c.id === item.id)) {
@@ -150,12 +160,16 @@ export function useFleetData() {
             changes.forEach((change) => {
               const v = change.doc.data();
               if (v && v.reg) {
+                const cleanV = {
+                  ...v,
+                  tipMehan: cleanVehicleType(v.tipMehan)
+                };
                 const regUpper = v.reg.toUpperCase();
                 const idx = updated.findIndex((x) => x.reg.toUpperCase() === regUpper);
 
                 if (change.type === "added" || change.type === "modified") {
-                  if (idx !== -1) updated[idx] = { ...updated[idx], ...v };
-                  else updated.push(v);
+                  if (idx !== -1) updated[idx] = { ...updated[idx], ...cleanV };
+                  else updated.push(cleanV);
                 } else if (change.type === "removed") {
                   if (idx !== -1) updated.splice(idx, 1);
                 }
@@ -206,6 +220,7 @@ export function useFleetData() {
     const fullRecord = {
       ...newRecord,
       id: docRef.id,
+      tipMehan: cleanVehicleType(newRecord.tipMehan),
       isNewCustom: true,
       createdAt: new Date().toISOString()
     };
@@ -218,7 +233,12 @@ export function useFleetData() {
 
   const saveVehicle = async (vehicle) => {
     const docId = vehicle.reg.replace(/[\/\\#\?]/g, "_").trim();
-    await setDoc(doc(db, "fleet_master", docId), { ...vehicle, isCustomEdit: true }, { merge: true });
+    const cleanV = {
+      ...vehicle,
+      tipMehan: cleanVehicleType(vehicle.tipMehan),
+      isCustomEdit: true
+    };
+    await setDoc(doc(db, "fleet_master", docId), cleanV, { merge: true });
   };
 
   return {

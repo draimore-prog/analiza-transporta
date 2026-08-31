@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { exportMasterFleetToExcel } from "@/lib/exportExcel.js";
+import { cleanVehicleType } from "@/lib/calculations.js";
 import { Download, Plus, RotateCcw, ArrowUpDown, ArrowUp, ArrowDown, ArrowDown as ScrollDown, CheckCircle2, Loader2, Edit3 } from "lucide-react";
 
 export function MasterFleetTable({
@@ -26,13 +27,22 @@ export function MasterFleetTable({
 
   const BATCH_SIZE = 60;
 
-  // Unikatni tipovi i marke
+  // Unikatni tipovi i marke (sa uklanjanjem duplikata i normalizacijom)
   const distinctTypes = useMemo(() => {
-    return Array.from(new Set(masterFleet.map((v) => v.tipMehan))).filter(Boolean).sort();
+    const set = new Set();
+    masterFleet.forEach((v) => {
+      const cleanT = cleanVehicleType(v.tipMehan);
+      if (cleanT && cleanT !== "Servis motornih vozila") {
+        set.add(cleanT);
+      }
+    });
+    return Array.from(set).sort();
   }, [masterFleet]);
 
   const distinctBrands = useMemo(() => {
-    return Array.from(new Set(masterFleet.map((v) => v.markaVoz))).filter(Boolean).sort();
+    return Array.from(new Set(masterFleet.map((v) => (v.markaVoz || "").trim())))
+      .filter((b) => b && b !== "-")
+      .sort();
   }, [masterFleet]);
 
   // Filtrirani i sortirani podaci
@@ -46,8 +56,9 @@ export function MasterFleetTable({
         vStatus.toLowerCase() === statusFilter.toLowerCase() ||
         (statusFilter === "Aktivno" && !vStatus.toLowerCase().includes("prodat") && !vStatus.toLowerCase().includes("rashod"));
 
-      const matchType = typeFilter === "all" || v.tipMehan === typeFilter;
-      const matchBrand = brandFilter === "all" || v.markaVoz === brandFilter;
+      const cleanT = cleanVehicleType(v.tipMehan);
+      const matchType = typeFilter === "all" || cleanT === typeFilter;
+      const matchBrand = brandFilter === "all" || (v.markaVoz || "").trim().toLowerCase() === brandFilter.toLowerCase();
 
       const matchSearch =
         !term ||
@@ -322,6 +333,8 @@ export function MasterFleetTable({
                     stClass = "bg-red-100 text-red-900 border-red-300 dark:bg-red-950 dark:text-red-300";
                   }
 
+                  const displayType = cleanVehicleType(v.tipMehan);
+
                   return (
                     <tr
                       key={v.reg || idx}
@@ -340,7 +353,7 @@ export function MasterFleetTable({
                         {v.reg}
                       </td>
                       <td className="p-3 text-slate-600 dark:text-slate-400">
-                        {v.tipMehan}
+                        {displayType}
                       </td>
                       <td className="p-3 font-bold text-slate-800 dark:text-slate-200">
                         {v.markaVoz || "-"}
