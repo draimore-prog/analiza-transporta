@@ -58,10 +58,14 @@ export function TransportKpis({
     return costData.reduce((acc, c) => acc + (c.cost || 0), 0);
   }, [costData]);
 
+  const filteredTotalCost = useMemo(() => {
+    return filteredCostData.reduce((acc, c) => acc + (c.cost || 0), 0);
+  }, [filteredCostData]);
+
   const cost2026 = yearlyStats[2026]?.cost || 0;
   const avgCostPerUnit2026 = dynamic2026.total > 0 ? cost2026 / dynamic2026.total : 0;
 
-  // Crtanje svih 5 grafikona
+  // Crtanje svih 5 grafikona sa bogatim tooltipsima i procentima
   useEffect(() => {
     // 1. Trend Grafikon
     if (trendCanvasRef.current) {
@@ -105,14 +109,17 @@ export function TransportKpis({
               legend: { position: "bottom", labels: { font: { size: 11, weight: "bold" } } },
               tooltip: {
                 callbacks: {
-                  label: (ctx) => ` ${ctx.dataset.label}: ${formatKM(ctx.raw)}`
+                  label: (ctx) => {
+                    const yTot = yearlyStats[parseInt(ctx.dataset.label)]?.cost || 1;
+                    const p = ((ctx.raw / yTot) * 100).toFixed(1);
+                    return ` ${ctx.dataset.label}: ${formatKM(ctx.raw)} (${p}% godišnjeg troška)`;
+                  }
                 }
               }
             }
           }
         });
       } else {
-        // Mjesečni trend za odabranu godinu (Interno vs Eksterno)
         const monthInterno = Array(12).fill(0);
         const monthEksterno = Array(12).fill(0);
 
@@ -144,7 +151,12 @@ export function TransportKpis({
               legend: { position: "bottom" },
               tooltip: {
                 callbacks: {
-                  label: (ctx) => ` ${ctx.dataset.label}: ${formatKM(ctx.raw)}`
+                  label: (ctx) => {
+                    const mIdx = ctx.dataIndex;
+                    const monthTotal = monthInterno[mIdx] + monthEksterno[mIdx];
+                    const p = monthTotal > 0 ? ((ctx.raw / monthTotal) * 100).toFixed(1) : "0";
+                    return ` ${ctx.dataset.label}: ${formatKM(ctx.raw)} (${p}%)`;
+                  }
                 }
               }
             }
@@ -153,7 +165,7 @@ export function TransportKpis({
       }
     }
 
-    // 2. Interno vs Eksterno Doughnut (sa klikom na modal)
+    // 2. Interno vs Eksterno Doughnut (sa procentima u tooltipu)
     if (intExtCanvasRef.current) {
       if (chartInstances.current.intExt) chartInstances.current.intExt.destroy();
       const ctx = intExtCanvasRef.current.getContext("2d");
@@ -192,7 +204,11 @@ export function TransportKpis({
             legend: { position: "bottom", labels: { font: { weight: "bold", size: 11 } } },
             tooltip: {
               callbacks: {
-                label: (ctx) => ` ${ctx.label}: ${formatKM(ctx.raw)}`
+                label: (ctx) => {
+                  const val = ctx.raw || 0;
+                  const p = total > 0 ? ((val / total) * 100).toFixed(1) : "0";
+                  return ` ${ctx.label}: ${formatKM(val)} (${p}%)`;
+                }
               }
             }
           },
@@ -207,7 +223,7 @@ export function TransportKpis({
       });
     }
 
-    // 3. Top 10 Vozila po Trošku (sa klikom na karton vozila)
+    // 3. Top 10 Vozila po Trošku (sa procentima u tooltipu)
     if (vehiclesCanvasRef.current) {
       if (chartInstances.current.vehicles) chartInstances.current.vehicles.destroy();
       const ctx = vehiclesCanvasRef.current.getContext("2d");
@@ -245,7 +261,11 @@ export function TransportKpis({
             legend: { display: false },
             tooltip: {
               callbacks: {
-                label: (ctx) => ` Trošak: ${formatKM(ctx.raw)}`
+                label: (ctx) => {
+                  const val = ctx.raw || 0;
+                  const p = filteredTotalCost > 0 ? ((val / filteredTotalCost) * 100).toFixed(2) : "0";
+                  return ` Trošak: ${formatKM(val)} (${p}% ukupnog troška)`;
+                }
               }
             }
           },
@@ -259,7 +279,7 @@ export function TransportKpis({
       });
     }
 
-    // 4. Segmenti Doughnut (sa klikom na segment modal)
+    // 4. Segmenti Doughnut (sa procentima u tooltipu)
     if (segmentsCanvasRef.current) {
       if (chartInstances.current.segments) chartInstances.current.segments.destroy();
       const ctx = segmentsCanvasRef.current.getContext("2d");
@@ -295,7 +315,11 @@ export function TransportKpis({
             legend: { position: "right", labels: { font: { weight: "bold", size: 10 } } },
             tooltip: {
               callbacks: {
-                label: (ctx) => ` ${ctx.label}: ${formatKM(ctx.raw)}`
+                label: (ctx) => {
+                  const val = ctx.raw || 0;
+                  const p = filteredTotalCost > 0 ? ((val / filteredTotalCost) * 100).toFixed(1) : "0";
+                  return ` ${ctx.label}: ${formatKM(val)} (${p}%)`;
+                }
               }
             }
           },
@@ -309,7 +333,7 @@ export function TransportKpis({
       });
     }
 
-    // 5. Top Dobavljači / Serviseri (sa klikom na dobavljač modal)
+    // 5. Top 7 Dobavljača / Servisera (sa procentima u tooltipu)
     if (suppliersCanvasRef.current) {
       if (chartInstances.current.suppliers) chartInstances.current.suppliers.destroy();
       const ctx = suppliersCanvasRef.current.getContext("2d");
@@ -344,7 +368,11 @@ export function TransportKpis({
             legend: { display: false },
             tooltip: {
               callbacks: {
-                label: (ctx) => ` Iznos: ${formatKM(ctx.raw)}`
+                label: (ctx) => {
+                  const val = ctx.raw || 0;
+                  const p = filteredTotalCost > 0 ? ((val / filteredTotalCost) * 100).toFixed(1) : "0";
+                  return ` Iznos: ${formatKM(val)} (${p}% ukupnog troška)`;
+                }
               }
             }
           },
@@ -369,6 +397,8 @@ export function TransportKpis({
     filteredCostData,
     trendMode,
     selectedYearFilter,
+    yearlyStats,
+    filteredTotalCost,
     onOpenVehicleModal,
     onOpenIntExtRecap,
     onOpenSupplierDetail,
@@ -480,7 +510,7 @@ export function TransportKpis({
             <select
               value={selectedYearFilter}
               onChange={(e) => setSelectedYearFilter(e.target.value)}
-              className="text-xs border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-1.5 font-bold bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white outline-none"
+              className="text-xs border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-1.5 font-bold bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white outline-none cursor-pointer"
             >
               <option value="all">Sve godine (2021-2026)</option>
               <option value="2026">2026. godina</option>

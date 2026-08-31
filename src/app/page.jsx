@@ -33,12 +33,58 @@ import { IntExtRecapModal } from "@/components/modals/IntExtRecapModal.jsx";
 import { SupplierDetailModal } from "@/components/modals/SupplierDetailModal.jsx";
 import { SegmentDetailModal } from "@/components/modals/SegmentDetailModal.jsx";
 
+// Mape za čitljive nazive stranica u URL-u
+const TRANSPORT_TAB_SLUGS = {
+  1: "kpi-pregled",
+  2: "analiza-odrzavanja",
+  3: "yoy-komparacija",
+  4: "tabela-servisa",
+  5: "maticna-baza-flote"
+};
+
+const TRANSPORT_SLUG_TO_TAB = {
+  "kpi-pregled": 1,
+  "kpi-struktura": 1,
+  "1": 1,
+  "analiza-odrzavanja": 2,
+  "2": 2,
+  "yoy-komparacija": 3,
+  "3": 3,
+  "tabela-servisa": 4,
+  "4": 4,
+  "maticna-baza-flote": 5,
+  "maticna-baza": 5,
+  "5": 5
+};
+
+const WAREHOUSE_TAB_SLUGS = {
+  1: "analitika-finansije",
+  2: "sifrarnik-flote",
+  3: "pregled-svih-opravki",
+  4: "segmenti-dijelovi",
+  5: "serviseri-dobavljaci"
+};
+
+const WAREHOUSE_SLUG_TO_TAB = {
+  "analitika-finansije": 1,
+  "1": 1,
+  "sifrarnik-flote": 2,
+  "2": 2,
+  "pregled-svih-opravki": 3,
+  "3": 3,
+  "segmenti-dijelovi": 4,
+  "4": 4,
+  "serviseri-dobavljaci": 5,
+  "5": 5
+};
+
 function DashboardContent() {
   const {
     activeUser,
     users,
     roles,
     currentRole,
+    isAuthReady,
     login,
     logout,
     saveUserToFirestore,
@@ -58,28 +104,35 @@ function DashboardContent() {
     saveVehicle
   } = useFleetData();
 
-  // Stanje portala i tabova sa URL sinhronizacijom
+  // Stanje portala i tabova sa čitljivim URL slugovima
   const [portalMode, setPortalModeState] = useState("transport");
   const [activeTab, setActiveTabState] = useState(1);
   const [activeWhTab, setActiveWhTabState] = useState(1);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Funkcije za promjenu tabova sa ažuriranjem browser URL-a
+  // Funkcije za promjenu tabova sa čitljivim nazivom stranice u linku
   const setPortalMode = useCallback((mode) => {
     setPortalModeState(mode);
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
-      url.searchParams.set("portal", mode);
+      const portalSlug = mode === "warehouse" ? "skladisna-mehanizacija" : "transport";
+      url.searchParams.set("portal", portalSlug);
+      const pageSlug = mode === "warehouse" ? WAREHOUSE_TAB_SLUGS[activeWhTab] : TRANSPORT_TAB_SLUGS[activeTab];
+      url.searchParams.set("stranica", pageSlug);
+      url.searchParams.delete("tab");
+      url.searchParams.delete("whTab");
       window.history.pushState({}, "", url.toString());
     }
-  }, []);
+  }, [activeTab, activeWhTab]);
 
   const setActiveTab = useCallback((tabNum) => {
     setActiveTabState(tabNum);
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
       url.searchParams.set("portal", "transport");
-      url.searchParams.set("tab", tabNum.toString());
+      url.searchParams.set("stranica", TRANSPORT_TAB_SLUGS[tabNum] || "kpi-pregled");
+      url.searchParams.delete("tab");
+      url.searchParams.delete("whTab");
       window.history.pushState({}, "", url.toString());
     }
   }, []);
@@ -88,8 +141,10 @@ function DashboardContent() {
     setActiveWhTabState(tabNum);
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
-      url.searchParams.set("portal", "warehouse");
-      url.searchParams.set("whTab", tabNum.toString());
+      url.searchParams.set("portal", "skladisna-mehanizacija");
+      url.searchParams.set("stranica", WAREHOUSE_TAB_SLUGS[tabNum] || "analitika-finansije");
+      url.searchParams.delete("tab");
+      url.searchParams.delete("whTab");
       window.history.pushState({}, "", url.toString());
     }
   }, []);
@@ -101,23 +156,19 @@ function DashboardContent() {
     const handleUrlChange = () => {
       const params = new URLSearchParams(window.location.search);
       const portalParam = params.get("portal");
-      const tabParam = params.get("tab");
-      const whTabParam = params.get("whTab");
+      const pageParam = params.get("stranica") || params.get("tab") || params.get("whTab");
 
-      if (portalParam === "warehouse") {
+      const isWh = portalParam === "skladisna-mehanizacija" || portalParam === "skladiste" || portalParam === "warehouse";
+      if (isWh) {
         setPortalModeState("warehouse");
-      } else if (portalParam === "transport") {
+        if (pageParam && WAREHOUSE_SLUG_TO_TAB[pageParam]) {
+          setActiveWhTabState(WAREHOUSE_SLUG_TO_TAB[pageParam]);
+        }
+      } else {
         setPortalModeState("transport");
-      }
-
-      if (tabParam) {
-        const t = parseInt(tabParam);
-        if (t >= 1 && t <= 5) setActiveTabState(t);
-      }
-
-      if (whTabParam) {
-        const wt = parseInt(whTabParam);
-        if (wt >= 1 && wt <= 5) setActiveWhTabState(wt);
+        if (pageParam && TRANSPORT_SLUG_TO_TAB[pageParam]) {
+          setActiveTabState(TRANSPORT_SLUG_TO_TAB[pageParam]);
+        }
       }
     };
 
@@ -175,6 +226,29 @@ function DashboardContent() {
     setActiveTab(4);
   }, [setActiveTab]);
 
+  // Čekanje inicijalizacije autentifikacije
+  if (!isAuthReady) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white gap-4 p-4">
+        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs text-slate-400 font-mono">Provjera prijave...</p>
+      </div>
+    );
+  }
+
+  // Ako korisnik NIJE prijavljen, prikazuje se SAMO login modal i NIKAKVI podaci
+  if (!activeUser) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-4">
+        <LoginModal
+          isOpen={true}
+          onLogin={login}
+        />
+      </div>
+    );
+  }
+
+  // Učitavanje baze podataka za prijavljenog korisnika
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white gap-4 p-4">
@@ -186,13 +260,7 @@ function DashboardContent() {
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 relative">
-      {/* Login Screen ako korisnik nije prijavljen */}
-      <LoginModal
-        isOpen={!activeUser}
-        onLogin={login}
-      />
-
+    <div className="flex h-screen w-full overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       {/* Sidebar sa navigacijom i odjavom */}
       <Sidebar
         portalMode={portalMode}

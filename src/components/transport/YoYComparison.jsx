@@ -62,8 +62,8 @@ export function YoYComparison({ costData }) {
     return costData.filter((c) => c.year === prevMonthYear && c.month === prevMonthNum);
   }, [costData, prevMonthYear, prevMonthNum]);
 
-  // Funkcija za generisanje komparativne tabele
-  const generateComparisonRows = (currData, prevData, groupKey, labelA, labelB) => {
+  // Funkcija za generisanje komparativne tabele (UVIJEK RAČUNA RAZLIKU OD VEĆE PREMA MANJOJ GODINI)
+  const generateComparisonRows = (currData, prevData, groupKey, labelA, labelB, actualYearA, actualYearB) => {
     const mapA = {};
     const mapB = {};
     const allKeys = new Set();
@@ -89,25 +89,34 @@ export function YoYComparison({ costData }) {
     let totalA = 0;
     let totalB = 0;
 
+    // Određivanje koja je godina veća (novija) a koja manja (starija)
+    const isANewer = actualYearA >= actualYearB;
+
     const rows = sorted.map((k) => {
       const costA = mapA[k] || 0;
       const costB = mapB[k] || 0;
       totalA += costA;
       totalB += costB;
 
-      const diffKM = costA - costB;
-      const diffPerc = costB > 0 ? ((costA - costB) / costB) * 100 : (costA > 0 ? 100 : 0);
+      // Razlika se računa uvijek: Novija Godina - Starija Godina
+      const costNewer = isANewer ? costA : costB;
+      const costOlder = isANewer ? costB : costA;
 
-      let badge = <span className="text-slate-400 font-bold">0.0%</span>;
+      const diffKM = costNewer - costOlder;
+      const diffPerc = costOlder > 0 ? ((costNewer - costOlder) / costOlder) * 100 : (costNewer > 0 ? 100 : 0);
+
+      let badge = <span className="text-slate-400 font-bold text-[11px]">0.0%</span>;
       if (diffKM > 0) {
+        // Porast troška u novijoj godini = CRVENO 🔴
         badge = (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-black bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-black bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 shadow-2xs">
             🔴 +{diffPerc.toFixed(1)}%
           </span>
         );
       } else if (diffKM < 0) {
+        // Smanjenje troška u novijoj godini (Ušteda) = ZELENO 🟢
         badge = (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shadow-2xs">
             🟢 {diffPerc.toFixed(1)}%
           </span>
         );
@@ -132,8 +141,10 @@ export function YoYComparison({ costData }) {
       );
     });
 
-    const grandDiffKM = totalA - totalB;
-    const grandDiffPerc = totalB > 0 ? ((totalA - totalB) / totalB) * 100 : (totalA > 0 ? 100 : 0);
+    const totalNewer = isANewer ? totalA : totalB;
+    const totalOlder = isANewer ? totalB : totalA;
+    const grandDiffKM = totalNewer - totalOlder;
+    const grandDiffPerc = totalOlder > 0 ? ((totalNewer - totalOlder) / totalOlder) * 100 : (totalNewer > 0 ? 100 : 0);
 
     const grandTotalRow = (
       <tr key="total" className="bg-slate-100 dark:bg-slate-800 font-black text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-600">
@@ -143,11 +154,11 @@ export function YoYComparison({ costData }) {
         <td className="py-2.5 px-3 text-right">{grandDiffKM >= 0 ? `+${formatKM(grandDiffKM)}` : formatKM(grandDiffKM)}</td>
         <td className="py-2.5 px-3 text-center">
           {grandDiffKM > 0 ? (
-            <span className="px-2 py-0.5 rounded text-[11px] font-black bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300">
+            <span className="px-2 py-0.5 rounded text-[11px] font-black bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 shadow-2xs">
               🔴 +{grandDiffPerc.toFixed(1)}%
             </span>
           ) : (
-            <span className="px-2 py-0.5 rounded text-[11px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300">
+            <span className="px-2 py-0.5 rounded text-[11px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 shadow-2xs">
               🟢 {grandDiffPerc.toFixed(1)}%
             </span>
           )}
@@ -205,7 +216,6 @@ export function YoYComparison({ costData }) {
   const handleExportAllToExcel = () => {
     const wb = XLSX.utils.book_new();
 
-    // Sheet 1: Matrica troškova
     const matrixRows = [];
     MONTH_NAMES.forEach((mName, idx) => {
       const row = { Mjesec: mName };
@@ -233,7 +243,7 @@ export function YoYComparison({ costData }) {
               </span>
             </h2>
             <p className="text-xs text-slate-300 mt-1">
-              Poređenje proteklih mjeseci tekuće godine naspram istog perioda prošle godine (YoY i MoM) sa indikatorima ušteda (🟢) ili rasta (🔴)
+              Poređenje proteklih mjeseci tekuće godine naspram istog perioda prošle godine (YoY i MoM) sa indikatorima ušteda (🟢) ili rasta troška (🔴)
             </p>
           </div>
         </div>
@@ -318,7 +328,7 @@ export function YoYComparison({ costData }) {
             <span>1. Komparacija po Tipu Mehanizacije</span>
           </h3>
           <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-            {generateComparisonRows(dataPeriodA, dataPeriodB, "tipMehan", `${yearA}.`, `${yearB}.`)}
+            {generateComparisonRows(dataPeriodA, dataPeriodB, "tipMehan", `${yearA}.`, `${yearB}.`, yearA, yearB)}
           </div>
         </div>
 
@@ -329,7 +339,7 @@ export function YoYComparison({ costData }) {
             <span>2. Komparacija po Segmentima Troškova</span>
           </h3>
           <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-            {generateComparisonRows(dataPeriodA, dataPeriodB, "segment", `${yearA}.`, `${yearB}.`)}
+            {generateComparisonRows(dataPeriodA, dataPeriodB, "segment", `${yearA}.`, `${yearB}.`, yearA, yearB)}
           </div>
         </div>
       </div>
@@ -348,7 +358,9 @@ export function YoYComparison({ costData }) {
               costData.filter((c) => c.year === yearB && c.month === currentMonthNum),
               "tipMehan",
               `${MONTH_NAMES[currentMonthNum - 1]} ${yearA}.`,
-              `${MONTH_NAMES[currentMonthNum - 1]} ${yearB}.`
+              `${MONTH_NAMES[currentMonthNum - 1]} ${yearB}.`,
+              yearA,
+              yearB
             )}
           </div>
         </div>
@@ -365,7 +377,9 @@ export function YoYComparison({ costData }) {
               dataPrevMonth,
               "tipMehan",
               `${MONTH_NAMES[currentMonthNum - 1]} ${yearA}.`,
-              `${MONTH_NAMES[prevMonthNum - 1]} ${prevMonthYear}.`
+              `${MONTH_NAMES[prevMonthNum - 1]} ${prevMonthYear}.`,
+              yearA,
+              prevMonthYear
             )}
           </div>
         </div>
@@ -437,7 +451,7 @@ export function YoYComparison({ costData }) {
         </div>
       </div>
 
-      {/* 4. VIŠEGODIŠNJA MATRICA POSTOTNIH RAZLIKA (YOY % RAST / PAD) */}
+      {/* 4. VIŠEGODIŠNJA MATRICA POSTOTNIH RAZLIKA (YOY % RAST / PAD - CRVENO ZA RAST, ZELENO ZA UŠTEDU) */}
       <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
@@ -445,8 +459,8 @@ export function YoYComparison({ costData }) {
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Postotne izmjene u odnosu na prethodnu godinu (
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold">Zeleno = Smanjenje troškova / Ušteda 📉</span> |{" "}
-            <span className="text-red-600 dark:text-red-400 font-bold">Crveno = Povećanje troškova 📈</span>)
+            <span className="text-red-600 dark:text-red-400 font-bold">🔴 Crveno = Povećanje troškova</span> |{" "}
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold">🟢 Zeleno = Smanjenje troškova / Ušteda</span>)
           </p>
         </div>
 
@@ -468,15 +482,26 @@ export function YoYComparison({ costData }) {
                 const calcPerc = (yNew, yOld) => {
                   const cNew = matrixData[m][yNew] || 0;
                   const cOld = matrixData[m][yOld] || 0;
-                  if (cOld === 0 && cNew === 0) return "-";
-                  if (cOld === 0) return "+100%";
+                  if (cOld === 0 && cNew === 0) return <span className="text-slate-400 font-medium">-</span>;
+                  if (cOld === 0) {
+                    return <span className="font-black text-red-600 dark:text-red-400">🔴 +100%</span>;
+                  }
+                  const diff = cNew - cOld;
                   const p = ((cNew - cOld) / cOld) * 100;
-                  const isPos = p > 0;
-                  return (
-                    <span className={`font-bold ${isPos ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}`}>
-                      {isPos ? `+${p.toFixed(1)}%` : `${p.toFixed(1)}%`}
-                    </span>
-                  );
+                  if (diff > 0) {
+                    return (
+                      <span className="font-black text-red-600 dark:text-red-400">
+                        🔴 +{p.toFixed(1)}%
+                      </span>
+                    );
+                  } else if (diff < 0) {
+                    return (
+                      <span className="font-black text-emerald-600 dark:text-emerald-400">
+                        🟢 {p.toFixed(1)}%
+                      </span>
+                    );
+                  }
+                  return <span className="text-slate-400 font-bold">0.0%</span>;
                 };
 
                 return (

@@ -19,18 +19,20 @@ export function useAuth() {
   const [roles, setRoles] = useState(DEFAULT_APP_ROLES);
   const [isAuthReady, setIsAuthReady] = useState(false);
 
-  // Inicijalizacija aktivnog korisnika iz sesije
+  // Inicijalizacija aktivnog korisnika isključivo iz sačuvane sesije
   useEffect(() => {
     try {
-      const stored = sessionStorage.getItem(SESSION_ACTIVE_USER_KEY) || localStorage.getItem(SESSION_ACTIVE_USER_KEY);
+      const stored =
+        sessionStorage.getItem(SESSION_ACTIVE_USER_KEY) ||
+        localStorage.getItem(SESSION_ACTIVE_USER_KEY);
       if (stored) {
         setActiveUser(JSON.parse(stored));
       } else {
-        // Početno postaviti superadmina ako nema sačuvanog stanja
-        setActiveUser(DEFAULT_SUPERADMIN);
+        // Ako nema aktivne sesije, korisnik je ODJAVLJEN (null)
+        setActiveUser(null);
       }
     } catch {
-      setActiveUser(DEFAULT_SUPERADMIN);
+      setActiveUser(null);
     }
     setIsAuthReady(true);
   }, []);
@@ -96,14 +98,14 @@ export function useAuth() {
       const idClean = (identifier || "").trim().toLowerCase();
       const passClean = (password || "").trim();
 
-      // Provjera superadmina i ostalih korisnika
+      // Provjera u bazi korisnika i superadmina
       let foundUser = users.find(
         (u) =>
           (u.username && u.username.toLowerCase() === idClean) ||
           (u.email && u.email.toLowerCase() === idClean)
       );
 
-      if (!foundUser && DEFAULT_SUPERADMIN.username.toLowerCase() === idClean) {
+      if (!foundUser && (DEFAULT_SUPERADMIN.username.toLowerCase() === idClean || DEFAULT_SUPERADMIN.email.toLowerCase() === idClean)) {
         foundUser = DEFAULT_SUPERADMIN;
       }
 
