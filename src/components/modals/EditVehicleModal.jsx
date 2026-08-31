@@ -77,8 +77,8 @@ export function EditVehicleModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/80 flex justify-center items-center z-[90] backdrop-blur-xs p-4 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 dark:border-slate-800 p-6 sm:p-7">
+    <div onClick={onClose} className="fixed inset-0 bg-slate-900/80 flex justify-center items-center z-[90] backdrop-blur-xs p-4 animate-in fade-in duration-200 cursor-pointer">
+      <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 dark:border-slate-800 p-6 sm:p-7 cursor-default">
         <div className="flex justify-between items-center pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
           <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
             {isEditMode ? (

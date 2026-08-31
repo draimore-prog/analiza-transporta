@@ -81,8 +81,8 @@ export function NewCostModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/80 flex justify-center items-center z-[70] backdrop-blur-xs p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
+    <div onClick={onClose} className="fixed inset-0 bg-slate-900/80 flex justify-center items-center z-[70] backdrop-blur-xs p-4 cursor-pointer">
+      <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 cursor-default">
         {/* Header */}
         <div className="p-5 bg-gradient-to-r from-emerald-800 to-teal-950 text-white flex justify-between items-center">
           <div className="flex items-center gap-2.5">
