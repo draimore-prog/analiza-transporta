@@ -6,28 +6,14 @@
     "rules": "storage.rules"
   },
   "hosting": {
-    "public": ".",
+    "public": "out",
     "ignore": [
       "firebase.json",
-      "**/.*",
-      ".git/**",
-      ".agents/**",
-      "**/scratch/**",
-      "node_modules/**",
-      "scripts/**",
-      "backups/**",
-      "*.zip",
-      "**/*.zip",
-      "*.py",
-      "*.txt",
-      "*.js",
-      "package*.json",
-      "**/*.xlsx",
-      "*.xlsx"
+      "**/.*"
     ],
     "headers": [
       {
-        "source": "**/*.@(html|json)",
+        "source": "**/*.@(html|json|js|css)",
         "headers": [
           {
             "key": "Cache-Control",
@@ -39,7 +25,7 @@
     "rewrites": [
       {
         "source": "**",
-        "destination": "/dashboard12_troskova.html"
+        "destination": "/index.html"
       }
     ]
   }
