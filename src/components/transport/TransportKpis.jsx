@@ -3,7 +3,7 @@
 import React, { useMemo, useRef, useEffect, useState } from "react";
 import ChartJS from "@/lib/chartSetup.js";
 import { formatKM } from "@/lib/calculations.js";
-import { Building2, BarChart2 } from "lucide-react";
+import { Building2, BarChart2, Calendar } from "lucide-react";
 
 const KPI_TOTAL_FLEET_BY_YEAR = {
   2021: { Total: 661 },
@@ -110,12 +110,21 @@ export function TransportKpis({
   const yearlyStats = useMemo(() => {
     const years = [2021, 2022, 2023, 2024, 2025, 2026];
     const stats = {};
-    years.forEach((y) => (stats[y] = { cost: 0, count: 0 }));
+    years.forEach((y) => (stats[y] = { cost: 0, count: 0, internalCost: 0 }));
 
     costData.forEach((c) => {
       if (stats[c.year]) {
         stats[c.year].cost += c.cost || 0;
         stats[c.year].count += 1;
+
+        const isInt =
+          (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("bingo") ||
+          (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("vlastit") ||
+          (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("intern");
+
+        if (isInt) {
+          stats[c.year].internalCost += c.cost || 0;
+        }
       }
     });
 
@@ -434,89 +443,142 @@ export function TransportKpis({
       });
     }
 
-    // 5. Top 7 Dobavljača / Servisera (sa Eksterno / Interno filterom i procentima)
+    // 5. Top 7 Dobavljača / Servisera (KLIKOM NA INTERNO PREBACUJE U GODINE)
     if (suppliersCanvasRef.current) {
       if (chartInstances.current.suppliers) chartInstances.current.suppliers.destroy();
       const ctx = suppliersCanvasRef.current.getContext("2d");
 
-      const supMap = new Map();
-      filteredCostData.forEach((c) => {
-        const isInt =
-          (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("bingo") ||
-          (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("vlastit") ||
-          (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("intern");
+      if (supplierMode === "internal") {
+        // PRIKAZ INTERNIH TROŠKOVA PO GODINAMA (2021-2026)
+        const years = [2021, 2022, 2023, 2024, 2025, 2026];
+        const internalData = years.map((y) => yearlyStats[y]?.internalCost || 0);
+        const totalInt = internalData.reduce((a, b) => a + b, 0);
 
-        let isMatch = false;
-        if (supplierMode === "external" && !isInt) isMatch = true;
-        else if (supplierMode === "internal" && isInt) isMatch = true;
-        else if (supplierMode === "all") isMatch = true;
-
-        if (isMatch) {
-          const sup = (c.dobavljacOrig || c.dobavljac || (isInt ? "Vlastita Radionica" : "Ostali Eksterni")).trim();
-          if (sup && sup !== "-") {
-            supMap.set(sup, (supMap.get(sup) || 0) + (c.cost || 0));
-          }
-        }
-      });
-
-      const sortedSups = Array.from(supMap.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 7);
-
-      const totalSupCost = sortedSups.reduce((acc, s) => acc + s[1], 0);
-
-      chartInstances.current.suppliers = new ChartJS(ctx, {
-        type: "bar",
-        data: {
-          labels: sortedSups.map((s) => s[0]),
-          datasets: [
-            {
-              label: "Ukupan iznos popravki (KM)",
-              data: sortedSups.map((s) => s[1]),
-              backgroundColor: supplierMode === "internal" ? "#2563eb" : "#6366f1",
-              borderRadius: 6
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            datalabels: {
-              display: true,
-              color: "#ffffff",
-              anchor: "end",
-              align: "start",
-              offset: 4,
-              font: { weight: "bold", size: 10 },
-              formatter: (value) => {
-                if (summaryKpis.totalCost === 0 || value === 0) return "";
-                return `${((value / summaryKpis.totalCost) * 100).toFixed(1)}%`;
+        chartInstances.current.suppliers = new ChartJS(ctx, {
+          type: "bar",
+          data: {
+            labels: years.map((y) => `${y}.`),
+            datasets: [
+              {
+                label: "Interno Održavanje (KM)",
+                data: internalData,
+                backgroundColor: "#2563eb",
+                borderRadius: 6
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              datalabels: {
+                display: true,
+                color: "#ffffff",
+                anchor: "end",
+                align: "start",
+                offset: 4,
+                font: { weight: "bold", size: 10 },
+                formatter: (value) => {
+                  if (totalInt === 0 || value === 0) return "";
+                  return `${((value / totalInt) * 100).toFixed(1)}%`;
+                }
+              },
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => {
+                    const val = ctx.raw || 0;
+                    const p = totalInt > 0 ? ((val / totalInt) * 100).toFixed(1) : "0";
+                    return ` Interni trošak: ${formatKM(val)} (${p}% ukupnog internog)`;
+                  }
+                }
               }
             },
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: (ctx) => {
-                  const val = ctx.raw || 0;
-                  const p = summaryKpis.totalCost > 0 ? ((val / summaryKpis.totalCost) * 100).toFixed(1) : "0";
-                  return ` Iznos: ${formatKM(val)} (${p}% ukupnog troška)`;
+            onClick: (e, els, ch) => {
+              if (els.length > 0 && onOpenIntExtRecap) {
+                onOpenIntExtRecap("Interno");
+              }
+            }
+          }
+        });
+      } else {
+        // PRIKAZ TOP DOBALJAČA (EKSTERNO ILI SVI)
+        const supMap = new Map();
+        filteredCostData.forEach((c) => {
+          const isInt =
+            (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("bingo") ||
+            (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("vlastit") ||
+            (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("intern");
+
+          let isMatch = false;
+          if (supplierMode === "external" && !isInt) isMatch = true;
+          else if (supplierMode === "all") isMatch = true;
+
+          if (isMatch) {
+            const sup = (c.dobavljacOrig || c.dobavljac || "Ostali Eksterni").trim();
+            if (sup && sup !== "-") {
+              supMap.set(sup, (supMap.get(sup) || 0) + (c.cost || 0));
+            }
+          }
+        });
+
+        const sortedSups = Array.from(supMap.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 7);
+
+        chartInstances.current.suppliers = new ChartJS(ctx, {
+          type: "bar",
+          data: {
+            labels: sortedSups.map((s) => s[0]),
+            datasets: [
+              {
+                label: "Ukupan iznos popravki (KM)",
+                data: sortedSups.map((s) => s[1]),
+                backgroundColor: "#6366f1",
+                borderRadius: 6
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              datalabels: {
+                display: true,
+                color: "#ffffff",
+                anchor: "end",
+                align: "start",
+                offset: 4,
+                font: { weight: "bold", size: 10 },
+                formatter: (value) => {
+                  if (summaryKpis.totalCost === 0 || value === 0) return "";
+                  return `${((value / summaryKpis.totalCost) * 100).toFixed(1)}%`;
+                }
+              },
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => {
+                    const val = ctx.raw || 0;
+                    const p = summaryKpis.totalCost > 0 ? ((val / summaryKpis.totalCost) * 100).toFixed(1) : "0";
+                    return ` Iznos: ${formatKM(val)} (${p}% ukupnog troška)`;
+                  }
+                }
+              }
+            },
+            onClick: (e, els, ch) => {
+              if (els.length > 0 && onOpenSupplierDetail) {
+                const supName = ch.data.labels[els[0].index];
+                if (supName.toLowerCase().includes("vlastit") || supName.toLowerCase().includes("bingo")) {
+                  if (onOpenIntExtRecap) onOpenIntExtRecap("Interno");
+                } else {
+                  onOpenSupplierDetail(supName);
                 }
               }
             }
-          },
-          onClick: (e, els, ch) => {
-            if (els.length > 0 && onOpenSupplierDetail) {
-              const supName = ch.data.labels[els[0].index];
-              if (supName.toLowerCase().includes("vlastit") || supName.toLowerCase().includes("bingo")) {
-                if (onOpenIntExtRecap) onOpenIntExtRecap("Interno");
-              } else {
-                onOpenSupplierDetail(supName);
-              }
-            }
           }
-        }
-      });
+        });
+      }
     }
 
     return () => {
@@ -618,7 +680,7 @@ export function TransportKpis({
         </div>
       </div>
 
-      {/* FILTER TRAKA ZA GRAFIKONE (UKLONJEN SWITCH, SAMO GODINE) */}
+      {/* FILTER TRAKA ZA GRAFIKONE */}
       <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-wrap justify-between items-center gap-3">
         <div className="flex items-center gap-2">
           <BarChart2 className="w-5 h-5 text-blue-600" />
@@ -677,7 +739,7 @@ export function TransportKpis({
         </div>
       </div>
 
-      {/* DRUGI RED GRAFIKONA: Top 10 Vozila + Segmenti + Top Dobavljači sa dugmetom Eksterno/Interno */}
+      {/* DRUGI RED GRAFIKONA: Top 10 Vozila + Segmenti + Top Dobavljači / Interni troškovi po godinama */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Top 10 Vozila (Horizontal Bar) */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
@@ -709,14 +771,24 @@ export function TransportKpis({
           </div>
         </div>
 
-        {/* Top 7 Dobavljača / Servisera sa DUGMADIMA: EKSTERNO (default) / INTERNO / SVI */}
+        {/* Top 7 Dobavljača / Interni Troškovi po Godinama */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
           <div className="flex flex-wrap justify-between items-center mb-3 gap-2">
-            <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
-              <Building2 className="w-4 h-4 text-indigo-500" /> Top Dobavljači & Serviseri
+            <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
+              {supplierMode === "internal" ? (
+                <>
+                  <Calendar className="w-4 h-4 text-blue-500" />
+                  <span>Interni Troškovi po Godinama</span>
+                </>
+              ) : (
+                <>
+                  <Building2 className="w-4 h-4 text-indigo-500" />
+                  <span>Top Dobavljači & Serviseri</span>
+                </>
+              )}
             </h4>
 
-            {/* DUGME: EKSTERNO (default) / INTERNO / SVI */}
+            {/* DUGME: EKSTERNO (default) / INTERNO (prebacuje u godine) / SVI */}
             <div className="flex bg-slate-100 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] font-bold">
               <button
                 onClick={() => setSupplierMode("external")}
@@ -736,7 +808,7 @@ export function TransportKpis({
                     : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
                 }`}
               >
-                Interno
+                Interno (Godine)
               </button>
               <button
                 onClick={() => setSupplierMode("all")}
