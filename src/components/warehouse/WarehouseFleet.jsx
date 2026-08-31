@@ -195,7 +195,7 @@ export function WarehouseFleet({
         <div
           ref={containerRef}
           onScroll={handleScroll}
-          className="overflow-x-auto overflow-y-auto max-h-[640px] scroll-smooth"
+          className="overflow-x-auto overflow-y-auto min-h-[560px] max-h-[calc(100vh-250px)] scroll-smooth"
         >
           <table className="min-w-full text-xs text-left">
             <thead className="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700 sticky top-0 z-20 shadow-xs">
