@@ -10,7 +10,10 @@ export function TransportKpis({
   costData,
   onSelectYear,
   onOpenFleetTab,
-  onOpenVehicleModal
+  onOpenVehicleModal,
+  onOpenIntExtRecap,
+  onOpenSupplierDetail,
+  onOpenSegmentDetail
 }) {
   const dynamic2026 = useMemo(() => calculateDynamic2026(masterFleet), [masterFleet]);
   const fleetByYear = useMemo(() => calculateFleetByYear(masterFleet), [masterFleet]);
@@ -68,7 +71,7 @@ export function TransportKpis({
       if (trendMode === "yoy" || selectedYearFilter === "all") {
         const years = [2021, 2022, 2023, 2024, 2025, 2026];
         const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
-        
+
         const datasets = years.map((y, idx) => {
           const monthData = Array(12).fill(0);
           costData.forEach((c) => {
@@ -116,7 +119,9 @@ export function TransportKpis({
         filteredCostData.forEach((c) => {
           const m = c.month || (c.datumObj ? c.datumObj.getMonth() + 1 : null);
           if (m && m >= 1 && m <= 12) {
-            const isInt = (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("bingo") || (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("vlastit");
+            const isInt =
+              (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("bingo") ||
+              (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("vlastit");
             if (isInt) monthInterno[m - 1] += c.cost || 0;
             else monthEksterno[m - 1] += c.cost || 0;
           }
@@ -148,14 +153,17 @@ export function TransportKpis({
       }
     }
 
-    // 2. Interno vs Eksterno Doughnut
+    // 2. Interno vs Eksterno Doughnut (sa klikom na modal)
     if (intExtCanvasRef.current) {
       if (chartInstances.current.intExt) chartInstances.current.intExt.destroy();
       const ctx = intExtCanvasRef.current.getContext("2d");
 
-      let intCost = 0, extCost = 0;
+      let intCost = 0,
+        extCost = 0;
       filteredCostData.forEach((c) => {
-        const isInt = (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("bingo") || (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("vlastit");
+        const isInt =
+          (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("bingo") ||
+          (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("vlastit");
         if (isInt) intCost += c.cost || 0;
         else extCost += c.cost || 0;
       });
@@ -168,12 +176,14 @@ export function TransportKpis({
         type: "doughnut",
         data: {
           labels: [`Interno (${intPerc}%)`, `Eksterno (${extPerc}%)`],
-          datasets: [{
-            data: [intCost, extCost],
-            backgroundColor: ["#2563eb", "#f59e0b"],
-            borderWidth: 2,
-            borderColor: document.documentElement.classList.contains("dark") ? "#1e293b" : "#ffffff"
-          }]
+          datasets: [
+            {
+              data: [intCost, extCost],
+              backgroundColor: ["#2563eb", "#f59e0b"],
+              borderWidth: 2,
+              borderColor: document.documentElement.classList.contains("dark") ? "#1e293b" : "#ffffff"
+            }
+          ]
         },
         options: {
           responsive: true,
@@ -185,12 +195,19 @@ export function TransportKpis({
                 label: (ctx) => ` ${ctx.label}: ${formatKM(ctx.raw)}`
               }
             }
+          },
+          onClick: (evt, elements) => {
+            if (elements.length > 0 && onOpenIntExtRecap) {
+              const idx = elements[0].index;
+              const type = idx === 0 ? "Interno" : "Eksterno";
+              onOpenIntExtRecap(type);
+            }
           }
         }
       });
     }
 
-    // 3. Top 10 Vozila po Trošku
+    // 3. Top 10 Vozila po Trošku (sa klikom na karton vozila)
     if (vehiclesCanvasRef.current) {
       if (chartInstances.current.vehicles) chartInstances.current.vehicles.destroy();
       const ctx = vehiclesCanvasRef.current.getContext("2d");
@@ -203,18 +220,22 @@ export function TransportKpis({
         }
       });
 
-      const sortedVehicles = Array.from(vehMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      const sortedVehicles = Array.from(vehMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
 
       chartInstances.current.vehicles = new ChartJS(ctx, {
         type: "bar",
         data: {
           labels: sortedVehicles.map((v) => v[0]),
-          datasets: [{
-            label: "Trošak (KM)",
-            data: sortedVehicles.map((v) => v[1]),
-            backgroundColor: "#ef4444",
-            borderRadius: 4
-          }]
+          datasets: [
+            {
+              label: "Trošak (KM)",
+              data: sortedVehicles.map((v) => v[1]),
+              backgroundColor: "#ef4444",
+              borderRadius: 4
+            }
+          ]
         },
         options: {
           indexAxis: "y",
@@ -238,7 +259,7 @@ export function TransportKpis({
       });
     }
 
-    // 4. Segmenti Doughnut
+    // 4. Segmenti Doughnut (sa klikom na segment modal)
     if (segmentsCanvasRef.current) {
       if (chartInstances.current.segments) chartInstances.current.segments.destroy();
       const ctx = segmentsCanvasRef.current.getContext("2d");
@@ -249,19 +270,23 @@ export function TransportKpis({
         segMap.set(seg, (segMap.get(seg) || 0) + (c.cost || 0));
       });
 
-      const sortedSegs = Array.from(segMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 7);
+      const sortedSegs = Array.from(segMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 7);
       const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#64748b"];
 
       chartInstances.current.segments = new ChartJS(ctx, {
         type: "doughnut",
         data: {
           labels: sortedSegs.map((s) => s[0]),
-          datasets: [{
-            data: sortedSegs.map((s) => s[1]),
-            backgroundColor: colors.slice(0, sortedSegs.length),
-            borderWidth: 2,
-            borderColor: document.documentElement.classList.contains("dark") ? "#1e293b" : "#ffffff"
-          }]
+          datasets: [
+            {
+              data: sortedSegs.map((s) => s[1]),
+              backgroundColor: colors.slice(0, sortedSegs.length),
+              borderWidth: 2,
+              borderColor: document.documentElement.classList.contains("dark") ? "#1e293b" : "#ffffff"
+            }
+          ]
         },
         options: {
           responsive: true,
@@ -273,12 +298,18 @@ export function TransportKpis({
                 label: (ctx) => ` ${ctx.label}: ${formatKM(ctx.raw)}`
               }
             }
+          },
+          onClick: (e, els, ch) => {
+            if (els.length > 0 && onOpenSegmentDetail) {
+              const segName = ch.data.labels[els[0].index];
+              onOpenSegmentDetail(segName);
+            }
           }
         }
       });
     }
 
-    // 5. Top Dobavljači / Serviseri
+    // 5. Top Dobavljači / Serviseri (sa klikom na dobavljač modal)
     if (suppliersCanvasRef.current) {
       if (chartInstances.current.suppliers) chartInstances.current.suppliers.destroy();
       const ctx = suppliersCanvasRef.current.getContext("2d");
@@ -289,18 +320,22 @@ export function TransportKpis({
         supMap.set(sup, (supMap.get(sup) || 0) + (c.cost || 0));
       });
 
-      const sortedSups = Array.from(supMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 7);
+      const sortedSups = Array.from(supMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 7);
 
       chartInstances.current.suppliers = new ChartJS(ctx, {
         type: "bar",
         data: {
           labels: sortedSups.map((s) => s[0]),
-          datasets: [{
-            label: "Ukupan iznos popravki (KM)",
-            data: sortedSups.map((s) => s[1]),
-            backgroundColor: "#6366f1",
-            borderRadius: 6
-          }]
+          datasets: [
+            {
+              label: "Ukupan iznos popravki (KM)",
+              data: sortedSups.map((s) => s[1]),
+              backgroundColor: "#6366f1",
+              borderRadius: 6
+            }
+          ]
         },
         options: {
           responsive: true,
@@ -312,6 +347,16 @@ export function TransportKpis({
                 label: (ctx) => ` Iznos: ${formatKM(ctx.raw)}`
               }
             }
+          },
+          onClick: (e, els, ch) => {
+            if (els.length > 0 && onOpenSupplierDetail) {
+              const supName = ch.data.labels[els[0].index];
+              if (supName.toLowerCase().includes("vlastit") || supName.toLowerCase().includes("bingo")) {
+                if (onOpenIntExtRecap) onOpenIntExtRecap("Interno");
+              } else {
+                onOpenSupplierDetail(supName);
+              }
+            }
           }
         }
       });
@@ -320,10 +365,18 @@ export function TransportKpis({
     return () => {
       Object.values(chartInstances.current).forEach((inst) => inst?.destroy());
     };
-  }, [filteredCostData, trendMode, selectedYearFilter, onOpenVehicleModal]);
+  }, [
+    filteredCostData,
+    trendMode,
+    selectedYearFilter,
+    onOpenVehicleModal,
+    onOpenIntExtRecap,
+    onOpenSupplierDetail,
+    onOpenSegmentDetail
+  ]);
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       {/* Top 4 KPI Kartice */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Kartica 1: Ukupan Vozni Park 2026 */}
@@ -343,7 +396,8 @@ export function TransportKpis({
             {dynamic2026.total.toLocaleString("bs-BA")}
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">
-            Teretna: <strong className="text-slate-800 dark:text-slate-200">{dynamic2026.teretna}</strong> | Skladišna: <strong className="text-slate-800 dark:text-slate-200">{dynamic2026.skladisna}</strong>
+            Teretna: <strong className="text-slate-800 dark:text-slate-200">{dynamic2026.teretna}</strong> | Skladišna:{" "}
+            <strong className="text-slate-800 dark:text-slate-200">{dynamic2026.skladisna}</strong>
           </p>
         </div>
 
@@ -382,7 +436,10 @@ export function TransportKpis({
             {formatKM(cost2026)}
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">
-            Broj unesenih računa: <strong className="text-slate-800 dark:text-slate-200">{yearlyStats[2026]?.count.toLocaleString("bs-BA")}</strong>
+            Broj unesenih računa:{" "}
+            <strong className="text-slate-800 dark:text-slate-200">
+              {yearlyStats[2026]?.count.toLocaleString("bs-BA")}
+            </strong>
           </p>
         </div>
 
@@ -412,6 +469,9 @@ export function TransportKpis({
           <span className="font-extrabold text-sm text-slate-900 dark:text-white">
             Interaktivni Analitički Grafikoni
           </span>
+          <span className="text-[10px] bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-300 font-bold px-2 py-0.5 rounded">
+            Klikom na grafikone otvarate detaljne preglede
+          </span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -435,16 +495,20 @@ export function TransportKpis({
           <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold">
             <button
               onClick={() => setTrendMode("yoy")}
-              className={`px-3 py-1 rounded-md transition-all ${
-                trendMode === "yoy" ? "bg-white dark:bg-slate-800 text-blue-600 shadow-xs font-black" : "text-slate-500"
+              className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                trendMode === "yoy"
+                  ? "bg-white dark:bg-slate-800 text-blue-600 shadow-xs font-black"
+                  : "text-slate-500"
               }`}
             >
               YoY Trend
             </button>
             <button
               onClick={() => setTrendMode("monthly")}
-              className={`px-3 py-1 rounded-md transition-all ${
-                trendMode === "monthly" ? "bg-white dark:bg-slate-800 text-blue-600 shadow-xs font-black" : "text-slate-500"
+              className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                trendMode === "monthly"
+                  ? "bg-white dark:bg-slate-800 text-blue-600 shadow-xs font-black"
+                  : "text-slate-500"
               }`}
             >
               Interno / Eksterno
@@ -468,10 +532,15 @@ export function TransportKpis({
 
         {/* Interno vs Eksterno (1 kolona) */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
-          <h4 className="text-sm font-extrabold text-slate-900 dark:text-white mb-3">
-            ⚖️ Interno vs Eksterno Održavanje
-          </h4>
-          <div className="h-[280px] w-full relative flex items-center justify-center">
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="text-sm font-extrabold text-slate-900 dark:text-white">
+              ⚖️ Interno vs Eksterno Održavanje
+            </h4>
+            <span className="text-[10px] text-blue-600 font-bold bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded">
+              Klik za detalje →
+            </span>
+          </div>
+          <div className="h-[280px] w-full relative flex items-center justify-center cursor-pointer">
             <canvas ref={intExtCanvasRef} />
           </div>
         </div>
@@ -486,30 +555,40 @@ export function TransportKpis({
               <Truck className="w-4 h-4 text-red-500" /> Top 10 Vozila po Trošku
             </h4>
             <span className="text-[10px] text-indigo-500 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded font-bold">
-              Klik na bar otvara karton
+              Klik za karton →
             </span>
           </div>
-          <div className="h-[280px] w-full relative">
+          <div className="h-[280px] w-full relative cursor-pointer">
             <canvas ref={vehiclesCanvasRef} />
           </div>
         </div>
 
         {/* Segmenti Doughnut */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
-          <h4 className="text-sm font-extrabold text-slate-900 dark:text-white mb-3 flex items-center gap-1.5">
-            <Layers className="w-4 h-4 text-blue-500" /> Trošak po Segmentima
-          </h4>
-          <div className="h-[280px] w-full relative flex items-center justify-center">
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <Layers className="w-4 h-4 text-blue-500" /> Trošak po Segmentima
+            </h4>
+            <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded">
+              Klik za spisak →
+            </span>
+          </div>
+          <div className="h-[280px] w-full relative flex items-center justify-center cursor-pointer">
             <canvas ref={segmentsCanvasRef} />
           </div>
         </div>
 
         {/* Top 7 Dobavljača / Servisera */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
-          <h4 className="text-sm font-extrabold text-slate-900 dark:text-white mb-3 flex items-center gap-1.5">
-            <Building2 className="w-4 h-4 text-indigo-500" /> Top Dobavljači & Serviseri
-          </h4>
-          <div className="h-[280px] w-full relative">
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <Building2 className="w-4 h-4 text-indigo-500" /> Top Dobavljači & Serviseri
+            </h4>
+            <span className="text-[10px] text-indigo-600 font-bold bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded">
+              Klik za analizu →
+            </span>
+          </div>
+          <div className="h-[280px] w-full relative cursor-pointer">
             <canvas ref={suppliersCanvasRef} />
           </div>
         </div>
@@ -553,7 +632,12 @@ export function TransportKpis({
                     className="hover:bg-blue-50/50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors group"
                   >
                     <td className="p-3 font-extrabold text-blue-700 dark:text-blue-400 group-hover:underline">
-                      {y}. godina {y === 2026 && <span className="text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 px-2 py-0.5 rounded-full ml-1 font-bold">Tekuća</span>}
+                      {y}. godina{" "}
+                      {y === 2026 && (
+                        <span className="text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 px-2 py-0.5 rounded-full ml-1 font-bold">
+                          Tekuća
+                        </span>
+                      )}
                     </td>
                     <td className="p-3 text-center font-bold text-slate-800 dark:text-slate-200">
                       {fCount.toLocaleString("bs-BA")}

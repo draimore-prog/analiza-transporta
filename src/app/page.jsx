@@ -28,6 +28,9 @@ import { AdminPanelModal } from "@/components/modals/AdminPanelModal.jsx";
 import { EditRoleModal } from "@/components/modals/EditRoleModal.jsx";
 import { EditUserModal } from "@/components/modals/EditUserModal.jsx";
 import { ChangePasswordModal } from "@/components/modals/ChangePasswordModal.jsx";
+import { IntExtRecapModal } from "@/components/modals/IntExtRecapModal.jsx";
+import { SupplierDetailModal } from "@/components/modals/SupplierDetailModal.jsx";
+import { SegmentDetailModal } from "@/components/modals/SegmentDetailModal.jsx";
 
 export default function DashboardPage() {
   const {
@@ -35,6 +38,7 @@ export default function DashboardPage() {
     users,
     roles,
     currentRole,
+    logout,
     saveUserToFirestore,
     deleteUserFromFirestore,
     saveRoleToFirestore
@@ -70,6 +74,11 @@ export default function DashboardPage() {
   const [editingRole, setEditingRole] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
 
+  // Detaljni modali (reakcije na klik na grafikone i tabele)
+  const [intExtModalTarget, setIntExtModalTarget] = useState(null); // 'Interno' or 'Eksterno'
+  const [supplierModalTarget, setSupplierModalTarget] = useState(null);
+  const [segmentModalTarget, setSegmentModalTarget] = useState(null);
+
   // Dark mode klasa na dokumentu
   useEffect(() => {
     if (isDarkMode) {
@@ -103,11 +112,11 @@ export default function DashboardPage() {
   }, []);
 
   const handleSelectSegmentDrilldown = useCallback((seg) => {
-    setActiveWhTab(3);
+    setSegmentModalTarget(seg);
   }, []);
 
   const handleSelectSupplierDrilldown = useCallback((sup) => {
-    setActiveWhTab(3);
+    setSupplierModalTarget(sup);
   }, []);
 
   if (isLoading) {
@@ -121,8 +130,8 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      {/* Sidebar */}
+    <div className="flex h-screen w-full overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+      {/* Sidebar sa navigacijom i odjavom */}
       <Sidebar
         portalMode={portalMode}
         setPortalMode={setPortalMode}
@@ -136,11 +145,12 @@ export default function DashboardPage() {
         setIsDarkMode={setIsDarkMode}
         onOpenAdminPanel={() => setIsAdminPanelOpen(true)}
         onOpenPasswordModal={() => setIsPasswordModalOpen(true)}
+        onLogout={logout}
       />
 
-      {/* Glavni Kontejner */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Header */}
+      {/* Glavni Kontejner - 100% širina browsera */}
+      <div className="flex-1 flex flex-col min-w-0 w-full h-full overflow-hidden">
+        {/* Header sa brzom pretragom i V1 dugmetom */}
         <Header
           portalMode={portalMode}
           setPortalMode={setPortalMode}
@@ -150,8 +160,8 @@ export default function DashboardPage() {
           onOpenNewVehicleModal={() => setIsNewVehicleOpen(true)}
         />
 
-        {/* Skrolabilni Body Dashboarda */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6">
+        {/* Skrolabilni Body Dashboarda - 100% širina */}
+        <main className="flex-1 overflow-y-auto w-full p-4 sm:p-6 lg:p-8 space-y-6">
           {portalMode === "transport" ? (
             /* Transport Tabovi */
             <>
@@ -161,6 +171,10 @@ export default function DashboardPage() {
                   costData={costData}
                   onSelectYear={handleSelectYearDrilldown}
                   onOpenFleetTab={() => setActiveTab(5)}
+                  onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
+                  onOpenIntExtRecap={(t) => setIntExtModalTarget(t)}
+                  onOpenSupplierDetail={(s) => setSupplierModalTarget(s)}
+                  onOpenSegmentDetail={(seg) => setSegmentModalTarget(seg)}
                 />
               )}
 
@@ -256,6 +270,42 @@ export default function DashboardPage() {
         reg={vehicleModalReg || ""}
         masterFleet={masterFleet}
         costData={costData}
+      />
+
+      {/* Rekapitulacija Internih / Eksternih Servisa Modal */}
+      <IntExtRecapModal
+        isOpen={!!intExtModalTarget}
+        onClose={() => setIntExtModalTarget(null)}
+        targetType={intExtModalTarget || "Interno"}
+        costData={costData}
+        onOpenVehicleModal={(reg) => {
+          setIntExtModalTarget(null);
+          setVehicleModalReg(reg);
+        }}
+      />
+
+      {/* Detalji Dobavljača / Servisera Modal */}
+      <SupplierDetailModal
+        isOpen={!!supplierModalTarget}
+        onClose={() => setSupplierModalTarget(null)}
+        supplierName={supplierModalTarget || ""}
+        costData={costData}
+        onOpenVehicleModal={(reg) => {
+          setSupplierModalTarget(null);
+          setVehicleModalReg(reg);
+        }}
+      />
+
+      {/* Detalji Segmenta Modal */}
+      <SegmentDetailModal
+        isOpen={!!segmentModalTarget}
+        onClose={() => setSegmentModalTarget(null)}
+        segmentName={segmentModalTarget || ""}
+        costData={costData}
+        onOpenVehicleModal={(reg) => {
+          setSegmentModalTarget(null);
+          setVehicleModalReg(reg);
+        }}
       />
 
       {/* Unos Novog Troška */}
