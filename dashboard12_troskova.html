@@ -885,9 +885,44 @@
                 </div>
             </div>
         </div>
-        <!-- ================= TAB 2: ANALIZA ODRŽAVANJA & TROŠAK PO VOZILU ================= -->
-        <div id="tabContent2" class="tab-content hidden">
-            <!-- ================= DUGOROČNI KPI TRETMAN (2021-2026) ================= -->
+                <!-- ================= TAB 2: ANALIZA ODRŽAVANJA & TROŠAK PO VOZILU ================= -->
+        <div id="tabContent2" class="tab-content hidden space-y-6">
+            <!-- 1. Prosječan Trošak PO JEDINICI (Vozilu) - Kontrolna Traka & KPI Grid -->
+            <div class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-4 rounded-xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h3 class="text-base font-extrabold flex items-center gap-2" id="tab2DailyTitle">
+                        <span>Prosječan Trošak PO JEDINICI (Vozilu)</span>
+                    </h3>
+                    <p class="text-xs text-blue-200 mt-0.5" id="tab2PeriodSubtitle">Egzaktna struktura flote iz "KPI Total"</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Prekidač Flote: KPI Total (964 vozila) vs Intervencije -->
+                    <div class="bg-white/10 p-1 rounded-lg border border-white/20 flex items-center text-xs">
+                        <button id="fleetModeMasterBtn" onclick="setFleetMode('master')" class="px-3 py-1.5 rounded-md font-bold transition-all bg-white text-blue-950 shadow">
+                            Flota iz KPI Total (<span id="masterFleetCountBadge">964</span>)
+                        </button>
+                        <button id="fleetModeActiveBtn" onclick="setFleetMode('active')" class="px-3 py-1.5 rounded-md font-semibold text-blue-100 hover:text-white transition-all">
+                            Samo Servisirana Vozila
+                        </button>
+                    </div>
+                    <!-- Birač Godine za Tab 2 -->
+                    <div class="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-lg border border-white/20 text-xs">
+                        <span class="font-semibold text-blue-200">Godina:</span>
+                        <select id="tab2YearSelect" onchange="changeTab2Year(this.value)" class="bg-white text-slate-800 font-bold rounded p-1 text-xs outline-none cursor-pointer">
+                            <!-- Pune se godine -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dnevni i Mjesečni Troškovi PO VOZILU po Tipovima (KPI Grid) -->
+            <div class="mb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4" id="dailyTypeKpiGrid">
+                    <!-- Pune se dinamičke kartice po formuli: Trošak / (Broj Vozila * Dani ili Mjeseci) -->
+                </div>
+            </div>
+
+            <!-- 2. DUGOROČNI KPI TRETMAN (2021-2026) -->
             <div class="card mb-6 border-2 border-indigo-100/50">
                 <div class="mb-4 pb-2 border-b-2 border-slate-100">
                     <h2 class="text-xl font-black text-slate-800 flex items-center gap-2">
@@ -986,90 +1021,9 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Kontrolna Traka za Proračun Flote i Godine -->
-            <div class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-4 rounded-xl mb-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h3 class="text-base font-extrabold flex items-center gap-2" id="tab2DailyTitle">
-                        <span>Prosječan Trošak PO JEDINICI (Vozilu)</span>
-                    </h3>
-                    <p class="text-xs text-blue-200 mt-0.5" id="tab2PeriodSubtitle">Egzaktna struktura flote iz "KPI Total"</p>
-                </div>
-                <div class="flex flex-wrap items-center gap-3">
-                    <!-- Prekidač Flote: KPI Total (964 vozila) vs Intervencije -->
-                    <div class="bg-white/10 p-1 rounded-lg border border-white/20 flex items-center text-xs">
-                        <button id="fleetModeMasterBtn" onclick="setFleetMode('master')" class="px-3 py-1.5 rounded-md font-bold transition-all bg-white text-blue-950 shadow">
-                            Flota iz KPI Total (<span id="masterFleetCountBadge">964</span>)
-                        </button>
-                        <button id="fleetModeActiveBtn" onclick="setFleetMode('active')" class="px-3 py-1.5 rounded-md font-semibold text-blue-100 hover:text-white transition-all">
-                            Samo Servisirana Vozila
-                        </button>
-                    </div>
-                    <!-- Birač Godine za Tab 2 -->
-                    <div class="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-lg border border-white/20 text-xs">
-                        <span class="font-semibold text-blue-200">Godina:</span>
-                        <select id="tab2YearSelect" onchange="changeTab2Year(this.value)" class="bg-white text-slate-800 font-bold rounded p-1 text-xs outline-none cursor-pointer">
-                            <!-- Pune se godine -->
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <!-- Dnevni i Mjesečni Troškovi PO VOZILU po Tipovima (KPI Grid) -->
-            <div class="mb-6">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4" id="dailyTypeKpiGrid">
-                    <!-- Pune se dinamičke kartice po formuli: Trošak / (Broj Vozila * Dani ili Mjeseci) -->
-                </div>
-            </div>
-            <!-- VIŠEGODIŠNJA KOMPARATIVNA MATRICA I GRAFIKON (YoY Unit Cost Comparison) -->
-            <div class="card mb-6">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-3">
-                    <div>
-                        <h3 class="text-base font-bold text-slate-800">📊 Višegodišnje Poređenje Troška Održavanja PO VOZILU (YoY)</h3>
-                        <p class="text-xs text-slate-500">Broj vozila po godinama iz tabele "KPI Total" (2021: 661, 2022: 623, 2023: 652, 2024: 747, 2025: 939, 2026: 964)</p>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
-                    <div class="lg:col-span-2 h-[260px] relative">
-                        <canvas id="chartYoyUnitCost"></canvas>
-                    </div>
-                    <div class="overflow-x-auto border border-slate-200 rounded-lg">
-                        <table class="min-w-full text-xs text-center border-collapse">
-                            <thead class="bg-slate-100 font-bold text-slate-700 border-b border-slate-200">
-                                <tr>
-                                    <th class="py-2 px-2.5 text-left">Godina</th>
-                                    <th class="py-2 px-2.5">Flota</th>
-                                    <th class="py-2 px-2.5">KM / mj / voz.</th>
-                                    <th class="py-2 px-2.5">KM / dan / voz.</th>
-                                </tr>
-                            </thead>
-                            <tbody id="yoyUnitCostTableBody" class="divide-y divide-slate-100 bg-white">
-                                <!-- Pune se redovi -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <!-- Grafikoni Tab 2 -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="card">
-                    <h3 class="text-base font-bold text-slate-800 mb-2">Vrsta Troška: Rezervni Dijelovi vs. Usluge / Rad</h3>
-                    <p class="text-xs text-slate-500 mb-4">Omjer utrošenog novca na dijelove naspram serviserskih radnih sati</p>
-                    <div class="h-[280px] relative flex items-center justify-center"><canvas id="chartPartsVsServices"></canvas></div>
-                </div>
-                <div class="card">
-                    <h3 class="text-base font-bold text-slate-800 mb-2">Dnevni Trošak po Vozilu kroz Mjesece</h3>
-                    <p class="text-xs text-slate-500 mb-4">Prosječna dnevna potrošnja po pojedinačnom vozilu (KM/dan/vozilo)</p>
-                    <div class="h-[280px] relative"><canvas id="chartDailyTrend"></canvas></div>
-                </div>
-                <div class="card lg:col-span-2">
-                    <h3 class="text-base font-bold text-slate-800 mb-2">Struktura Segmenta po Tipu Vozila</h3>
-                    <p class="text-xs text-slate-500 mb-4">Raspodjela troškova održavanja (Motor, Gume, Kočnice, Skladišna mehanizacija...) po kategorijama vozila</p>
-                    <div class="h-[320px] relative"><canvas id="chartTypeSegmentMatrix"></canvas></div>
-                </div>
-            </div>
         </div>
         
-              <!-- ================= TAB 3: YOY KOMPARACIJA & KPI MJESEČNI ================= -->
+        <!-- ================= TAB 3: YOY KOMPARACIJA & KPI MJESEČNI ================= -->
         <div id="tabContent3" class="tab-content hidden space-y-6">
             <!-- Header Kartica za Komparativnu Analizu -->
             <div class="card bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 shadow-md border border-slate-800">
@@ -4309,116 +4263,6 @@
                 `);
             });
             gridContainer.innerHTML = kpiCardsHTML.join('');
-            renderYoyUnitCostMatrix(data);
-            drawChartsTab2(totalParts, totalServices, typeMonthDaily, typeSegmentMap, Array.from(allSegments), sortedTypes, typeVehicleSets);
-        }
-        function renderYoyUnitCostMatrix(data) {
-            let availableYears = Array.from(yearsSet).sort((a,b) => a - b);
-            let yoyTableBody = document.getElementById('yoyUnitCostTableBody');
-            
-            let labels = [];
-            let monthlyData = [];
-            let dailyData = [];
-            let rowsHTML = [];
-            availableYears.forEach(year => {
-                let yData = data.filter(d => d.year === year);
-                let yTotal = yData.reduce((acc, i) => acc + i.cost, 0);
-                if (yTotal === 0 && kpiTotalCostsByYear[year]) {
-                    yTotal = kpiTotalCostsByYear[year].Total || 0;
-                }
-                
-                let activeMonths = Array.from(new Set(yData.map(d => d.month))).sort((a,b) => a - b);
-                let mCount = Math.max(1, activeMonths.length);
-                let dCount = 0;
-                activeMonths.forEach(m => { dCount += new Date(year, m, 0).getDate(); });
-                if (dCount === 0) dCount = 365;
-                let fleetSize = (kpiTotalFleetByYear[year] && kpiTotalFleetByYear[year].Total) ? kpiTotalFleetByYear[year].Total : (new Set(yData.map(i => i.reg)).size || 1);
-                let monthlyPerVehicle = yTotal / (fleetSize * mCount);
-                let dailyPerVehicle = yTotal / (fleetSize * dCount);
-                labels.push(year.toString());
-                monthlyData.push(monthlyPerVehicle.toFixed(2));
-                dailyData.push(dailyPerVehicle.toFixed(2));
-                rowsHTML.push(`
-                    <tr class="hover:bg-slate-50">
-                        <td class="py-2 px-2.5 text-left font-bold text-slate-800">${year}.</td>
-                        <td class="py-2 px-2.5 font-semibold text-slate-600">${fleetSize}</td>
-                        <td class="py-2 px-2.5 font-bold text-blue-700">${monthlyPerVehicle.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM</td>
-                        <td class="py-2 px-2.5 font-bold text-amber-700">${dailyPerVehicle.toLocaleString('bs-BA', {minimumFractionDigits: 2, maximumFractionDigits: 2})} KM</td>
-                    </tr>
-                `);
-            });
-            yoyTableBody.innerHTML = rowsHTML.join('');
-            if (chartYoyUnitCost) chartYoyUnitCost.destroy();
-            chartYoyUnitCost = new Chart(document.getElementById('chartYoyUnitCost').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Trošak po vozilu MJESEČNO (KM)', data: monthlyData, backgroundColor: '#2563eb', borderRadius: 4 },
-                        { label: 'Trošak po vozilu DNEVNO (KM)', data: dailyData, backgroundColor: '#f59e0b', borderRadius: 4 }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-        }
-        function drawChartsTab2(parts, services, typeMonthDaily, typeSegmentMap, segmentsList, typesList, typeVehicleSets) {
-            if(chartPartsVsServices) chartPartsVsServices.destroy(); 
-            if(chartDailyTrend) chartDailyTrend.destroy(); 
-            if(chartTypeSegmentMatrix) chartTypeSegmentMatrix.destroy();
-            chartPartsVsServices = new Chart(document.getElementById('chartPartsVsServices').getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Rezervni Dijelovi', 'Usluge / Radni sati'],
-                    datasets: [{ data: [parts, services], backgroundColor: ['#3b82f6', '#f59e0b'], borderWidth: 2, borderColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff' }]
-                },
-                options: { maintainAspectRatio: false }
-            });
-            let trendDatasets = [], colors = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-            typesList.slice(0, 5).forEach((tip, idx) => {
-                let mData = [];
-                let latestYear = Math.max(...Object.keys(kpiTotalFleetByYear).map(y => parseInt(y)));
-                let kpiFleet = kpiTotalFleetByYear[latestYear] || {};
-                let vCount = (fleetMode === 'master' && kpiFleet[tip]) ? kpiFleet[tip] : (typeVehicleSets[tip] ? Math.max(1, typeVehicleSets[tip].size) : 1);
-                
-                for(let m=1; m<=12; m++) {
-                    let monthlyTot = typeMonthDaily[tip][m];
-                    let mDays = 30;
-                    let dailyPerVeh = monthlyTot / (vCount * mDays);
-                    mData.push(dailyPerVeh.toFixed(2));
-                }
-                trendDatasets.push({
-                    label: `${tip} (KM/dan/vozilo)`,
-                    data: mData,
-                    borderColor: colors[idx % colors.length],
-                    backgroundColor: 'transparent',
-                    borderWidth: 2,
-                    tension: 0.3
-                });
-            });
-            chartDailyTrend = new Chart(document.getElementById('chartDailyTrend').getContext('2d'), {
-                type: 'line',
-                data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'], datasets: trendDatasets },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-            let topSegs = segmentsList.slice(0, 6);
-            let matrixDatasets = [];
-            topSegs.forEach((seg, idx) => {
-                let segData = typesList.map(tip => (typeSegmentMap[tip] && typeSegmentMap[tip][seg]) ? typeSegmentMap[tip][seg] : 0);
-                matrixDatasets.push({
-                    label: seg,
-                    data: segData,
-                    backgroundColor: colors[idx % colors.length]
-                });
-            });
-            chartTypeSegmentMatrix = new Chart(document.getElementById('chartTypeSegmentMatrix').getContext('2d'), {
-                type: 'bar',
-                data: { labels: typesList, datasets: matrixDatasets },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { x: { stacked: true }, y: { stacked: true } }
-                }
-            });
         }
         // ================= TAB 3 PROCESSOR (YOY KOMPARACIJA & KPI MJESEČNI) =================
         function populateTab3Controls() {
