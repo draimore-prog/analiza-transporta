@@ -2976,7 +2976,7 @@
         }
         // ================= INDEXEDDB LOCAL CACHE & INCREMENTAL SYNC =================
         const IDBCache = {
-            dbName: 'AnalizaTransportaDB_v3',
+            dbName: 'AnalizaTransportaDB_v10',
             storeName: 'dataset_cache',
             version: 1,
             _dbPromise: null,
@@ -3042,8 +3042,32 @@
                 } catch(e) {}
             }
         };
-        const COSTS_CACHE_KEY = 'fleet_costs_v3';
-        const MASTER_CACHE_KEY = 'fleet_master_v3';
+        const COSTS_CACHE_KEY = 'fleet_costs_v10_clean';
+        const MASTER_CACHE_KEY = 'fleet_master_v10_clean';
+
+        // Automatic cleanup of legacy caches
+        try {
+            if (window.indexedDB && window.indexedDB.deleteDatabase) {
+                window.indexedDB.deleteDatabase('AnalizaTransportaDB_v2');
+                window.indexedDB.deleteDatabase('AnalizaTransportaDB_v3');
+                window.indexedDB.deleteDatabase('AnalizaTransportaDB_v4');
+                window.indexedDB.deleteDatabase('AnalizaTransportaDB_v5');
+            }
+        } catch(e) {}
+
+        function deduplicateCostsById(items) {
+            if (!items || !Array.isArray(items)) return [];
+            let map = new Map();
+            for (let i = 0; i < items.length; i++) {
+                let it = items[i];
+                let normId = (it.id || it._firestoreId || ('rec_' + i)).toString().replace(/^cost_/, '');
+                if (!map.has(normId)) {
+                    map.set(normId, it);
+                }
+            }
+            return Array.from(map.values());
+        }
+
         let _costsRealtimeUnsubscribe = null;
         let _masterRealtimeUnsubscribe = null;
         let _isCostSyncInitialized = false;
@@ -3064,7 +3088,8 @@
             try {
                 let cachedData = await IDBCache.get(COSTS_CACHE_KEY);
                 if (cachedData && Array.isArray(cachedData) && cachedData.length > 0) {
-                    globalData = cachedData.map(d => ({
+                    let cleanCached = deduplicateCostsById(cachedData);
+                    globalData = cleanCached.map(d => ({
                         ...d,
                         datumObj: d.datum ? new Date(d.datum) : null
                     }));
@@ -3086,7 +3111,7 @@
                     if (res.ok) {
                         const data = await res.json();
                         if (data && data.records && data.records.length > 0) {
-                            let cleanRecords = deduplicateCosts(data.records);
+                            let cleanRecords = deduplicateCostsById(data.records);
                             globalData = cleanRecords.map((item, idx) => {
                                 let regNorm = (item.reg || '').trim();
                                 if (/^(\d+)([A-Za-z]+)$/.test(regNorm)) {
@@ -3205,6 +3230,7 @@
             if (modal) modal.classList.add('hidden');
         }
         function _finalizeDatasetLoad() {
+            globalData = deduplicateCostsById(globalData);
             // Globalna normalizacija registarskih/garažnih brojeva
             if (typeof globalData !== 'undefined' && globalData && globalData.length > 0) {
                 globalData.forEach(item => {
