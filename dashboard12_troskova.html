@@ -706,7 +706,7 @@
         <!-- Topbar -->
         <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-3 flex justify-between items-center z-10 flex-shrink-0 shadow-sm">
             <div>
-                <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">KPI Total Struktura (964 vozila u 2026.)</p>
+                <p id="headerSubtitle" class="text-xs text-slate-500 dark:text-slate-400 font-medium">KPI Total Struktura (964 vozila u 2026.)</p>
             </div>
             
             <div class="flex items-center gap-3">
@@ -1069,7 +1069,7 @@
                 </div>
             </div>
 
-            <div id="appDashboardContent" class="w-full px-2 lg:px-6 mx-auto">
+            <div id="appDashboardContent" class="hidden w-full px-2 lg:px-6 mx-auto">
         <!-- Loader Indikator -->
         <div id="loader" class="hidden my-8 p-6 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-center gap-3">
             <svg class="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -3623,49 +3623,64 @@
             let whDash = document.getElementById('warehouseDashboard');
             let appDash = document.getElementById('appDashboardContent');
             let sDash = document.getElementById('serviserDashboard');
+            let filterSec = document.getElementById('filter-section');
             let aside = document.querySelector('aside');
             let header = document.querySelector('header');
             let switcherLabel = document.getElementById('portalSwitcherLabel');
             let switcherIcon = document.getElementById('portalSwitcherIcon');
             let backBtn = document.getElementById('warehouseBackToTransportBtn');
             let sideBackBtn = document.getElementById('whSideBtnBack');
+            let sideTitle = document.getElementById('sidebarAppTitle');
+            let headerSub = document.getElementById('headerSubtitle');
 
             let transSideNav = document.getElementById('tabs-navigation');
             let whSideNav = document.getElementById('warehouseSidebarNav');
 
             let isSuperAdmin = activeUser && (activeUser.username?.toLowerCase() === 'emir.durakovic' || activeUser.role === 'superadmin');
+            let isWarehouseUser = activeUser && (activeUser.role === 'warehouse_specialist' || (activeUser.email && activeUser.email.toLowerCase() === 'skladisna.mehanizacija@bingotuzla.ba') || activeUser.username === 'skladisna.mehanizacija');
 
             if (mode === 'warehouse') {
                 if (sDash) { sDash.classList.add('hidden'); sDash.classList.remove('flex'); }
                 if (appDash) appDash.classList.add('hidden');
+                if (filterSec) filterSec.classList.add('hidden');
                 if (whDash) whDash.classList.remove('hidden');
 
-                if (aside) aside.classList.remove('hidden');
-                if (transSideNav) {
-                    // Hide individual transport tab buttons but keep container visible
-                    for (let i = 1; i <= 5; i++) {
-                        let b = document.getElementById('tabBtn' + i);
-                        if (b) b.classList.add('hidden');
-                    }
+                // Hide transport tabs
+                for (let i = 1; i <= 5; i++) {
+                    let c = document.getElementById('tabContent' + i);
+                    if (c) c.classList.add('hidden');
+                    let b = document.getElementById('tabBtn' + i);
+                    if (b) b.classList.add('hidden');
                 }
+
+                if (aside) aside.classList.remove('hidden');
                 if (whSideNav) whSideNav.classList.remove('hidden');
+
+                if (sideTitle) {
+                    sideTitle.innerHTML = '🏗️ Skladišna Mehanizacija<span id="sidebarAppSubtitle" class="block text-amber-600 dark:text-amber-400 text-sm mt-1 font-bold">Viljuškari & Paletari</span>';
+                }
+                if (headerSub) {
+                    headerSub.innerText = 'Skladišna mehanizacija (594 aktivne jedinice)';
+                }
 
                 if (switcherLabel) switcherLabel.innerText = 'Glavni Transport';
                 if (switcherIcon) switcherIcon.innerText = '🚛';
                 
                 if (backBtn) {
-                    if (isSuperAdmin) backBtn.classList.remove('hidden');
+                    if (isSuperAdmin && !isWarehouseUser) backBtn.classList.remove('hidden');
                     else backBtn.classList.add('hidden');
                 }
                 if (sideBackBtn) {
-                    if (isSuperAdmin) sideBackBtn.classList.remove('hidden');
+                    if (isSuperAdmin && !isWarehouseUser) sideBackBtn.classList.remove('hidden');
                     else sideBackBtn.classList.add('hidden');
                 }
 
+                switchWhTab(whCurrentTab || 1);
                 renderWarehousePortal();
             } else {
                 if (whDash) whDash.classList.add('hidden');
                 if (appDash) appDash.classList.remove('hidden');
+                if (filterSec) filterSec.classList.remove('hidden');
                 if (sDash) { sDash.classList.add('hidden'); sDash.classList.remove('flex'); }
 
                 if (aside) aside.classList.remove('hidden');
@@ -3677,8 +3692,17 @@
                 }
                 if (whSideNav) whSideNav.classList.add('hidden');
 
+                if (sideTitle) {
+                    sideTitle.innerHTML = 'Servis motornih vozila<span id="sidebarAppSubtitle" class="block text-blue-600 dark:text-blue-400 text-sm mt-1">Održavanje voznog parka</span>';
+                }
+                if (headerSub) {
+                    headerSub.innerText = 'KPI Total Struktura (964 vozila u 2026.)';
+                }
+
                 if (switcherLabel) switcherLabel.innerText = 'Skladišna Mehanizacija';
                 if (switcherIcon) switcherIcon.innerText = '🏗️';
+
+                switchTab(activeTab || 1);
             }
         }
 
