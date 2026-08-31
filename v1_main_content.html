@@ -1,0 +1,941 @@
+YPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Servis motornih vozila - Odr??avanje voznog parka</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <!-- Firebase Web SDK v10 (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.06); transition: all 0.25s ease; border: 1px solid #e2e8f0; }
+        .card:hover { box-shadow: 0 10px 25px rgba(0,0,0,0.06); }
+        .clickable-chart canvas { cursor: pointer; }
+        .filter-badge { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 9999px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .dropzone { border: 2px dashed #93c5fd; background-color: #eff6ff; transition: all 0.2s ease; cursor: pointer; }
+        .dropzone:hover, .dropzone.dragover { border-color: #2563eb; background-color: #dbeafe; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* ================= DARK MODE COLOR PALETTE & STYLES ================= */
+        html.dark {
+            color-scheme: dark;
+        }
+        html.dark body {
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+        html.dark .card,
+        html.dark .bg-white {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f1f5f9 !important;
+        }
+        html.dark .text-slate-900,
+        html.dark .text-slate-800,
+        html.dark .text-slate-700,
+        html.dark .text-slate-600,
+        html.dark .text-gray-900,
+        html.dark .text-gray-800,
+        html.dark .text-gray-700 {
+            color: #f8fafc !important;
+        }
+        html.dark .text-slate-500,
+        html.dark .text-slate-400,
+        html.dark .text-gray-500,
+        html.dark .text-gray-400 {
+            color: #cbd5e1 !important;
+        }
+        html.dark .text-indigo-900,
+        html.dark .text-indigo-800,
+        html.dark .text-indigo-700,
+        html.dark .text-indigo-600,
+        html.dark .text-blue-900,
+        html.dark .text-blue-800,
+        html.dark .text-blue-700,
+        html.dark .text-emerald-900,
+        html.dark .text-emerald-800,
+        html.dark .text-emerald-700,
+        html.dark .text-amber-900,
+        html.dark .text-amber-800,
+        html.dark .text-amber-700,
+        html.dark .text-purple-900,
+        html.dark .text-purple-800,
+        html.dark .text-purple-700 {
+            color: #38bdf8 !important;
+        }
+        html.dark .bg-slate-50,
+        html.dark .bg-slate-100,
+        html.dark .bg-gray-50,
+        html.dark .bg-gray-100,
+        html.dark .bg-indigo-50,
+        html.dark .bg-blue-50,
+        html.dark .bg-emerald-50,
+        html.dark .bg-amber-50,
+        html.dark .bg-gradient-to-br {
+            background-color: #0f172a !important;
+            background-image: none !important;
+            color: #e2e8f0 !important;
+        }
+        html.dark .bg-slate-200,
+        html.dark .bg-slate-300,
+        html.dark .bg-indigo-100,
+        html.dark .bg-blue-100,
+        html.dark .bg-emerald-100,
+        html.dark .bg-amber-100,
+        html.dark .bg-purple-100 {
+            background-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        html.dark .border-slate-100,
+        html.dark .border-slate-200,
+        html.dark .border-slate-300,
+        html.dark .border-gray-200,
+        html.dark .border-indigo-100,
+        html.dark .border-blue-100,
+        html.dark .border-emerald-200 {
+            border-color: #334155 !important;
+        }
+        html.dark input,
+        html.dark select,
+        html.dark textarea {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+            border-color: #475569 !important;
+        }
+        html.dark input::placeholder,
+        html.dark textarea::placeholder {
+            color: #64748b !important;
+        }
+        html.dark table thead {
+            background-color: #0f172a !important;
+            color: #cbd5e1 !important;
+        }
+        html.dark table tbody tr {
+            border-color: #334155 !important;
+        }
+        html.dark table tbody tr:hover {
+            background-color: #334155 !important;
+        }
+        html.dark .dropzone {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+        }
+        html.dark .dropzone:hover {
+            background-color: #1e3a8a !important;
+        }
+        html.dark select option {
+            background-color: #1e293b !important;
+            color: #f8fafc !important;
+        }
+        
+        /* PRILAGO??ENI STILOVI ZA PRINTE / PDF IZDAVANJE KARTONA VOZILA */
+        @media print {
+            @page { size: A4 portrait; margin: 10mm; }
+            body * { visibility: hidden; }
+            #vehicleModal, #vehicleModal *, #segmentDetailModal, #segmentDetailModal * { visibility: visible; }
+            #vehicleModal, #segmentDetailModal { 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 100% !important; 
+                height: auto !important; 
+                background: white !important; 
+                backdrop-filter: none !important; 
+                display: block !important;
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+            .no-print { display: none !important; }
+            .print-full-width { 
+                width: 100% !important; 
+                max-height: none !important; 
+                overflow: visible !important; 
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+            }
+            
+            .modal-header-print {
+                background: white !important;
+                color: #0f172a !important;
+                border-bottom: 3px solid #2563eb !important;
+                padding: 12px 0 !important;
+            }
+            .modal-header-print * {
+                color: #0f172a !important;
+            }
+            #modalRegBadge {
+                border: 1.5px solid #2563eb !important;
+                color: #1d4ed8 !important;
+                background: #eff6ff !important;
+            }
+            
+            .print-kpi-grid {
+                display: grid !important;
+                grid-template-columns: repeat(4, 1fr) !important;
+                gap: 10px !important;
+                margin-top: 10px !important;
+                margin-bottom: 15px !important;
+            }
+            .print-kpi-grid > div {
+                border: 1px solid #cbd5e1 !important;
+                background: #f8fafc !important;
+                padding: 8px 10px !important;
+                border-radius: 6px !important;
+            }
+            .print-kpi-grid span { color: #475569 !important; font-weight: 700 !important; }
+            .print-kpi-grid p { color: #0f172a !important; font-weight: 800 !important; }
+            
+            .overflow-y-auto {
+                max-height: none !important;
+                overflow: visible !important;
+                border: none !important;
+            }
+            table { width: 100% !important; font-size: 10.5px !important; border-collapse: collapse !important; }
+            th, td { border-bottom: 1px solid #e2e8f0 !important; padding: 6px 8px !important; }
+            tr { page-break-inside: avoid !important; }
+            thead { background: #f1f5f9 !important; color: #0f172a !important; display: table-header-group !important; }
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-indigo-50/40 to-blue-50/50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-slate-800 dark:text-slate-100 font-sans antialiased">
+    <div id="globalAppSpinner" class="hidden fixed inset-0 z-[9999] bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm flex-col items-center justify-center">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl flex items-center gap-4 border border-slate-100 max-w-sm">
+            <svg class="animate-spin h-8 w-8 text-blue-600 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <div>
+                <p id="spinnerTitle" class="text-sm font-extrabold text-slate-800">U??itavanje podataka...</p>
+                <p id="spinnerSubtitle" class="text-xs text-slate-500 mt-0.5">Molimo sa??ekajte trenutak</p>
+            </div>
+        </div>
+    </div>
+    <!-- ================= MODAL ZA PRIJAVU (LOGIN SCREEN) ================= -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-md flex justify-center items-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 p-8">
+            <div class="text-center mb-6">
+                <div class="inline-flex bg-blue-100 text-blue-700 p-4 rounded-full mb-3 shadow-inner">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-black text-slate-800 tracking-tight">Prijava u Sistem</h2>
+                <p class="text-xs text-slate-500 mt-1">Servis motornih vozila & Odr??avanje voznog parka</p>
+            </div>
+            <form onsubmit="handleLogin(event)" class="space-y-4" autocomplete="on">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1 flex items-center justify-between">
+                        <span>Korisni??ko ime ili Email</span>
+                        <span class="text-[10px] text-blue-600 font-normal">???? Firebase Auth</span>
+                    </label>
+                    <input type="text" id="loginUsername" name="username" autocomplete="username" required placeholder="Unesite korisni??ko ime ili email..." class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 font-semibold outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Lozinka</label>
+                    <input type="password" id="loginPassword" name="password" autocomplete="current-password" required placeholder="Unesite lozinku..." class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 font-semibold outline-none">
+                </div>
+                <div class="flex items-center justify-between py-1">
+                    <label class="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer select-none">
+                        <input type="checkbox" id="rememberMe" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                        <span>Zapamti moje podatke za prijavu</span>
+                    </label>
+                </div>
+                <div id="loginError" class="hidden p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg font-bold">
+                    Neispravno korisni??ko ime ili lozinka!
+                </div>
+                <button type="submit" id="loginSubmitBtn" class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-extrabold py-3 px-4 rounded-xl shadow-lg transition-all hover:shadow-xl flex items-center justify-center gap-2 cursor-pointer">
+                    <svg id="loginBtnSpinner" class="animate-spin h-4 w-4 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span id="loginBtnText">???? Prijavi se u Firebase Auth</span>
+                </button>
+                <div class="pt-3 border-t border-slate-100 mt-3">
+                    <button type="button" id="googleLoginBtn" onclick="handleGoogleLogin()" class="w-full bg-white hover:bg-slate-50 disabled:opacity-60 text-slate-700 font-extrabold py-2.5 px-4 rounded-xl border border-slate-300 shadow-sm transition-all flex items-center justify-center gap-2.5 text-xs cursor-pointer">
+                        <svg id="googleBtnSpinner" class="animate-spin h-4 w-4 text-slate-600 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <svg id="googleIcon" class="w-4 h-4" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                        </svg>
+                        <span id="googleBtnText">Prijava putem Google Ra??una (Firebase Auth)</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- ================= MODAL ZA ADMIN PANEL (UPRAVLJANJE KORISNICIMA) ================= -->
+    <div id="adminPanelModal" class="fixed inset-0 bg-slate-900/60 hidden flex justify-center items-center z-50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-100">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center p-5 bg-gradient-to-r from-blue-950 via-indigo-900 to-slate-900 text-white">
+                <div>
+                    <h2 class="text-xl font-extrabold tracking-tight flex items-center gap-2">
+                        <span>??????? Admin Panel - Korisnici & Uloge (Firestore)</span>
+                    </h2>
+                    <p class="text-xs text-blue-200 mt-0.5">Upravljanje nalozima, ulogama i navigacijskim panelima u realnom vremenu</p>
+                </div>
+                <button onclick="closeAdminPanel()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-lg w-9 h-9 flex items-center justify-center text-2xl font-light transition-colors cursor-pointer">&times;</button>
+            </div>
+            <!-- Sub-tabs bar -->
+            <div class="flex border-b border-slate-200 bg-white px-6 pt-3 gap-2">
+                <button id="adminTabBtnUsers" onclick="switchAdminPanelTab('users')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-indigo-600 text-indigo-600 flex items-center gap-1.5 transition-colors cursor-pointer">
+                    <span>???? Korisni??ki Nalozi</span>
+                </button>
+                <button id="adminTabBtnRoles" onclick="switchAdminPanelTab('roles')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition-colors cursor-pointer">
+                    <span>??????? Uloge & Navigacijski Paneli (app_roles)</span>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto space-y-6 bg-slate-50 flex-1">
+                <!-- ================= TAB 1: KORISNICI ================= -->
+                <div id="adminSectionUsers" class="space-y-6">
+                    <!-- FORMA ZA KREIRANJE NOVOG KORISNIKA -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="text-sm font-extrabold text-slate-800 mb-3 flex items-center gap-2">
+                            <span>??? Kreiranje Novog Korisnika</span>
+                        </h3>
+                        <form onsubmit="handleCreateUser(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Korisni??ko ime</label>
+                                <input type="text" id="newUsername" required placeholder="npr. emir.durakovic" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Ime i prezime</label>
+                                <input type="text" id="newFullname" required placeholder="npr. Marko Markovi??" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Email adresa</label>
+                                <input type="email" id="newEmail" placeholder="npr. marko@bingotuzla.ba" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Lozinka</label>
+                                <input type="password" id="newPassword" required placeholder="Lozinka..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Uloga</label>
+                                <div class="flex gap-2">
+                                    <select id="newRole" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold bg-slate-50 outline-none">
+                                        <option value="editor">?????? Admin - Unos faktura</option>
+                                        <option value="viewer">???? Analiti??ar (Samo pregled)</option>
+                                        <option value="warehouse_specialist">??????? Specijalist skladi??ne mehanizacije</option>
+                                        <option value="serviser">???? Serviser (Samo pregled kartona)</option>
+                                        <option value="superadmin">???? Super Administrator</option>
+                                    </select>
+                                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-lg shadow text-xs whitespace-nowrap transition-all cursor-pointer">
+                                        Spremi
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <!-- LISTA POSTOJE??IH KORISNIKA -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                            <h3 class="text-sm font-extrabold text-slate-800">???? Registrovani Korisni??ki Nalozi</h3>
+                            <div class="flex items-center gap-2">
+                                <button onclick="forceSyncUsers(this)" type="button" class="text-[10px] bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-2 py-1 rounded font-bold transition-colors cursor-pointer">Osvje??i iz baze</button>
+                                <span id="userCountBadge" class="text-xs bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full font-bold">1 nalog</span>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-xs text-left">
+                                <thead class="bg-slate-100 font-bold text-slate-700 border-b border-slate-200">
+                                    <tr>
+                                        <th class="py-2.5 px-3">Korisni??ko Ime</th>
+                                        <th class="py-2.5 px-3">Ime i Prezime</th>
+                                        <th class="py-2.5 px-3">Uloga</th>
+                                        <th class="py-2.5 px-3">Kreiran</th>
+                                        <th class="py-2.5 px-3 text-right">Akcije</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="userTableBody" class="divide-y divide-slate-100 bg-white">
+                                    <!-- Pune se registrovani nalozi -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- SEKCIJA ZA REGISTRACIJU NOVOG VOZILA U BAZU (SAMO ZA ADMINE) -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                                <span>???? Baza Aktivnih Vozila 2026</span>
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Autorizovani unos i registracija novog aktivnog vozila u centralnu bazu flote</p>
+                        </div>
+                        <button onclick="openEditVehicleModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-4 py-2.5 rounded-xl shadow text-xs flex items-center gap-2 transition-all cursor-pointer">
+                            <span>??? Registruj Novo Vozilo u Bazu</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ================= TAB 2: ULOGE & NAVIGACIJSKI PANELI (FIRESTORE app_roles) ================= -->
+                <div id="adminSectionRoles" class="hidden space-y-6">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl">????</span>
+                                <h3 class="text-sm font-black text-slate-800">Firestore Kolekcija: <code class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-mono text-xs font-bold">app_roles</code></h3>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">Struktura autorizovanih uloga, dozvoljenih portala, navigacijskih panela i akcijskih prava u sistemu</p>
+                        </div>
+                        <button onclick="reseedFirestoreRoles(this)" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5 shadow cursor-pointer">
+                            <span>???? Sinhronizuj / Resetuj Uloge u Firebase</span>
+                        </button>
+                    </div>
+
+                    <!-- Lista Uloga Kartice -->
+                    <div class="grid grid-cols-1 gap-4" id="adminRolesCardsContainer">
+                        <!-- Popunjava se dinami??ki iz Firestore app_roles -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        <!-- ================= MODAL ZA URE??IVANJE KORISNIKA ================= -->
+    <div id="editUserModal" class="fixed inset-0 bg-slate-900/75 hidden flex justify-center items-center z-[60] backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 p-6">
+            <div class="flex justify-between items-center pb-3 mb-4 border-b border-slate-100">
+                <h3 class="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                    <span>?????? Ure??ivanje Korisni??kog Naloga</span>
+                </h3>
+                <button onclick="closeEditUserModal()" class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
+            </div>
+            <form onsubmit="handleSaveEditedUser(event)" class="space-y-3.5 text-xs">
+                <input type="hidden" id="editOriginalUsername">
+                <div>
+                    <label class="block font-bold uppercase text-slate-500 mb-1">Korisni??ko Ime</label>
+                    <input type="text" id="editUsername" required class="w-full border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-500 mb-1">Ime i Prezime</label>
+                    <input type="text" id="editFullname" required class="w-full border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-500 mb-1">Email adresa</label>
+                    <input type="email" id="editEmail" placeholder="npr. korisnik@firma.ba" class="w-full border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-500 mb-1">Lozinka</label>
+                    <input type="text" id="editPassword" required class="w-full border border-slate-300 rounded-lg p-2.5 font-mono font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-500 mb-1">Uloga / Prava Pristupa</label>
+                    <select id="editRole" class="w-full border border-slate-300 rounded-lg p-2.5 font-bold bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="editor">?????? Admin - Unos faktura</option>
+                        <option value="viewer">???? Analiti??ar (Samo pregled)</option>
+                        <option value="warehouse_specialist">??????? Specijalist skladi??ne mehanizacije</option>
+                        <option value="serviser">???? Serviser (Samo pregled kartona)</option>
+                        <option value="superadmin">???? Super Administrator</option>
+                    </select>
+                </div>
+                <div class="pt-3 flex justify-end gap-2 border-t border-slate-100 mt-4">
+                    <button type="button" onclick="closeEditUserModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all">
+                        Odustani
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow transition-all">
+                        ???? Sa??uvaj Izmjene
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL ZA DINAMI??KO URE??IVANJE ULOGA I PRAVA (FIRESTORE app_roles) ================= -->
+    <div id="editRoleModal" class="fixed inset-0 bg-slate-900/80 hidden flex justify-center items-center z-[70] backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-100">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white">
+                <div class="flex items-center gap-3">
+                    <span id="editRoleModalIcon" class="text-3xl">???????</span>
+                    <div>
+                        <h3 class="text-lg font-extrabold tracking-tight flex items-center gap-2">
+                            <span>Ure??ivanje Uloge & Prava: <span id="editRoleModalTitle" class="text-amber-400">Uloga</span></span>
+                        </h3>
+                        <p class="text-xs text-indigo-200 mt-0.5">Dinami??ko pode??avanje navigacijskih panela i akcija na Firestore bazi</p>
+                    </div>
+                </div>
+                <button onclick="closeEditRoleModal()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-lg w-9 h-9 flex items-center justify-center text-2xl font-light transition-colors cursor-pointer">&times;</button>
+            </div>
+            
+            <form onsubmit="handleSaveRolePermissions(event)" class="p-6 overflow-y-auto space-y-5 text-xs flex-1 bg-slate-50">
+                <input type="hidden" id="editRoleId">
+                
+                <!-- Osnovne informacije o ulozi -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="sm:col-span-2">
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Naziv Uloge</label>
+                        <input type="text" id="editRoleName" required class="w-full border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Ikonica (Emoji)</label>
+                        <input type="text" id="editRoleIcon" required class="w-full border border-slate-300 rounded-lg p-2.5 font-bold text-center outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Opis Uloge</label>
+                        <input type="text" id="editRoleDesc" required class="w-full border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                    </div>
+                    <div>
+                        <label class="block font-bold uppercase text-slate-500 mb-1">Default Portal</label>
+                        <select id="editRoleDefaultPortal" class="w-full border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                            <option value="transport">???? Glavni Transport</option>
+                            <option value="warehouse">??????? Skladi??na Mehanizacija</option>
+                            <option value="serviser">???? Serviser (Karton)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Dozvoljeni Navigacijski Paneli / Tabovi -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                        <h4 class="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
+                            <span>???? Dozvoljeni Navigacijski Paneli & Tabovi</span>
+                        </h4>
+                        <span class="text-[10px] text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded">Odaberite tabove vidljive ovoj ulozi</span>
+                    </div>
+
+                    <!-- Transport Tabovi -->
+                    <div>
+                        <p class="text-[10px] font-extrabold text-blue-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">???? Glavni Transportni Portal:</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                <input type="checkbox" id="panel_tab1" class="rounded text-indigo-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">???? Tab 1: Pregled Flote & KPI</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                <input type="checkbox" id="panel_tab2" class="rounded text-indigo-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">???? Tab 2: Analiza Odr??avanja</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                <input type="checkbox" id="panel_tab3" class="rounded text-indigo-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">???? Tab 3: YoY Komparacija</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                <input type="checkbox" id="panel_tab4" class="rounded text-indigo-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">???? Tab 4: Tabela Servisa</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer sm:col-span-2">
+                                <input type="checkbox" id="panel_tab5" class="rounded text-indigo-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">???? Tab 5: Mati??na baza podataka voznog parka (938)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Skladi??na Mehanizacija Tabovi -->
+                    <div class="pt-2 border-t border-slate-100">
+                        <p class="text-[10px] font-extrabold text-amber-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">??????? Skladi??na Mehanizacija:</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                <input type="checkbox" id="panel_wh1" class="rounded text-amber-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">???? Tab 1: Analitika & Finansije</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                <input type="checkbox" id="panel_wh2" class="rounded text-amber-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">???? Tab 2: ??ifrarnik Flote (594)</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                <input type="checkbox" id="panel_wh3" class="rounded text-amber-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">???? Tab 3: Pregled Svih Opravki</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                <input type="checkbox" id="panel_wh4" class="rounded text-amber-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">??? Tab 4: Segmenti & Dijelovi</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer sm:col-span-2">
+                                <input type="checkbox" id="panel_wh5" class="rounded text-amber-600 w-4 h-4">
+                                <span class="font-bold text-slate-800">???? Tab 5: Serviseri & Dobavlja??i</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Serviser Tab -->
+                    <div class="pt-2 border-t border-slate-100">
+                        <p class="text-[10px] font-extrabold text-slate-600 uppercase tracking-wider mb-1.5 flex items-center gap-1">???? Servisna Radionica:</p>
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="panel_serviserSearch" class="rounded text-indigo-600 w-4 h-4">
+                            <span class="font-bold text-slate-800">???? Karton Vozila (Pretraga historije opravki)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Akcijske Dozvole & Permisije -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                        <h4 class="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
+                            <span>??? Akcijska Prava & Permisije</span>
+                        </h4>
+                        <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded">Prava izmjena i unosa</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="perm_canUploadExcel" class="rounded text-indigo-600 w-4 h-4">
+                            <div>
+                                <span class="font-bold text-slate-800 block">???? Excel Upload</span>
+                                <span class="text-[10px] text-slate-500">Mogu??nost uvoza Excel evidencija</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="perm_canInputCost" class="rounded text-indigo-600 w-4 h-4">
+                            <div>
+                                <span class="font-bold text-slate-800 block">??? Unos Tro??ka</span>
+                                <span class="text-[10px] text-slate-500">Ru??ni unos naloga i popravki</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="perm_canRegisterVehicle" class="rounded text-indigo-600 w-4 h-4">
+                            <div>
+                                <span class="font-bold text-slate-800 block">???? Registracija Vozila</span>
+                                <span class="text-[10px] text-slate-500">Unos novog vozila u bazu</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="perm_canAccessAdminPanel" class="rounded text-indigo-600 w-4 h-4">
+                            <div>
+                                <span class="font-bold text-slate-800 block">?????? Pristup Admin Panelu</span>
+                                <span class="text-[10px] text-slate-500">Upravljanje nalozima i ulogama</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="perm_canSwitchPortal" class="rounded text-indigo-600 w-4 h-4">
+                            <div>
+                                <span class="font-bold text-slate-800 block">???? Portal Switcher</span>
+                                <span class="text-[10px] text-slate-500">Prebacivanje Transport / Skladi??te</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="perm_canExportExcel" class="rounded text-indigo-600 w-4 h-4">
+                            <div>
+                                <span class="font-bold text-slate-800 block">???? Excel Export</span>
+                                <span class="text-[10px] text-slate-500">Preuzimanje tabela u XLSX</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="perm_canEditCost" class="rounded text-indigo-600 w-4 h-4">
+                            <div>
+                                <span class="font-bold text-slate-800 block">?????? Ure??ivanje Tro??kova</span>
+                                <span class="text-[10px] text-slate-500">Izmjena unesenih servisa</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="perm_canDeleteCost" class="rounded text-indigo-600 w-4 h-4">
+                            <div>
+                                <span class="font-bold text-slate-800 block">??????? Brisanje Tro??kova</span>
+                                <span class="text-[10px] text-slate-500">Uklanjanje stavki iz baze</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pt-3 flex justify-end gap-2 border-t border-slate-200">
+                    <button type="button" onclick="closeEditRoleModal()" class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all cursor-pointer">
+                        Odustani
+                    </button>
+                    <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer">
+                        <span>???? Sa??uvaj Dozvole u Firebase</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+        <!-- ================= MODAL ZA UNOS NOVOG TRO??KA / SERVISNOG NALOGA ================= -->
+    <div id="newCostModal" class="fixed inset-0 bg-slate-900/70 hidden flex justify-center items-center z-50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-100">
+            <div class="flex justify-between items-center p-5 bg-gradient-to-r from-emerald-800 to-teal-900 text-white">
+                <div>
+                    <h2 class="text-xl font-extrabold tracking-tight flex items-center gap-2">
+                        <span>???? Unos Novog Tro??ka / Servisnog Naloga</span>
+                    </h2>
+                    <p class="text-xs text-emerald-200 mt-0.5">Evidentirajte servis ili tro??ak direktno u bazu bez potrebe za Excel tabelom</p>
+                </div>
+                <button onclick="closeNewCostModal()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-lg w-9 h-9 flex items-center justify-center text-2xl font-light transition-colors">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-6 bg-slate-50">
+                <!-- SEKCIJA 1: OSNOVNI PODACI O VOZILU -->
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <h3 class="text-xs font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <span>???? 1. Osnovni Podaci o Vozilu / Mehanizaciji</span>
+                        <span class="text-[10px] font-normal text-slate-500 lowercase">(izborom registracije automatski se popunjavaju ostala polja)</span>
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Reg. Oznaka <span class="text-red-500">*</span></label>
+                            <input type="text" id="ncReg" list="ncVehicleList" placeholder="Ukucajte reg. ili gara??ni br..." onchange="ncOnVehicleSelect()" oninput="ncOnVehicleSelect()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-black uppercase outline-none focus:ring-2 focus:ring-emerald-500 bg-emerald-50/40 shadow-sm">
+                            <datalist id="ncVehicleList"></datalist>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-500 mb-1 flex items-center gap-1">
+                                <span>MT / Gara??ni Broj</span>
+                                <span class="text-[9px] text-slate-400 font-normal">???? ??ifrarnik</span>
+                            </label>
+                            <input type="text" id="ncMt" placeholder="Gara??ni broj..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-500 mb-1 flex items-center gap-1">
+                                <span>Godi??te</span>
+                                <span class="text-[9px] text-slate-400 font-normal">???? ??ifrarnik</span>
+                            </label>
+                            <input type="text" id="ncGod" placeholder="Godi??te..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-semibold outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-500 mb-1 flex items-center gap-1">
+                                <span>Tip Mehanizacije</span>
+                                <span class="text-[9px] text-slate-400 font-normal">???? ??ifrarnik</span>
+                            </label>
+                            <select id="ncTip" onchange="ncOnTipChange()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none bg-white">
+                                <option value="Teretna vozila">Teretna vozila</option>
+                                <option value="Putni??ka vozila">Putni??ka vozila</option>
+                                <option value="Skladi??na mehanizacija">Skladi??na mehanizacija</option>
+                                <option value="Priklju??na vozila">Priklju??na vozila</option>
+                                <option value="Radna ma??ina">Radna ma??ina</option>
+                                <option value="Servis motornih vozila">Servis motornih vozila</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-500 mb-1 flex items-center gap-1">
+                                <span>Marka i Model Vozila</span>
+                                <span class="text-[9px] text-slate-400 font-normal">???? ??ifrarnik</span>
+                            </label>
+                            <input type="text" id="ncMarka" placeholder="Marka i model..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none">
+                        </div>
+                        <!-- DINAMI??KO POLJE ZA KILOMETRA??U (PUTNI??KO I TERETNO) -->
+                        <div id="ncKmContainer">
+                            <label class="block text-[11px] font-extrabold uppercase text-indigo-900 mb-1">??????? Kilometra??a na datum servisa (km)</label>
+                            <input type="number" id="ncKilometraza" placeholder="npr. 285400" class="w-full text-xs border border-indigo-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-indigo-50/40">
+                        </div>
+                        <!-- DINAMI??KO POLJE ZA RADNE SATE (SKLADI??NA MEHANIZACIJA) -->
+                        <div id="ncHoursContainer" class="hidden">
+                            <label class="block text-[11px] font-extrabold uppercase text-amber-900 mb-1">?????? Radni Sati na datum servisa (h / radni sati)</label>
+                            <input type="number" id="ncRadniSati" placeholder="npr. 4250" class="w-full text-xs border border-amber-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-amber-500 bg-amber-50/40">
+                        </div>
+                    </div>
+                </div>
+                <!-- SEKCIJA 2: DETALJI SERVISA I RA??UN -->
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <h3 class="text-xs font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <span>???? 2. Detalji Servisa i Fakture</span>
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Datum <span class="text-red-500">*</span></label>
+                            <input type="date" id="ncDatum" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Broj Ra??una / RN</label>
+                            <input type="text" id="ncBrojRacuna" placeholder="npr. RN-2026/014" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-mono font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Serviser / Izvo??a??</label>
+                            <input type="text" id="ncServiser" list="ncSupplierList" placeholder="npr. Centralni Servis..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-emerald-500">
+                            <datalist id="ncSupplierList"></datalist>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Opis Kvara / Servisnih Radova <span class="text-red-500">*</span></label>
+                        <textarea id="ncOpis" rows="2" placeholder="Unesite detaljan opis zamijenjenih dijelova ili izvr??enih usluga..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                    </div>
+                    <div class="bg-emerald-50/60 p-3.5 rounded-xl border border-emerald-200/80 space-y-2">
+                        <label class="block text-[11px] font-extrabold uppercase text-emerald-900 flex items-center justify-between">
+                            <span>???? Slika / Skenirana Faktura ili Ra??un (Firebase Storage)</span>
+                            <span class="text-[10px] text-emerald-700 font-normal">?????? Cloud Prilog</span>
+                        </label>
+                        <input type="file" id="ncInvoiceFile" accept="image/*,application/pdf" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer border border-emerald-200 rounded-lg p-1.5 bg-white">
+                        <div id="ncUploadProgressContainer" class="hidden mt-1.5">
+                            <div class="w-full bg-slate-200 rounded-full h-1.5">
+                                <div id="ncUploadProgressBar" class="bg-emerald-600 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                            <span id="ncUploadProgressText" class="text-[10px] font-bold text-emerald-800">Slanje u Cloud Storage... 0%</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- SEKCIJA 3: KATEGORIZACIJA -->
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <h3 class="text-xs font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <span>??????? 3. Kategorizacija i Vrsta Tro??ka</span>
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Segment <span class="text-red-500">*</span></label>
+                            <select id="ncSegment" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                                <!-- Pune se dinami??ki iz postoje??e baze -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Vrsta Tro??ka</label>
+                            <select id="ncVrstaTroska" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                                <option value="Interno">Interni rad / servis</option>
+                                <option value="Eksterno">Eksterni dobavlja??</option>
+                                <option value="Rezervni dio">Rezervni dio</option>
+                                <option value="Ostalo">Ostalo</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Vrsta Fakture</label>
+                            <select id="ncVrstaFakture" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                                <option value="Kombinovana">Kombinovana faktura (Dijelovi + Usluga)</option>
+                                <option value="Faktura za dijelove">Faktura za rezervne dijelove</option>
+                                <option value="Faktura za uslugu">Faktura za rad / uslugu</option>
+                                <option value="Interni nalog">Interni radni nalog</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- SEKCIJA 4: FINANSIJSKI IZNOSI -->
+                <div class="bg-gradient-to-br from-emerald-50 to-teal-50 p-5 rounded-xl border border-emerald-200 shadow-sm space-y-4">
+                    <h3 class="text-xs font-black uppercase text-emerald-900 tracking-wider flex items-center gap-2 border-b border-emerald-200/60 pb-2">
+                        <span>???? 4. Finansijski Obra??un (Automatski Total)</span>
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Cijena Rezervnog Dijela (KM)</label>
+                            <input type="number" step="0.01" min="0" id="ncCijenaDijela" placeholder="0.00" oninput="ncCalculateTotal()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Cijena Usluge / Rada (KM)</label>
+                            <input type="number" step="0.01" min="0" id="ncCijenaUsluge" placeholder="0.00" oninput="ncCalculateTotal()" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-black uppercase text-emerald-900 mb-1">Total Tro??ak (KM) <span class="text-red-500">*</span></label>
+                            <input type="number" step="0.01" min="0" id="ncTotalTrosak" placeholder="0.00" class="w-full text-sm border-2 border-emerald-500 rounded-lg p-2 font-black text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-inner">
+                        </div>
+                    </div>
+                </div>
+                <!-- DUGMAD ZA POTVRDU -->
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeNewCostModal()" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-xs hover:bg-slate-100 transition-colors">
+                        Odustani
+                    </button>
+                    <button type="button" onclick="handleCreateNewCost(event)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-6 py-2.5 rounded-xl shadow-lg transition-all text-xs flex items-center gap-2 cursor-pointer">
+                        <span>???? Sa??uvaj Tro??ak u Bazu</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- MAIN APP WRAPPER (SIDEBAR LAYOUT) -->
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col h-full flex-shrink-0 z-20 transition-all duration-300">
+        <!-- Logo / Title -->
+        <div class="p-5 border-b border-slate-200 dark:border-slate-700">
+             <h1 class="text-xl font-extrabold tracking-tight">
+                 Servis motornih vozila
+                 <span class="block text-blue-600 text-sm mt-1">Odr??avanje voznog parka</span>
+             </h1>
+        </div>
+        
+        <!-- Sat i Kalendar Widget -->
+        <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50">
+            <div class="flex flex-col items-center justify-center text-center">
+                <div id="sideClock" class="text-2xl font-black text-slate-700 dark:text-slate-200 tracking-tighter" style="font-variant-numeric: tabular-nums;">--:--:--</div>
+                <div id="sideDate" class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5 uppercase tracking-wider">--.--.----</div>
+            </div>
+        </div>
+        
+        <!-- Navigation Links (instead of tabs) -->
+        <nav id="tabs-navigation" class="flex-1 overflow-y-auto p-4 space-y-1 hidden">
+             <div class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 mt-2">Nadzorna plo??a</div>
+             <button id="tabBtn1" onclick="switchTab(1)" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-bold transition-all bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400">
+                 <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg> Pregled Flote & KPI
+             </button>
+             <button id="tabBtn2" onclick="switchTab(2)" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-bold transition-all text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50">
+                 <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg> Analiza Odr??avanja
+             </button>
+             <button id="tabBtn3" onclick="switchTab(3)" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-bold transition-all text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50">
+                 <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg> YoY Komparacija
+             </button>
+             <button id="tabBtn4" onclick="switchTab(4)" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-bold transition-all text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50">
+                 <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v11m0 5l4.879-4.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242z"></path></svg> Tabela Servisa
+             </button>
+             <button id="tabBtn5" onclick="switchTab(5)" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-bold transition-all text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50">
+                 <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg> Mati??na baza podataka voznog parka
+             </button>
+        
+             <!-- Skladi??na Mehanizacija Sidebar Links -->
+             <div id="warehouseSidebarNav" class="hidden space-y-1">
+                 <div class="text-[10px] font-bold text-amber-500 dark:text-amber-400 uppercase tracking-wider mb-3 mt-2">Skladi??na Mehanizacija</div>
+                 <button id="whSideBtn1" onclick="switchWhTab(1)" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-bold transition-all bg-amber-50 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 cursor-pointer">
+                     <span class="text-lg">????</span> Analitika & Finansije
+                 </button>
+                 <button id="whSideBtn2" onclick="switchWhTab(2)" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-bold transition-all text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50 cursor-pointer">
+                     <span class="text-lg">????</span> ??ifrarnik Flote (<span id="whSideBadgeCount">594</span>)
+                 </button>
+                 <button id="whSideBtn3" onclick="switchWhTab(3)" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-bold transition-all text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50 cursor-pointer">
+                     <span class="text-lg">????</span> Pregled Svih Opravki
+                 </button>
+                 <button id="whSideBtn4" onclick="switchWhTab(4)" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-bold transition-all text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50 cursor-pointer">
+                     <span class="text-lg">???</span> Segmenti & Dijelovi
+                 </button>
+                 <button id="whSideBtn5" onclick="switchWhTab(5)" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-bold transition-all text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50 cursor-pointer">
+                     <span class="text-lg">????</span> Serviseri & Dobavlja??i
+                 </button>
+                 <button id="whSideBtnBack" onclick="setPortalMode('transport')" class="hidden w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-bold transition-all text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 border border-blue-200 dark:border-blue-800 mt-4 cursor-pointer">
+                     <span class="text-lg">????</span> Glavni Transport
+                 </button>
+             </div>
+
+        </nav>
+        <!-- Administrative Controls (Bottom of Sidebar) -->
+        <div class="p-4 border-t border-slate-200 dark:border-slate-700 flex flex-col gap-2">
+            <button id="themeToggleBtn" onclick="toggleTheme()" class="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-amber-300 hover:bg-slate-200 dark:hover:bg-slate-600 font-bold rounded-lg text-xs transition-all flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-600 shadow-sm">
+                <span id="themeToggleIcon">????</span>
+                <span id="themeToggleText">Dark Mode</span>
+            </button>
+            <div id="userHeaderBadge" class="hidden mt-2 flex flex-col gap-2">
+                <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-700/50 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <span class="bg-blue-200 dark:bg-blue-900/50 p-1.5 rounded-md text-blue-800 dark:text-blue-300">????</span>
+                    <div>
+                        <p class="font-extrabold text-xs text-slate-800 dark:text-slate-200" id="headerUserFullname">Admin</p>
+                        <p class="text-[9px] text-slate-500 dark:text-slate-400 font-mono" id="headerUserRole">Administrator</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="adminPanelBtn" onclick="openAdminPanel()" class="hidden bg-indigo-100 hover:bg-indigo-200 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 font-bold px-2 py-1.5 rounded-lg transition-colors text-[10px]">
+                        ?????? Admin
+                    </button>
+                    <button onclick="promptChangeMyPassword()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-700 dark:text-slate-300 font-bold px-2 py-1.5 rounded-lg transition-colors text-[10px]">
+                        ???? ??ifra
+                    </button>
+                    <button onclick="handleLogout()" class="col-span-2 bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/40 dark:text-red-400 font-bold px-2 py-1.5 rounded-lg transition-colors text-[10px]">
+                        ???? Odjava
+                    </button>
+                </div>
+            </div>
+        </div>
+    </aside>
+    <!-- Main Content Area -->
+    
