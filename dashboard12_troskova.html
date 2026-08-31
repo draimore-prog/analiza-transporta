@@ -3179,7 +3179,7 @@
 
         // ================= INDEXEDDB LOCAL CACHE & INCREMENTAL SYNC =================
         const IDBCache = {
-            dbName: 'AnalizaTransportaDB_v2',
+            dbName: 'AnalizaTransportaDB_v3',
             storeName: 'dataset_cache',
             version: 1,
             _dbPromise: null,
@@ -3211,6 +3211,19 @@
                     });
                 } catch(e) { return false; }
             },
+            // Non-blocking background save
+            saveAsync(key, value) {
+                setTimeout(async () => {
+                    try {
+                        let cleanData = Array.isArray(value) ? value.map(d => {
+                            let c = { ...d };
+                            delete c.datumObj;
+                            return c;
+                        }) : value;
+                        await this.set(key, cleanData);
+                    } catch(e) {}
+                }, 100);
+            },
             async get(key) {
                 try {
                     let db = await this._getDB();
@@ -3233,11 +3246,22 @@
             }
         };
 
-        const COSTS_CACHE_KEY = 'fleet_costs_v2';
-        const MASTER_CACHE_KEY = 'fleet_master_v2';
+        const COSTS_CACHE_KEY = 'fleet_costs_v3';
+        const MASTER_CACHE_KEY = 'fleet_master_v3';
         let _costsRealtimeUnsubscribe = null;
         let _masterRealtimeUnsubscribe = null;
         let _isCostSyncInitialized = false;
+        let _costIdMap = new Map();
+        let _costSyncDebounceTimer = null;
+
+        function buildCostIdMap() {
+            _costIdMap.clear();
+            for (let i = 0; i < globalData.length; i++) {
+                let d = globalData[i];
+                if (d.id) _costIdMap.set(d.id, d);
+                if (d._firestoreId) _costIdMap.set(d._firestoreId, d);
+            }
+        }
 
         async function autoLoadDataset() {
             let loadedFromCache = false;
@@ -3252,6 +3276,7 @@
                     }));
                     yearsSet.clear();
                     globalData.forEach(d => { if (d.year) yearsSet.add(d.year); });
+                    buildCostIdMap();
                     _finalizeDatasetLoad();
                     hideGlobalSpinner();
                     console.log(`⚡ Instant učitano ${globalData.length} troškova iz lokalnog IndexedDB keša`);
@@ -3290,13 +3315,8 @@
                                 kpiTotalFleetByYear = { ...kpiTotalFleetByYear, ...data.metadata.fleetByYear };
                             }
                             
-                            // Save to IndexedDB cache
-                            IDBCache.set(COSTS_CACHE_KEY, globalData.map(d => {
-                                let c = { ...d };
-                                delete c.datumObj;
-                                return c;
-                            }));
-
+                            buildCostIdMap();
+                            IDBCache.saveAsync(COSTS_CACHE_KEY, globalData);
                             _finalizeDatasetLoad();
                         }
                     }
@@ -3322,7 +3342,11 @@
 
                 _costsRealtimeUnsubscribe = window.db.collection('fleet_costs').onSnapshot(snapshot => {
                     let hasChanges = false;
-                    snapshot.docChanges().forEach(change => {
+                    let changes = snapshot.docChanges();
+                    if (!changes || changes.length === 0) return;
+
+                    for (let i = 0; i < changes.length; i++) {
+                        let change = changes[i];
                         let docData = change.doc.data();
                         let docId = change.doc.id;
                         docData._firestoreId = docId;
@@ -3332,44 +3356,47 @@
                         let dob = (docData.dobavljacOrig || docData.dobavljac || '').toLowerCase();
                         if (dob.includes('pgl')) docData.segment = 'Guma';
 
+                        let existing = _costIdMap.get(docData.id) || _costIdMap.get(docId);
+
                         if (change.type === 'added') {
-                            let existsIdx = globalData.findIndex(g => g.id === docData.id || g._firestoreId === docId);
-                            if (existsIdx === -1) {
+                            if (!existing) {
                                 globalData.unshift(docData);
+                                _costIdMap.set(docData.id, docData);
+                                _costIdMap.set(docId, docData);
                                 if (docData.year) yearsSet.add(docData.year);
                                 hasChanges = true;
                             }
                         } else if (change.type === 'modified') {
-                            let idx = globalData.findIndex(g => g.id === docData.id || g._firestoreId === docId);
-                            if (idx !== -1) {
-                                globalData[idx] = { ...globalData[idx], ...docData };
+                            if (existing) {
+                                Object.assign(existing, docData);
                                 hasChanges = true;
                             }
                         } else if (change.type === 'removed') {
-                            let idx = globalData.findIndex(g => g.id === docData.id || g._firestoreId === docId);
-                            if (idx !== -1) {
-                                globalData.splice(idx, 1);
+                            if (existing) {
+                                let idx = globalData.indexOf(existing);
+                                if (idx !== -1) globalData.splice(idx, 1);
+                                _costIdMap.delete(docData.id);
+                                _costIdMap.delete(docId);
                                 hasChanges = true;
                             }
                         }
-                    });
+                    }
 
                     if (hasChanges) {
-                        console.log(`🔄 Inkrementalna sinhronizacija primijenjena (Ukupno ${globalData.length} troškova)`);
-                        IDBCache.set(COSTS_CACHE_KEY, globalData.map(d => {
-                            let c = { ...d };
-                            delete c.datumObj;
-                            return c;
-                        }));
+                        if (_costSyncDebounceTimer) clearTimeout(_costSyncDebounceTimer);
+                        _costSyncDebounceTimer = setTimeout(() => {
+                            console.log(`🔄 Inkrementalna sinhronizacija primijenjena (Ukupno ${globalData.length} troškova)`);
+                            IDBCache.saveAsync(COSTS_CACHE_KEY, globalData);
 
-                        const statusSub = document.getElementById('uploadStatusSubtitle');
-                        if (statusSub) {
-                            statusSub.innerText = `☁️ Firestore Real-Time: ${masterFleetData.length || 953} vozila | ${globalData.length.toLocaleString('bs-BA')} troškova (Keširano & Sinhronizovano)`;
-                        }
+                            const statusSub = document.getElementById('uploadStatusSubtitle');
+                            if (statusSub) {
+                                statusSub.innerText = `☁️ Firestore Real-Time: ${masterFleetData.length || 953} vozila | ${globalData.length.toLocaleString('bs-BA')} troškova (Keširano & Sinhronizovano)`;
+                            }
 
-                        if (typeof applyFilters === 'function') {
-                            applyFilters();
-                        }
+                            if (typeof applyFilters === 'function') {
+                                applyFilters();
+                            }
+                        }, 250);
                     }
                 }, err => {
                     console.warn('Realtime fleet_costs notice:', err);
@@ -5743,6 +5770,17 @@
         // ================= MASTER ŠIFRARNIK LOGIKA (TAB 4) =================
         let masterFleetPage = 1;
         const masterFleetPerPage = 50;
+        let _masterRegMap = new Map();
+        let _masterSyncDebounceTimer = null;
+        let _isMasterSyncInitialized = false;
+
+        function buildMasterRegMap() {
+            _masterRegMap.clear();
+            for (let i = 0; i < masterFleetData.length; i++) {
+                let v = masterFleetData[i];
+                if (v && v.reg) _masterRegMap.set(v.reg.toUpperCase(), v);
+            }
+        }
 
         async function autoLoadMasterFleet() {
             let loadedFromCache = false;
@@ -5750,6 +5788,7 @@
                 let cached = await IDBCache.get(MASTER_CACHE_KEY);
                 if (cached && Array.isArray(cached) && cached.length > 0) {
                     masterFleetData = cached.map(v => ({ ...v, tipMehan: ocistiTip(v.tipMehan) }));
+                    buildMasterRegMap();
                     renderMasterFleetTable();
                     console.log(`⚡ Instant učitano ${masterFleetData.length} vozila iz IndexedDB keša`);
                     loadedFromCache = true;
@@ -5765,7 +5804,8 @@
                             masterFleetData = data.map(v => ({ ...v, tipMehan: ocistiTip(v.tipMehan) }));
                             masterFleetData.sort((a, b) => (a.reg || '').localeCompare(b.reg || ''));
                             masterFleetData.forEach((v, idx) => v.rb = idx + 1);
-                            IDBCache.set(MASTER_CACHE_KEY, masterFleetData);
+                            buildMasterRegMap();
+                            IDBCache.saveAsync(MASTER_CACHE_KEY, masterFleetData);
                             renderMasterFleetTable();
                         }
                     }
@@ -5776,6 +5816,7 @@
                 // Last resort: build from cost data
                 if (masterFleetData.length === 0 && globalData && globalData.length > 0) {
                     buildFallbackMasterFleetFromGlobalData();
+                    buildMasterRegMap();
                 }
             }
 
@@ -5783,43 +5824,59 @@
         }
 
         function initIncrementalMasterSync() {
-            if (_masterRealtimeUnsubscribe || !window.db) return;
+            if (_isMasterSyncInitialized || !window.db) return;
+            _isMasterSyncInitialized = true;
             try {
+                if (_masterRealtimeUnsubscribe) {
+                    _masterRealtimeUnsubscribe();
+                    _masterRealtimeUnsubscribe = null;
+                }
                 _masterRealtimeUnsubscribe = window.db.collection('fleet_master').onSnapshot(snapshot => {
                     let hasChanges = false;
-                    snapshot.docChanges().forEach(change => {
+                    let changes = snapshot.docChanges();
+                    if (!changes || changes.length === 0) return;
+
+                    for (let i = 0; i < changes.length; i++) {
+                        let change = changes[i];
                         let v = change.doc.data();
                         if (v && v.reg) {
+                            let regUpper = v.reg.toUpperCase();
                             v.tipMehan = ocistiTip(v.tipMehan);
-                            let idx = masterFleetData.findIndex(item => item.reg === v.reg);
+                            let existing = _masterRegMap.get(regUpper);
+
                             if (change.type === 'added' || change.type === 'modified') {
-                                if (idx !== -1) {
-                                    masterFleetData[idx] = { ...masterFleetData[idx], ...v };
+                                if (existing) {
+                                    Object.assign(existing, v);
                                 } else {
                                     masterFleetData.push(v);
+                                    _masterRegMap.set(regUpper, v);
                                 }
                                 hasChanges = true;
                             } else if (change.type === 'removed') {
-                                if (idx !== -1) {
-                                    masterFleetData.splice(idx, 1);
+                                if (existing) {
+                                    let idx = masterFleetData.indexOf(existing);
+                                    if (idx !== -1) masterFleetData.splice(idx, 1);
+                                    _masterRegMap.delete(regUpper);
                                     hasChanges = true;
                                 }
                             }
                         }
-                    });
+                    }
 
                     if (hasChanges) {
-                        masterFleetData.sort((a, b) => (a.reg || '').localeCompare(b.reg || ''));
-                        masterFleetData.forEach((v, idx) => v.rb = idx + 1);
-                        IDBCache.set(MASTER_CACHE_KEY, masterFleetData);
-                        renderMasterFleetTable();
+                        if (_masterSyncDebounceTimer) clearTimeout(_masterSyncDebounceTimer);
+                        _masterSyncDebounceTimer = setTimeout(() => {
+                            masterFleetData.sort((a, b) => (a.reg || '').localeCompare(b.reg || ''));
+                            masterFleetData.forEach((v, idx) => v.rb = idx + 1);
+                            IDBCache.saveAsync(MASTER_CACHE_KEY, masterFleetData);
+                            renderMasterFleetTable();
+                        }, 250);
                     }
                 }, err => {
                     console.warn('Realtime fleet_master notice:', err);
                 });
             } catch(e) {}
         }
-
 
         function buildFallbackMasterFleetFromGlobalData() {
             let map = new Map();
@@ -7335,9 +7392,7 @@
             // Modali se zatvaraju isključivo dugmetom 'X', 'Odustani' ili 'Sačuvaj'.
         };
 
-        window.addEventListener('DOMContentLoaded', function() {
-            autoLoadMasterFleet();
-        });
+        // autoLoadMasterFleet is loaded via _finalizeDatasetLoad
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
