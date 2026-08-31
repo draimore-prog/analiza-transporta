@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useAuth } from "@/hooks/useAuth.js";
 import { useFleetData } from "@/hooks/useFleetData.js";
 import { Sidebar } from "@/components/layout/Sidebar.jsx";
@@ -32,7 +32,7 @@ import { IntExtRecapModal } from "@/components/modals/IntExtRecapModal.jsx";
 import { SupplierDetailModal } from "@/components/modals/SupplierDetailModal.jsx";
 import { SegmentDetailModal } from "@/components/modals/SegmentDetailModal.jsx";
 
-export default function DashboardPage() {
+function DashboardContent() {
   const {
     activeUser,
     users,
@@ -56,11 +56,73 @@ export default function DashboardPage() {
     saveVehicle
   } = useFleetData();
 
-  // Stanje portala i tabova
-  const [portalMode, setPortalMode] = useState("transport");
-  const [activeTab, setActiveTab] = useState(1);
-  const [activeWhTab, setActiveWhTab] = useState(1);
+  // Stanje portala i tabova sa URL sinhronizacijom
+  const [portalMode, setPortalModeState] = useState("transport");
+  const [activeTab, setActiveTabState] = useState(1);
+  const [activeWhTab, setActiveWhTabState] = useState(1);
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Funkcije za promjenu tabova sa ažuriranjem browser URL-a
+  const setPortalMode = useCallback((mode) => {
+    setPortalModeState(mode);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("portal", mode);
+      window.history.pushState({}, "", url.toString());
+    }
+  }, []);
+
+  const setActiveTab = useCallback((tabNum) => {
+    setActiveTabState(tabNum);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("portal", "transport");
+      url.searchParams.set("tab", tabNum.toString());
+      window.history.pushState({}, "", url.toString());
+    }
+  }, []);
+
+  const setActiveWhTab = useCallback((tabNum) => {
+    setActiveWhTabState(tabNum);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("portal", "warehouse");
+      url.searchParams.set("whTab", tabNum.toString());
+      window.history.pushState({}, "", url.toString());
+    }
+  }, []);
+
+  // Čitanje URL parametara pri učitavanju i promjeni historije (popstate)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleUrlChange = () => {
+      const params = new URLSearchParams(window.location.search);
+      const portalParam = params.get("portal");
+      const tabParam = params.get("tab");
+      const whTabParam = params.get("whTab");
+
+      if (portalParam === "warehouse") {
+        setPortalModeState("warehouse");
+      } else if (portalParam === "transport") {
+        setPortalModeState("transport");
+      }
+
+      if (tabParam) {
+        const t = parseInt(tabParam);
+        if (t >= 1 && t <= 5) setActiveTabState(t);
+      }
+
+      if (whTabParam) {
+        const wt = parseInt(whTabParam);
+        if (wt >= 1 && wt <= 5) setActiveWhTabState(wt);
+      }
+    };
+
+    handleUrlChange();
+    window.addEventListener("popstate", handleUrlChange);
+    return () => window.removeEventListener("popstate", handleUrlChange);
+  }, []);
 
   // Filteri
   const [selectedServiceYear, setSelectedServiceYear] = useState("all");
@@ -74,8 +136,8 @@ export default function DashboardPage() {
   const [editingRole, setEditingRole] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
 
-  // Detaljni modali (reakcije na klik na grafikone i tabele)
-  const [intExtModalTarget, setIntExtModalTarget] = useState(null); // 'Interno' or 'Eksterno'
+  // Detaljni modali
+  const [intExtModalTarget, setIntExtModalTarget] = useState(null);
   const [supplierModalTarget, setSupplierModalTarget] = useState(null);
   const [segmentModalTarget, setSegmentModalTarget] = useState(null);
 
@@ -91,9 +153,9 @@ export default function DashboardPage() {
   // Automatska dodjela početnog portala na osnovu uloge
   useEffect(() => {
     if (activeUser?.role === "warehouse_specialist") {
-      setPortalMode("warehouse");
+      setPortalModeState("warehouse");
     } else if (currentRole?.defaultPortal) {
-      setPortalMode(currentRole.defaultPortal === "warehouse" ? "warehouse" : "transport");
+      setPortalModeState(currentRole.defaultPortal === "warehouse" ? "warehouse" : "transport");
     }
   }, [activeUser, currentRole]);
 
@@ -101,23 +163,15 @@ export default function DashboardPage() {
   const handleSelectYearDrilldown = useCallback((year) => {
     setSelectedServiceYear(year.toString());
     setActiveTab(4);
-  }, []);
+  }, [setActiveTab]);
 
   const handleSelectTypeDrilldown = useCallback((type) => {
     setActiveTab(4);
-  }, []);
+  }, [setActiveTab]);
 
   const handleSelectBrandDrilldown = useCallback((brand) => {
     setActiveTab(4);
-  }, []);
-
-  const handleSelectSegmentDrilldown = useCallback((seg) => {
-    setSegmentModalTarget(seg);
-  }, []);
-
-  const handleSelectSupplierDrilldown = useCallback((sup) => {
-    setSupplierModalTarget(sup);
-  }, []);
+  }, [setActiveTab]);
 
   if (isLoading) {
     return (
@@ -131,7 +185,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      {/* Sidebar sa navigacijom i odjavom */}
+      {/* Sidebar sa zasebnim linkovima za navigaciju */}
       <Sidebar
         portalMode={portalMode}
         setPortalMode={setPortalMode}
@@ -163,7 +217,7 @@ export default function DashboardPage() {
         {/* Skrolabilni Body Dashboarda - 100% širina */}
         <main className="flex-1 overflow-y-auto w-full p-4 sm:p-6 lg:p-8 space-y-6">
           {portalMode === "transport" ? (
-            /* Transport Tabovi */
+            /* Glavni Transport Tabovi */
             <>
               {activeTab === 1 && (
                 <TransportKpis
@@ -181,6 +235,7 @@ export default function DashboardPage() {
               {activeTab === 2 && (
                 <MaintenanceAnalysis
                   costData={costData}
+                  masterFleet={masterFleet}
                   onSelectType={handleSelectTypeDrilldown}
                   onSelectBrand={handleSelectBrandDrilldown}
                 />
@@ -189,7 +244,6 @@ export default function DashboardPage() {
               {activeTab === 3 && (
                 <YoYComparison
                   costData={costData}
-                  onSelectYear={handleSelectYearDrilldown}
                 />
               )}
 
@@ -221,7 +275,7 @@ export default function DashboardPage() {
                 <WarehouseKpis
                   warehouseMasterFleet={warehouseMasterFleet}
                   warehouseCostData={warehouseCostData}
-                  onSelectYear={(y) => setActiveWhTab(3)}
+                  onSelectYear={() => setActiveWhTab(3)}
                   onOpenFleetTab={() => setActiveWhTab(2)}
                   onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
                 />
@@ -246,14 +300,14 @@ export default function DashboardPage() {
               {activeWhTab === 4 && (
                 <WarehouseSegments
                   warehouseCostData={warehouseCostData}
-                  onSelectSegment={handleSelectSegmentDrilldown}
+                  onSelectSegment={(s) => setSegmentModalTarget(s)}
                 />
               )}
 
               {activeWhTab === 5 && (
                 <WarehouseSuppliers
                   warehouseCostData={warehouseCostData}
-                  onSelectSupplier={handleSelectSupplierDrilldown}
+                  onSelectSupplier={(s) => setSupplierModalTarget(s)}
                 />
               )}
             </>
@@ -366,5 +420,13 @@ export default function DashboardPage() {
         onSaveUser={saveUserToFirestore}
       />
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-900" />}>
+      <DashboardContent />
+    </Suspense>
   );
 }
