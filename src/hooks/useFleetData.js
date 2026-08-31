@@ -71,66 +71,88 @@ export function useFleetData() {
 
   // Real-time sinhronizacija troškova iz Firestore kolekcije 'cost_records'
   useEffect(() => {
-    const q = query(collection(db, "cost_records"));
-    const unsub = onSnapshot(q, (snapshot) => {
-      const changes = snapshot.docChanges();
-      if (!changes || changes.length === 0) return;
+    let unsub = () => {};
+    try {
+      const q = query(collection(db, "cost_records"));
+      unsub = onSnapshot(
+        q,
+        (snapshot) => {
+          const changes = snapshot.docChanges();
+          if (!changes || changes.length === 0) return;
 
-      setCostData((prev) => {
-        let updated = [...prev];
-        changes.forEach((change) => {
-          const item = change.doc.data();
-          item.id = change.doc.id;
-          if (item.datum && !item.datumObj) {
-            item.datumObj = new Date(item.datum);
-          }
+          setCostData((prev) => {
+            let updated = [...prev];
+            changes.forEach((change) => {
+              const item = change.doc.data();
+              item.id = change.doc.id;
+              if (item.datum && !item.datumObj) {
+                item.datumObj = new Date(item.datum);
+              }
 
-          if (change.type === "added") {
-            if (!updated.some((c) => c.id === item.id)) {
-              updated.unshift(item);
-            }
-          } else if (change.type === "modified") {
-            const idx = updated.findIndex((c) => c.id === item.id);
-            if (idx !== -1) updated[idx] = item;
-          } else if (change.type === "removed") {
-            updated = updated.filter((c) => c.id !== item.id);
-          }
-        });
-        IDBCache.set(DATASET_CACHE_KEY, updated);
-        return updated;
-      });
-    });
+              if (change.type === "added") {
+                if (!updated.some((c) => c.id === item.id)) {
+                  updated.unshift(item);
+                }
+              } else if (change.type === "modified") {
+                const idx = updated.findIndex((c) => c.id === item.id);
+                if (idx !== -1) updated[idx] = item;
+              } else if (change.type === "removed") {
+                updated = updated.filter((c) => c.id !== item.id);
+              }
+            });
+            IDBCache.set(DATASET_CACHE_KEY, updated);
+            return updated;
+          });
+        },
+        (err) => {
+          console.warn("Notice: cost_records listener error:", err);
+        }
+      );
+    } catch (e) {
+      console.warn("Firestore cost_records error:", e);
+    }
 
     return () => unsub();
   }, []);
 
   // Real-time sinhronizacija izmjena vozila iz Firestore kolekcije 'fleet_master'
   useEffect(() => {
-    const q = query(collection(db, "fleet_master"), where("isCustomEdit", "==", true));
-    const unsub = onSnapshot(q, (snapshot) => {
-      const changes = snapshot.docChanges();
-      if (!changes || changes.length === 0) return;
+    let unsub = () => {};
+    try {
+      const q = query(collection(db, "fleet_master"), where("isCustomEdit", "==", true));
+      unsub = onSnapshot(
+        q,
+        (snapshot) => {
+          const changes = snapshot.docChanges();
+          if (!changes || changes.length === 0) return;
 
-      setMasterFleet((prev) => {
-        let updated = [...prev];
-        changes.forEach((change) => {
-          const v = change.doc.data();
-          if (v && v.reg) {
-            const regUpper = v.reg.toUpperCase();
-            const idx = updated.findIndex((x) => x.reg.toUpperCase() === regUpper);
+          setMasterFleet((prev) => {
+            let updated = [...prev];
+            changes.forEach((change) => {
+              const v = change.doc.data();
+              if (v && v.reg) {
+                const regUpper = v.reg.toUpperCase();
+                const idx = updated.findIndex((x) => x.reg.toUpperCase() === regUpper);
 
-            if (change.type === "added" || change.type === "modified") {
-              if (idx !== -1) updated[idx] = { ...updated[idx], ...v };
-              else updated.push(v);
-            } else if (change.type === "removed") {
-              if (idx !== -1) updated.splice(idx, 1);
-            }
-          }
-        });
-        IDBCache.set(MASTER_CACHE_KEY, updated);
-        return updated;
-      });
-    });
+                if (change.type === "added" || change.type === "modified") {
+                  if (idx !== -1) updated[idx] = { ...updated[idx], ...v };
+                  else updated.push(v);
+                } else if (change.type === "removed") {
+                  if (idx !== -1) updated.splice(idx, 1);
+                }
+              }
+            });
+            IDBCache.set(MASTER_CACHE_KEY, updated);
+            return updated;
+          });
+        },
+        (err) => {
+          console.warn("Notice: fleet_master listener error:", err);
+        }
+      );
+    } catch (e) {
+      console.warn("Firestore fleet_master error:", e);
+    }
 
     return () => unsub();
   }, []);

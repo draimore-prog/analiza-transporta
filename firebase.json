@@ -7,17 +7,18 @@
   },
   "hosting": {
     "public": "out",
+    "cleanUrls": true,
     "ignore": [
       "firebase.json",
       "**/.*"
     ],
     "headers": [
       {
-        "source": "**/*.@(html|json|js|css)",
+        "source": "**",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "max-age=0, no-cache, no-store, must-revalidate"
+            "value": "no-cache, no-store, must-revalidate"
           }
         ]
       }

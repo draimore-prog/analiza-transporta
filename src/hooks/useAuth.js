@@ -36,34 +36,53 @@ export function useAuth() {
 
   // Real-time osluškivanje Firestore app_roles
   useEffect(() => {
-    const unsubRoles = onSnapshot(collection(db, "app_roles"), (snapshot) => {
-      if (!snapshot.empty) {
-        const loadedRoles = { ...DEFAULT_APP_ROLES };
-        snapshot.forEach((d) => {
-          const rData = d.data();
-          if (rData && d.id) {
-            loadedRoles[d.id] = { ...DEFAULT_APP_ROLES[d.id], ...rData, roleId: d.id };
-          }
-        });
-        setRoles(loadedRoles);
-      }
-    });
+    let unsubRoles = () => {};
+    let unsubUsers = () => {};
 
-    // Real-time osluškivanje Firestore app_users
-    const unsubUsers = onSnapshot(collection(db, "app_users"), (snapshot) => {
-      if (!snapshot.empty) {
-        const loadedUsers = [];
-        snapshot.forEach((d) => {
-          const u = d.data();
-          if (u && u.username) {
-            loadedUsers.push(u);
+    try {
+      unsubRoles = onSnapshot(
+        collection(db, "app_roles"),
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const loadedRoles = { ...DEFAULT_APP_ROLES };
+            snapshot.forEach((d) => {
+              const rData = d.data();
+              if (rData && d.id) {
+                loadedRoles[d.id] = { ...DEFAULT_APP_ROLES[d.id], ...rData, roleId: d.id };
+              }
+            });
+            setRoles(loadedRoles);
           }
-        });
-        if (loadedUsers.length > 0) {
-          setUsers(loadedUsers);
+        },
+        (err) => {
+          console.warn("Notice: app_roles snapshot listener error:", err);
         }
-      }
-    });
+      );
+
+      // Real-time osluškivanje Firestore app_users
+      unsubUsers = onSnapshot(
+        collection(db, "app_users"),
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const loadedUsers = [];
+            snapshot.forEach((d) => {
+              const u = d.data();
+              if (u && u.username) {
+                loadedUsers.push(u);
+              }
+            });
+            if (loadedUsers.length > 0) {
+              setUsers(loadedUsers);
+            }
+          }
+        },
+        (err) => {
+          console.warn("Notice: app_users snapshot listener error:", err);
+        }
+      );
+    } catch (e) {
+      console.warn("Firestore listeners error:", e);
+    }
 
     return () => {
       unsubRoles();
@@ -73,13 +92,21 @@ export function useAuth() {
 
   const loginAs = useCallback((user) => {
     setActiveUser(user);
-    sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(user));
-    localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(user));
+    try {
+      sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(user));
+      localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(user));
+    } catch (e) {
+      console.warn("Storage error:", e);
+    }
   }, []);
 
   const logout = useCallback(() => {
-    sessionStorage.removeItem(SESSION_ACTIVE_USER_KEY);
-    localStorage.removeItem(SESSION_ACTIVE_USER_KEY);
+    try {
+      sessionStorage.removeItem(SESSION_ACTIVE_USER_KEY);
+      localStorage.removeItem(SESSION_ACTIVE_USER_KEY);
+    } catch (e) {
+      console.warn("Storage error:", e);
+    }
     setActiveUser(DEFAULT_SUPERADMIN);
   }, []);
 
@@ -98,7 +125,7 @@ export function useAuth() {
 
   const currentRole = (activeUser && roles[activeUser.role]) 
     ? roles[activeUser.role] 
-    : (activeUser?.role === 'warehouse_specialist' ? DEFAULT_APP_ROLES.warehouse_specialist : DEFAULT_APP_ROLES.superadmin);
+    : (activeUser?.role === "warehouse_specialist" ? DEFAULT_APP_ROLES.warehouse_specialist : DEFAULT_APP_ROLES.superadmin);
 
   return {
     activeUser,
