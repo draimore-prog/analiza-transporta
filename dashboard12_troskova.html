@@ -1161,119 +1161,78 @@
                 </div>
 
                 <!-- TAB W3: PREGLED SVIH OPRAVKI & SERVISA SKLADIŠNE MEHANIZACIJE -->
-                <div id="whTabContent3" class="hidden space-y-4">
-                    <!-- Kontrolna traka i filteri opravki -->
-                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
-                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
+                <div id="whTabContent3" class="hidden space-y-6">
+                    <div class="card">
+                        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-3 bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
                             <div>
-                                <h3 class="text-base font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
-                                    <span>🔧</span> Pregled Opravki & Servisa Skladišne Mehanizacije
-                                </h3>
-                                <p class="text-xs text-slate-500">Filtrirajte i pretražujte pojedinačne račune, servise i zamijenjene dijelove</p>
+                                <h3 class="text-base font-extrabold text-slate-800 dark:text-white">📋 Tabela filtriranih servisa i opravki skladišne mehanizacije</h3>
+                                <p class="text-xs text-slate-500 mt-0.5" id="whTableRecordCount">Prikazano 0 zapisa</p>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <button onclick="resetWhServiceFilters()" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg transition-colors cursor-pointer">
-                                    🔄 Reset Filter
-                                </button>
-                                <button onclick="exportWarehouseServicesToExcel()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold rounded-lg transition-colors shadow flex items-center gap-1.5 cursor-pointer">
-                                    <span>📥</span> Izvoz Opravki (Excel)
-                                </button>
+                            <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+                                <!-- Filter Godine -->
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Godina</label>
+                                    <select id="whServYearFilter" onchange="filterWhServices()" class="text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-amber-500 focus:outline-none bg-white dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200">
+                                        <option value="all">Sve godine</option>
+                                    </select>
+                                </div>
+                                <!-- Sortiranje po datumu/iznosu -->
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Sortiranje / Novi unosi</label>
+                                    <select id="whServSortFilter" onchange="filterWhServices()" class="text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-amber-500 focus:outline-none bg-white dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200">
+                                        <option value="new-first">🆕 Novi unosi na vrhu + Datum (Najnovije)</option>
+                                        <option value="date-desc">📅 Datum (Najnovije prvo)</option>
+                                        <option value="date-asc">📅 Datum (Najstarije prvo)</option>
+                                        <option value="cost-desc">💰 Trošak (Najveći prvo)</option>
+                                        <option value="cost-asc">💰 Trošak (Najmanji prvo)</option>
+                                    </select>
+                                </div>
+                                <!-- Pretraga -->
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Pretraga</label>
+                                    <input type="text" id="whServSearchInput" onkeyup="filterWhServices()" placeholder="🔍 Pretraži reg, opis ili servisera..." class="text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 w-full sm:w-56 focus:ring-2 focus:ring-amber-500 font-medium bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">
+                                </div>
+                                <!-- Export Excel dugme -->
+                                <div class="flex items-end">
+                                    <button onclick="exportWarehouseServicesToExcel()" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-extrabold px-3 py-1.5 rounded-lg text-xs transition-all shadow-sm flex items-center gap-1.5 cursor-pointer mt-3 sm:mt-0">
+                                        <span>📥 Izvezi Excel</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-
-                        <!-- Filter red 1 -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                            <div>
-                                <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Godina</label>
-                                <select id="whServYearFilter" onchange="filterWhServices()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-xs font-bold text-slate-800 dark:text-white outline-none">
-                                    <option value="all">Sve godine (2021-2026)</option>
-                                    <option value="2026">2026. godina</option>
-                                    <option value="2025">2025. godina</option>
-                                    <option value="2024">2024. godina</option>
-                                    <option value="2023">2023. godina</option>
-                                    <option value="2022">2022. godina</option>
-                                    <option value="2021">2021. godina</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Mjesec</label>
-                                <select id="whServMonthFilter" onchange="filterWhServices()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-xs font-bold text-slate-800 dark:text-white outline-none">
-                                    <option value="all">Svi mjeseci</option>
-                                    <option value="1">Januar</option><option value="2">Februar</option><option value="3">Mart</option>
-                                    <option value="4">April</option><option value="5">Maj</option><option value="6">Juni</option>
-                                    <option value="7">Juli</option><option value="8">August</option><option value="9">Septembar</option>
-                                    <option value="10">Oktobar</option><option value="11">Novembar</option><option value="12">Decembar</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Segment</label>
-                                <select id="whServSegmentFilter" onchange="filterWhServices()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-xs font-bold text-slate-800 dark:text-white outline-none">
-                                    <option value="all">Svi segmenti</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Marka</label>
-                                <select id="whServBrandFilter" onchange="filterWhServices()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-xs font-bold text-slate-800 dark:text-white outline-none">
-                                    <option value="all">Sve marke</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Dobavljač / Servis</label>
-                                <select id="whServSupplierFilter" onchange="filterWhServices()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-xs font-bold text-slate-800 dark:text-white outline-none">
-                                    <option value="all">Svi serviseri</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Pretraga</label>
-                                <input type="text" id="whServSearchInput" oninput="filterWhServices()" placeholder="🔍 Npr. 40768, Linde, Baterija..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-xs font-bold text-slate-800 dark:text-white outline-none">
-                            </div>
-                        </div>
-
-                        <!-- Sumarne trake za filtrirane opravke -->
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                            <div class="bg-amber-50 dark:bg-slate-900/80 p-3 rounded-xl border border-amber-200 dark:border-slate-700 flex justify-between items-center">
-                                <span class="text-xs font-bold text-slate-600 dark:text-slate-400">Ukupan Trošak:</span>
-                                <span class="text-base font-black text-amber-700 dark:text-amber-400" id="whServTotalSum">0 KM</span>
-                            </div>
-                            <div class="bg-blue-50 dark:bg-slate-900/80 p-3 rounded-xl border border-blue-200 dark:border-slate-700 flex justify-between items-center">
-                                <span class="text-xs font-bold text-slate-600 dark:text-slate-400">Broj Opravki:</span>
-                                <span class="text-base font-black text-blue-700 dark:text-blue-400" id="whServCount">0</span>
-                            </div>
-                            <div class="bg-emerald-50 dark:bg-slate-900/80 p-3 rounded-xl border border-emerald-200 dark:border-slate-700 flex justify-between items-center">
-                                <span class="text-xs font-bold text-slate-600 dark:text-slate-400">Prosjek po Opravci:</span>
-                                <span class="text-base font-black text-emerald-700 dark:text-emerald-400" id="whServAvg">0 KM</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tabela opravki -->
-                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-                        <div class="overflow-x-auto">
+                        
+                        <div class="overflow-x-auto max-h-[550px] border border-slate-200 dark:border-slate-800 rounded-lg">
                             <table class="min-w-full text-xs text-left">
-                                <thead class="bg-slate-100 dark:bg-slate-900/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
+                                <thead class="bg-slate-100 dark:bg-slate-900 sticky top-0 font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800">
                                     <tr>
-                                        <th class="p-3 text-center">R.b.</th>
-                                        <th class="p-3">Datum</th>
-                                        <th class="p-3">Garažni Br.</th>
-                                        <th class="p-3">Oznaka / Reg</th>
-                                        <th class="p-3">Marka / Tip</th>
-                                        <th class="p-3">Serviser / Dobavljač</th>
-                                        <th class="p-3">Opis radova / Ugrađeni dijelovi</th>
-                                        <th class="p-3">Segment</th>
-                                        <th class="p-3 text-right">Trošak (KM)</th>
-                                        <th class="p-3 text-center">Prilog</th>
-                                        <th class="p-3 text-center">Karton</th>
+                                        <th class="py-2.5 px-3">Datum</th>
+                                        <th class="py-2.5 px-3">Registracija / Oznaka</th>
+                                        <th class="py-2.5 px-3">Garažni Broj</th>
+                                        <th class="py-2.5 px-3">Tip Mehanizacije</th>
+                                        <th class="py-2.5 px-3">Marka</th>
+                                        <th class="py-2.5 px-3">Segment</th>
+                                        <th class="py-2.5 px-3">Opis Popravke</th>
+                                        <th class="py-2.5 px-3">Serviser / Dobavljač</th>
+                                        <th class="py-2.5 px-3 text-right">Trošak (KM)</th>
                                     </tr>
                                 </thead>
-                                <tbody id="whServicesTableBody" class="divide-y divide-slate-100 dark:divide-slate-700/50"></tbody>
+                                <tbody id="whServicesTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                                    <!-- Pune se redovi identično tabeli servisa -->
+                                </tbody>
                             </table>
                         </div>
-                        <div class="p-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center text-xs">
-                            <span id="whServPaginationInfo" class="text-slate-500 font-medium">Učitavanje...</span>
-                            <div class="flex gap-2">
-                                <button id="whServPrevBtn" onclick="changeWhServPage(-1)" class="px-3 py-1 bg-white dark:bg-slate-800 border rounded font-bold hover:bg-slate-100 disabled:opacity-40 cursor-pointer">Prethodna</button>
-                                <button id="whServNextBtn" onclick="changeWhServPage(1)" class="px-3 py-1 bg-white dark:bg-slate-800 border rounded font-bold hover:bg-slate-100 disabled:opacity-40 cursor-pointer">Sljedeća</button>
-                            </div>
+                        
+                        <!-- PAGINACIJA ZA TABELU SERVISA SKLADIŠTA -->
+                        <div class="flex items-center justify-between mt-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2.5 rounded-lg">
+                            <button id="whTransPrevBtn" onclick="prevWhTransPage()" class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer">
+                                ⬅️ Prethodna
+                            </button>
+                            <span id="whTransCurrentPageDisplay" class="text-xs font-bold text-slate-600 dark:text-slate-400">
+                                Stranica 1 od 1
+                            </span>
+                            <button id="whTransNextBtn" onclick="nextWhTransPage()" class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer">
+                                Sljedeća ➡️
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -4223,18 +4182,394 @@
         const whFleetPerPage = 25;
         let whFilteredData = [];
 
-        // ================= WAREHOUSE SERVICES TABLE (EXACT CLONE OF TABELA SERVISA) =================
-        let whTransactionTableData = [];
+        // Services table state
+        let whServPage = 1;
+        const whServPerPage = 25;
+        let whFilteredServices = [];
+
+        function setPortalMode(mode) {
+            currentPortalMode = mode;
+            let whDash = document.getElementById('warehouseDashboard');
+            let appDash = document.getElementById('appDashboardContent');
+            let sDash = document.getElementById('serviserDashboard');
+            let filterSec = document.getElementById('filter-section');
+            let aside = document.querySelector('aside');
+            let header = document.querySelector('header');
+            let switcherLabel = document.getElementById('portalSwitcherLabel');
+            let switcherIcon = document.getElementById('portalSwitcherIcon');
+            let backBtn = document.getElementById('warehouseBackToTransportBtn');
+            let sideBackBtn = document.getElementById('whSideBtnBack');
+            let sideTitle = document.getElementById('sidebarAppTitle');
+            let headerSub = document.getElementById('headerSubtitle');
+
+            let transSideNav = document.getElementById('tabs-navigation');
+            let whSideNav = document.getElementById('warehouseSidebarNav');
+
+            let isSuperAdmin = activeUser && (activeUser.username?.toLowerCase() === 'emir.durakovic' || activeUser.role === 'superadmin');
+            let isWarehouseUser = activeUser && (activeUser.role === 'warehouse_specialist' || (activeUser.email && activeUser.email.toLowerCase() === 'skladisna.mehanizacija@bingotuzla.ba') || activeUser.username === 'skladisna.mehanizacija');
+
+            if (mode === 'warehouse') {
+                if (sDash) { sDash.classList.add('hidden'); sDash.classList.remove('flex'); }
+                if (appDash) appDash.classList.add('hidden');
+                if (filterSec) filterSec.classList.add('hidden');
+                if (whDash) whDash.classList.remove('hidden');
+
+                // Hide transport tabs
+                for (let i = 1; i <= 5; i++) {
+                    let c = document.getElementById('tabContent' + i);
+                    if (c) c.classList.add('hidden');
+                    let b = document.getElementById('tabBtn' + i);
+                    if (b) b.classList.add('hidden');
+                }
+
+                if (aside) aside.classList.remove('hidden');
+                if (whSideNav) whSideNav.classList.remove('hidden');
+
+                if (sideTitle) {
+                    sideTitle.innerHTML = '🏗️ Skladišna Mehanizacija<span id="sidebarAppSubtitle" class="block text-amber-600 dark:text-amber-400 text-sm mt-1 font-bold">Viljuškari & Paletari</span>';
+                }
+                if (headerSub) {
+                    headerSub.innerText = 'Skladišna mehanizacija (594 aktivne jedinice)';
+                }
+
+                if (switcherLabel) switcherLabel.innerText = 'Glavni Transport';
+                if (switcherIcon) switcherIcon.innerText = '🚛';
+                
+                if (backBtn) {
+                    if (isSuperAdmin && !isWarehouseUser) backBtn.classList.remove('hidden');
+                    else backBtn.classList.add('hidden');
+                }
+                if (sideBackBtn) {
+                    if (isSuperAdmin && !isWarehouseUser) sideBackBtn.classList.remove('hidden');
+                    else sideBackBtn.classList.add('hidden');
+                }
+
+                switchWhTab(whCurrentTab || 1);
+                renderWarehousePortal();
+            } else {
+                if (whDash) whDash.classList.add('hidden');
+                if (appDash) appDash.classList.remove('hidden');
+                if (filterSec) filterSec.classList.remove('hidden');
+                if (sDash) { sDash.classList.add('hidden'); sDash.classList.remove('flex'); }
+
+                if (aside) aside.classList.remove('hidden');
+                if (transSideNav) {
+                    for (let i = 1; i <= 5; i++) {
+                        let b = document.getElementById('tabBtn' + i);
+                        if (b) b.classList.remove('hidden');
+                    }
+                }
+                if (whSideNav) whSideNav.classList.add('hidden');
+
+                if (sideTitle) {
+                    sideTitle.innerHTML = 'Servis motornih vozila<span id="sidebarAppSubtitle" class="block text-blue-600 dark:text-blue-400 text-sm mt-1">Održavanje voznog parka</span>';
+                }
+                if (headerSub) {
+                    headerSub.innerText = 'KPI Total Struktura (938 aktivnih vozila u 2026.)';
+                }
+
+                if (switcherLabel) switcherLabel.innerText = 'Skladišna Mehanizacija';
+                if (switcherIcon) switcherIcon.innerText = '🏗️';
+
+                switchTab(activeTab || 1);
+            }
+        }
+
+        function togglePortalMode() {
+            if (currentPortalMode === 'warehouse') {
+                setPortalMode('transport');
+            } else {
+                setPortalMode('warehouse');
+            }
+        }
+
+        function switchWhTab(tabIdx) {
+            whCurrentTab = tabIdx;
+            for (let i = 1; i <= 5; i++) {
+                let sideBtn = document.getElementById('whSideBtn' + i);
+                let content = document.getElementById('whTabContent' + i);
+                if (sideBtn) {
+                    if (i === tabIdx) {
+                        sideBtn.className = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-bold transition-all bg-amber-100 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 border-l-4 border-amber-600 shadow-sm cursor-pointer';
+                    } else {
+                        sideBtn.className = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-bold transition-all text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50 cursor-pointer';
+                    }
+                }
+                if (content) {
+                    if (i === tabIdx) content.classList.remove('hidden');
+                    else content.classList.add('hidden');
+                }
+            }
+
+            if (tabIdx === 2) {
+                renderWarehouseFleetTable();
+            } else if (tabIdx === 3) {
+                filterWhServices();
+            } else if (tabIdx === 4) {
+                renderWarehouseSegments();
+            } else if (tabIdx === 5) {
+                renderWarehouseSuppliers();
+            }
+        }
+
+        function getWarehouseData() {
+            if (!globalData || !Array.isArray(globalData)) return [];
+            return globalData.filter(d => {
+                let t = (d.tipMehan || '').toLowerCase();
+                return t.includes('skladi') || t.includes('viljuš') || t.includes('viljusk');
+            });
+        }
+
+        function getWarehouseMasterFleet() {
+            if (!masterFleetData || !Array.isArray(masterFleetData)) return [];
+            return masterFleetData.filter(v => {
+                let t = (v.tipMehan || '').toLowerCase();
+                return t.includes('skladi') || t.includes('viljuš') || t.includes('viljusk');
+            });
+        }
+
+        // ================= CLICKABLE DRILLDOWNS =================
+        function drilldownWhToFleet(statusFilter = 'Aktivno', brand = 'all') {
+            switchWhTab(2);
+            let sFilter = document.getElementById('whStatusFilter');
+            let bFilter = document.getElementById('whBrandFilter');
+            let sInput = document.getElementById('whSearchInput');
+            if (sFilter) sFilter.value = statusFilter;
+            if (bFilter && brand !== 'all') bFilter.value = brand;
+            if (sInput) sInput.value = '';
+            filterWhFleet();
+        }
+
+        function drilldownWhToServices(year = 'all', segment = 'all', brand = 'all', supplier = 'all') {
+            switchWhTab(3);
+            let yFilter = document.getElementById('whServYearFilter');
+            let sInput = document.getElementById('whServSearchInput');
+
+            if (yFilter && year) yFilter.value = year;
+            if (sInput) {
+                if (segment && segment !== 'all') sInput.value = segment;
+                else if (supplier && supplier !== 'all') sInput.value = supplier;
+                else if (brand && brand !== 'all') sInput.value = brand;
+                else sInput.value = '';
+            }
+
+            filterWhServices();
+        }
+
+        function drilldownWhToBrands() {
+            drilldownWhToFleet('all');
+        }
+
+        function drilldownWhToSegment(segmentName) {
+            drilldownWhToServices('all', segmentName);
+        }
+
+        function drilldownWhToSupplier(supplierName) {
+            drilldownWhToServices('all', 'all', 'all', supplierName);
+        }
+
+        function renderWarehousePortal() {
+            renderWarehouseKpis();
+            populateWarehouseBrandsFilter();
+            populateWarehouseServiceFilters();
+            filterWhFleet();
+            filterWhServices();
+            renderWarehouseSegments();
+            renderWarehouseSuppliers();
+        }
+
+        function renderWarehouseKpis() {
+            let whCosts = getWarehouseData();
+            let whMaster = getWarehouseMasterFleet();
+
+            let activeVehicles = whMaster.filter(v => (v.status || 'Aktivno') === 'Aktivno');
+            let activeCountElem = document.getElementById('whActiveCount');
+            let sideBadgeElem = document.getElementById('whSideBadgeCount');
+            if (activeCountElem) activeCountElem.innerText = activeVehicles.length.toLocaleString('bs-BA');
+            if (sideBadgeElem) sideBadgeElem.innerText = activeVehicles.length.toLocaleString('bs-BA');
+
+            let totalCost = whCosts.reduce((acc, c) => acc + (c.cost || 0), 0);
+            let cost2026 = whCosts.filter(c => c.year === 2026).reduce((acc, c) => acc + (c.cost || 0), 0);
+
+            let totalCostElem = document.getElementById('whTotalCost');
+            if (totalCostElem) totalCostElem.innerText = `${totalCost.toLocaleString('bs-BA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KM`;
+
+            let cost2026Elem = document.getElementById('wh2026Cost');
+            if (cost2026Elem) {
+                let displayVal = cost2026 > 0 ? cost2026 : (kpiTotalCostsByYear[2026]?.['Skladišna mehanizacija'] || 137748);
+                cost2026Elem.innerText = `${displayVal.toLocaleString('bs-BA', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} KM`;
+            }
+
+            // Populate Years Table with Clickable Drilldown
+            let yearsTbody = document.getElementById('whYearsTableBody');
+            if (yearsTbody) {
+                let years = [2021, 2022, 2023, 2024, 2025, 2026];
+                let rowsHTML = [];
+                years.forEach(y => {
+                    let yCosts = whCosts.filter(c => c.year === y);
+                    let yTot = yCosts.reduce((acc, c) => acc + (c.cost || 0), 0);
+                    if (yTot === 0 && kpiTotalCostsByYear[y]?.['Skladišna mehanizacija']) {
+                        yTot = kpiTotalCostsByYear[y]['Skladišna mehanizacija'];
+                    }
+                    let fleetCount = kpiTotalFleetByYear[y]?.['Skladišna mehanizacija'] || (y === 2026 ? 594 : 595);
+                    let avgPerUnit = fleetCount > 0 ? (yTot / fleetCount) : 0;
+
+                    rowsHTML.push(`
+                        <tr onclick="drilldownWhToServices('${y}')" class="hover:bg-amber-50/50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors group">
+                            <td class="p-2.5 font-bold text-slate-800 dark:text-slate-200 group-hover:text-amber-700 flex items-center gap-1.5">
+                                <span>📅</span> ${y}. godina
+                            </td>
+                            <td class="p-2.5 text-center font-semibold text-slate-600 dark:text-slate-400">${fleetCount} mašina</td>
+                            <td class="p-2.5 text-right font-extrabold text-amber-700 dark:text-amber-400">${yTot.toLocaleString('bs-BA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KM</td>
+                            <td class="p-2.5 text-right font-bold text-slate-700 dark:text-slate-300">${avgPerUnit.toLocaleString('bs-BA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KM</td>
+                            <td class="p-2.5 text-center">
+                                <span class="text-amber-600 font-extrabold text-[11px] group-hover:underline">Opravke →</span>
+                            </td>
+                        </tr>
+                    `);
+                });
+                yearsTbody.innerHTML = rowsHTML.join('');
+            }
+
+            // Top 5 Vehicles by cost
+            let vehCostMap = new Map();
+            whCosts.forEach(c => {
+                let reg = (c.reg || '').trim().toUpperCase();
+                if (reg && reg !== '-') {
+                    vehCostMap.set(reg, (vehCostMap.get(reg) || 0) + (c.cost || 0));
+                }
+            });
+            let sortedVehicles = Array.from(vehCostMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            let topListElem = document.getElementById('whTopVehiclesList');
+            if (topListElem) {
+                let listHTML = [];
+                sortedVehicles.forEach(([reg, cost], idx) => {
+                    let vInfo = whMaster.find(v => (v.reg || '').trim().toUpperCase() === reg) || {};
+                    listHTML.push(`
+                        <div onclick="openVehicleModal('${reg}')" class="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center cursor-pointer hover:border-amber-400 hover:shadow-sm transition-all group">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-6 h-6 rounded-full bg-amber-100 text-amber-800 font-bold text-xs flex items-center justify-center">${idx + 1}</span>
+                                <div>
+                                    <p class="font-black text-xs text-slate-900 dark:text-white group-hover:text-amber-600 transition-colors">${reg}</p>
+                                    <p class="text-[10px] text-slate-500">${vInfo.markaVoz || 'Viljuškar'} ${vInfo.modelVoz || ''} (GB: ${vInfo.garazniBroj || '-'})</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-extrabold text-xs text-amber-700 dark:text-amber-400">${cost.toLocaleString('bs-BA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KM</span>
+                                <p class="text-[9px] text-slate-400 group-hover:text-amber-500">Karton →</p>
+                            </div>
+                        </div>
+                    `);
+                });
+                topListElem.innerHTML = listHTML.join('');
+            }
+        }
+
+        function populateWarehouseBrandsFilter() {
+            let whMaster = getWarehouseMasterFleet();
+            let brands = Array.from(new Set(whMaster.map(v => (v.markaVoz || '').trim()))).filter(b => b && b !== '-').sort();
+            let select = document.getElementById('whBrandFilter');
+            if (select) {
+                let options = ['<option value="all">Sve marke viljuškara</option>'];
+                brands.forEach(b => options.push(`<option value="${b}">${b}</option>`));
+                select.innerHTML = options.join('');
+            }
+        }
+
+        function filterWhFleet() {
+            let whMaster = getWarehouseMasterFleet();
+            let search = (document.getElementById('whSearchInput')?.value || '').trim().toLowerCase();
+            let brand = document.getElementById('whBrandFilter')?.value || 'all';
+            let status = document.getElementById('whStatusFilter')?.value || 'Aktivno';
+
+            whFilteredData = whMaster.filter(v => {
+                let vReg = (v.reg || '').toLowerCase();
+                let vGb = (v.garazniBroj || '').toLowerCase();
+                let vMarka = (v.markaVoz || '').toLowerCase();
+                let vModel = (v.modelVoz || '').toLowerCase();
+                let vSasija = (v.brojSasije || '').toLowerCase();
+                let vStatus = (v.status || 'Aktivno');
+
+                let matchSearch = !search || vReg.includes(search) || vGb.includes(search) || vMarka.includes(search) || vModel.includes(search) || vSasija.includes(search);
+                let matchBrand = brand === 'all' || (v.markaVoz || '').trim().toLowerCase() === brand.toLowerCase();
+                let matchStatus = status === 'all' || vStatus.toLowerCase() === status.toLowerCase();
+
+                return matchSearch && matchBrand && matchStatus;
+            });
+
+            whFleetPage = 1;
+            renderWarehouseFleetTable();
+        }
+
+        function renderWarehouseFleetTable() {
+            let tbody = document.getElementById('whFleetTableBody');
+            if (!tbody) return;
+
+            let total = whFilteredData.length;
+            let badge = document.getElementById('whFilteredCountBadge');
+            if (badge) badge.innerText = total.toLocaleString('bs-BA');
+
+            let totalPages = Math.ceil(total / whFleetPerPage) || 1;
+            if (whFleetPage > totalPages) whFleetPage = totalPages;
+            if (whFleetPage < 1) whFleetPage = 1;
+
+            let start = (whFleetPage - 1) * whFleetPerPage;
+            let end = Math.min(start + whFleetPerPage, total);
+            let pageItems = whFilteredData.slice(start, end);
+
+            let pageInfo = document.getElementById('whPaginationInfo');
+            if (pageInfo) pageInfo.innerText = total > 0 ? `Prikazano ${start + 1} - ${end} od ${total} mašina (Stranica ${whFleetPage} od ${totalPages})` : 'Nema rezultata';
+
+            let prevBtn = document.getElementById('whPrevPageBtn');
+            let nextBtn = document.getElementById('whNextPageBtn');
+            if (prevBtn) prevBtn.disabled = whFleetPage <= 1;
+            if (nextBtn) nextBtn.disabled = whFleetPage >= totalPages;
+
+            let rowsHTML = [];
+            pageItems.forEach((v, idx) => {
+                let st = (v.status || 'Aktivno');
+                let stClass = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+                if (st === 'Prodato') stClass = 'bg-purple-100 text-purple-900 border-purple-300';
+                if (st === 'Rashodovano') stClass = 'bg-red-100 text-red-900 border-red-300';
+
+                rowsHTML.push(`
+                    <tr class="hover:bg-amber-50/40 dark:hover:bg-slate-700/50 border-b border-slate-100 dark:border-slate-700/50 transition-colors">
+                        <td class="p-3 text-center font-mono text-slate-500 text-xs">${start + idx + 1}</td>
+                        <td class="p-3 font-mono font-bold text-slate-800 dark:text-slate-200 text-xs">${v.garazniBroj || '-'}</td>
+                        <td class="p-3 font-black text-slate-900 dark:text-white text-xs">${v.reg}</td>
+                        <td class="p-3 font-bold text-amber-800 dark:text-amber-300 text-xs">${v.markaVoz || '-'}</td>
+                        <td class="p-3 font-medium text-slate-700 dark:text-slate-300 text-xs">${v.modelVoz || '-'}</td>
+                        <td class="p-3 text-slate-600 dark:text-slate-400 text-xs">${v.godProizvodnje || '-'}</td>
+                        <td class="p-3 font-mono text-slate-500 text-[11px]">${v.brojSasije || '-'}</td>
+                        <td class="p-3 text-center">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${stClass}">${st}</span>
+                        </td>
+                        <td class="p-3 text-center">
+                            <button onclick="openVehicleModal('${v.reg}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 font-bold px-2.5 py-1 rounded-lg text-xs transition-colors border border-indigo-200 dark:border-indigo-800 cursor-pointer">
+                                📋 Karton
+                            </button>
+                        </td>
+                    </tr>
+                `);
+            });
+            tbody.innerHTML = rowsHTML.length > 0 ? rowsHTML.join('') : '<tr><td colspan="9" class="p-6 text-center text-slate-500">Nema pronađenih mašina za odabrane filtere.</td></tr>';
+        }
+
+        function changeWhPage(delta) {
+            whFleetPage += delta;
+            renderWarehouseFleetTable();
+        }
+
+        // ================= WAREHOUSE SERVICES & REPAIRS (TAB 3 - IDENTICAL TO TABELA SERVISA) =================
         let whTransPage = 1;
         const whTransPerPage = 100;
-        let currentFilteredWhTransactions = [];
 
-        function renderWarehouseServices() {
-            whTransactionTableData = getWarehouseData();
-            const yearSelect = document.getElementById('whTableYearFilter');
+        function populateWarehouseServiceFilters() {
+            let whCosts = getWarehouseData();
+            let yearSelect = document.getElementById('whServYearFilter');
             if (yearSelect) {
                 let currentVal = yearSelect.value || 'all';
-                let yearsArr = Array.from(new Set(whTransactionTableData.map(i => i.year))).sort((a,b) => b - a);
+                let yearsArr = Array.from(new Set(whCosts.map(i => i.year))).sort((a,b) => b - a);
                 let options = ['<option value="all">Sve godine</option>'];
                 yearsArr.forEach(y => {
                     let sel = (y.toString() === currentVal) ? 'selected' : '';
@@ -4242,15 +4577,15 @@
                 });
                 yearSelect.innerHTML = options.join('');
             }
-            filterWarehouseTransactionTable();
         }
 
-        function filterWarehouseTransactionTable() {
-            let term = (document.getElementById('whTableSearchInput')?.value || '').trim().toLowerCase();
-            let selectedYear = document.getElementById('whTableYearFilter') ? document.getElementById('whTableYearFilter').value : 'all';
-            let sortMode = document.getElementById('whTableSortFilter') ? document.getElementById('whTableSortFilter').value : 'new-first';
+        function filterWhServices() {
+            let whCosts = getWarehouseData();
+            let term = (document.getElementById('whServSearchInput')?.value || '').trim().toLowerCase();
+            let selectedYear = document.getElementById('whServYearFilter') ? document.getElementById('whServYearFilter').value : 'all';
+            let sortMode = document.getElementById('whServSortFilter') ? document.getElementById('whServSortFilter').value : 'new-first';
 
-            let filtered = whTransactionTableData.filter(item => {
+            let filtered = whCosts.filter(item => {
                 let matchYear = selectedYear === 'all' || item.year === parseInt(selectedYear);
                 let matchTerm = !term ||
                     (item.reg && item.reg.toLowerCase().includes(term)) ||
@@ -4277,13 +4612,13 @@
                 filtered.sort((a, b) => a.cost - b.cost);
             }
 
-            currentFilteredWhTransactions = filtered;
+            whFilteredServices = filtered;
             whTransPage = 1;
-            renderWarehouseTransactionTablePage();
+            renderWarehouseServicesTable();
         }
 
-        function renderWarehouseTransactionTablePage() {
-            let filtered = currentFilteredWhTransactions;
+        function renderWarehouseServicesTable() {
+            let filtered = whFilteredServices;
             const countElem = document.getElementById('whTableRecordCount');
             if (countElem) countElem.innerText = `Prikazano ukupno ${filtered.length.toLocaleString('bs-BA')} servisa skladišne mehanizacije`;
 
@@ -4291,7 +4626,7 @@
             if (whTransPage > totalPages) whTransPage = totalPages;
             if (whTransPage < 1) whTransPage = 1;
 
-            const tbody = document.getElementById('whTransactionTableBody');
+            const tbody = document.getElementById('whServicesTableBody');
             if (!tbody) return;
 
             let rowsHTML = [];
@@ -4341,49 +4676,16 @@
         function prevWhTransPage() {
             if (whTransPage > 1) {
                 whTransPage--;
-                renderWarehouseTransactionTablePage();
+                renderWarehouseServicesTable();
             }
         }
 
         function nextWhTransPage() {
-            let totalPages = Math.ceil(currentFilteredWhTransactions.length / whTransPerPage) || 1;
+            let totalPages = Math.ceil(whFilteredServices.length / whTransPerPage) || 1;
             if (whTransPage < totalPages) {
                 whTransPage++;
-                renderWarehouseTransactionTablePage();
+                renderWarehouseServicesTable();
             }
-        }
-
-        function drilldownWhToYear(year) {
-            switchWhTab(3);
-            setTimeout(() => {
-                const yearSelect = document.getElementById('whTableYearFilter');
-                if (yearSelect) {
-                    yearSelect.value = year.toString();
-                    filterWarehouseTransactionTable();
-                }
-            }, 50);
-        }
-
-        function drilldownWhToSegment(seg) {
-            switchWhTab(3);
-            setTimeout(() => {
-                const searchInput = document.getElementById('whTableSearchInput');
-                if (searchInput) {
-                    searchInput.value = seg;
-                    filterWarehouseTransactionTable();
-                }
-            }, 50);
-        }
-
-        function drilldownWhToSupplier(sup) {
-            switchWhTab(3);
-            setTimeout(() => {
-                const searchInput = document.getElementById('whTableSearchInput');
-                if (searchInput) {
-                    searchInput.value = sup;
-                    filterWarehouseTransactionTable();
-                }
-            }, 50);
         }
 
         function exportWarehouseServicesToExcel() {
@@ -4391,7 +4693,7 @@
                 alert("XLSX biblioteka nije učitana.");
                 return;
             }
-            let cleanRows = currentFilteredWhTransactions.map((c, i) => {
+            let cleanRows = whFilteredServices.map((c, i) => {
                 let dateStr = "-";
                 if (c.datumObj && !isNaN(c.datumObj)) {
                     dateStr = ("0" + c.datumObj.getDate()).slice(-2) + "." + ("0" + (c.datumObj.getMonth() + 1)).slice(-2) + "." + c.datumObj.getFullYear() + ".";
