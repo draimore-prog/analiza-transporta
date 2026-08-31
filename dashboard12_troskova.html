@@ -299,96 +299,132 @@
     <!-- ================= MODAL ZA ADMIN PANEL (UPRAVLJANJE KORISNICIMA) ================= -->
     <div id="adminPanelModal" class="fixed inset-0 bg-slate-900/60 hidden flex justify-center items-center z-50 backdrop-blur-sm p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-100">
-            <div class="flex justify-between items-center p-5 bg-gradient-to-r from-blue-900 to-indigo-900 text-white">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center p-5 bg-gradient-to-r from-blue-950 via-indigo-900 to-slate-900 text-white">
                 <div>
                     <h2 class="text-xl font-extrabold tracking-tight flex items-center gap-2">
-                        <span>👤 Admin Panel - Upravljanje Korisničkim Nalozima</span>
+                        <span>🛡️ Admin Panel - Korisnici & Uloge (Firestore)</span>
                     </h2>
-                    <p class="text-xs text-blue-200 mt-0.5">Kreirajte nove naloge, mijenjajte lozinke i upravljajte pristupima</p>
+                    <p class="text-xs text-blue-200 mt-0.5">Upravljanje nalozima, ulogama i navigacijskim panelima u realnom vremenu</p>
                 </div>
-                <button onclick="closeAdminPanel()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-lg w-9 h-9 flex items-center justify-center text-2xl font-light transition-colors">&times;</button>
+                <button onclick="closeAdminPanel()" class="text-white/70 hover:text-white hover:bg-white/10 rounded-lg w-9 h-9 flex items-center justify-center text-2xl font-light transition-colors cursor-pointer">&times;</button>
             </div>
-            <div class="p-6 overflow-y-auto space-y-6 bg-slate-50">
-                <!-- FORMA ZA KREIRANJE NOVOG KORISNIKA -->
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <h3 class="text-sm font-extrabold text-slate-800 mb-3 flex items-center gap-2">
-                        <span>➕ Kreiranje Novog Korisnika</span>
-                    </h3>
-                    <form onsubmit="handleCreateUser(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
-                        <div>
-                            <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Korisničko ime</label>
-                            <input type="text" id="newUsername" required placeholder="npr. marka" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Ime i prezime</label>
-                            <input type="text" id="newFullname" required placeholder="npr. Marko Marković" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                          <div>
-                              <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Email adresa</label>
-                              <input type="email" id="newEmail" placeholder="npr. marko@firma.ba (opciono)" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-blue-500">
-                          </div>
-                        <div>
-                            <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Lozinka</label>
-                            <input type="password" id="newPassword" required placeholder="Lozinka..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Uloga</label>
-                            <div class="flex gap-2">
-                                <select id="newRole" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold bg-slate-50 outline-none">
-                                    <option value="editor">Admin - Unos faktura</option>
-                                    <option value="viewer">Analitičar (Samo pregled)</option>
-                                    <option value="serviser">Serviser (Samo pregled kartona)</option>
-                                    <option value="superadmin">Super Administrator</option>
-                                </select>
-                                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-lg shadow text-xs whitespace-nowrap transition-all">
-                                    Spremi
-                                </button>
+            <!-- Sub-tabs bar -->
+            <div class="flex border-b border-slate-200 bg-white px-6 pt-3 gap-2">
+                <button id="adminTabBtnUsers" onclick="switchAdminPanelTab('users')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-indigo-600 text-indigo-600 flex items-center gap-1.5 transition-colors cursor-pointer">
+                    <span>👥 Korisnički Nalozi</span>
+                </button>
+                <button id="adminTabBtnRoles" onclick="switchAdminPanelTab('roles')" class="px-4 py-2.5 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition-colors cursor-pointer">
+                    <span>🛡️ Uloge & Navigacijski Paneli (app_roles)</span>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto space-y-6 bg-slate-50 flex-1">
+                <!-- ================= TAB 1: KORISNICI ================= -->
+                <div id="adminSectionUsers" class="space-y-6">
+                    <!-- FORMA ZA KREIRANJE NOVOG KORISNIKA -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="text-sm font-extrabold text-slate-800 mb-3 flex items-center gap-2">
+                            <span>➕ Kreiranje Novog Korisnika</span>
+                        </h3>
+                        <form onsubmit="handleCreateUser(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Korisničko ime</label>
+                                <input type="text" id="newUsername" required placeholder="npr. emir.durakovic" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Ime i prezime</label>
+                                <input type="text" id="newFullname" required placeholder="npr. Marko Marković" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Email adresa</label>
+                                <input type="email" id="newEmail" placeholder="npr. marko@bingotuzla.ba" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Lozinka</label>
+                                <input type="password" id="newPassword" required placeholder="Lozinka..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Uloga</label>
+                                <div class="flex gap-2">
+                                    <select id="newRole" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 font-bold bg-slate-50 outline-none">
+                                        <option value="editor">✍️ Admin - Unos faktura</option>
+                                        <option value="viewer">📊 Analitičar (Samo pregled)</option>
+                                        <option value="warehouse_specialist">🏗️ Specijalist skladišne mehanizacije</option>
+                                        <option value="serviser">🔧 Serviser (Samo pregled kartona)</option>
+                                        <option value="superadmin">👑 Super Administrator</option>
+                                    </select>
+                                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-lg shadow text-xs whitespace-nowrap transition-all cursor-pointer">
+                                        Spremi
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <!-- LISTA POSTOJEĆIH KORISNIKA -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                            <h3 class="text-sm font-extrabold text-slate-800">📋 Registrovani Korisnički Nalozi</h3>
+                            <div class="flex items-center gap-2">
+                                <button onclick="forceSyncUsers(this)" type="button" class="text-[10px] bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-2 py-1 rounded font-bold transition-colors cursor-pointer">Osvježi iz baze</button>
+                                <span id="userCountBadge" class="text-xs bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full font-bold">1 nalog</span>
                             </div>
                         </div>
-                    </form>
-                </div>
-                <!-- LISTA POSTOJEĆIH KORISNIKA -->
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="p-4 border-b border-slate-100 flex justify-between items-center">
-                        <h3 class="text-sm font-extrabold text-slate-800">📋 Registrovani Korisnički Nalozi</h3>
-                        <div class="flex items-center gap-2">
-                            <button onclick="forceSyncUsers(this)" type="button" class="text-[10px] bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-2 py-1 rounded font-bold transition-colors">Osvje�i iz baze</button>
-                            <span id="userCountBadge" class="text-xs bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full font-bold">1 nalog</span>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-xs text-left">
+                                <thead class="bg-slate-100 font-bold text-slate-700 border-b border-slate-200">
+                                    <tr>
+                                        <th class="py-2.5 px-3">Korisničko Ime</th>
+                                        <th class="py-2.5 px-3">Ime i Prezime</th>
+                                        <th class="py-2.5 px-3">Uloga</th>
+                                        <th class="py-2.5 px-3">Kreiran</th>
+                                        <th class="py-2.5 px-3 text-right">Akcije</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="userTableBody" class="divide-y divide-slate-100 bg-white">
+                                    <!-- Pune se registrovani nalozi -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-xs text-left">
-                            <thead class="bg-slate-100 font-bold text-slate-700 border-b border-slate-200">
-                                <tr>
-                                    <th class="py-2.5 px-3">Korisničko Ime</th>
-                                    <th class="py-2.5 px-3">Ime i Prezime</th>
-                                    <th class="py-2.5 px-3">Uloga</th>
-                                    <th class="py-2.5 px-3">Kreiran</th>
-                                    <th class="py-2.5 px-3 text-right">Akcije</th>
-                                </tr>
-                            </thead>
-                            <tbody id="userTableBody" class="divide-y divide-slate-100 bg-white">
-                                <!-- Pune se registrovani nalozi -->
-                            </tbody>
-                        </table>
+                    <!-- SEKCIJA ZA REGISTRACIJU NOVOG VOZILA U BAZU (SAMO ZA ADMINE) -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                                <span>🚛 Baza Aktivnih Vozila 2026</span>
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Autorizovani unos i registracija novog aktivnog vozila u centralnu bazu flote</p>
+                        </div>
+                        <button onclick="openEditVehicleModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-4 py-2.5 rounded-xl shadow text-xs flex items-center gap-2 transition-all cursor-pointer">
+                            <span>➕ Registruj Novo Vozilo u Bazu</span>
+                        </button>
                     </div>
                 </div>
-                <!-- SEKCIJA ZA REGISTRACIJU NOVOG VOZILA U BAZU (SAMO ZA ADMINE) -->
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
-                            <span>🚛 Baza Aktivnih Vozila 2026</span>
-                        </h3>
-                        <p class="text-xs text-slate-500 mt-0.5">Autorizovani unos i registracija novog aktivnog vozila u centralnu bazu flote</p>
+
+                <!-- ================= TAB 2: ULOGE & NAVIGACIJSKI PANELI (FIRESTORE app_roles) ================= -->
+                <div id="adminSectionRoles" class="hidden space-y-6">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl">🔥</span>
+                                <h3 class="text-sm font-black text-slate-800">Firestore Kolekcija: <code class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-mono text-xs font-bold">app_roles</code></h3>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">Struktura autorizovanih uloga, dozvoljenih portala, navigacijskih panela i akcijskih prava u sistemu</p>
+                        </div>
+                        <button onclick="reseedFirestoreRoles(this)" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5 shadow cursor-pointer">
+                            <span>🔄 Sinhronizuj / Resetuj Uloge u Firebase</span>
+                        </button>
                     </div>
-                    <button onclick="openEditVehicleModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-4 py-2.5 rounded-xl shadow text-xs flex items-center gap-2 transition-all">
-                        <span>➕ Registruj Novo Vozilo u Bazu</span>
-                    </button>
+
+                    <!-- Lista Uloga Kartice -->
+                    <div class="grid grid-cols-1 gap-4" id="adminRolesCardsContainer">
+                        <!-- Popunjava se dinamički iz Firestore app_roles -->
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <!-- ================= MODAL ZA UREĐIVANJE KORISNIKA ================= -->
+        <!-- ================= MODAL ZA UREĐIVANJE KORISNIKA ================= -->
     <div id="editUserModal" class="fixed inset-0 bg-slate-900/75 hidden flex justify-center items-center z-[60] backdrop-blur-sm p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 p-6">
             <div class="flex justify-between items-center pb-3 mb-4 border-b border-slate-100">
