@@ -2,8 +2,26 @@
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import ChartJS from "@/lib/chartSetup.js";
-import { formatKM, calculateDynamic2026 } from "@/lib/calculations.js";
+import { formatKM } from "@/lib/calculations.js";
 import { Wrench, TrendingUp, Layers, Calendar, ChevronRight } from "lucide-react";
+
+// Pomoćna funkcija za robusno prepoznavanje tipa mehanizacije bez obzira na kvačice (č, ć, š, ž)
+function normalizeVehicleType(rawType) {
+  if (!rawType) return "Ostalo";
+  const str = rawType
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
+  if (str.includes("putnick") || str.includes("putnic") || str.includes("putn")) return "Putničko";
+  if (str.includes("teret")) return "Teretno";
+  if (str.includes("prikljuc") || str.includes("priklj")) return "Priključno";
+  if (str.includes("radn")) return "Radna mašina";
+  if (str.includes("skladis") || str.includes("viljusk")) return "Skladišna mehanizacija";
+  if (str.includes("servis")) return "Servis motornih vozila";
+  return "Putničko";
+}
 
 // Fiksni podaci za Dugoročni KPI (2021-2025)
 const LT_KPI_FIXED_DATA = {
@@ -107,47 +125,47 @@ export function MaintenanceAnalysis({
   const ltIntRef = useRef(null);
   const chartInstances = useRef({});
 
-  // Dinamički podaci za 2026.
+  // Dinamički podaci za 2026. godinu (Egzaktno sabiranje troškova i bez dupliranja jedinica)
   const dynamic2026 = useMemo(() => {
     const data26 = {
-      units: { "Priključno": 51, "Putničko": 119, "Radna mašina": 8, "Servis motornih vozila": 0, "Skladišna mehanizacija": 594, "Teretno": 166 },
+      units: { "Priključno": 0, "Putničko": 0, "Radna mašina": 0, "Servis motornih vozila": 0, "Skladišna mehanizacija": 0, "Teretno": 0 },
       typeCost: { "Priključno": 0, "Putničko": 0, "Radna mašina": 0, "Servis motornih vozila": 0, "Skladišna mehanizacija": 0, "Teretno": 0 },
       segmentCost: { "Elektronika": 0, "Guma": 0, "Hidraulika": 0, "Mehanika": 0, "Redovan servis": 0, "Signalizacija": 0, "Tečnost": 0 },
       interventions: { "Priključno": 0, "Putničko": 0, "Radna mašina": 0, "Servis motornih vozila": 0, "Skladišna mehanizacija": 0, "Teretno": 0 }
     };
 
+    // 1. Broj aktivnih jedinica u 2026.
     if (masterFleet && masterFleet.length > 0) {
+      let activeCount = 0;
       masterFleet.forEach((v) => {
-        const st = (v.status || "").toLowerCase();
+        const st = (v.status || "").toLowerCase().trim();
         if (st && st !== "aktivno") return;
-        const type = (v.tipMehan || "").trim();
-        if (type.includes("Putničk") || type.includes("Putnick")) data26.units["Putničko"]++;
-        else if (type.includes("Radna")) data26.units["Radna mašina"]++;
-        else if (type.includes("Skladi")) data26.units["Skladišna mehanizacija"]++;
-        else if (type.includes("Priključ") || type.includes("Prikljuc")) data26.units["Priključno"]++;
-        else if (type.includes("Teret")) data26.units["Teretno"]++;
-        else if (type.includes("Servis")) data26.units["Servis motornih vozila"]++;
+        const normType = normalizeVehicleType(v.tipMehan || v.tipMehanizacije);
+        if (data26.units[normType] !== undefined) {
+          data26.units[normType]++;
+          activeCount++;
+        }
       });
+      if (activeCount === 0) {
+        // Fallback ako masterFleet nema status polje
+        data26.units = { "Priključno": 51, "Putničko": 119, "Radna mašina": 8, "Servis motornih vozila": 0, "Skladišna mehanizacija": 594, "Teretno": 166 };
+      }
+    } else {
+      data26.units = { "Priključno": 51, "Putničko": 119, "Radna mašina": 8, "Servis motornih vozila": 0, "Skladišna mehanizacija": 594, "Teretno": 166 };
     }
 
+    // 2. Troškovi i intervencije u 2026.
     costData.forEach((item) => {
       if (item.year === 2026) {
-        let type = (item.tipMehan || "").trim();
+        const normType = normalizeVehicleType(item.tipMehan);
         const cost = item.cost || 0;
         let segment = (item.segment || "").trim();
 
-        if (type.includes("Putničk") || type.includes("Putnick")) type = "Putničko";
-        else if (type.includes("Radna")) type = "Radna mašina";
-        else if (type.includes("Skladi")) type = "Skladišna mehanizacija";
-        else if (type.includes("Priključ") || type.includes("Prikljuc")) type = "Priključno";
-        else if (type.includes("Teret")) type = "Teretno";
-        else type = "Putničko";
+        if (segment === "Tecnost" || segment.toLowerCase().includes("tecnost")) segment = "Tečnost";
 
-        if (segment === "Tecnost") segment = "Tečnost";
-
-        if (data26.typeCost[type] !== undefined) {
-          data26.typeCost[type] += cost;
-          data26.interventions[type]++;
+        if (data26.typeCost[normType] !== undefined) {
+          data26.typeCost[normType] += cost;
+          data26.interventions[normType]++;
         }
         if (data26.segmentCost[segment] !== undefined) {
           data26.segmentCost[segment] += cost;
@@ -160,7 +178,7 @@ export function MaintenanceAnalysis({
     return data26;
   }, [masterFleet, costData]);
 
-  // Izračun 6 KPI kartica za gornji grid
+  // Izračun 6 KPI kartica za gornji grid sa egzaktnom normalizacijom tipova
   const kpiCardsData = useMemo(() => {
     const targetY = selectedYear === "all" ? 2026 : parseInt(selectedYear);
     const dailyDataYear = costData.filter((c) => (selectedYear === "all" ? true : c.year === targetY));
@@ -172,14 +190,32 @@ export function MaintenanceAnalysis({
 
     const yearKpiFleet = KPI_TOTAL_FLEET_BY_YEAR[targetY] || KPI_TOTAL_FLEET_BY_YEAR[2026];
 
-    const typeYearTotals = {};
-    const typeVehicleSets = {};
+    const typeYearTotals = {
+      "Teretno": 0,
+      "Putničko": 0,
+      "Skladišna mehanizacija": 0,
+      "Priključno": 0,
+      "Radna mašina": 0,
+      "Servis motornih vozila": 0
+    };
+
+    const typeVehicleSets = {
+      "Teretno": new Set(),
+      "Putničko": new Set(),
+      "Skladišna mehanizacija": new Set(),
+      "Priključno": new Set(),
+      "Radna mašina": new Set(),
+      "Servis motornih vozila": new Set()
+    };
 
     dailyDataYear.forEach((item) => {
-      const tip = item.tipMehan || "Ostalo";
-      typeYearTotals[tip] = (typeYearTotals[tip] || 0) + (item.cost || 0);
-      if (!typeVehicleSets[tip]) typeVehicleSets[tip] = new Set();
-      if (item.reg && item.reg !== "-") typeVehicleSets[tip].add(item.reg);
+      const norm = normalizeVehicleType(item.tipMehan);
+      if (typeYearTotals[norm] !== undefined) {
+        typeYearTotals[norm] += item.cost || 0;
+        if (item.reg && item.reg !== "-") {
+          typeVehicleSets[norm].add(item.reg.trim().toUpperCase());
+        }
+      }
     });
 
     const standardTypes = [
@@ -192,22 +228,13 @@ export function MaintenanceAnalysis({
     ];
 
     return standardTypes.map((t) => {
-      let cost = 0;
-      Object.keys(typeYearTotals).forEach((k) => {
-        if (k.toLowerCase().includes(t.key.toLowerCase()) || (t.key === "Teretno" && k.toLowerCase().includes("teret"))) {
-          cost += typeYearTotals[k];
-        }
-      });
-
+      const cost = typeYearTotals[t.key] || 0;
       let vehCount = 0;
+
       if (fleetMode === "master") {
         vehCount = yearKpiFleet[t.key] || 0;
       } else {
-        Object.keys(typeVehicleSets).forEach((k) => {
-          if (k.toLowerCase().includes(t.key.toLowerCase()) || (t.key === "Teretno" && k.toLowerCase().includes("teret"))) {
-            vehCount += typeVehicleSets[k].size;
-          }
-        });
+        vehCount = typeVehicleSets[t.key]?.size || 0;
       }
 
       const dailyPerVehicle = vehCount > 0 && daysCount > 0 ? cost / (vehCount * daysCount) : 0;
@@ -249,7 +276,10 @@ export function MaintenanceAnalysis({
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          plugins: {
+            datalabels: { display: false },
+            legend: { display: false }
+          },
           scales: {
             y: { beginAtZero: true, display: false },
             x: { grid: { display: false }, ticks: { font: { size: 9, weight: "bold" } } }
@@ -371,7 +401,7 @@ export function MaintenanceAnalysis({
         <td className={`py-2.5 px-2 ${isCost ? "text-right" : "text-center"}`}>{isCost ? formatKM(totals[2023]) : totals[2023]}</td>
         <td className={`py-2.5 px-2 ${isCost ? "text-right" : "text-center"}`}>{isCost ? formatKM(totals[2024]) : totals[2024]}</td>
         <td className={`py-2.5 px-2 ${isCost ? "text-right" : "text-center"}`}>{isCost ? formatKM(totals[2025]) : totals[2025]}</td>
-        <td className={`py-2.5 px-2 text-indigo-900 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-950 ${isCost ? "text-right" : "text-center"}`}>
+        <td className={`py-2.5 px-2 text-indigo-900 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-950 font-black ${isCost ? "text-right" : "text-center"}`}>
           {isCost ? formatKM(totals[2026]) : totals[2026]}
         </td>
         <td className="py-2.5 px-1 text-center bg-slate-300/40 dark:bg-slate-700/50 border-l border-slate-300 dark:border-slate-600">{tp21_22}%</td>
