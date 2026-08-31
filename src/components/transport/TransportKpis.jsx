@@ -65,7 +65,7 @@ export function TransportKpis({
   const cost2026 = yearlyStats[2026]?.cost || 0;
   const avgCostPerUnit2026 = dynamic2026.total > 0 ? cost2026 / dynamic2026.total : 0;
 
-  // Crtanje svih 5 grafikona sa bogatim tooltipsima i procentima
+  // Crtanje svih 5 grafikona sa tačnim procentima unutar grafikona i barova
   useEffect(() => {
     // 1. Trend Grafikon
     if (trendCanvasRef.current) {
@@ -106,6 +106,7 @@ export function TransportKpis({
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
+              datalabels: { display: false },
               legend: { position: "bottom", labels: { font: { size: 11, weight: "bold" } } },
               tooltip: {
                 callbacks: {
@@ -148,6 +149,17 @@ export function TransportKpis({
             maintainAspectRatio: false,
             scales: { x: { stacked: true }, y: { stacked: true } },
             plugins: {
+              datalabels: {
+                display: true,
+                color: "#ffffff",
+                font: { weight: "bold", size: 9 },
+                formatter: (value, ctx) => {
+                  const mIdx = ctx.dataIndex;
+                  const mTotal = monthInterno[mIdx] + monthEksterno[mIdx];
+                  if (mTotal === 0 || value < mTotal * 0.1) return "";
+                  return `${((value / mTotal) * 100).toFixed(0)}%`;
+                }
+              },
               legend: { position: "bottom" },
               tooltip: {
                 callbacks: {
@@ -165,7 +177,7 @@ export function TransportKpis({
       }
     }
 
-    // 2. Interno vs Eksterno Doughnut (sa procentima u tooltipu)
+    // 2. Interno vs Eksterno Doughnut (sa tačnim procentima unutar grafikona)
     if (intExtCanvasRef.current) {
       if (chartInstances.current.intExt) chartInstances.current.intExt.destroy();
       const ctx = intExtCanvasRef.current.getContext("2d");
@@ -201,6 +213,15 @@ export function TransportKpis({
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
+            datalabels: {
+              display: true,
+              color: "#ffffff",
+              font: { weight: "900", size: 13 },
+              formatter: (value) => {
+                if (total === 0 || value === 0) return "";
+                return `${((value / total) * 100).toFixed(1)}%`;
+              }
+            },
             legend: { position: "bottom", labels: { font: { weight: "bold", size: 11 } } },
             tooltip: {
               callbacks: {
@@ -223,7 +244,7 @@ export function TransportKpis({
       });
     }
 
-    // 3. Top 10 Vozila po Trošku (sa procentima u tooltipu)
+    // 3. Top 10 Vozila po Trošku (sa tačnim procentima unutar barova)
     if (vehiclesCanvasRef.current) {
       if (chartInstances.current.vehicles) chartInstances.current.vehicles.destroy();
       const ctx = vehiclesCanvasRef.current.getContext("2d");
@@ -258,6 +279,18 @@ export function TransportKpis({
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
+            datalabels: {
+              display: true,
+              color: "#ffffff",
+              anchor: "end",
+              align: "start",
+              offset: 4,
+              font: { weight: "bold", size: 10 },
+              formatter: (value) => {
+                if (filteredTotalCost === 0 || value === 0) return "";
+                return `${((value / filteredTotalCost) * 100).toFixed(1)}%`;
+              }
+            },
             legend: { display: false },
             tooltip: {
               callbacks: {
@@ -279,7 +312,7 @@ export function TransportKpis({
       });
     }
 
-    // 4. Segmenti Doughnut (sa procentima u tooltipu)
+    // 4. Segmenti Doughnut (sa tačnim procentima unutar segmenata)
     if (segmentsCanvasRef.current) {
       if (chartInstances.current.segments) chartInstances.current.segments.destroy();
       const ctx = segmentsCanvasRef.current.getContext("2d");
@@ -294,6 +327,8 @@ export function TransportKpis({
         .sort((a, b) => b[1] - a[1])
         .slice(0, 7);
       const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#64748b"];
+
+      const segSum = sortedSegs.reduce((acc, s) => acc + s[1], 0);
 
       chartInstances.current.segments = new ChartJS(ctx, {
         type: "doughnut",
@@ -312,6 +347,15 @@ export function TransportKpis({
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
+            datalabels: {
+              display: true,
+              color: "#ffffff",
+              font: { weight: "bold", size: 10 },
+              formatter: (value) => {
+                if (segSum === 0 || value < segSum * 0.05) return "";
+                return `${((value / segSum) * 100).toFixed(1)}%`;
+              }
+            },
             legend: { position: "right", labels: { font: { weight: "bold", size: 10 } } },
             tooltip: {
               callbacks: {
@@ -333,7 +377,7 @@ export function TransportKpis({
       });
     }
 
-    // 5. Top 7 Dobavljača / Servisera (sa procentima u tooltipu)
+    // 5. Top 7 Dobavljača / Servisera (sa tačnim procentima unutar barova)
     if (suppliersCanvasRef.current) {
       if (chartInstances.current.suppliers) chartInstances.current.suppliers.destroy();
       const ctx = suppliersCanvasRef.current.getContext("2d");
@@ -365,6 +409,18 @@ export function TransportKpis({
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
+            datalabels: {
+              display: true,
+              color: "#ffffff",
+              anchor: "end",
+              align: "start",
+              offset: 4,
+              font: { weight: "bold", size: 10 },
+              formatter: (value) => {
+                if (filteredTotalCost === 0 || value === 0) return "";
+                return `${((value / filteredTotalCost) * 100).toFixed(1)}%`;
+              }
+            },
             legend: { display: false },
             tooltip: {
               callbacks: {
@@ -500,7 +556,7 @@ export function TransportKpis({
             Interaktivni Analitički Grafikoni
           </span>
           <span className="text-[10px] bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-300 font-bold px-2 py-0.5 rounded">
-            Klikom na grafikone otvarate detaljne preglede
+            Grafikoni prikazuju tačne procente unutar segmenata i barova
           </span>
         </div>
 
