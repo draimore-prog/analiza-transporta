@@ -13,6 +13,9 @@
       "**/scratch/**",
       "node_modules/**",
       "scripts/**",
+      "backups/**",
+      "*.zip",
+      "**/*.zip",
       "package*.json",
       "**/*.xlsx",
       "*.xlsx"
