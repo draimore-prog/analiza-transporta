@@ -1,8 +1,7 @@
-"use client";
-
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { formatDate, formatKM, cleanVehicleType } from "@/lib/calculations.js";
 import { exportTransactionsToExcel } from "@/lib/exportExcel.js";
+import { InvoicePreviewModal } from "@/components/modals/InvoicePreviewModal.jsx";
 import {
   Download,
   Trash2,
@@ -12,7 +11,8 @@ import {
   RotateCcw,
   FilterX,
   ArrowUpDown,
-  ArrowUp
+  ArrowUp,
+  Paperclip
 } from "lucide-react";
 
 export function ServiceTable({
@@ -23,6 +23,7 @@ export function ServiceTable({
   onDeleteCostRecord,
   activeUser
 }) {
+  const [previewInvoice, setPreviewInvoice] = useState(null);
   // In-table kolonski filteri
   const [colFilterReg, setColFilterReg] = useState("");
   const [colFilterGb, setColFilterGb] = useState("");
@@ -478,6 +479,22 @@ export function ServiceTable({
                         <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-slate-200">
                           <div className="flex items-center justify-end gap-1.5">
                             <span>{formatKM(item.cost || 0)}</span>
+                            {item.invoiceUrl && (
+                              <button
+                                type="button"
+                                onClick={() => setPreviewInvoice({
+                                  url: item.invoiceUrl,
+                                  name: item.invoiceName || "Račun",
+                                  type: item.invoiceType || "application/pdf",
+                                  reg: item.reg,
+                                  datum: item.datum
+                                })}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-300 font-extrabold text-[10px] border border-emerald-300 dark:border-emerald-700 transition-all cursor-pointer shadow-2xs"
+                                title="Pregledaj priloženi račun"
+                              >
+                                <Paperclip className="w-3 h-3" /> Račun
+                              </button>
+                            )}
                             {item.isNewCustom && canDelete && item.id && onDeleteCostRecord && (
                               <button
                                 onClick={() => onDeleteCostRecord(item.id)}
@@ -549,5 +566,13 @@ export function ServiceTable({
           </div>
         </div>
       </div>
+
+      {/* MODAL ZA PREGLED RAČUNA */}
+      <InvoicePreviewModal
+        isOpen={Boolean(previewInvoice)}
+        onClose={() => setPreviewInvoice(null)}
+        invoice={previewInvoice}
+      />
+    </div>
   );
 }

@@ -231,6 +231,15 @@ export function useFleetData() {
     await deleteDoc(doc(db, "cost_records", recordId));
   };
 
+  const updateCostRecord = async (recordId, updatedFields) => {
+    const cleanFields = { ...updatedFields };
+    if (cleanFields.tipMehan) {
+      cleanFields.tipMehan = cleanVehicleType(cleanFields.tipMehan);
+    }
+    cleanFields.updatedAt = new Date().toISOString();
+    await setDoc(doc(db, "cost_records", recordId), cleanFields, { merge: true });
+  };
+
   const saveVehicle = async (vehicle) => {
     const docId = vehicle.reg.replace(/[\/\\#\?]/g, "_").trim();
     const cleanV = {
@@ -250,6 +259,7 @@ export function useFleetData() {
     isLoading,
     loadProgress,
     addCostRecord,
+    updateCostRecord,
     deleteCostRecord,
     saveVehicle
   };

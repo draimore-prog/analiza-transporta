@@ -1,9 +1,8 @@
-"use client";
-
 import React, { useEffect, useRef, useMemo, useState } from "react";
 import { formatKM, formatDate } from "@/lib/calculations.js";
 import { Chart, registerables } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import { InvoicePreviewModal } from "./InvoicePreviewModal.jsx";
 import {
   X,
   Printer,
@@ -13,7 +12,9 @@ import {
   RotateCcw,
   FilterX,
   Calendar,
-  Sparkles
+  Sparkles,
+  Paperclip,
+  Image as ImageIcon
 } from "lucide-react";
 
 Chart.register(...registerables, ChartDataLabels);
@@ -38,6 +39,10 @@ export function VehicleCardModal({
   const [colFilterSegment, setColFilterSegment] = useState("all");
   const [colFilterOpis, setColFilterOpis] = useState("");
   const [colFilterSupplier, setColFilterSupplier] = useState("");
+
+  // Preview stanja za račun i sliku vozila
+  const [previewInvoice, setPreviewInvoice] = useState(null);
+  const [previewVehicleImg, setPreviewVehicleImg] = useState(false);
 
   // Pronađi osnovne podatke o vozilu
   const vehicleInfo = useMemo(() => {
@@ -377,9 +382,26 @@ export function VehicleCardModal({
         <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white flex justify-between items-start print:bg-slate-100 print:text-slate-900 print:p-4 print:rounded-lg print:border print:border-slate-300">
           <div>
             <div className="flex items-center gap-3">
-              <span className="p-2 bg-white/10 rounded-xl border border-white/20 text-xl print:hidden">
-                🚛
-              </span>
+              {vehicleInfo.imageUrl ? (
+                <div
+                  onClick={() => setPreviewVehicleImg(true)}
+                  className="relative group cursor-pointer shrink-0 print:hidden"
+                  title="Klikni za prikaz slike vozila"
+                >
+                  <img
+                    src={vehicleInfo.imageUrl}
+                    alt={vehicleInfo.reg}
+                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover border-2 border-white/40 shadow-md group-hover:scale-105 transition-transform"
+                  />
+                  <span className="absolute inset-0 bg-black/30 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] text-white font-bold transition-opacity">
+                    🔍
+                  </span>
+                </div>
+              ) : (
+                <span className="p-2.5 bg-white/10 rounded-2xl border border-white/20 text-2xl print:hidden shrink-0">
+                  🚛
+                </span>
+              )}
               <div>
                 <h3 className="text-xl font-black tracking-tight flex items-center gap-2 print:text-lg">
                   <span>{vehicleInfo.reg}</span>
@@ -635,7 +657,25 @@ export function VehicleCardModal({
                           {c.dobavljacOrig || c.dobavljac || "-"}
                         </td>
                         <td className="p-2.5 text-right font-bold text-slate-900 dark:text-white whitespace-nowrap print:text-slate-900">
-                          {formatKM(c.cost || 0)}
+                          <div className="flex items-center justify-end gap-1.5">
+                            <span>{formatKM(c.cost || 0)}</span>
+                            {c.invoiceUrl && (
+                              <button
+                                type="button"
+                                onClick={() => setPreviewInvoice({
+                                  url: c.invoiceUrl,
+                                  name: c.invoiceName || "Račun",
+                                  type: c.invoiceType || "application/pdf",
+                                  reg: vehicleInfo.reg,
+                                  datum: c.datum
+                                })}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-300 font-extrabold text-[10px] border border-emerald-300 dark:border-emerald-700 transition-all cursor-pointer shadow-2xs print:hidden"
+                                title="Pregledaj račun / fakturu"
+                              >
+                                <Paperclip className="w-3 h-3" /> Račun
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -664,6 +704,38 @@ export function VehicleCardModal({
           </div>
         </div>
       </div>
+
+      {/* MODAL ZA PREGLED PRILOŽENOG RAČUNA */}
+      <InvoicePreviewModal
+        isOpen={Boolean(previewInvoice)}
+        onClose={() => setPreviewInvoice(null)}
+        invoice={previewInvoice}
+      />
+
+      {/* LIGHTBOX ZA UVEĆANJE SLIKE VOZILA */}
+      {previewVehicleImg && vehicleInfo?.imageUrl && (
+        <div
+          onClick={() => setPreviewVehicleImg(false)}
+          className="fixed inset-0 bg-black/90 z-[110] flex flex-col items-center justify-center p-4 cursor-pointer animate-in fade-in duration-150"
+        >
+          <div className="relative max-w-4xl max-h-[85vh] flex flex-col items-center">
+            <button
+              onClick={() => setPreviewVehicleImg(false)}
+              className="absolute -top-10 right-0 text-white hover:text-slate-300 font-bold p-1 text-lg cursor-pointer"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <img
+              src={vehicleInfo.imageUrl}
+              alt={vehicleInfo.reg}
+              className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-white/20"
+            />
+            <p className="text-white font-bold text-sm mt-3 tracking-wide bg-slate-900/80 px-4 py-1 rounded-full border border-slate-700">
+              {vehicleInfo.reg} • {vehicleInfo.markaVoz} {vehicleInfo.modelVoz}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -345,7 +345,16 @@ export function WarehouseFleet({
                         onClick={() => onOpenVehicleModal(v.reg)}
                         className="p-3 font-black text-amber-700 dark:text-amber-400 cursor-pointer hover:underline"
                       >
-                        {v.reg}
+                        <div className="flex items-center gap-2">
+                          {v.imageUrl && (
+                            <img
+                              src={v.imageUrl}
+                              alt={v.reg}
+                              className="w-7 h-7 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs"
+                            />
+                          )}
+                          <span>{v.reg}</span>
+                        </div>
                       </td>
                       <td className="p-3 font-bold text-slate-800 dark:text-slate-200">
                         {v.markaVoz || "-"}
