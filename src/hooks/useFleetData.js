@@ -13,7 +13,7 @@ export function useFleetData() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadProgress, setLoadProgress] = useState("Učitavanje baze podataka...");
 
-  // Učitavanje matične baze voznog parka
+  // Učitavanje matične baze voznog parka (1.236 vozila / 938 aktivnih)
   const loadMasterFleet = useCallback(async () => {
     try {
       const cached = await IDBCache.get(MASTER_CACHE_KEY);
@@ -22,9 +22,10 @@ export function useFleetData() {
       } else {
         const res = await fetch("/fleet_master.json");
         if (res.ok) {
-          const data = await res.json();
-          setMasterFleet(data);
-          IDBCache.set(MASTER_CACHE_KEY, data);
+          const raw = await res.json();
+          const list = Array.isArray(raw) ? raw : (raw.records || []);
+          setMasterFleet(list);
+          IDBCache.set(MASTER_CACHE_KEY, list);
         }
       }
     } catch (e) {
@@ -32,21 +33,36 @@ export function useFleetData() {
     }
   }, []);
 
-  // Učitavanje historije troškova i servisa
+  // Učitavanje historije troškova i servisa (30.814 transakcija)
   const loadCostData = useCallback(async () => {
     try {
       const cached = await IDBCache.get(DATASET_CACHE_KEY);
       if (cached && Array.isArray(cached) && cached.length > 0) {
-        setCostData(cached);
+        // Obnovi Date objekte iz keša
+        const revived = cached.map((c) => ({
+          ...c,
+          datumObj: c.datum ? new Date(c.datum) : (c.datumObj ? new Date(c.datumObj) : null),
+          cost: parseFloat(c.cost || 0) || 0,
+          year: parseInt(c.year) || 2026,
+          month: parseInt(c.month) || 1
+        }));
+        setCostData(revived);
       } else {
         const res = await fetch("/fleet_data.json");
         if (res.ok) {
           const raw = await res.json();
-          const parsed = raw.map((c) => ({
-            ...c,
-            datumObj: c.datum ? new Date(c.datum) : null,
-            tipMehan: cleanVehicleType(c.tipMehan)
-          }));
+          const list = Array.isArray(raw) ? raw : (raw.records || []);
+          const parsed = list.map((c) => {
+            const datumObj = c.datum ? new Date(c.datum) : null;
+            return {
+              ...c,
+              datumObj,
+              cost: parseFloat(c.cost || 0) || 0,
+              year: parseInt(c.year) || (datumObj ? datumObj.getFullYear() : 2026),
+              month: parseInt(c.month) || (datumObj ? datumObj.getMonth() + 1 : 1),
+              tipMehan: cleanVehicleType(c.tipMehan)
+            };
+          });
           setCostData(parsed);
           IDBCache.set(DATASET_CACHE_KEY, parsed);
         }
@@ -88,6 +104,9 @@ export function useFleetData() {
               if (item.datum && !item.datumObj) {
                 item.datumObj = new Date(item.datum);
               }
+              item.cost = parseFloat(item.cost || 0) || 0;
+              item.year = parseInt(item.year) || (item.datumObj ? item.datumObj.getFullYear() : 2026);
+              item.month = parseInt(item.month) || (item.datumObj ? item.datumObj.getMonth() + 1 : 1);
 
               if (change.type === "added") {
                 if (!updated.some((c) => c.id === item.id)) {
