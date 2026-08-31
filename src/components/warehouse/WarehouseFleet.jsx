@@ -2,11 +2,13 @@
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { exportMasterFleetToExcel } from "@/lib/exportExcel.js";
-import { Download, RotateCcw, ArrowDown as ScrollDown, CheckCircle2, Loader2 } from "lucide-react";
+import { Download, RotateCcw, ArrowDown as ScrollDown, CheckCircle2, Loader2, Edit3 } from "lucide-react";
 
 export function WarehouseFleet({
   warehouseMasterFleet,
-  onOpenVehicleModal
+  onOpenVehicleModal,
+  onOpenEditVehicle,
+  currentRole
 }) {
   const [statusFilter, setStatusFilter] = useState("Aktivno");
   const [brandFilter, setBrandFilter] = useState("all");
@@ -103,6 +105,8 @@ export function WarehouseFleet({
     }
   }, [hasMore, isLoadingMore, loadMore]);
 
+  const canEditVehicle = currentRole?.permissions?.canRegisterVehicle || currentRole?.permissions?.canEditCosts || currentRole?.roleId === "superadmin" || currentRole?.roleId === "warehouse_specialist";
+
   return (
     <div className="space-y-6">
       {/* Header Kartica */}
@@ -192,7 +196,7 @@ export function WarehouseFleet({
         </div>
       </div>
 
-      {/* Tabela sa Inkrementalnim Skrolom */}
+      {/* Tabela */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
         <div
           ref={containerRef}
@@ -210,7 +214,7 @@ export function WarehouseFleet({
                 <th className="p-3">Godište</th>
                 <th className="p-3">Broj Šasije</th>
                 <th className="p-3 text-center">Status</th>
-                <th className="p-3 text-center">Karton</th>
+                <th className="p-3 text-center">Akcije</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50 bg-white dark:bg-slate-900">
@@ -259,12 +263,23 @@ export function WarehouseFleet({
                         </span>
                       </td>
                       <td className="p-3 text-center">
-                        <button
-                          onClick={() => onOpenVehicleModal(v.reg)}
-                          className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 font-bold px-2.5 py-1 rounded-lg text-xs transition-colors border border-indigo-200 dark:border-indigo-800 cursor-pointer"
-                        >
-                          📋 Karton
-                        </button>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => onOpenVehicleModal(v.reg)}
+                            className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-indigo-200 dark:border-indigo-800 cursor-pointer"
+                          >
+                            📋 Karton
+                          </button>
+                          {canEditVehicle && onOpenEditVehicle && (
+                            <button
+                              onClick={() => onOpenEditVehicle(v)}
+                              className="bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-amber-200 dark:border-amber-800 cursor-pointer flex items-center gap-1"
+                              title="Uredi matične podatke ove mašine"
+                            >
+                              <Edit3 className="w-3 h-3" /> Uredi
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

@@ -2,12 +2,13 @@
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { exportMasterFleetToExcel } from "@/lib/exportExcel.js";
-import { Download, Plus, RotateCcw, ArrowUpDown, ArrowUp, ArrowDown, ArrowDown as ScrollDown, CheckCircle2, Loader2 } from "lucide-react";
+import { Download, Plus, RotateCcw, ArrowUpDown, ArrowUp, ArrowDown, ArrowDown as ScrollDown, CheckCircle2, Loader2, Edit3 } from "lucide-react";
 
 export function MasterFleetTable({
   masterFleet,
   onOpenVehicleModal,
   onOpenNewVehicleModal,
+  onOpenEditVehicle,
   currentRole
 }) {
   const [statusFilter, setStatusFilter] = useState("Aktivno");
@@ -140,6 +141,8 @@ export function MasterFleetTable({
     setVisibleCount(BATCH_SIZE);
   };
 
+  const canEditVehicle = currentRole?.permissions?.canRegisterVehicle || currentRole?.permissions?.canEditCosts || currentRole?.roleId === "superadmin";
+
   return (
     <div className="space-y-6">
       {/* Header Kartica */}
@@ -153,12 +156,12 @@ export function MasterFleetTable({
               </span>
             </h2>
             <p className="text-xs text-slate-300 mt-1">
-              Konsolidovani matični podaci svih aktivnih (938), prodatih (256) i rashodovanih (42) jedinica sa automatskim učitavanjem
+              Konsolidovani matični podaci svih aktivnih (938), prodatih (256) i rashodovanih (42) jedinica sa opcijom uređivanja
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-            {currentRole?.permissions?.canRegisterVehicle && (
+            {canEditVehicle && (
               <button
                 onClick={onOpenNewVehicleModal}
                 className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-4 py-2 rounded-xl shadow-xs transition-all text-xs flex items-center gap-2 cursor-pointer"
@@ -305,7 +308,7 @@ export function MasterFleetTable({
                 <th className="p-3">Godište</th>
                 <th className="p-3">Broj Šasije</th>
                 <th className="p-3 text-center">Status</th>
-                <th className="p-3 text-center">Karton</th>
+                <th className="p-3 text-center">Akcije</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50 bg-white dark:bg-slate-900">
@@ -357,12 +360,23 @@ export function MasterFleetTable({
                         </span>
                       </td>
                       <td className="p-3 text-center">
-                        <button
-                          onClick={() => onOpenVehicleModal(v.reg)}
-                          className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 font-bold px-2.5 py-1 rounded-lg text-xs transition-colors border border-indigo-200 dark:border-indigo-800 cursor-pointer"
-                        >
-                          📋 Karton
-                        </button>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => onOpenVehicleModal(v.reg)}
+                            className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-indigo-200 dark:border-indigo-800 cursor-pointer"
+                          >
+                            📋 Karton
+                          </button>
+                          {canEditVehicle && onOpenEditVehicle && (
+                            <button
+                              onClick={() => onOpenEditVehicle(v)}
+                              className="bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-amber-200 dark:border-amber-800 cursor-pointer flex items-center gap-1"
+                              title="Uredi matične podatke ovog vozila"
+                            >
+                              <Edit3 className="w-3 h-3" /> Uredi
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

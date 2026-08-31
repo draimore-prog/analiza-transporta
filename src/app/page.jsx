@@ -184,6 +184,7 @@ function DashboardContent() {
   const [vehicleModalReg, setVehicleModalReg] = useState(null);
   const [isNewCostOpen, setIsNewCostOpen] = useState(false);
   const [isNewVehicleOpen, setIsNewVehicleOpen] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState(null);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
@@ -287,7 +288,10 @@ function DashboardContent() {
           currentRole={currentRole}
           onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
           onOpenNewCostModal={() => setIsNewCostOpen(true)}
-          onOpenNewVehicleModal={() => setIsNewVehicleOpen(true)}
+          onOpenNewVehicleModal={() => {
+            setEditingVehicle(null);
+            setIsNewVehicleOpen(true);
+          }}
         />
 
         {/* Skrolabilni Body Dashboarda - 100% širina */}
@@ -338,7 +342,11 @@ function DashboardContent() {
                 <MasterFleetTable
                   masterFleet={masterFleet}
                   onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
-                  onOpenNewVehicleModal={() => setIsNewVehicleOpen(true)}
+                  onOpenNewVehicleModal={() => {
+                    setEditingVehicle(null);
+                    setIsNewVehicleOpen(true);
+                  }}
+                  onOpenEditVehicle={(v) => setEditingVehicle(v)}
                   activeUser={activeUser}
                   currentRole={currentRole}
                 />
@@ -361,6 +369,8 @@ function DashboardContent() {
                 <WarehouseFleet
                   warehouseMasterFleet={warehouseMasterFleet}
                   onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
+                  onOpenEditVehicle={(v) => setEditingVehicle(v)}
+                  currentRole={currentRole}
                 />
               )}
 
@@ -400,6 +410,8 @@ function DashboardContent() {
         reg={vehicleModalReg || ""}
         masterFleet={masterFleet}
         costData={costData}
+        onOpenEditVehicle={(v) => setEditingVehicle(v)}
+        currentRole={currentRole}
       />
 
       {/* Rekapitulacija Internih / Eksternih Servisa Modal */}
@@ -447,10 +459,14 @@ function DashboardContent() {
         activeUser={activeUser}
       />
 
-      {/* Unos / Nabavka Novog Vozila */}
+      {/* Unos / Uređivanje Vozila Modal */}
       <EditVehicleModal
-        isOpen={isNewVehicleOpen}
-        onClose={() => setIsNewVehicleOpen(false)}
+        isOpen={isNewVehicleOpen || !!editingVehicle}
+        onClose={() => {
+          setIsNewVehicleOpen(false);
+          setEditingVehicle(null);
+        }}
+        initialVehicle={editingVehicle}
         onSaveVehicle={saveVehicle}
       />
 

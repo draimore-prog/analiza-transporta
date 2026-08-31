@@ -3,14 +3,16 @@
 import React, { useMemo, useRef, useEffect } from "react";
 import ChartJS from "@/lib/chartSetup.js";
 import { formatDate, formatKM } from "@/lib/calculations.js";
-import { X, Printer, Wrench, BarChart2 } from "lucide-react";
+import { X, Printer, Wrench, BarChart2, Edit3 } from "lucide-react";
 
 export function VehicleCardModal({
   isOpen,
   onClose,
   reg,
   masterFleet,
-  costData
+  costData,
+  onOpenEditVehicle,
+  currentRole
 }) {
   const chartYearRef = useRef(null);
   const chartMonthRef = useRef(null);
@@ -147,6 +149,8 @@ export function VehicleCardModal({
     window.print();
   };
 
+  const canEditVehicle = currentRole?.permissions?.canRegisterVehicle || currentRole?.permissions?.canEditCosts || currentRole?.roleId === "superadmin";
+
   return (
     <div className="fixed inset-0 bg-slate-900/80 flex justify-center items-center z-[70] backdrop-blur-xs p-4">
       <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
@@ -175,6 +179,18 @@ export function VehicleCardModal({
           </div>
 
           <div className="flex items-center gap-2">
+            {canEditVehicle && onOpenEditVehicle && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenEditVehicle(vehicleInfo);
+                }}
+                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl transition-all cursor-pointer flex items-center gap-1 text-xs shadow-xs"
+                title="Uredi matične podatke vozila"
+              >
+                <Edit3 className="w-3.5 h-3.5" /> Uredi Vozilo
+              </button>
+            )}
             <button
               onClick={handlePrint}
               className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all cursor-pointer"
