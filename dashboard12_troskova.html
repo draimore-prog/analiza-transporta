@@ -3126,30 +3126,6 @@
             tbody.innerHTML = rowsHTML.join('');
         }
 
-        // ================= FIREBASE, FIRESTORE & STORAGE INTEGRATION =================
-        const firebaseConfig = {
-            apiKey: "AIzaSyDyYOLagPwhGirEfMXbqAClooDFODUVb2M",
-            authDomain: "analiza-transporta-flota.firebaseapp.com",
-            projectId: "analiza-transporta-flota",
-            storageBucket: "analiza-transporta-flota.firebasestorage.app",
-            messagingSenderId: "1097206634987",
-            appId: "1:1097206634987:web:178e18377696faf183e1ae"
-        };
-
-        if (typeof firebase !== 'undefined' && firebase.initializeApp) {
-            try {
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(firebaseConfig);
-                }
-                window.db = firebase.firestore();
-                window.storage = firebase.storage ? firebase.storage() : null;
-                window.auth = firebase.auth ? firebase.auth() : null;
-                console.log("Firebase, Firestore, Auth & Storage initialized successfully");
-            } catch (e) {
-                console.warn("Firebase initialization notice:", e);
-            }
-        }
-
         // --- HELPER ZA PREBACIVANJE DATOTEKA / SLIKA U FIREBASE CLOUD STORAGE ---
         async function uploadFileToFirebaseStorage(folder, file, progressCallback) {
             if (!file) return null;
@@ -3201,109 +3177,99 @@
             });
         }
 
-        // --- LIGHTBOX MODAL ZA PREGLED SLIKA ---
-        function openLightbox(imgUrl, title = 'Pregled Slike') {
-            if (!imgUrl) return;
-            const modal = document.getElementById('imageLightboxModal');
-            const imgElem = document.getElementById('lightboxImg');
-            const titleElem = document.getElementById('lightboxTitle');
-            if (modal && imgElem) {
-                imgElem.src = imgUrl;
-                if (titleElem) titleElem.innerText = title;
-                modal.classList.remove('hidden');
+        // ================= INDEXEDDB LOCAL CACHE & INCREMENTAL SYNC =================
+        const IDBCache = {
+            dbName: 'AnalizaTransportaDB_v2',
+            storeName: 'dataset_cache',
+            version: 1,
+            _dbPromise: null,
+            _getDB() {
+                if (this._dbPromise) return this._dbPromise;
+                this._dbPromise = new Promise((resolve) => {
+                    if (!window.indexedDB) { resolve(null); return; }
+                    let req = window.indexedDB.open(this.dbName, this.version);
+                    req.onupgradeneeded = (e) => {
+                        let db = e.target.result;
+                        if (!db.objectStoreNames.contains(this.storeName)) {
+                            db.createObjectStore(this.storeName);
+                        }
+                    };
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = (err) => { console.warn('IDB open notice:', err); resolve(null); };
+                });
+                return this._dbPromise;
+            },
+            async set(key, value) {
+                try {
+                    let db = await this._getDB();
+                    if (!db) return false;
+                    return new Promise((res) => {
+                        let tx = db.transaction(this.storeName, 'readwrite');
+                        tx.objectStore(this.storeName).put({ ts: Date.now(), data: value }, key);
+                        tx.oncomplete = () => res(true);
+                        tx.onerror = () => res(false);
+                    });
+                } catch(e) { return false; }
+            },
+            async get(key) {
+                try {
+                    let db = await this._getDB();
+                    if (!db) return null;
+                    return new Promise((res) => {
+                        let tx = db.transaction(this.storeName, 'readonly');
+                        let req = tx.objectStore(this.storeName).get(key);
+                        req.onsuccess = () => res(req.result ? req.result.data : null);
+                        req.onerror = () => res(null);
+                    });
+                } catch(e) { return null; }
+            },
+            async delete(key) {
+                try {
+                    let db = await this._getDB();
+                    if (!db) return;
+                    let tx = db.transaction(this.storeName, 'readwrite');
+                    tx.objectStore(this.storeName).delete(key);
+                } catch(e) {}
             }
-        }
+        };
 
-        function closeLightbox() {
-            const modal = document.getElementById('imageLightboxModal');
-            if (modal) modal.classList.add('hidden');
-        }
-
-        const COSTS_CACHE_KEY = 'fleet_costs_cache_v2';
-        const MASTER_CACHE_KEY = 'fleet_master_cache_v2';
-        const CACHE_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
-
-        function _isCacheFresh(cacheKey) {
-            try {
-                let raw = localStorage.getItem(cacheKey);
-                if (!raw) return false;
-                let cached = JSON.parse(raw);
-                return cached.ts && (Date.now() - cached.ts) < CACHE_TTL_MS && cached.data && cached.data.length > 0;
-            } catch(e) { return false; }
-        }
-
-        function _saveCache(cacheKey, data) {
-            try {
-                localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
-            } catch(e) { console.warn('Cache save failed (storage full?):', e); }
-        }
-
-        function _loadCache(cacheKey) {
-            try {
-                let raw = localStorage.getItem(cacheKey);
-                if (!raw) return null;
-                return JSON.parse(raw).data || null;
-            } catch(e) { return null; }
-        }
+        const COSTS_CACHE_KEY = 'fleet_costs_v2';
+        const MASTER_CACHE_KEY = 'fleet_master_v2';
+        let _costsRealtimeUnsubscribe = null;
+        let _masterRealtimeUnsubscribe = null;
+        let _isCostSyncInitialized = false;
 
         async function autoLoadDataset() {
             let loadedFromCache = false;
-            if (_isCacheFresh(COSTS_CACHE_KEY)) {
-                let cached = _loadCache(COSTS_CACHE_KEY);
-                if (cached && cached.length > 0) {
-                    globalData = cached.map(d => ({ ...d, datumObj: d.datum ? new Date(d.datum) : null }));
+            
+            // 1. INSTANT LOAD FROM INDEXEDDB LOCAL CACHE (< 50ms)
+            try {
+                let cachedData = await IDBCache.get(COSTS_CACHE_KEY);
+                if (cachedData && Array.isArray(cachedData) && cachedData.length > 0) {
+                    globalData = cachedData.map(d => ({
+                        ...d,
+                        datumObj: d.datum ? new Date(d.datum) : null
+                    }));
                     yearsSet.clear();
                     globalData.forEach(d => { if (d.year) yearsSet.add(d.year); });
                     _finalizeDatasetLoad();
                     hideGlobalSpinner();
-                    console.log(`⚡ Instant loaded ${globalData.length} records from local cache`);
+                    console.log(`⚡ Instant učitano ${globalData.length} troškova iz lokalnog IndexedDB keša`);
                     loadedFromCache = true;
                 }
+            } catch(e) {
+                console.warn('IDB cache load notice:', e);
             }
 
             if (!loadedFromCache) {
-                showGlobalSpinner('Učitavanje troškova...', 'Dohvatanje podataka iz Firestore baze');
-            }
-
-            // FIRESTORE SYNC (Primary source)
-            if (window.db) {
-                try {
-                    let snapshot = await window.db.collection('fleet_costs').get();
-                    if (!snapshot.empty) {
-                        let records = [];
-                        snapshot.forEach(doc => {
-                            let d = doc.data();
-                            d._firestoreId = doc.id;
-                            if (!d.id) d.id = doc.id;
-                            if (d.datum) d.datumObj = new Date(d.datum);
-                            let dob = (d.dobavljacOrig || d.dobavljac || '').toLowerCase();
-                            if (dob.includes('pgl')) d.segment = 'Guma';
-                            records.push(d);
-                        });
-                        globalData = records;
-                        yearsSet.clear();
-                        globalData.forEach(d => { if (d.year) yearsSet.add(d.year); });
-                        // Save fresh data to local cache (strip non-serializable datumObj)
-                        _saveCache(COSTS_CACHE_KEY, globalData.map(d => { let c={...d}; delete c.datumObj; return c; }));
-                        _finalizeDatasetLoad();
-                        hideGlobalSpinner();
-                        console.log(`🔄 Firestore sync complete: ${globalData.length} records updated`);
-                        return;
-                    }
-                } catch(e) {
-                    console.warn('Firestore fleet_costs load notice, falling back to JSON:', e);
-                }
-            }
-
-            // FALLBACK: fleet_data.json (offline/no Firestore)
-            if (!loadedFromCache) {
+                showGlobalSpinner('Učitavanje baze troškova...', 'Prvo učitavanje i inicijalizacija keša');
                 try {
                     const res = await fetch('fleet_data.json');
                     if (res.ok) {
                         const data = await res.json();
                         if (data && data.records && data.records.length > 0) {
                             globalData = data.records.map((item, idx) => {
-                                                                let regNorm = (item.reg || '').trim();
+                                let regNorm = (item.reg || '').trim();
                                 if (/^(\d+)([A-Za-z]+)$/.test(regNorm)) {
                                     regNorm = regNorm.replace(/^(\d+)([A-Za-z]+)$/, '$1 $2');
                                 }
@@ -3323,18 +3289,116 @@
                             if (data.metadata && data.metadata.fleetByYear) {
                                 kpiTotalFleetByYear = { ...kpiTotalFleetByYear, ...data.metadata.fleetByYear };
                             }
+                            
+                            // Save to IndexedDB cache
+                            IDBCache.set(COSTS_CACHE_KEY, globalData.map(d => {
+                                let c = { ...d };
+                                delete c.datumObj;
+                                return c;
+                            }));
+
                             _finalizeDatasetLoad();
                         }
                     }
                 } catch (e) {
-                    console.log('Auto-load dataset note:', e);
+                    console.warn('Auto-load fleet_data.json notice:', e);
                 }
                 hideGlobalSpinner();
             }
+
+            // 2. INICIJALIZACIJA REAL-TIME INKREMENTALNE SINHRONIZACIJE (Samo razlike/novi unosi)
+            initIncrementalCostSync();
         }
 
-                function _finalizeDatasetLoad() {
-            // Globalna normalizacija registarskih/gara�nih brojeva (npr. 101I -> 101 I)
+        function initIncrementalCostSync() {
+            if (_isCostSyncInitialized || !window.db) return;
+            _isCostSyncInitialized = true;
+
+            try {
+                if (_costsRealtimeUnsubscribe) {
+                    _costsRealtimeUnsubscribe();
+                    _costsRealtimeUnsubscribe = null;
+                }
+
+                _costsRealtimeUnsubscribe = window.db.collection('fleet_costs').onSnapshot(snapshot => {
+                    let hasChanges = false;
+                    snapshot.docChanges().forEach(change => {
+                        let docData = change.doc.data();
+                        let docId = change.doc.id;
+                        docData._firestoreId = docId;
+                        if (!docData.id) docData.id = docId;
+                        if (docData.datum) docData.datumObj = new Date(docData.datum);
+
+                        let dob = (docData.dobavljacOrig || docData.dobavljac || '').toLowerCase();
+                        if (dob.includes('pgl')) docData.segment = 'Guma';
+
+                        if (change.type === 'added') {
+                            let existsIdx = globalData.findIndex(g => g.id === docData.id || g._firestoreId === docId);
+                            if (existsIdx === -1) {
+                                globalData.unshift(docData);
+                                if (docData.year) yearsSet.add(docData.year);
+                                hasChanges = true;
+                            }
+                        } else if (change.type === 'modified') {
+                            let idx = globalData.findIndex(g => g.id === docData.id || g._firestoreId === docId);
+                            if (idx !== -1) {
+                                globalData[idx] = { ...globalData[idx], ...docData };
+                                hasChanges = true;
+                            }
+                        } else if (change.type === 'removed') {
+                            let idx = globalData.findIndex(g => g.id === docData.id || g._firestoreId === docId);
+                            if (idx !== -1) {
+                                globalData.splice(idx, 1);
+                                hasChanges = true;
+                            }
+                        }
+                    });
+
+                    if (hasChanges) {
+                        console.log(`🔄 Inkrementalna sinhronizacija primijenjena (Ukupno ${globalData.length} troškova)`);
+                        IDBCache.set(COSTS_CACHE_KEY, globalData.map(d => {
+                            let c = { ...d };
+                            delete c.datumObj;
+                            return c;
+                        }));
+
+                        const statusSub = document.getElementById('uploadStatusSubtitle');
+                        if (statusSub) {
+                            statusSub.innerText = `☁️ Firestore Real-Time: ${masterFleetData.length || 953} vozila | ${globalData.length.toLocaleString('bs-BA')} troškova (Keširano & Sinhronizovano)`;
+                        }
+
+                        if (typeof applyFilters === 'function') {
+                            applyFilters();
+                        }
+                    }
+                }, err => {
+                    console.warn('Realtime fleet_costs notice:', err);
+                });
+            } catch(e) {
+                console.warn('Realtime sync setup notice:', e);
+            }
+        }
+
+        // --- LIGHTBOX MODAL ZA PREGLED SLIKA ---
+        function openLightbox(imgUrl, title = 'Pregled Slike') {
+            if (!imgUrl) return;
+            const modal = document.getElementById('imageLightboxModal');
+            const imgElem = document.getElementById('lightboxImg');
+            const titleElem = document.getElementById('lightboxTitle');
+            if (modal && imgElem) {
+                imgElem.src = imgUrl;
+                if (titleElem) titleElem.innerText = title;
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function closeLightbox() {
+            const modal = document.getElementById('imageLightboxModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function _finalizeDatasetLoad() {
+            // Globalna normalizacija registarskih/garažnih brojeva
             if (typeof globalData !== 'undefined' && globalData && globalData.length > 0) {
                 globalData.forEach(item => {
                     let regNorm = (item.reg || '').trim();
@@ -5495,7 +5559,9 @@
             renderModalContent(filtered);
         }
 
-        document.getElementById('modalSegmentFilter').addEventListener('change', filterModalTable);
+        if (document.getElementById('modalSegmentFilter')) {
+            document.getElementById('modalSegmentFilter').addEventListener('change', filterModalTable);
+        }
 
         function renderModalContent(vehData) {
             let isDarkMode = document.documentElement.classList.contains('dark');
@@ -5680,45 +5746,16 @@
 
         async function autoLoadMasterFleet() {
             let loadedFromCache = false;
-            if (_isCacheFresh(MASTER_CACHE_KEY)) {
-                let cached = _loadCache(MASTER_CACHE_KEY);
-                if (cached && cached.length > 0) {
+            try {
+                let cached = await IDBCache.get(MASTER_CACHE_KEY);
+                if (cached && Array.isArray(cached) && cached.length > 0) {
                     masterFleetData = cached.map(v => ({ ...v, tipMehan: ocistiTip(v.tipMehan) }));
                     renderMasterFleetTable();
-                    console.log(`⚡ Instant loaded ${masterFleetData.length} vehicles from local cache`);
+                    console.log(`⚡ Instant učitano ${masterFleetData.length} vozila iz IndexedDB keša`);
                     loadedFromCache = true;
                 }
-            }
+            } catch(e) {}
 
-            // FIRESTORE SYNC (Primary source)
-            if (window.db) {
-                try {
-                    let snapshot = await window.db.collection('fleet_master').get();
-                    if (!snapshot.empty) {
-                        let vehicles = [];
-                        snapshot.forEach(doc => {
-                            let v = doc.data();
-                            if (v && v.reg) {
-                                v.tipMehan = ocistiTip(v.tipMehan);
-                                vehicles.push(v);
-                            }
-                        });
-                        if (vehicles.length > 0) {
-                            vehicles.sort((a, b) => (a.reg || '').localeCompare(b.reg || ''));
-                            vehicles.forEach((v, idx) => v.rb = idx + 1);
-                            masterFleetData = vehicles;
-                            _saveCache(MASTER_CACHE_KEY, masterFleetData);
-                            renderMasterFleetTable();
-                            console.log(`🔄 Firestore fleet master synced (${masterFleetData.length} vehicles)`);
-                            return;
-                        }
-                    }
-                } catch(e) {
-                    console.warn('Firestore fleet_master load notice, falling back to JSON:', e);
-                }
-            }
-
-            // FALLBACK: fleet_master.json (offline/cold start)
             if (!loadedFromCache) {
                 try {
                     const res = await fetch('fleet_master.json?v=' + Date.now());
@@ -5728,12 +5765,12 @@
                             masterFleetData = data.map(v => ({ ...v, tipMehan: ocistiTip(v.tipMehan) }));
                             masterFleetData.sort((a, b) => (a.reg || '').localeCompare(b.reg || ''));
                             masterFleetData.forEach((v, idx) => v.rb = idx + 1);
-                            _saveCache(MASTER_CACHE_KEY, masterFleetData);
+                            IDBCache.set(MASTER_CACHE_KEY, masterFleetData);
                             renderMasterFleetTable();
                         }
                     }
                 } catch (e) {
-                    console.log('Notice auto-loading fleet_master.json:', e);
+                    console.warn('Notice auto-loading fleet_master.json:', e);
                 }
 
                 // Last resort: build from cost data
@@ -5741,6 +5778,46 @@
                     buildFallbackMasterFleetFromGlobalData();
                 }
             }
+
+            initIncrementalMasterSync();
+        }
+
+        function initIncrementalMasterSync() {
+            if (_masterRealtimeUnsubscribe || !window.db) return;
+            try {
+                _masterRealtimeUnsubscribe = window.db.collection('fleet_master').onSnapshot(snapshot => {
+                    let hasChanges = false;
+                    snapshot.docChanges().forEach(change => {
+                        let v = change.doc.data();
+                        if (v && v.reg) {
+                            v.tipMehan = ocistiTip(v.tipMehan);
+                            let idx = masterFleetData.findIndex(item => item.reg === v.reg);
+                            if (change.type === 'added' || change.type === 'modified') {
+                                if (idx !== -1) {
+                                    masterFleetData[idx] = { ...masterFleetData[idx], ...v };
+                                } else {
+                                    masterFleetData.push(v);
+                                }
+                                hasChanges = true;
+                            } else if (change.type === 'removed') {
+                                if (idx !== -1) {
+                                    masterFleetData.splice(idx, 1);
+                                    hasChanges = true;
+                                }
+                            }
+                        }
+                    });
+
+                    if (hasChanges) {
+                        masterFleetData.sort((a, b) => (a.reg || '').localeCompare(b.reg || ''));
+                        masterFleetData.forEach((v, idx) => v.rb = idx + 1);
+                        IDBCache.set(MASTER_CACHE_KEY, masterFleetData);
+                        renderMasterFleetTable();
+                    }
+                }, err => {
+                    console.warn('Realtime fleet_master notice:', err);
+                });
+            } catch(e) {}
         }
 
 
