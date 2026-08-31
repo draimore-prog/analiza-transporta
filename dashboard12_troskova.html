@@ -2157,6 +2157,139 @@
         // Run immediately to avoid visual flicker
         initTheme();
 
+        // ================= FIREBASE, FIRESTORE & STORAGE INITIALIZATION =================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDyYOLagPwhGirEfMXbqAClooDFODUVb2M",
+            authDomain: "analiza-transporta-flota.firebaseapp.com",
+            projectId: "analiza-transporta-flota",
+            storageBucket: "analiza-transporta-flota.firebasestorage.app",
+            messagingSenderId: "1097206634987",
+            appId: "1:1097206634987:web:178e18377696faf183e1ae"
+        };
+
+        if (typeof firebase !== 'undefined' && firebase.initializeApp) {
+            try {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                window.db = firebase.firestore();
+                window.storage = firebase.storage ? firebase.storage() : null;
+                window.auth = firebase.auth ? firebase.auth() : null;
+                console.log("🔥 Firebase, Firestore, Auth & Storage initialized successfully");
+            } catch (e) {
+                console.warn("Firebase initialization notice:", e);
+            }
+        }
+
+        // ================= REAL-TIME ROLE CHANGE LISTENER & UI TOAST =================
+        let _activeUserUnsubscribe = [];
+
+        function showRoleChangeBanner(newRole) {
+            let existing = document.getElementById('roleChangeNotificationBanner');
+            if (existing) existing.remove();
+
+            let roleNames = {
+                'superadmin': '👑 Super Administrator',
+                'editor': '✍️ Admin (Unos faktura)',
+                'serviser': '🔧 Serviser (Karton vozila)',
+                'viewer': '📊 Analitičar (Samo pregled)'
+            };
+            let roleText = roleNames[newRole] || newRole;
+
+            let banner = document.createElement('div');
+            banner.id = 'roleChangeNotificationBanner';
+            banner.className = 'fixed bottom-6 right-6 z-[9999] bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white px-5 py-4 rounded-2xl shadow-2xl border-2 border-indigo-500/80 flex items-center gap-3 transition-all duration-300 transform translate-y-0 text-xs font-bold animate-bounce';
+            banner.innerHTML = `
+                <span class="text-2xl animate-pulse">⚡</span>
+                <div>
+                    <p class="font-extrabold text-white text-sm">Prava pristupa ažurirana u realnom vremenu!</p>
+                    <p class="text-indigo-200 font-medium mt-0.5">Administrator je ažurirao Vašu ulogu u: <span class="text-amber-300 font-extrabold">${roleText}</span></p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="ml-3 text-indigo-300 hover:text-white text-lg font-bold">&times;</button>
+            `;
+            document.body.appendChild(banner);
+            setTimeout(() => {
+                if (banner && banner.parentNode) {
+                    banner.classList.remove('animate-bounce');
+                    banner.classList.add('opacity-0', 'translate-y-4');
+                    setTimeout(() => banner.remove(), 400);
+                }
+            }, 6000);
+        }
+
+        function setupActiveUserRealtimeListener(username, email) {
+            _activeUserUnsubscribe.forEach(unsub => { try { if (typeof unsub === 'function') unsub(); } catch(e) {} });
+            _activeUserUnsubscribe = [];
+
+            if (!window.db) {
+                setTimeout(() => { if (activeUser) setupActiveUserRealtimeListener(activeUser.username, activeUser.email); }, 300);
+                return;
+            }
+            let unameClean = (username || '').toLowerCase();
+            let emailClean = (email || '').toLowerCase();
+            let unamePrefix = unameClean.includes('@') ? unameClean.split('@')[0] : unameClean;
+
+            const handleUserUpdate = (data) => {
+                if (!data || !activeUser) return;
+                let isEmir = isSuperAdminUser(activeUser.username, activeUser.email);
+                let newRole = isEmir ? 'superadmin' : (data.role || activeUser.role);
+                let newFullname = data.fullname || activeUser.fullname;
+
+                if (activeUser.role !== newRole || (data.fullname && activeUser.fullname !== newFullname)) {
+                    console.log(`⚡ Real-time promjena uloge sa [${activeUser.role}] na [${newRole}]`);
+                    activeUser.role = newRole;
+                    activeUser.fullname = newFullname;
+                    
+                    let key = localStorage.getItem(SESSION_ACTIVE_USER_KEY) ? 'localStorage' : 'sessionStorage';
+                    window[key].setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+                    
+                    updateAuthUI();
+                    showRoleChangeBanner(newRole);
+                }
+            };
+
+            try {
+                if (unameClean) {
+                    let unsub1 = window.db.collection('app_users').doc(unameClean).onSnapshot(doc => {
+                        if (doc && doc.exists) handleUserUpdate(doc.data());
+                    }, err => {});
+                    _activeUserUnsubscribe.push(unsub1);
+                }
+                if (unamePrefix && unamePrefix !== unameClean) {
+                    let unsub2 = window.db.collection('app_users').doc(unamePrefix).onSnapshot(doc => {
+                        if (doc && doc.exists) handleUserUpdate(doc.data());
+                    }, err => {});
+                    _activeUserUnsubscribe.push(unsub2);
+                }
+                if (emailClean && emailClean !== unameClean && emailClean !== unamePrefix) {
+                    let unsub3 = window.db.collection('app_users').doc(emailClean).onSnapshot(doc => {
+                        if (doc && doc.exists) handleUserUpdate(doc.data());
+                    }, err => {});
+                    _activeUserUnsubscribe.push(unsub3);
+                }
+                // Live collection-level changes for instant capture
+                let unsub4 = window.db.collection('app_users').onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === "added" || change.type === "modified") {
+                            let docData = change.doc.data();
+                            let dUname = (docData.username || change.doc.id || '').toLowerCase();
+                            let dEmail = (docData.email || '').toLowerCase();
+                            let curUname = (activeUser?.username || '').toLowerCase();
+                            let curEmail = (activeUser?.email || '').toLowerCase();
+                            let curPrefix = curUname.includes('@') ? curUname.split('@')[0] : curUname;
+
+                            if (dUname === curUname || dUname === curPrefix || (dEmail && curEmail && dEmail === curEmail) || (dEmail && dEmail.split('@')[0] === curPrefix)) {
+                                handleUserUpdate(docData);
+                            }
+                        }
+                    });
+                }, err => {});
+                _activeUserUnsubscribe.push(unsub4);
+            } catch(e) {
+                console.warn("Notice setting up active user listener:", e);
+            }
+        }
+
         // ================= AUTHENTICATION & USER MANAGEMENT (V19) =================
         const LOCAL_STORAGE_USERS_KEY = 'transport_app_users_v19';
         const SESSION_ACTIVE_USER_KEY = 'transport_app_active_user';
