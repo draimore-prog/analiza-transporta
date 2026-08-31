@@ -2,8 +2,17 @@
 
 import React, { useMemo, useRef, useEffect, useState } from "react";
 import ChartJS from "@/lib/chartSetup.js";
-import { calculateFleetByYear, calculateDynamic2026, formatKM } from "@/lib/calculations.js";
-import { Truck, DollarSign, Calendar, TrendingDown, Layers, Building2, BarChart2 } from "lucide-react";
+import { formatKM } from "@/lib/calculations.js";
+import { Building2, BarChart2 } from "lucide-react";
+
+const KPI_TOTAL_FLEET_BY_YEAR = {
+  2021: { Total: 661 },
+  2022: { Total: 623 },
+  2023: { Total: 652 },
+  2024: { Total: 747 },
+  2025: { Total: 939 },
+  2026: { Total: 938 }
+};
 
 export function TransportKpis({
   masterFleet,
@@ -15,12 +24,9 @@ export function TransportKpis({
   onOpenSupplierDetail,
   onOpenSegmentDetail
 }) {
-  const dynamic2026 = useMemo(() => calculateDynamic2026(masterFleet), [masterFleet]);
-  const fleetByYear = useMemo(() => calculateFleetByYear(masterFleet), [masterFleet]);
-
   // Stanje filtera unutar Tab 1
   const [selectedYearFilter, setSelectedYearFilter] = useState("all");
-  const [trendMode, setTrendMode] = useState("yoy"); // 'yoy', 'monthly'
+  const [supplierMode, setSupplierMode] = useState("external"); // 'external' (default), 'internal', 'all'
 
   // Canvas ref-ovi
   const trendCanvasRef = useRef(null);
@@ -32,13 +38,75 @@ export function TransportKpis({
   // Instanca chartova
   const chartInstances = useRef({});
 
-  // Filtrirani podaci za Tab 1
+  // Filtrirani podaci za Tab 1 na osnovu izabrane godine
   const filteredCostData = useMemo(() => {
     if (selectedYearFilter === "all") return costData;
     return costData.filter((c) => c.year === parseInt(selectedYearFilter));
   }, [costData, selectedYearFilter]);
 
-  // Godišnje statistike
+  // Izračun 6 V1 Summary KPI Kartica
+  const summaryKpis = useMemo(() => {
+    const isAllYears = selectedYearFilter === "all";
+    const targetY = isAllYears ? 2026 : parseInt(selectedYearFilter);
+
+    let totalCost = 0;
+    let internalCost = 0;
+    let externalCost = 0;
+    const segmentMap = {};
+
+    filteredCostData.forEach((item) => {
+      const c = item.cost || 0;
+      totalCost += c;
+
+      const isInt =
+        (item.dobavljacOrig || item.dobavljac || "").toLowerCase().includes("bingo") ||
+        (item.dobavljacOrig || item.dobavljac || "").toLowerCase().includes("vlastit") ||
+        (item.dobavljacOrig || item.dobavljac || "").toLowerCase().includes("intern");
+
+      if (isInt) internalCost += c;
+      else externalCost += c;
+
+      const seg = item.segment || "Ostalo";
+      segmentMap[seg] = (segmentMap[seg] || 0) + c;
+    });
+
+    const totalCount = filteredCostData.length;
+    const avgCostPerIntervention = totalCount > 0 ? totalCost / totalCount : 0;
+    const internalPerc = totalCost > 0 ? ((internalCost / totalCost) * 100).toFixed(1) : "0";
+
+    // Određivanje Top Segmenta
+    let topSegmentName = "-";
+    let topSegmentCost = 0;
+    Object.entries(segmentMap).forEach(([seg, cost]) => {
+      if (cost > topSegmentCost) {
+        topSegmentCost = cost;
+        topSegmentName = seg;
+      }
+    });
+
+    // Izračun troška po vozilu / dan
+    const dailyDataYear = costData.filter((c) => c.year === targetY);
+    const monthsSet = new Set(dailyDataYear.map((c) => c.month).filter(Boolean));
+    const monthsCount = monthsSet.size > 0 ? monthsSet.size : 6;
+    const daysCount = monthsCount * 30.4;
+    const fleetSize = KPI_TOTAL_FLEET_BY_YEAR[targetY]?.Total || 938;
+    const yearTotal = dailyDataYear.reduce((acc, i) => acc + (i.cost || 0), 0);
+    const dailyAvgPerVehicle = fleetSize > 0 && daysCount > 0 ? yearTotal / (fleetSize * daysCount) : 0;
+
+    return {
+      totalCost,
+      dailyAvgPerVehicle,
+      fleetSize,
+      targetY,
+      internalPerc,
+      topSegmentName,
+      topSegmentCost,
+      totalCount,
+      avgCostPerIntervention
+    };
+  }, [filteredCostData, costData, selectedYearFilter]);
+
+  // Godišnje statistike za trend linije
   const yearlyStats = useMemo(() => {
     const years = [2021, 2022, 2023, 2024, 2025, 2026];
     const stats = {};
@@ -54,25 +122,14 @@ export function TransportKpis({
     return stats;
   }, [costData]);
 
-  const totalAllTimeCost = useMemo(() => {
-    return costData.reduce((acc, c) => acc + (c.cost || 0), 0);
-  }, [costData]);
-
-  const filteredTotalCost = useMemo(() => {
-    return filteredCostData.reduce((acc, c) => acc + (c.cost || 0), 0);
-  }, [filteredCostData]);
-
-  const cost2026 = yearlyStats[2026]?.cost || 0;
-  const avgCostPerUnit2026 = dynamic2026.total > 0 ? cost2026 / dynamic2026.total : 0;
-
-  // Crtanje svih 5 grafikona sa tačnim procentima unutar grafikona i barova
+  // Crtanje svih 5 grafikona
   useEffect(() => {
-    // 1. Trend Grafikon
+    // 1. Mjesečna Dinamika / Trend Grafikon
     if (trendCanvasRef.current) {
       if (chartInstances.current.trend) chartInstances.current.trend.destroy();
       const ctx = trendCanvasRef.current.getContext("2d");
 
-      if (trendMode === "yoy" || selectedYearFilter === "all") {
+      if (selectedYearFilter === "all") {
         const years = [2021, 2022, 2023, 2024, 2025, 2026];
         const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
@@ -177,7 +234,7 @@ export function TransportKpis({
       }
     }
 
-    // 2. Interno vs Eksterno Doughnut (sa tačnim procentima unutar grafikona)
+    // 2. Interno vs Eksterno Doughnut (sa procentima)
     if (intExtCanvasRef.current) {
       if (chartInstances.current.intExt) chartInstances.current.intExt.destroy();
       const ctx = intExtCanvasRef.current.getContext("2d");
@@ -187,7 +244,8 @@ export function TransportKpis({
       filteredCostData.forEach((c) => {
         const isInt =
           (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("bingo") ||
-          (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("vlastit");
+          (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("vlastit") ||
+          (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("intern");
         if (isInt) intCost += c.cost || 0;
         else extCost += c.cost || 0;
       });
@@ -244,7 +302,7 @@ export function TransportKpis({
       });
     }
 
-    // 3. Top 10 Vozila po Trošku (sa tačnim procentima unutar barova)
+    // 3. Top 10 Vozila po Trošku (sa procentima)
     if (vehiclesCanvasRef.current) {
       if (chartInstances.current.vehicles) chartInstances.current.vehicles.destroy();
       const ctx = vehiclesCanvasRef.current.getContext("2d");
@@ -287,8 +345,8 @@ export function TransportKpis({
               offset: 4,
               font: { weight: "bold", size: 10 },
               formatter: (value) => {
-                if (filteredTotalCost === 0 || value === 0) return "";
-                return `${((value / filteredTotalCost) * 100).toFixed(1)}%`;
+                if (summaryKpis.totalCost === 0 || value === 0) return "";
+                return `${((value / summaryKpis.totalCost) * 100).toFixed(1)}%`;
               }
             },
             legend: { display: false },
@@ -296,7 +354,7 @@ export function TransportKpis({
               callbacks: {
                 label: (ctx) => {
                   const val = ctx.raw || 0;
-                  const p = filteredTotalCost > 0 ? ((val / filteredTotalCost) * 100).toFixed(2) : "0";
+                  const p = summaryKpis.totalCost > 0 ? ((val / summaryKpis.totalCost) * 100).toFixed(2) : "0";
                   return ` Trošak: ${formatKM(val)} (${p}% ukupnog troška)`;
                 }
               }
@@ -312,7 +370,7 @@ export function TransportKpis({
       });
     }
 
-    // 4. Segmenti Doughnut (sa tačnim procentima unutar segmenata)
+    // 4. Segmenti Doughnut (sa procentima)
     if (segmentsCanvasRef.current) {
       if (chartInstances.current.segments) chartInstances.current.segments.destroy();
       const ctx = segmentsCanvasRef.current.getContext("2d");
@@ -327,7 +385,6 @@ export function TransportKpis({
         .sort((a, b) => b[1] - a[1])
         .slice(0, 7);
       const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#64748b"];
-
       const segSum = sortedSegs.reduce((acc, s) => acc + s[1], 0);
 
       chartInstances.current.segments = new ChartJS(ctx, {
@@ -361,7 +418,7 @@ export function TransportKpis({
               callbacks: {
                 label: (ctx) => {
                   const val = ctx.raw || 0;
-                  const p = filteredTotalCost > 0 ? ((val / filteredTotalCost) * 100).toFixed(1) : "0";
+                  const p = summaryKpis.totalCost > 0 ? ((val / summaryKpis.totalCost) * 100).toFixed(1) : "0";
                   return ` ${ctx.label}: ${formatKM(val)} (${p}%)`;
                 }
               }
@@ -377,20 +434,36 @@ export function TransportKpis({
       });
     }
 
-    // 5. Top 7 Dobavljača / Servisera (sa tačnim procentima unutar barova)
+    // 5. Top 7 Dobavljača / Servisera (sa Eksterno / Interno filterom i procentima)
     if (suppliersCanvasRef.current) {
       if (chartInstances.current.suppliers) chartInstances.current.suppliers.destroy();
       const ctx = suppliersCanvasRef.current.getContext("2d");
 
       const supMap = new Map();
       filteredCostData.forEach((c) => {
-        const sup = (c.dobavljacOrig || c.dobavljac || "Vlastita Radionica").trim();
-        supMap.set(sup, (supMap.get(sup) || 0) + (c.cost || 0));
+        const isInt =
+          (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("bingo") ||
+          (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("vlastit") ||
+          (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("intern");
+
+        let isMatch = false;
+        if (supplierMode === "external" && !isInt) isMatch = true;
+        else if (supplierMode === "internal" && isInt) isMatch = true;
+        else if (supplierMode === "all") isMatch = true;
+
+        if (isMatch) {
+          const sup = (c.dobavljacOrig || c.dobavljac || (isInt ? "Vlastita Radionica" : "Ostali Eksterni")).trim();
+          if (sup && sup !== "-") {
+            supMap.set(sup, (supMap.get(sup) || 0) + (c.cost || 0));
+          }
+        }
       });
 
       const sortedSups = Array.from(supMap.entries())
         .sort((a, b) => b[1] - a[1])
         .slice(0, 7);
+
+      const totalSupCost = sortedSups.reduce((acc, s) => acc + s[1], 0);
 
       chartInstances.current.suppliers = new ChartJS(ctx, {
         type: "bar",
@@ -400,7 +473,7 @@ export function TransportKpis({
             {
               label: "Ukupan iznos popravki (KM)",
               data: sortedSups.map((s) => s[1]),
-              backgroundColor: "#6366f1",
+              backgroundColor: supplierMode === "internal" ? "#2563eb" : "#6366f1",
               borderRadius: 6
             }
           ]
@@ -417,8 +490,8 @@ export function TransportKpis({
               offset: 4,
               font: { weight: "bold", size: 10 },
               formatter: (value) => {
-                if (filteredTotalCost === 0 || value === 0) return "";
-                return `${((value / filteredTotalCost) * 100).toFixed(1)}%`;
+                if (summaryKpis.totalCost === 0 || value === 0) return "";
+                return `${((value / summaryKpis.totalCost) * 100).toFixed(1)}%`;
               }
             },
             legend: { display: false },
@@ -426,7 +499,7 @@ export function TransportKpis({
               callbacks: {
                 label: (ctx) => {
                   const val = ctx.raw || 0;
-                  const p = filteredTotalCost > 0 ? ((val / filteredTotalCost) * 100).toFixed(1) : "0";
+                  const p = summaryKpis.totalCost > 0 ? ((val / summaryKpis.totalCost) * 100).toFixed(1) : "0";
                   return ` Iznos: ${formatKM(val)} (${p}% ukupnog troška)`;
                 }
               }
@@ -451,10 +524,11 @@ export function TransportKpis({
     };
   }, [
     filteredCostData,
-    trendMode,
+    costData,
     selectedYearFilter,
+    supplierMode,
     yearlyStats,
-    filteredTotalCost,
+    summaryKpis.totalCost,
     onOpenVehicleModal,
     onOpenIntExtRecap,
     onOpenSupplierDetail,
@@ -463,92 +537,88 @@ export function TransportKpis({
 
   return (
     <div className="w-full space-y-6">
-      {/* Top 4 KPI Kartice */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Kartica 1: Ukupan Vozni Park 2026 */}
-        <div
-          onClick={onOpenFleetTab}
-          className="bg-white dark:bg-slate-800 p-5 rounded-2xl border-l-4 border-blue-600 border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:shadow-md hover:border-blue-700 transition-all group"
-        >
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Aktivni Vozni Park 2026
-            </span>
-            <span className="p-2 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl group-hover:scale-110 transition-transform">
-              <Truck className="w-5 h-5" />
-            </span>
-          </div>
-          <div className="text-3xl font-black text-slate-900 dark:text-white">
-            {dynamic2026.total.toLocaleString("bs-BA")}
-          </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">
-            Teretna: <strong className="text-slate-800 dark:text-slate-200">{dynamic2026.teretna}</strong> | Skladišna:{" "}
-            <strong className="text-slate-800 dark:text-slate-200">{dynamic2026.skladisna}</strong>
+      {/* 6 ORIGINALNIH V1 SUMMARY KARTICA IZNAD GRAFIKONA */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+        {/* Kartica 1: Ukupan Trošak */}
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border-l-4 border-blue-500 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+            Ukupan Trošak
+          </p>
+          <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2">
+            {formatKM(summaryKpis.totalCost)}
+          </h3>
+          <p className="text-[10px] text-slate-400 mt-1">
+            {selectedYearFilter === "all" ? "Konsolidovano (2021-2026)" : `${selectedYearFilter}. godina`}
           </p>
         </div>
 
-        {/* Kartica 2: Ukupni Troškovi Održavanja */}
-        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border-l-4 border-emerald-500 border border-slate-200 dark:border-slate-700 shadow-sm">
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Ukupni Troškovi Održavanja
-            </span>
-            <span className="p-2 bg-emerald-50 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-xl">
-              <DollarSign className="w-5 h-5" />
-            </span>
-          </div>
-          <div className="text-3xl font-black text-slate-900 dark:text-white">
-            {formatKM(totalAllTimeCost)}
-          </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">
-            Konsolidovano (2021 - 2026)
+        {/* Kartica 2: Trošak po Vozilu / Dan */}
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border-l-4 border-amber-500 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+            Trošak po Vozilu / Dan
+          </p>
+          <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2">
+            {summaryKpis.dailyAvgPerVehicle.toLocaleString("bs-BA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KM/dan
+          </h3>
+          <p className="text-[11px] text-amber-700 dark:text-amber-400 font-semibold mt-1 truncate">
+            Po vozilu ({summaryKpis.fleetSize} voz. u {summaryKpis.targetY}.)
           </p>
         </div>
 
-        {/* Kartica 3: Trošak 2026 */}
-        <div
-          onClick={() => onSelectYear(2026)}
-          className="bg-white dark:bg-slate-800 p-5 rounded-2xl border-l-4 border-indigo-500 border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:shadow-md hover:border-indigo-600 transition-all group"
-        >
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Trošak u 2026. Godini
-            </span>
-            <span className="p-2 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-xl group-hover:scale-110 transition-transform">
-              <Calendar className="w-5 h-5" />
-            </span>
-          </div>
-          <div className="text-3xl font-black text-indigo-600 dark:text-indigo-400">
-            {formatKM(cost2026)}
-          </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">
-            Broj unesenih računa:{" "}
-            <strong className="text-slate-800 dark:text-slate-200">
-              {yearlyStats[2026]?.count.toLocaleString("bs-BA")}
-            </strong>
+        {/* Kartica 3: Udio Internog Servisa */}
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border-l-4 border-yellow-500 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+            Udio Internog Servisa
+          </p>
+          <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2">
+            {summaryKpis.internalPerc}%
+          </h3>
+          <p className="text-[10px] text-slate-400 mt-1">
+            Vlastita radionica / servis
           </p>
         </div>
 
-        {/* Kartica 4: Prosjek po Vozilu 2026 */}
-        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border-l-4 border-amber-500 border border-slate-200 dark:border-slate-700 shadow-sm">
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Prosjek po Vozilu (2026)
-            </span>
-            <span className="p-2 bg-amber-50 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-xl">
-              <TrendingDown className="w-5 h-5" />
-            </span>
-          </div>
-          <div className="text-3xl font-black text-amber-600 dark:text-amber-400">
-            {formatKM(avgCostPerUnit2026)}
-          </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">
-            Na bazi {dynamic2026.total} aktivnih jedinica
+        {/* Kartica 4: Top Segment */}
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border-l-4 border-red-500 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+            Top Segment
+          </p>
+          <h3 className="text-xl font-black text-slate-900 dark:text-white mt-2 truncate" title={summaryKpis.topSegmentName}>
+            {summaryKpis.topSegmentName}
+          </h3>
+          <p className="text-[10px] text-red-600 dark:text-red-400 font-bold mt-1">
+            {formatKM(summaryKpis.topSegmentCost)}
+          </p>
+        </div>
+
+        {/* Kartica 5: Broj Intervencija */}
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border-l-4 border-purple-500 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+            Broj Intervencija
+          </p>
+          <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2">
+            {summaryKpis.totalCount.toLocaleString("bs-BA")}
+          </h3>
+          <p className="text-[10px] text-slate-400 mt-1">
+            Ukupan broj naloga / računa
+          </p>
+        </div>
+
+        {/* Kartica 6: Prosjek / Intervenciji */}
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border-l-4 border-emerald-500 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+            Prosjek / Intervenciji
+          </p>
+          <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2">
+            {formatKM(summaryKpis.avgCostPerIntervention)}
+          </h3>
+          <p className="text-[10px] text-slate-400 mt-1">
+            Prosječan trošak po nalogu
           </p>
         </div>
       </div>
 
-      {/* FILTER TRAKA ZA GRAFIKONE */}
+      {/* FILTER TRAKA ZA GRAFIKONE (UKLONJEN SWITCH, SAMO GODINE) */}
       <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-wrap justify-between items-center gap-3">
         <div className="flex items-center gap-2">
           <BarChart2 className="w-5 h-5 text-blue-600" />
@@ -556,50 +626,25 @@ export function TransportKpis({
             Interaktivni Analitički Grafikoni
           </span>
           <span className="text-[10px] bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-300 font-bold px-2 py-0.5 rounded">
-            Grafikoni prikazuju tačne procente unutar segmenata i barova
+            Klikom na grafikone otvarate detaljne preglede
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div>
-            <label className="text-[10px] font-bold uppercase text-slate-400 mr-2">Godina:</label>
-            <select
-              value={selectedYearFilter}
-              onChange={(e) => setSelectedYearFilter(e.target.value)}
-              className="text-xs border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-1.5 font-bold bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white outline-none cursor-pointer"
-            >
-              <option value="all">Sve godine (2021-2026)</option>
-              <option value="2026">2026. godina</option>
-              <option value="2025">2025. godina</option>
-              <option value="2024">2024. godina</option>
-              <option value="2023">2023. godina</option>
-              <option value="2022">2022. godina</option>
-              <option value="2021">2021. godina</option>
-            </select>
-          </div>
-
-          <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold">
-            <button
-              onClick={() => setTrendMode("yoy")}
-              className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
-                trendMode === "yoy"
-                  ? "bg-white dark:bg-slate-800 text-blue-600 shadow-xs font-black"
-                  : "text-slate-500"
-              }`}
-            >
-              YoY Trend
-            </button>
-            <button
-              onClick={() => setTrendMode("monthly")}
-              className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
-                trendMode === "monthly"
-                  ? "bg-white dark:bg-slate-800 text-blue-600 shadow-xs font-black"
-                  : "text-slate-500"
-              }`}
-            >
-              Interno / Eksterno
-            </button>
-          </div>
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-bold uppercase text-slate-400 mr-1">Godina:</label>
+          <select
+            value={selectedYearFilter}
+            onChange={(e) => setSelectedYearFilter(e.target.value)}
+            className="text-xs border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-1.5 font-bold bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white outline-none cursor-pointer"
+          >
+            <option value="all">Sve godine (2021-2026)</option>
+            <option value="2026">2026. godina</option>
+            <option value="2025">2025. godina</option>
+            <option value="2024">2024. godina</option>
+            <option value="2023">2023. godina</option>
+            <option value="2022">2022. godina</option>
+            <option value="2021">2021. godina</option>
+          </select>
         </div>
       </div>
 
@@ -632,13 +677,13 @@ export function TransportKpis({
         </div>
       </div>
 
-      {/* DRUGI RED GRAFIKONA: Top 10 Vozila + Segmenti + Dobavljači */}
+      {/* DRUGI RED GRAFIKONA: Top 10 Vozila + Segmenti + Top Dobavljači sa dugmetom Eksterno/Interno */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Top 10 Vozila (Horizontal Bar) */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
           <div className="flex justify-between items-center mb-3">
             <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
-              <Truck className="w-4 h-4 text-red-500" /> Top 10 Vozila po Trošku
+              🚗 Top 10 Vozila po Trošku
             </h4>
             <span className="text-[10px] text-indigo-500 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded font-bold">
               Klik za karton →
@@ -653,7 +698,7 @@ export function TransportKpis({
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
           <div className="flex justify-between items-center mb-3">
             <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
-              <Layers className="w-4 h-4 text-blue-500" /> Trošak po Segmentima
+              ⚙️ Trošak po Segmentima
             </h4>
             <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded">
               Klik za spisak →
@@ -664,15 +709,46 @@ export function TransportKpis({
           </div>
         </div>
 
-        {/* Top 7 Dobavljača / Servisera */}
+        {/* Top 7 Dobavljača / Servisera sa DUGMADIMA: EKSTERNO (default) / INTERNO / SVI */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
-          <div className="flex justify-between items-center mb-3">
+          <div className="flex flex-wrap justify-between items-center mb-3 gap-2">
             <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
               <Building2 className="w-4 h-4 text-indigo-500" /> Top Dobavljači & Serviseri
             </h4>
-            <span className="text-[10px] text-indigo-600 font-bold bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded">
-              Klik za analizu →
-            </span>
+
+            {/* DUGME: EKSTERNO (default) / INTERNO / SVI */}
+            <div className="flex bg-slate-100 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] font-bold">
+              <button
+                onClick={() => setSupplierMode("external")}
+                className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
+                  supplierMode === "external"
+                    ? "bg-indigo-600 text-white shadow-xs font-black"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                }`}
+              >
+                Eksterno
+              </button>
+              <button
+                onClick={() => setSupplierMode("internal")}
+                className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
+                  supplierMode === "internal"
+                    ? "bg-blue-600 text-white shadow-xs font-black"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                }`}
+              >
+                Interno
+              </button>
+              <button
+                onClick={() => setSupplierMode("all")}
+                className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
+                  supplierMode === "all"
+                    ? "bg-slate-700 text-white shadow-xs font-black"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                }`}
+              >
+                Svi
+              </button>
+            </div>
           </div>
           <div className="h-[280px] w-full relative cursor-pointer">
             <canvas ref={suppliersCanvasRef} />
@@ -706,7 +782,7 @@ export function TransportKpis({
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
               {[2026, 2025, 2024, 2023, 2022, 2021].map((y) => {
-                const fCount = fleetByYear[y] || 0;
+                const fCount = KPI_TOTAL_FLEET_BY_YEAR[y]?.Total || 0;
                 const cost = yearlyStats[y]?.cost || 0;
                 const count = yearlyStats[y]?.count || 0;
                 const avg = fCount > 0 ? cost / fCount : 0;
