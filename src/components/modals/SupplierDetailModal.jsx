@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { formatDate, formatKM } from "@/lib/calculations.js";
 import { exportTransactionsToExcel } from "@/lib/exportExcel.js";
-import { X, Download, Building2, Search, ArrowDown as ScrollDown, CheckCircle2, Loader2 } from "lucide-react";
+import { X, Download, Building2, ArrowDown as ScrollDown, CheckCircle2, Loader2, RotateCcw, FilterX } from "lucide-react";
 
 export function SupplierDetailModal({
   isOpen,
@@ -12,9 +12,12 @@ export function SupplierDetailModal({
   costData,
   onOpenVehicleModal
 }) {
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedYear, setSelectedYear] = useState("all");
-  const [selectedSegment, setSelectedSegment] = useState("all");
+  const [colFilterReg, setColFilterReg] = useState("");
+  const [colFilterGb, setColFilterGb] = useState("");
+  const [colFilterSegment, setColFilterSegment] = useState("all");
+  const [colFilterType, setColFilterType] = useState("all");
+  const [colFilterOpis, setColFilterOpis] = useState("");
 
   const [visibleCount, setVisibleCount] = useState(60);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -70,29 +73,44 @@ export function SupplierDetailModal({
 
   // Unikatni segmenti
   const distinctSegments = useMemo(() => {
-    return Array.from(new Set(supplierTransactions.map((c) => c.segment).filter(Boolean))).sort();
+    return Array.from(new Set(supplierTransactions.map((c) => (c.segment || "").trim()).filter(Boolean))).sort();
+  }, [supplierTransactions]);
+
+  // Unikatni tipovi
+  const distinctTypes = useMemo(() => {
+    return Array.from(new Set(supplierTransactions.map((c) => (c.tipMehan || "").trim()).filter(Boolean))).sort();
+  }, [supplierTransactions]);
+
+  // Raspoložive godine
+  const availableYears = useMemo(() => {
+    return Array.from(new Set(supplierTransactions.map((c) => c.year))).filter(Boolean).sort((a, b) => b - a);
   }, [supplierTransactions]);
 
   // Filtriranje
   const filteredData = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
+    const regTerm = colFilterReg.trim().toLowerCase();
+    const gbTerm = colFilterGb.trim().toLowerCase();
+    const opisTerm = colFilterOpis.trim().toLowerCase();
 
     return supplierTransactions.filter((c) => {
       const matchYear = selectedYear === "all" || c.year === parseInt(selectedYear);
-      const matchSegment = selectedSegment === "all" || c.segment === selectedSegment;
-      const matchTerm =
-        !term ||
-        (c.reg && c.reg.toLowerCase().includes(term)) ||
-        (c.garazniBroj && c.garazniBroj.toLowerCase().includes(term)) ||
-        (c.opisPopravke && c.opisPopravke.toLowerCase().includes(term));
+      const matchSegment = colFilterSegment === "all" || (c.segment || "").trim().toLowerCase() === colFilterSegment.toLowerCase();
+      const matchType = colFilterType === "all" || (c.tipMehan || "").trim().toLowerCase() === colFilterType.toLowerCase();
 
-      return matchYear && matchSegment && matchTerm;
+      const matchReg = !regTerm || (c.reg && c.reg.toLowerCase().includes(regTerm));
+      const matchGb = !gbTerm || (c.garazniBroj && c.garazniBroj.toLowerCase().includes(gbTerm));
+      const matchOpis =
+        !opisTerm ||
+        (c.opisPopravke && c.opisPopravke.toLowerCase().includes(opisTerm)) ||
+        (c.opis && c.opis.toLowerCase().includes(opisTerm));
+
+      return matchYear && matchSegment && matchType && matchReg && matchGb && matchOpis;
     });
-  }, [supplierTransactions, selectedYear, selectedSegment, searchTerm]);
+  }, [supplierTransactions, selectedYear, colFilterSegment, colFilterType, colFilterReg, colFilterGb, colFilterOpis]);
 
   useEffect(() => {
     setVisibleCount(BATCH_SIZE);
-  }, [selectedYear, selectedSegment, searchTerm]);
+  }, [selectedYear, colFilterSegment, colFilterType, colFilterReg, colFilterGb, colFilterOpis]);
 
   const visibleItems = useMemo(() => {
     return filteredData.slice(0, visibleCount);
@@ -139,6 +157,24 @@ export function SupplierDetailModal({
       loadMore();
     }
   }, [hasMore, isLoadingMore, loadMore]);
+
+  const isAnyFilterActive =
+    selectedYear !== "all" ||
+    colFilterSegment !== "all" ||
+    colFilterType !== "all" ||
+    colFilterReg !== "" ||
+    colFilterGb !== "" ||
+    colFilterOpis !== "";
+
+  const resetAllFilters = () => {
+    setSelectedYear("all");
+    setColFilterSegment("all");
+    setColFilterType("all");
+    setColFilterReg("");
+    setColFilterGb("");
+    setColFilterOpis("");
+    setVisibleCount(BATCH_SIZE);
+  };
 
   if (!isOpen || !supplierName) return null;
 
@@ -245,7 +281,7 @@ export function SupplierDetailModal({
             </div>
           </div>
 
-          {/* Tabela transakcija */}
+          {/* Tabela transakcija sa kolonskim filterima */}
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs">
             <div className="p-3.5 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex flex-wrap justify-between items-center gap-3">
               <div className="flex items-center gap-2">
@@ -255,46 +291,15 @@ export function SupplierDetailModal({
                 </h4>
               </div>
 
-              {/* Filteri */}
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="🔍 Pretraži reg, opis..."
-                    className="w-44 sm:w-52 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg pl-7 pr-2.5 py-1 text-xs outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
-                  />
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2" />
-                </div>
-
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1 text-xs font-bold outline-none cursor-pointer"
-                >
-                  <option value="all">Sve godine</option>
-                  <option value="2026">2026.</option>
-                  <option value="2025">2025.</option>
-                  <option value="2024">2024.</option>
-                  <option value="2023">2023.</option>
-                  <option value="2022">2022.</option>
-                  <option value="2021">2021.</option>
-                </select>
-
-                <select
-                  value={selectedSegment}
-                  onChange={(e) => setSelectedSegment(e.target.value)}
-                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1 text-xs font-bold outline-none cursor-pointer"
-                >
-                  <option value="all">Svi segmenti</option>
-                  {distinctSegments.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-
+              <div className="flex items-center gap-2">
+                {isAnyFilterActive && (
+                  <button
+                    onClick={resetAllFilters}
+                    className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg font-black text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                  >
+                    <FilterX className="w-3.5 h-3.5" /> Poništi filtere
+                  </button>
+                )}
                 <button
                   onClick={() => exportTransactionsToExcel(filteredData, `Dobavljac_${supplierName}.xlsx`)}
                   className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
@@ -311,16 +316,102 @@ export function SupplierDetailModal({
               className="overflow-x-auto overflow-y-auto max-h-[420px] scroll-smooth"
             >
               <table className="min-w-full text-xs text-left">
-                <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10 shadow-xs">
+                <thead className="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700 sticky top-0 z-20 shadow-xs">
+                  {/* 1. RED */}
                   <tr>
-                    <th className="p-2.5 text-center">R.b.</th>
-                    <th className="p-2.5">Datum</th>
-                    <th className="p-2.5">Reg. Oznaka</th>
-                    <th className="p-2.5">Garažni Br.</th>
-                    <th className="p-2.5">Segment</th>
-                    <th className="p-2.5">Tip Mehanizacije</th>
-                    <th className="p-2.5">Opis Popravke / Radovi</th>
-                    <th className="p-2.5 text-right">Trošak (KM)</th>
+                    <th className="p-2 text-center w-12">R.b.</th>
+                    <th className="p-2 w-24">Datum</th>
+                    <th className="p-2 w-28">Reg. Oznaka</th>
+                    <th className="p-2 w-24">Garažni Br.</th>
+                    <th className="p-2 w-32">Segment</th>
+                    <th className="p-2 w-36">Tip Mehanizacije</th>
+                    <th className="p-2 w-48">Opis Popravke / Radovi</th>
+                    <th className="p-2 text-right w-24">Trošak (KM)</th>
+                  </tr>
+
+                  {/* 2. RED: In-Table Filteri */}
+                  <tr className="bg-slate-200/90 dark:bg-slate-950 border-t border-slate-300 dark:border-slate-800 font-normal">
+                    <th className="p-1 text-center">
+                      <span className="text-[10px] text-slate-400 font-mono">#</span>
+                    </th>
+                    <th className="p-1">
+                      <select
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(e.target.value)}
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1 py-0.5 text-[11px] font-bold outline-none"
+                      >
+                        <option value="all">Sve god.</option>
+                        {availableYears.map((y) => (
+                          <option key={y} value={y.toString()}>
+                            {y}.
+                          </option>
+                        ))}
+                      </select>
+                    </th>
+                    <th className="p-1">
+                      <input
+                        type="text"
+                        value={colFilterReg}
+                        onChange={(e) => setColFilterReg(e.target.value)}
+                        placeholder="🔍 Reg..."
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-0.5 text-[11px] font-bold uppercase outline-none"
+                      />
+                    </th>
+                    <th className="p-1">
+                      <input
+                        type="text"
+                        value={colFilterGb}
+                        onChange={(e) => setColFilterGb(e.target.value)}
+                        placeholder="🔍 GB..."
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-0.5 text-[11px] font-medium outline-none"
+                      />
+                    </th>
+                    <th className="p-1">
+                      <select
+                        value={colFilterSegment}
+                        onChange={(e) => setColFilterSegment(e.target.value)}
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1 py-0.5 text-[11px] font-bold outline-none"
+                      >
+                        <option value="all">Svi segmenti</option>
+                        {distinctSegments.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </th>
+                    <th className="p-1">
+                      <select
+                        value={colFilterType}
+                        onChange={(e) => setColFilterType(e.target.value)}
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1 py-0.5 text-[11px] font-bold outline-none"
+                      >
+                        <option value="all">Svi tipovi</option>
+                        {distinctTypes.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
+                    </th>
+                    <th className="p-1">
+                      <input
+                        type="text"
+                        value={colFilterOpis}
+                        onChange={(e) => setColFilterOpis(e.target.value)}
+                        placeholder="🔍 Opis..."
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-0.5 text-[11px] font-medium outline-none"
+                      />
+                    </th>
+                    <th className="p-1 text-center">
+                      <button
+                        onClick={resetAllFilters}
+                        title="Poništi filtere"
+                        className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-[10px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1 w-full"
+                      >
+                        <RotateCcw className="w-3 h-3" /> Reset
+                      </button>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50 bg-white dark:bg-slate-900">
