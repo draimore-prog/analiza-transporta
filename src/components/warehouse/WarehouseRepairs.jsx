@@ -207,43 +207,43 @@ export function WarehouseRepairs({
     ["superadmin", "editor", "warehouse_specialist", "admin"].includes(activeUser.role);
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
-        {/* Header Kontrole */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+    <div className="space-y-4">
+      {/* Header Kartica - Odvojena tamna kartica */}
+      <div className="bg-gradient-to-r from-slate-900 via-amber-950 to-orange-950 text-white p-5 rounded-2xl shadow-md border border-slate-800">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
           <div>
-            <h3 className="text-base font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
+            <h2 className="text-xl font-black tracking-tight flex items-center gap-2">
               <span>📋 Pregled Opravki Skladišne Mehanizacije</span>
-              <span className="text-xs bg-amber-100 dark:bg-amber-900/60 text-amber-900 dark:text-amber-300 font-bold px-2.5 py-0.5 rounded-full font-mono">
+              <span className="text-xs bg-amber-500/30 text-amber-200 border border-amber-400 px-3 py-0.5 rounded-full font-mono font-bold">
                 {visibleItems.length.toLocaleString("bs-BA")} / {filteredData.length.toLocaleString("bs-BA")} opravki
               </span>
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Filteri su ugrađeni direktno u zaglavlje svake kolone tabele ispod
+            </h2>
+            <p className="text-xs text-slate-300 mt-0.5">
+              Filteri su integrisani direktno u zaglavlje svake kolone tabele ispod
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
-            {/* Sort */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Sort:</span>
+          <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+            {/* Sort Selector */}
+            <div className="flex items-center gap-1.5 bg-white/10 px-2.5 py-1.5 rounded-xl border border-white/20">
+              <span className="text-[10px] font-bold text-amber-200 uppercase">Sort:</span>
               <select
                 value={sortMode}
                 onChange={(e) => setSortMode(e.target.value)}
-                className="text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-amber-500 bg-white dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+                className="text-xs bg-transparent text-white font-bold outline-none cursor-pointer"
               >
-                <option value="new-first">🆕 Najnoviji unosi na vrhu</option>
-                <option value="date-desc">📅 Datum (Najnovije prvo)</option>
-                <option value="date-asc">📅 Datum (Najstarije prvo)</option>
-                <option value="cost-desc">💰 Trošak (Najveći prvo)</option>
-                <option value="cost-asc">💰 Trošak (Najmanji prvo)</option>
+                <option value="new-first" className="bg-slate-900 text-white">🆕 Najnoviji unosi</option>
+                <option value="date-desc" className="bg-slate-900 text-white">📅 Datum (Najnovije prvo)</option>
+                <option value="date-asc" className="bg-slate-900 text-white">📅 Datum (Najstarije prvo)</option>
+                <option value="cost-desc" className="bg-slate-900 text-white">💰 Trošak (Najveći prvo)</option>
+                <option value="cost-asc" className="bg-slate-900 text-white">💰 Trošak (Najmanji prvo)</option>
               </select>
             </div>
 
             {isAnyFilterActive && (
               <button
                 onClick={resetAllFilters}
-                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3.5 py-1.5 rounded-lg shadow-xs transition-all text-xs flex items-center gap-1.5 cursor-pointer"
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3.5 py-1.5 rounded-xl shadow-xs transition-all text-xs flex items-center gap-1.5 cursor-pointer"
               >
                 <FilterX className="w-3.5 h-3.5" /> Poništi filtere
               </button>
@@ -252,20 +252,21 @@ export function WarehouseRepairs({
             {/* Excel Izvoz */}
             <button
               onClick={() => exportTransactionsToExcel(filteredData, "Skladisna_Mehanizacija_Opravke.xlsx")}
-              className="bg-amber-600 hover:bg-amber-500 text-slate-950 font-extrabold px-3.5 py-1.5 rounded-lg text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+              className="bg-amber-600 hover:bg-amber-500 text-slate-950 font-extrabold px-3.5 py-1.5 rounded-xl text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" /> Izvezi Sve ({filteredData.length.toLocaleString("bs-BA")})
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Tabela sa Inkrementalnim Skrolom i In-Table Filterima */}
-        <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden shadow-xs">
-          <div
-            ref={containerRef}
-            onScroll={handleScroll}
-            className="overflow-x-auto overflow-y-auto min-h-[380px] max-h-[calc(100vh-310px)] scroll-smooth"
-          >
+      {/* Tabela sa Inkrementalnim Skrolom i In-Table Filterima */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+        <div
+          ref={containerRef}
+          onScroll={handleScroll}
+          className="overflow-x-auto overflow-y-auto min-h-[380px] max-h-[calc(100vh-310px)] scroll-smooth"
+        >
             <table className="min-w-full text-xs text-left">
               <thead className="bg-slate-100 dark:bg-slate-900 sticky top-0 font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 z-20 shadow-xs">
                 {/* 1. RED: Nazivi kolona */}
