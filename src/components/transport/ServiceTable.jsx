@@ -565,14 +565,13 @@ export function ServiceTable({
             </div>
           </div>
         </div>
-      </div>
 
-      {/* MODAL ZA PREGLED RAČUNA */}
-      <InvoicePreviewModal
-        isOpen={Boolean(previewInvoice)}
-        onClose={() => setPreviewInvoice(null)}
-        invoice={previewInvoice}
-      />
-    </div>
+        {/* MODAL ZA PREGLED RAČUNA */}
+        <InvoicePreviewModal
+          isOpen={Boolean(previewInvoice)}
+          onClose={() => setPreviewInvoice(null)}
+          invoice={previewInvoice}
+        />
+      </div>
   );
 }
