@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="bs">
 <head>
     <meta charset="UTF-8">
@@ -419,6 +419,10 @@
                 <div>
                     <label class="block font-bold uppercase text-slate-500 mb-1">Ime i Prezime</label>
                     <input type="text" id="editFullname" required class="w-full border border-slate-300 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block font-bold uppercase text-slate-500 mb-1">Email adresa</label>
+                    <input type="email" id="editEmail" placeholder="npr. korisnik@firma.ba" class="w-full border border-slate-300 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div>
                     <label class="block font-bold uppercase text-slate-500 mb-1">Lozinka</label>
@@ -2230,12 +2234,74 @@
             }
         }
 
+        function findUserInDB(identifier) {
+            if (!identifier) return null;
+            let clean = identifier.trim().toLowerCase();
+            let unamePrefix = clean.includes('@') ? clean.split('@')[0] : clean;
+            return usersDB.find(u => {
+                let uName = (u.username || '').toLowerCase();
+                let uEmail = (u.email || '').toLowerCase();
+                let uNamePrefix = uName.includes('@') ? uName.split('@')[0] : uName;
+                let uEmailPrefix = uEmail.includes('@') ? uEmail.split('@')[0] : uEmail;
+                return uName === clean || 
+                       uEmail === clean || 
+                       uName === unamePrefix || 
+                       uNamePrefix === unamePrefix ||
+                       (uEmail && uEmailPrefix === unamePrefix);
+            });
+        }
+
+        async function getFirestoreUserDoc(identifier, email) {
+            if (!window.db) return null;
+            let idClean = identifier ? identifier.trim().toLowerCase() : '';
+            let emailClean = email ? email.trim().toLowerCase() : '';
+            let prefixClean = idClean.includes('@') ? idClean.split('@')[0] : idClean;
+
+            try {
+                // 1. Try doc by exact identifier
+                if (idClean) {
+                    let snap = await window.db.collection('app_users').doc(idClean).get();
+                    if (snap.exists) return snap.data();
+                }
+                // 2. Try doc by prefix
+                if (prefixClean && prefixClean !== idClean) {
+                    let snap = await window.db.collection('app_users').doc(prefixClean).get();
+                    if (snap.exists) return snap.data();
+                }
+                // 3. Try doc by email
+                if (emailClean && emailClean !== idClean && emailClean !== prefixClean) {
+                    let snap = await window.db.collection('app_users').doc(emailClean).get();
+                    if (snap.exists) return snap.data();
+                }
+                // 4. Query by email field
+                if (emailClean) {
+                    let qSnap = await window.db.collection('app_users').where('email', '==', emailClean).limit(1).get();
+                    if (!qSnap.empty) return qSnap.docs[0].data();
+                }
+                // 5. Query by username field
+                if (idClean) {
+                    let qSnap = await window.db.collection('app_users').where('username', '==', idClean).limit(1).get();
+                    if (!qSnap.empty) return qSnap.docs[0].data();
+                }
+                if (prefixClean && prefixClean !== idClean) {
+                    let qSnap = await window.db.collection('app_users').where('username', '==', prefixClean).limit(1).get();
+                    if (!qSnap.empty) return qSnap.docs[0].data();
+                }
+            } catch(e) {
+                console.warn("Greška pri dohvatu korisnika iz Firestore:", e);
+            }
+            return null;
+        }
+
         function saveUsersDB() {
             localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(usersDB));
             if (window.db) {
                 usersDB.forEach(user => {
                     try {
-                        window.db.collection('app_users').doc(user.username.toLowerCase()).set(user, { merge: true });
+                        let docId = (user.username || '').toLowerCase();
+                        if (docId) {
+                            window.db.collection('app_users').doc(docId).set(user, { merge: true });
+                        }
                     } catch(e) {}
                 });
             }
@@ -2244,11 +2310,11 @@
         async function forceSyncUsers(btn) {
             if (!window.db) { alert("Baza nije povezana!"); return; }
             try {
-                if (btn) { btn.innerText = "Osvje�avam..."; }
+                if (btn) { btn.innerText = "Osvježavam..."; }
                 await syncFirestoreUsers();
-                if (btn) { btn.innerText = "Osvje�i iz baze"; }
-                alert("Nalozi su uspje�no sinhronizovani sa glavne baze!");
-            } catch(e) { alert("Gre�ka: " + e.message); }
+                if (btn) { btn.innerText = "Osvježi iz baze"; }
+                alert("Nalozi su uspješno sinhronizovani sa glavne baze!");
+            } catch(e) { alert("Greška: " + e.message); }
         }
 
         async function syncFirestoreUsers() {
@@ -2258,12 +2324,20 @@
                 if (!snapshot.empty) {
                     snapshot.forEach(doc => {
                         let u = doc.data();
-                        if (u && u.username) {
-                            let idx = usersDB.findIndex(x => x.username.toLowerCase() === u.username.toLowerCase());
+                        if (u && (u.username || u.email || doc.id)) {
+                            let cleanUname = (u.username || doc.id || '').toLowerCase();
+                            let cleanEmail = (u.email || '').toLowerCase();
+                            let idx = usersDB.findIndex(x => {
+                                let xUname = (x.username || '').toLowerCase();
+                                let xEmail = (x.email || '').toLowerCase();
+                                return (xUname && xUname === cleanUname) ||
+                                       (cleanEmail && xEmail && xEmail === cleanEmail) ||
+                                       (cleanEmail && xUname && xUname === cleanEmail.split('@')[0]);
+                            });
                             if (idx !== -1) {
-                                usersDB[idx] = { ...usersDB[idx], ...u };
+                                usersDB[idx] = { ...usersDB[idx], ...u, username: usersDB[idx].username || cleanUname };
                             } else {
-                                usersDB.push(u);
+                                usersDB.push({ ...u, username: u.username || cleanUname });
                             }
                         }
                     });
@@ -2294,7 +2368,9 @@
                 document.getElementById('headerUserFullname').innerText = activeUser.fullname || activeUser.username;
 
                 let roleLabel = 'Analitičar (Samo pregled)';
-                let isEmir = activeUser.username.toLowerCase() === 'emir.durakovic' || activeUser.role === 'superadmin';
+                let isEmir = (activeUser.username && activeUser.username.toLowerCase() === 'emir.durakovic') || 
+                             (activeUser.email && (activeUser.email.toLowerCase() === 'emir.durakovic@gmail.com' || activeUser.email.toLowerCase() === 'emir.durakovic@bingotuzla.ba')) ||
+                             activeUser.role === 'superadmin';
 
                 if (isEmir) {
                     roleLabel = '👑 Super Administrator';
@@ -2326,7 +2402,7 @@
                     if (aside) aside.classList.remove('hidden');
                     if (header) header.classList.remove('hidden');
                     if (appDash) appDash.classList.remove('hidden');
-                    if (sDash) {
+                    if (sDash) { 
                         sDash.classList.remove('flex');
                         sDash.classList.add('hidden');
                     }
@@ -2397,14 +2473,43 @@
 
         function initFirebaseAuthListener() {
             if (window.auth && typeof window.auth.onAuthStateChanged === 'function') {
-                window.auth.onAuthStateChanged((firebaseUser) => {
+                window.auth.onAuthStateChanged(async (firebaseUser) => {
                     let storedSession = sessionStorage.getItem(SESSION_ACTIVE_USER_KEY) || localStorage.getItem(SESSION_ACTIVE_USER_KEY);
-                    if (firebaseUser && storedSession) {
+                    if (firebaseUser) {
+                        let parsed = null;
+                        if (storedSession) {
+                            try { parsed = JSON.parse(storedSession); } catch(e) {}
+                        }
+                        let emailLower = (firebaseUser.email || '').toLowerCase();
+                        let uname = parsed?.username || (emailLower ? emailLower.split('@')[0] : firebaseUser.uid);
+                        let isEmir = uname === 'emir.durakovic' || emailLower === 'emir.durakovic@gmail.com' || emailLower === 'emir.durakovic@bingotuzla.ba';
+
+                        if (parsed && parsed.username) {
+                            activeUser = { ...parsed, uid: firebaseUser.uid, email: firebaseUser.email };
+                            updateAuthUI();
+                        }
+
+                        // Background sync role from Firestore to guarantee accuracy
                         try {
-                            // Use session data immediately — no blocking Firestore read
-                            let parsed = JSON.parse(storedSession);
-                            if (parsed && parsed.username) {
-                                activeUser = { ...parsed, uid: firebaseUser.uid, email: firebaseUser.email };
+                            let fireDoc = await getFirestoreUserDoc(uname, emailLower);
+                            let matchedLocal = findUserInDB(uname) || findUserInDB(emailLower);
+                            let correctRole = isSuperAdminUser(uname, emailLower) ? 'superadmin' : (
+                                (fireDoc && fireDoc.role) ? fireDoc.role :
+                                (matchedLocal && matchedLocal.role) ? matchedLocal.role :
+                                (activeUser ? activeUser.role : 'editor')
+                            );
+                            let correctFullname = (fireDoc && fireDoc.fullname) || (matchedLocal && matchedLocal.fullname) || (activeUser ? activeUser.fullname : uname);
+
+                            if (!activeUser || activeUser.role !== correctRole || activeUser.fullname !== correctFullname) {
+                                activeUser = {
+                                    username: uname,
+                                    fullname: correctFullname,
+                                    role: correctRole,
+                                    email: firebaseUser.email,
+                                    uid: firebaseUser.uid
+                                };
+                                let key = localStorage.getItem(SESSION_ACTIVE_USER_KEY) ? 'localStorage' : 'sessionStorage';
+                                window[key].setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
                                 updateAuthUI();
                             }
                         } catch(e) {}
@@ -2414,6 +2519,12 @@
                     }
                 });
             }
+        }
+
+        function isSuperAdminUser(uname, email) {
+            let uClean = (uname || '').toLowerCase();
+            let eClean = (email || '').toLowerCase();
+            return uClean === 'emir.durakovic' || eClean === 'emir.durakovic@gmail.com' || eClean === 'emir.durakovic@bingotuzla.ba';
         }
 
         async function handleGoogleLogin() {
@@ -2430,24 +2541,47 @@
                 let result = await window.auth.signInWithPopup(provider);
                 if (result && result.user) {
                     let user = result.user;
-                    let uname = user.email ? user.email.split('@')[0].toLowerCase() : user.uid;
-                    let isEmir = uname === 'emir.durakovic' || user.email === 'emir.durakovic@gmail.com';
+                    let emailLower = user.email ? user.email.toLowerCase() : '';
+                    let uname = emailLower ? emailLower.split('@')[0] : user.uid;
+                    let isEmir = isSuperAdminUser(uname, emailLower);
+
+                    // First check existing role in Firestore or LocalDB to preserve assigned roles!
+                    let fireDoc = await getFirestoreUserDoc(uname, emailLower);
+                    let matchedLocal = findUserInDB(uname) || findUserInDB(emailLower);
+
+                    let assignedRole = isEmir ? 'superadmin' : (
+                        (fireDoc && fireDoc.role) ? fireDoc.role :
+                        (matchedLocal && matchedLocal.role) ? matchedLocal.role : 'editor'
+                    );
+
+                    let assignedFullname = (fireDoc && fireDoc.fullname) ||
+                                           (matchedLocal && matchedLocal.fullname) ||
+                                           user.displayName || uname;
 
                     let userObj = {
                         username: uname,
-                        fullname: user.displayName || uname,
-                        role: isEmir ? 'superadmin' : 'editor',
+                        fullname: assignedFullname,
+                        role: assignedRole,
                         email: user.email,
-                        createdAt: new Date().toISOString().slice(0, 10)
+                        createdAt: (fireDoc && fireDoc.createdAt) || (matchedLocal && matchedLocal.createdAt) || new Date().toISOString().slice(0, 10)
                     };
+
+                    // Update local DB
+                    let existingIdx = usersDB.findIndex(u => (u.username && u.username.toLowerCase() === uname) || (u.email && emailLower && u.email.toLowerCase() === emailLower));
+                    if (existingIdx !== -1) {
+                        usersDB[existingIdx] = { ...usersDB[existingIdx], ...userObj };
+                    } else {
+                        usersDB.push(userObj);
+                    }
+                    localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(usersDB));
 
                     if (window.db) {
                         try {
-                            window.db.collection('app_users').doc(uname).set(userObj, { merge: true });
+                            await window.db.collection('app_users').doc(uname).set(userObj, { merge: true });
                         } catch(e) {}
                     }
 
-                    activeUser = userObj;
+                    activeUser = { ...userObj, uid: user.uid };
                     sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
                     updateAuthUI();
                 }
@@ -2484,8 +2618,8 @@
                 return;
             }
 
-            let localUserByUname = usersDB.find(u => u.username.toLowerCase() === uInput.toLowerCase());
-            let emailToUse = uInput.includes('@') ? uInput : (localUserByUname && localUserByUname.email ? localUserByUname.email : `${uInput.toLowerCase()}@analizatransporta.ba`);
+            let localUser = findUserInDB(uInput);
+            let emailToUse = uInput.includes('@') ? uInput : (localUser && localUser.email ? localUser.email : `${uInput.toLowerCase()}@analizatransporta.ba`);
             
             if (errDiv) errDiv.classList.add('hidden');
             setSubmitLoading(true);
@@ -2495,14 +2629,18 @@
                 let userCred = await window.auth.signInWithEmailAndPassword(emailToUse, pInput);
                 if (userCred && userCred.user) {
                     console.log("🔥 Firebase Auth prijava uspješna:", userCred.user.email);
+                    let emailLower = userCred.user.email ? userCred.user.email.toLowerCase() : '';
                     let uname = uInput.includes('@') ? uInput.split('@')[0].toLowerCase() : uInput.toLowerCase();
-                    let isSuper = uname === 'emir.durakovic';
-                    let localUser = usersDB.find(u => u.username.toLowerCase() === uname);
-                    let initialRole = isSuper ? 'superadmin' : (localUser ? (localUser.role || 'editor') : 'editor');
+                    let isSuper = isSuperAdminUser(uname, emailLower);
+
+                    let matchedUser = findUserInDB(uInput) || findUserInDB(uname) || findUserInDB(emailLower);
+                    
+                    let initialRole = isSuper ? 'superadmin' : (matchedUser ? (matchedUser.role || 'viewer') : 'viewer');
+                    let initialFullname = (matchedUser && matchedUser.fullname) || userCred.user.displayName || uname;
 
                     activeUser = {
                         username: uname,
-                        fullname: userCred.user.displayName || (localUser ? localUser.fullname : uname),
+                        fullname: initialFullname,
                         role: initialRole,
                         email: userCred.user.email,
                         uid: userCred.user.uid
@@ -2514,23 +2652,22 @@
                     if (errDiv) errDiv.classList.add('hidden');
                     updateAuthUI();
 
-                    // Fetch role from Firestore in background AFTER login modal closes (as failsafe)
+                    // Immediately fetch exact role from Firestore in background (failsafe)
                     setTimeout(async () => {
                         try {
-                            if (window.db) {
-                                let snap = await window.db.collection('app_users').doc(uname).get();
-                                if (snap.exists) {
-                                    let uDoc = snap.data();
-                                    if (uDoc.role && uDoc.role !== activeUser.role) {
-                                        activeUser.role = uDoc.role;
-                                        activeUser.fullname = uDoc.fullname || activeUser.fullname;
-                                        window[stored].setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
-                                        updateAuthUI();
-                                    }
+                            let fireDoc = await getFirestoreUserDoc(uname, emailLower);
+                            if (fireDoc && fireDoc.role) {
+                                let trueRole = isSuper ? 'superadmin' : fireDoc.role;
+                                let trueFullname = fireDoc.fullname || activeUser.fullname;
+                                if (activeUser.role !== trueRole || activeUser.fullname !== trueFullname) {
+                                    activeUser.role = trueRole;
+                                    activeUser.fullname = trueFullname;
+                                    window[stored].setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
+                                    updateAuthUI();
                                 }
                             }
                         } catch(e) {}
-                    }, 500);
+                    }, 200);
 
                     return;
                 }
@@ -2540,20 +2677,25 @@
                 if (authErr.code === 'auth/user-not-found' || authErr.code === 'auth/invalid-credential') {
                     try {
                         let uname = uInput.includes('@') ? uInput.split('@')[0].toLowerCase() : uInput.toLowerCase();
+                        let emailLower = uInput.includes('@') ? uInput.toLowerCase() : '';
                         
                         // SIGURNOSNA PROVJERA: Da li je admin prethodno kreirao ovog korisnika u bazi?
-                        let localUser = usersDB.find(u => u.username.toLowerCase() === uname);
-                        if (!localUser || localUser.password !== pInput) {
+                        let localUser = findUserInDB(uInput) || findUserInDB(uname);
+                        let fireDoc = await getFirestoreUserDoc(uname, emailLower);
+                        
+                        let targetUser = localUser || fireDoc;
+                        if (!targetUser || (targetUser.password && targetUser.password !== pInput)) {
                             throw new Error("Pristup odbijen. Obratite se administratoru.");
                         }
 
                         let newCred = await window.auth.createUserWithEmailAndPassword(emailToUse, pInput);
                         if (newCred && newCred.user) {
-                            let isSuper = uname === 'emir.durakovic';
+                            let isSuper = isSuperAdminUser(uname, emailLower);
+                            let roleToSet = isSuper ? 'superadmin' : (targetUser.role || 'viewer');
                             activeUser = {
                                 username: uname,
-                                fullname: localUser.fullname || uname,
-                                role: isSuper ? 'superadmin' : (localUser.role || 'editor'),
+                                fullname: targetUser.fullname || uname,
+                                role: roleToSet,
                                 email: newCred.user.email,
                                 uid: newCred.user.uid
                             };
@@ -2562,23 +2704,6 @@
                             
                             if (errDiv) errDiv.classList.add('hidden');
                             updateAuthUI();
-
-                            setTimeout(async () => {
-                                try {
-                                    if (window.db) {
-                                        let snap = await window.db.collection('app_users').doc(uname).get();
-                                        if (snap.exists) {
-                                            let uDoc = snap.data();
-                                            if (uDoc.role && uDoc.role !== activeUser.role) {
-                                                activeUser.role = uDoc.role;
-                                                activeUser.fullname = uDoc.fullname || activeUser.fullname;
-                                                window[stored].setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(activeUser));
-                                                updateAuthUI();
-                                            }
-                                        }
-                                    }
-                                } catch(e) {}
-                            }, 500);
 
                             return;
                         }
@@ -2590,7 +2715,7 @@
                             errDiv.classList.remove('hidden');
                         }
                         setSubmitLoading(false);
-                        return; // Stop flow completely
+                        return;
                     }
                 }
 
@@ -2646,18 +2771,20 @@
             e.preventDefault();
             if (!activeUser || (activeUser.username.toLowerCase() !== 'emir.durakovic' && activeUser.role !== 'superadmin')) return;
 
-            const uname = document.getElementById('newUsername').value.trim().toLowerCase();
+            const rawUname = document.getElementById('newUsername').value.trim().toLowerCase();
             const fname = document.getElementById('newFullname').value.trim();
             const pass = document.getElementById('newPassword').value.trim();
             const role = document.getElementById('newRole').value;
+            const emailVal = document.getElementById("newEmail").value.trim().toLowerCase();
 
-            if (usersDB.some(u => u.username.toLowerCase() === uname)) {
-                alert(`Korisničko ime "${uname}" već postoji!`);
+            let uname = rawUname.includes("@") ? rawUname.split("@")[0] : rawUname;
+            let emailToUse = emailVal ? emailVal : (rawUname.includes("@") ? rawUname : uname + "@transport-analitika.local");
+
+            if (usersDB.some(u => (u.username && u.username.toLowerCase() === uname) || (u.email && u.email.toLowerCase() === emailToUse))) {
+                alert(`Korisnik "${uname}" ili email "${emailToUse}" već postoji!`);
                 return;
             }
 
-            const emailVal = document.getElementById("newEmail").value.trim();
-            let emailToUse = emailVal ? emailVal : (uname.includes("@") ? uname : uname + "@transport-analitika.local");
             try {
                 if (!firebase.apps.some(a => a.name === "SecondaryApp")) {
                     firebase.initializeApp(firebase.app().options, "SecondaryApp");
@@ -2668,7 +2795,7 @@
             } catch (err) {
                 console.error("Firebase Auth Error:", err);
                 if (err.code !== "auth/email-already-in-use") {
-                    alert("Gre�ka pri kreiranju autentikacije: " + err.message);
+                    alert("Greška pri kreiranju autentikacije: " + err.message);
                     return;
                 }
             }
@@ -2688,21 +2815,28 @@
 
             document.getElementById('newUsername').value = '';
             document.getElementById('newFullname').value = '';
+            if (document.getElementById('newEmail')) document.getElementById('newEmail').value = '';
             document.getElementById('newPassword').value = '';
-            alert(`Novi nalog "${uname}" je uspješno kreiran!`);
+            alert(`Novi nalog "${uname}" sa ulogom "${role}" je uspješno kreiran!`);
         }
 
         function deleteUser(uname) {
             if (uname.toLowerCase() === 'emir.durakovic' || (activeUser && uname === activeUser.username)) {
-                alert("Ne možete obrisati vlastiti ili glavne administrator nalog.");
+                alert("Ne možete obrisati vlastiti ili glavni administratorski nalog.");
                 return;
             }
 
             if (confirm(`Da li ste sigurni da želite obrisati korisnika "${uname}"?`)) {
-                usersDB = usersDB.filter(u => u.username !== uname);
+                let userToDelete = findUserInDB(uname);
+                usersDB = usersDB.filter(u => u.username !== uname && (!userToDelete || u.email !== userToDelete.email));
                 saveUsersDB();
                 if (window.db) {
-                    try { window.db.collection('app_users').doc(uname.toLowerCase()).delete(); } catch(e) {}
+                    try { 
+                        window.db.collection('app_users').doc(uname.toLowerCase()).delete();
+                        if (userToDelete && userToDelete.email) {
+                            window.db.collection('app_users').doc(userToDelete.email.toLowerCase()).delete();
+                        }
+                    } catch(e) {}
                 }
                 renderUserTable();
             }
@@ -2712,7 +2846,7 @@
             if (!activeUser) return;
             let oldP = prompt("Unesite Vašu TRENUTNU lozinku:");
             if (!oldP) return;
-            if (oldP.trim() !== activeUser.password && oldP.trim().toLowerCase() !== activeUser.password.toLowerCase()) {
+            if (oldP.trim() !== activeUser.password && oldP.trim().toLowerCase() !== (activeUser.password || '').toLowerCase()) {
                 alert("Neispravna trenutna lozinka!");
                 return;
             }
@@ -2739,12 +2873,13 @@
         }
 
         function openEditUserModal(uname) {
-            let u = usersDB.find(x => x.username.toLowerCase() === uname.toLowerCase());
+            let u = findUserInDB(uname);
             if (!u) return;
 
             document.getElementById('editOriginalUsername').value = u.username;
             document.getElementById('editUsername').value = u.username;
             document.getElementById('editFullname').value = u.fullname || '';
+            if (document.getElementById('editEmail')) document.getElementById('editEmail').value = u.email || '';
             document.getElementById('editPassword').value = u.password || '';
             document.getElementById('editRole').value = u.role || 'editor';
 
@@ -2762,6 +2897,7 @@
             let origUname = document.getElementById('editOriginalUsername').value;
             let newUname = document.getElementById('editUsername').value.trim().toLowerCase();
             let newFname = document.getElementById('editFullname').value.trim();
+            let newEmail = document.getElementById('editEmail') ? document.getElementById('editEmail').value.trim().toLowerCase() : '';
             let newPass = document.getElementById('editPassword').value.trim();
             let newRole = document.getElementById('editRole').value;
 
@@ -2777,6 +2913,7 @@
 
             usersDB[targetIdx].username = newUname;
             usersDB[targetIdx].fullname = newFname;
+            if (newEmail) usersDB[targetIdx].email = newEmail;
             usersDB[targetIdx].password = newPass;
             usersDB[targetIdx].role = newRole;
 
@@ -2790,13 +2927,13 @@
             saveUsersDB();
             renderUserTable();
             closeEditUserModal();
-            alert(`Nalog "${newUname}" je uspješno ažuriran!`);
+            alert(`Nalog "${newUname}" je uspješno ažuriran sa ulogom "${newRole}"!`);
         }
 
         function changeUserPassword(uname) {
             let newPass = prompt(`Unesite novu lozinku za korisnika "${uname}":`);
             if (newPass && newPass.trim() !== '') {
-                let user = usersDB.find(u => u.username === uname);
+                let user = findUserInDB(uname);
                 if (user) {
                     user.password = newPass.trim();
                     saveUsersDB();
@@ -2812,7 +2949,9 @@
 
             let rowsHTML = [];
             usersDB.forEach(user => {
-                let isSuper = user.username.toLowerCase() === 'emir.durakovic' || user.role === 'superadmin';
+                let isSuper = (user.username && user.username.toLowerCase() === 'emir.durakovic') || 
+                              (user.email && (user.email.toLowerCase() === 'emir.durakovic@gmail.com' || user.email.toLowerCase() === 'emir.durakovic@bingotuzla.ba')) ||
+                              user.role === 'superadmin';
                 let roleBadgeHTML = '';
                 if (isSuper) {
                     roleBadgeHTML = '<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-900 border border-purple-300">👑 Super Administrator</span>';
@@ -2835,7 +2974,7 @@
                         <td class="py-2.5 px-3 text-right font-medium">
                             <button onclick="openEditUserModal('${user.username}')" class="text-indigo-600 hover:text-indigo-800 font-bold mr-2 text-[11px]">✏️ Uredi</button>
                             <button onclick="changeUserPassword('${user.username}')" class="text-blue-600 hover:text-blue-800 font-bold mr-2 text-[11px]">🔑 Šifra</button>
-                            ${!isSuper && user.username !== activeUser.username ? `
+                            ${!isSuper && (!activeUser || user.username !== activeUser.username) ? `
                                 <button onclick="deleteUser('${user.username}')" class="text-red-600 hover:text-red-800 font-bold text-[11px]">🗑️ Obriši</button>
                             ` : '<span class="text-slate-300 text-[11px]">-</span>'}
                         </td>
