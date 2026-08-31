@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { formatDate, formatKM } from "@/lib/calculations.js";
 import { exportTransactionsToExcel } from "@/lib/exportExcel.js";
-import { Download, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Download, Trash2, ArrowDown, CheckCircle2, Loader2 } from "lucide-react";
 
 export function WarehouseRepairs({
   warehouseCostData,
@@ -14,8 +14,13 @@ export function WarehouseRepairs({
   const [selectedYear, setSelectedYear] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortMode, setSortMode] = useState("new-first");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 100;
+  const [visibleCount, setVisibleCount] = useState(60);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const containerRef = useRef(null);
+  const sentinelRef = useRef(null);
+
+  const BATCH_SIZE = 60;
 
   // Raspoložive godine
   const availableYears = useMemo(() => {
@@ -61,10 +66,59 @@ export function WarehouseRepairs({
     return filtered;
   }, [warehouseCostData, selectedYear, searchTerm, sortMode]);
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
-  const safePage = Math.min(Math.max(currentPage, 1), totalPages);
-  const startIdx = (safePage - 1) * itemsPerPage;
-  const pageItems = filteredData.slice(startIdx, startIdx + itemsPerPage);
+  // Resetovanje na početni broj kada se promjene filteri
+  useEffect(() => {
+    setVisibleCount(BATCH_SIZE);
+  }, [selectedYear, searchTerm, sortMode]);
+
+  // Vidljivi elementi na osnovu inkrementalnog skrola
+  const visibleItems = useMemo(() => {
+    return filteredData.slice(0, visibleCount);
+  }, [filteredData, visibleCount]);
+
+  const hasMore = visibleCount < filteredData.length;
+
+  const loadMore = useCallback(() => {
+    if (!hasMore || isLoadingMore) return;
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((prev) => Math.min(prev + BATCH_SIZE, filteredData.length));
+      setIsLoadingMore(false);
+    }, 150);
+  }, [hasMore, isLoadingMore, filteredData.length]);
+
+  // IntersectionObserver za automatsko učitavanje pri skrolu do dna tabele
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+          loadMore();
+        }
+      },
+      {
+        root: containerRef.current,
+        rootMargin: "300px",
+        threshold: 0.1
+      }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingMore, loadMore]);
+
+  // Skrol listener za kontejner
+  const handleScroll = useCallback(() => {
+    const el = containerRef.current;
+    if (!el || !hasMore || isLoadingMore) return;
+
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 400;
+    if (nearBottom) {
+      loadMore();
+    }
+  }, [hasMore, isLoadingMore, loadMore]);
 
   const canDelete = activeUser && ["superadmin", "editor", "warehouse_specialist"].includes(activeUser.role);
 
@@ -74,11 +128,14 @@ export function WarehouseRepairs({
         {/* Header Kontrole */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-3 bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
           <div>
-            <h3 className="text-base font-extrabold text-slate-800 dark:text-white">
-              📋 Tabela servisa i opravki skladišne mehanizacije
+            <h3 className="text-base font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
+              <span>📋 Inkrementalni Pregled Opravki Skladišne Mehanizacije</span>
+              <span className="text-xs bg-amber-100 dark:bg-amber-900/60 text-amber-900 dark:text-amber-300 font-bold px-2 py-0.5 rounded-full">
+                {visibleItems.length.toLocaleString("bs-BA")} / {filteredData.length.toLocaleString("bs-BA")}
+              </span>
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Prikazano ukupno {filteredData.length.toLocaleString("bs-BA")} servisa skladišne mehanizacije
+              Skrolajte prema dolje za automatsko učitavanje starijih opravki viljuškara (Infinite Scroll)
             </p>
           </div>
 
@@ -90,13 +147,10 @@ export function WarehouseRepairs({
               </label>
               <select
                 value={selectedYear}
-                onChange={(e) => {
-                  setSelectedYear(e.target.value);
-                  setCurrentPage(1);
-                }}
+                onChange={(e) => setSelectedYear(e.target.value)}
                 className="text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-amber-500 bg-white dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200"
               >
-                <option value="all">Sve godine</option>
+                <option value="all">Sve godine (2021-2026)</option>
                 {availableYears.map((y) => (
                   <option key={y} value={y.toString()}>
                     {y}. godina
@@ -108,17 +162,14 @@ export function WarehouseRepairs({
             {/* Sort */}
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">
-                Sortiranje / Novi unosi
+                Sortiranje / Unosi
               </label>
               <select
                 value={sortMode}
-                onChange={(e) => {
-                  setSortMode(e.target.value);
-                  setCurrentPage(1);
-                }}
+                onChange={(e) => setSortMode(e.target.value)}
                 className="text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-amber-500 bg-white dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200"
               >
-                <option value="new-first">🆕 Novi unosi na vrhu + Datum (Najnovije)</option>
+                <option value="new-first">🆕 Najnoviji unosi na vrhu</option>
                 <option value="date-desc">📅 Datum (Najnovije prvo)</option>
                 <option value="date-asc">📅 Datum (Najstarije prvo)</option>
                 <option value="cost-desc">💰 Trošak (Najveći prvo)</option>
@@ -134,10 +185,7 @@ export function WarehouseRepairs({
               <input
                 type="text"
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="🔍 Pretraži reg, opis ili servisera..."
                 className="text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 w-full sm:w-56 focus:ring-2 focus:ring-amber-500 font-medium bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
               />
@@ -149,16 +197,20 @@ export function WarehouseRepairs({
                 onClick={() => exportTransactionsToExcel(filteredData, "Skladisna_Mehanizacija_Opravke.xlsx")}
                 className="bg-amber-600 hover:bg-amber-500 text-slate-950 font-extrabold px-3 py-1.5 rounded-lg text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer mt-3 sm:mt-0"
               >
-                <Download className="w-3.5 h-3.5" /> Izvezi Excel
+                <Download className="w-3.5 h-3.5" /> Izvezi Sve ({filteredData.length.toLocaleString("bs-BA")})
               </button>
             </div>
           </div>
         </div>
 
-        {/* Tabela */}
-        <div className="overflow-x-auto max-h-[550px] border border-slate-200 dark:border-slate-800 rounded-lg">
+        {/* Tabela sa Inkrementalnim Skrolom */}
+        <div
+          ref={containerRef}
+          onScroll={handleScroll}
+          className="overflow-x-auto overflow-y-auto max-h-[620px] border border-slate-200 dark:border-slate-800 rounded-xl shadow-inner scroll-smooth"
+        >
           <table className="min-w-full text-xs text-left">
-            <thead className="bg-slate-100 dark:bg-slate-900 sticky top-0 font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 z-10">
+            <thead className="bg-slate-100 dark:bg-slate-900 sticky top-0 font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 z-10 shadow-xs">
               <tr>
                 <th className="py-2.5 px-3">Datum</th>
                 <th className="py-2.5 px-3">Registracija / Oznaka</th>
@@ -172,12 +224,12 @@ export function WarehouseRepairs({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
-              {pageItems.length > 0 ? (
-                pageItems.map((item, idx) => (
+              {visibleItems.length > 0 ? (
+                visibleItems.map((item, idx) => (
                   <tr
-                    key={item.id || idx}
+                    key={item.id || `${item.reg}-${item.datum}-${idx}`}
                     className={`hover:bg-amber-50/60 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 transition-colors ${
-                      item.isNewCustom ? "bg-emerald-50/30 dark:bg-emerald-950/20 font-medium" : ""
+                      item.isNewCustom ? "bg-emerald-50/40 dark:bg-emerald-950/20 font-medium" : ""
                     }`}
                   >
                     <td className="py-2 px-3 whitespace-nowrap text-slate-700 dark:text-slate-300 font-medium">
@@ -221,7 +273,7 @@ export function WarehouseRepairs({
                         {item.isNewCustom && canDelete && item.id && onDeleteCostRecord && (
                           <button
                             onClick={() => onDeleteCostRecord(item.id)}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded font-bold text-xs transition-all cursor-pointer"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/50 p-1 rounded font-bold text-xs transition-all cursor-pointer"
                             title="Obriši ovaj ručno uneseni trošak"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -243,27 +295,48 @@ export function WarehouseRepairs({
               )}
             </tbody>
           </table>
+
+          {/* Sentinel element za automatski infinite scroll */}
+          <div ref={sentinelRef} className="h-4 w-full" />
         </div>
 
-        {/* Paginacija */}
-        <div className="flex items-center justify-between mt-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2.5 rounded-lg">
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-            disabled={safePage <= 1}
-            className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-xs flex items-center gap-1 cursor-pointer"
-          >
-            <ChevronLeft className="w-4 h-4" /> Prethodna
-          </button>
-          <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
-            Stranica {safePage} od {totalPages}
-          </span>
-          <button
-            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-            disabled={safePage >= totalPages}
-            className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-xs flex items-center gap-1 cursor-pointer"
-          >
-            Sljedeća <ChevronRight className="w-4 h-4" />
-          </button>
+        {/* Traka statusa inkrementalnog učitavanja */}
+        <div className="flex flex-col sm:flex-row items-center justify-between mt-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl gap-3">
+          <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+            <span className="font-bold text-slate-900 dark:text-white">
+              Prikazano: {visibleItems.length.toLocaleString("bs-BA")} od {filteredData.length.toLocaleString("bs-BA")} opravki
+            </span>
+            <span className="text-[11px] text-slate-400">
+              ({((visibleItems.length / (filteredData.length || 1)) * 100).toFixed(0)}%)
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {hasMore ? (
+              <button
+                onClick={loadMore}
+                disabled={isLoadingMore}
+                className="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-slate-950 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isLoadingMore ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Učitavam starije opravke...</span>
+                  </>
+                ) : (
+                  <>
+                    <ArrowDown className="w-3.5 h-3.5" />
+                    <span>Učitaj još {BATCH_SIZE} opravki</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-extrabold">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Sve opravke su uspješno učitane</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
