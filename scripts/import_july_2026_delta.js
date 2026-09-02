@@ -199,17 +199,26 @@ async function runDeltaImport() {
     const missingVehicles = new Map();
 
     rows.forEach((row, idx) => {
-        const m = parseInt(row['Month']);
-        const y = parseInt(row['Year']) || 2026;
+        const reg = (row['Reg.oznaka'] || row['RegBroj'] || row['Reg. Oznaka'] || '').toString().trim().toUpperCase();
+        if (!reg || reg === '-' || reg === 'NEPOZNATO') return;
+
+        let y = parseInt(row['Year']) || 2026;
+        let m = parseInt(row['Month']);
+
+        // DERIVE MONTH AND YEAR PRIMARILY FROM "Datum" TO AVOID TYPOS IN "Month" COLUMN
+        const dateIso = parseExcelDate(row['Datum'], y, m);
+        if (dateIso) {
+            const parsedDateObj = new Date(dateIso);
+            m = parsedDateObj.getUTCMonth() + 1;
+            y = parsedDateObj.getUTCFullYear();
+        }
+
         if (isNaN(m)) return;
 
         // CRITICAL FILTER: EXCLUDE MONTH 8 (AUGUST 2026) PER USER REQUIREMENT!
         if (m === 8) {
             return;
         }
-
-        const reg = (row['Reg.oznaka'] || row['RegBroj'] || row['Reg. Oznaka'] || '').toString().trim().toUpperCase();
-        if (!reg || reg === '-' || reg === 'NEPOZNATO') return;
 
         const cost = Math.round((parseFloat(row['cijTot']) || 0) * 100) / 100;
         if (isNaN(cost) || cost <= 0) return;
