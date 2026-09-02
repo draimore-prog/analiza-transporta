@@ -12,6 +12,7 @@ import { MaintenanceAnalysis } from "@/components/transport/MaintenanceAnalysis.
 import { YoYComparison } from "@/components/transport/YoYComparison.jsx";
 import { ServiceTable } from "@/components/transport/ServiceTable.jsx";
 import { MasterFleetTable } from "@/components/transport/MasterFleetTable.jsx";
+import { TcoCalculator } from "@/components/transport/TcoCalculator.jsx";
 
 // Skladišni Tabovi
 import { WarehouseKpis } from "@/components/warehouse/WarehouseKpis.jsx";
@@ -39,7 +40,8 @@ const TRANSPORT_TAB_SLUGS = {
   2: "analiza-odrzavanja",
   3: "yoy-komparacija",
   4: "tabela-servisa",
-  5: "maticna-baza-flote"
+  5: "maticna-baza-flote",
+  6: "tco-zamjena"
 };
 
 const TRANSPORT_SLUG_TO_TAB = {
@@ -54,7 +56,10 @@ const TRANSPORT_SLUG_TO_TAB = {
   "4": 4,
   "maticna-baza-flote": 5,
   "maticna-baza": 5,
-  "5": 5
+  "5": 5,
+  "tco-zamjena": 6,
+  "tco-kalkulator": 6,
+  "6": 6
 };
 
 const WAREHOUSE_TAB_SLUGS = {
@@ -396,6 +401,14 @@ function DashboardContent() {
                   onOpenEditVehicle={(v) => setEditingVehicle(v)}
                   activeUser={activeUser}
                   currentRole={currentRole}
+                />
+              )}
+
+              {activeTab === 6 && (
+                <TcoCalculator
+                  masterFleet={masterFleet}
+                  costData={costData}
+                  onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
                 />
               )}
             </>
