@@ -1,4 +1,4 @@
-const https = require('https');
+import https from 'https';
 
 const PROJECT_ID = 'analiza-transporta-flota';
 
