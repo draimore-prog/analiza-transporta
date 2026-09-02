@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Users, Shield, Plus, Edit2, RefreshCw, X } from "lucide-react";
+import { Users, Shield, Plus, Edit2, RefreshCw, X, Sparkles, ExternalLink } from "lucide-react";
 
 export function AdminPanelModal({
   isOpen,
@@ -98,37 +98,51 @@ export function AdminPanelModal({
           </button>
         </div>
 
-        {/* Tab Navigacija */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 px-6 pt-3 gap-2">
-          <button
-            onClick={() => setActiveAdminTab("users")}
-            className={`flex items-center gap-2 px-4 py-2.5 font-extrabold text-xs rounded-t-xl transition-all cursor-pointer border-t border-x ${
-              activeAdminTab === "users"
-                ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border-slate-200 dark:border-slate-700 shadow-xs"
-                : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span>👥 Korisnički Nalozi</span>
-            <span className="text-[10px] bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full font-mono font-bold">
-              {users.length}
-            </span>
-          </button>
+        {/* Tab Navigacija & Sistemske Akcije */}
+        <div className="flex flex-wrap justify-between items-center border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 px-6 pt-3 gap-2">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveAdminTab("users")}
+              className={`flex items-center gap-2 px-4 py-2.5 font-extrabold text-xs rounded-t-xl transition-all cursor-pointer border-t border-x ${
+                activeAdminTab === "users"
+                  ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border-slate-200 dark:border-slate-700 shadow-xs"
+                  : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>👥 Korisnički Nalozi</span>
+              <span className="text-[10px] bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full font-mono font-bold">
+                {users.length}
+              </span>
+            </button>
 
-          <button
-            onClick={() => setActiveAdminTab("roles")}
-            className={`flex items-center gap-2 px-4 py-2.5 font-extrabold text-xs rounded-t-xl transition-all cursor-pointer border-t border-x ${
-              activeAdminTab === "roles"
-                ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border-slate-200 dark:border-slate-700 shadow-xs"
-                : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-            }`}
-          >
-            <Shield className="w-4 h-4" />
-            <span>🛡️ Uloge & Navigacijski Paneli (app_roles)</span>
-            <span className="text-[10px] bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full font-mono font-bold">
-              {Object.keys(roles).length}
-            </span>
-          </button>
+            <button
+              onClick={() => setActiveAdminTab("roles")}
+              className={`flex items-center gap-2 px-4 py-2.5 font-extrabold text-xs rounded-t-xl transition-all cursor-pointer border-t border-x ${
+                activeAdminTab === "roles"
+                  ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border-slate-200 dark:border-slate-700 shadow-xs"
+                  : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+              }`}
+            >
+              <Shield className="w-4 h-4" />
+              <span>🛡️ Uloge & Navigacijski Paneli (app_roles)</span>
+              <span className="text-[10px] bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full font-mono font-bold">
+                {Object.keys(roles).length}
+              </span>
+            </button>
+          </div>
+
+          <div className="pb-2">
+            <button
+              onClick={() => (window.location.href = "/v1.html")}
+              title="Otvara originalni, neizmijenjeni V1 HTML pregled sa kompletnom bazom"
+              className="bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-600 hover:to-indigo-700 text-white font-extrabold px-3.5 py-2 rounded-xl transition-all text-xs flex items-center gap-2 shadow-xs border border-indigo-600 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>🏛️ V1 Originalni Pregled</span>
+              <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+            </button>
+          </div>
         </div>
 
         {/* Tab Sadržaj */}
