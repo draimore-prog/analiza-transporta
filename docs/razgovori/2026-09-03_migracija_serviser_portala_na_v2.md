@@ -44,5 +44,10 @@
    - U `LoginModal.jsx` dodan `await onLogin(...)`.
    - U Firestore bazi ispravljen nalog `jasenko` (ime: Jasenko Mitrović, email: `jasenko.mitrovic@bingotuzla.ba`).
 
-5. **Verifikacija**:
+5. **Verifikacija i Deployment**:
    - Pokrenut `npm run build` – aplikacija se kompajlira za 3.5s bez ijedne greške.
+   - Povezan GitHub nalog i uspješno izvršen `git push origin master`.
+   - Autentifikovan Firebase CLI i izvršen live deploy:
+     - Komanda: `npx firebase deploy --only hosting`
+     - Status: `+ Deploy complete!`
+     - Live URL: `https://analiza-transporta-flota.web.app` (HTTP 200, `no-cache, no-store, must-revalidate`).
