@@ -3,9 +3,19 @@
 **Datum**: 03.09.2026.  
 **Projekat**: Analiza Transporta - Održavanje Flote (`analiza-transporta-flota`)
 
+## 0. Direktni Linkovi za Preuzimanje i Pristup
+
+- 📦 **Direktan ZIP Download koda**:  
+  [https://github.com/draimore-prog/analiza-transporta/archive/refs/heads/master.zip](https://github.com/draimore-prog/analiza-transporta/archive/refs/heads/master.zip)
+- 🌐 **Web Aplikacija (Uživo sa svim podacima)**:  
+  [https://analiza-transporta-flota.web.app](https://analiza-transporta-flota.web.app)
+- 🐙 **GitHub Repozitorij**:  
+  [https://github.com/draimore-prog/analiza-transporta](https://github.com/draimore-prog/analiza-transporta)
+
 ---
 
 ## 1. Web Pristup (Najbrži način bez instalacije)
+
 Za rad i korištenje aplikacije na novom računaru (pregled analitike, uvoz novih Excel fajlova, rad sa kartonima vozila):
 - Otvoriti web preglednik na računaru i ići na adresu: **`https://analiza-transporta-flota.web.app`**
 - Svi podaci se automatski učitavaju iz Google Cloud Firestore baze podataka u realnom vremenu.
