@@ -40,8 +40,8 @@ export function EditUserModal({
       const updated = {
         username: username.trim(),
         fullname: fullname.trim(),
-        email: email.trim() || undefined,
-        password: password.trim() || undefined,
+        email: email.trim() || "",
+        password: password.trim() || user.password || "",
         role: role,
         createdAt: user.createdAt || new Date().toISOString()
       };

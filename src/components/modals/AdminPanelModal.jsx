@@ -40,7 +40,7 @@ export function AdminPanelModal({
       const newUserObj = {
         username: newUsername.trim().toLowerCase(),
         fullname: newFullname.trim(),
-        email: newEmail.trim() || undefined,
+        email: newEmail.trim() || "",
         password: newPassword.trim(),
         role: newRole,
         createdAt: new Date().toLocaleDateString("bs-BA")

@@ -66,17 +66,19 @@ export function useAuth() {
       unsubUsers = onSnapshot(
         collection(db, "app_users"),
         (snapshot) => {
+          const loadedUsers = [];
           if (!snapshot.empty) {
-            const loadedUsers = [];
             snapshot.forEach((d) => {
               const u = d.data();
               if (u && u.username) {
                 loadedUsers.push(u);
               }
             });
-            if (loadedUsers.length > 0) {
-              setUsers(loadedUsers);
-            }
+          }
+          if (loadedUsers.length > 0) {
+            setUsers(loadedUsers);
+          } else {
+            setUsers([DEFAULT_SUPERADMIN]);
           }
         },
         (err) => {
@@ -153,7 +155,10 @@ export function useAuth() {
 
   const saveUserToFirestore = async (user) => {
     const docId = user.username.toLowerCase();
-    await setDoc(doc(db, "app_users", docId), user, { merge: true });
+    const cleanUser = Object.fromEntries(
+      Object.entries(user).filter(([_, v]) => v !== undefined)
+    );
+    await setDoc(doc(db, "app_users", docId), cleanUser, { merge: true });
   };
 
   const deleteUserFromFirestore = async (username) => {
