@@ -16,9 +16,9 @@ export function LoginModal({ isOpen, onLogin, onGoogleLogin }) {
     setIsLoading(true);
 
     try {
-      const res = onLogin(username, password, rememberMe);
-      if (!res.success) {
-        setErrorMessage(res.error || "Neispravno korisničko ime ili lozinka!");
+      const res = await onLogin(username, password, rememberMe);
+      if (!res?.success) {
+        setErrorMessage(res?.error || "Neispravno korisničko ime ili lozinka!");
       }
     } catch (err) {
       setErrorMessage("Došlo je do greške prilikom prijave.");

@@ -147,11 +147,20 @@ export function Sidebar({
               </div>
               <button
                 onClick={() => setPortalMode("warehouse")}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs font-bold bg-amber-50/80 hover:bg-amber-100 dark:bg-amber-950/30 dark:hover:bg-amber-900/40 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50 transition-all cursor-pointer"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs font-bold bg-amber-50/80 hover:bg-amber-100 dark:bg-amber-950/30 dark:hover:bg-amber-900/40 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50 transition-all cursor-pointer mb-1.5"
               >
                 <span>🏗️</span>
                 <span>Skladišna Mehanizacija</span>
               </button>
+              {(currentRole?.allowedPortals?.includes("serviser") || activeUser?.role === "superadmin") && (
+                <button
+                  onClick={() => setPortalMode("serviser")}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs font-bold bg-indigo-50/80 hover:bg-indigo-100 dark:bg-indigo-950/30 dark:hover:bg-indigo-900/40 text-indigo-900 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900/50 transition-all cursor-pointer"
+                >
+                  <span>🔧</span>
+                  <span>Servisna Radionica</span>
+                </button>
+              )}
             </div>
           </>
         ) : (

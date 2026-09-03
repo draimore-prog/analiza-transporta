@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { DEFAULT_APP_ROLES, SESSION_ACTIVE_USER_KEY } from "@/lib/constants.js";
 import { db } from "@/lib/firebase.js";
-import { collection, onSnapshot, doc, setDoc, deleteDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc, getDocs, query, where } from "firebase/firestore";
 
 const DEFAULT_SUPERADMIN = {
   username: "emir.durakovic",
@@ -96,19 +96,39 @@ export function useAuth() {
   }, []);
 
   const login = useCallback(
-    (identifier, password, rememberMe = true) => {
+    async (identifier, password, rememberMe = true) => {
       const idClean = (identifier || "").trim().toLowerCase();
       const passClean = (password || "").trim();
 
-      // Provjera u bazi korisnika i superadmina
+      // 1. Provjera u lokalnom state-u (brzo)
       let foundUser = users.find(
         (u) =>
           (u.username && u.username.toLowerCase() === idClean) ||
           (u.email && u.email.toLowerCase() === idClean)
       );
 
+      // 2. Provjera default superadmina
       if (!foundUser && (DEFAULT_SUPERADMIN.username.toLowerCase() === idClean || DEFAULT_SUPERADMIN.email.toLowerCase() === idClean)) {
         foundUser = DEFAULT_SUPERADMIN;
+      }
+
+      // 3. Fallback: Ako nije u lokalnom stanju (npr. snapshot se još učitava), povuci direktno iz Firestore
+      if (!foundUser) {
+        try {
+          const userDocSnap = await getDoc(doc(db, "app_users", idClean));
+          if (userDocSnap.exists()) {
+            foundUser = userDocSnap.data();
+          } else {
+            // Provjeri po emailu u Firestore ako je unesen email
+            const q = query(collection(db, "app_users"), where("email", "==", idClean));
+            const emailSnap = await getDocs(q);
+            if (!emailSnap.empty) {
+              foundUser = emailSnap.docs[0].data();
+            }
+          }
+        } catch (err) {
+          console.warn("Direct firestore lookup error during login:", err);
+        }
       }
 
       if (foundUser && foundUser.password === passClean) {

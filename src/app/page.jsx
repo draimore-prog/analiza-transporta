@@ -21,6 +21,9 @@ import { WarehouseRepairs } from "@/components/warehouse/WarehouseRepairs.jsx";
 import { WarehouseSegments } from "@/components/warehouse/WarehouseSegments.jsx";
 import { WarehouseSuppliers } from "@/components/warehouse/WarehouseSuppliers.jsx";
 
+// Serviser Portal
+import { ServiserDashboard } from "@/components/serviser/ServiserDashboard.jsx";
+
 // Modali
 import { LoginModal } from "@/components/modals/LoginModal.jsx";
 import { VehicleCardModal } from "@/components/modals/VehicleCardModal.jsx";
@@ -120,9 +123,19 @@ function DashboardContent() {
     setPortalModeState(mode);
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
-      const portalSlug = mode === "warehouse" ? "skladisna-mehanizacija" : "transport";
+      const portalSlug =
+        mode === "warehouse"
+          ? "skladisna-mehanizacija"
+          : mode === "serviser"
+          ? "servisna-radionica"
+          : "transport";
       url.searchParams.set("portal", portalSlug);
-      const pageSlug = mode === "warehouse" ? WAREHOUSE_TAB_SLUGS[activeWhTab] : TRANSPORT_TAB_SLUGS[activeTab];
+      const pageSlug =
+        mode === "warehouse"
+          ? WAREHOUSE_TAB_SLUGS[activeWhTab]
+          : mode === "serviser"
+          ? "karton-pretraga"
+          : TRANSPORT_TAB_SLUGS[activeTab];
       url.searchParams.set("stranica", pageSlug);
       url.searchParams.delete("tab");
       url.searchParams.delete("whTab");
@@ -164,7 +177,10 @@ function DashboardContent() {
       const pageParam = params.get("stranica") || params.get("tab") || params.get("whTab");
 
       const isWh = portalParam === "skladisna-mehanizacija" || portalParam === "skladiste" || portalParam === "warehouse";
-      if (isWh) {
+      const isServ = portalParam === "servisna-radionica" || portalParam === "serviser";
+      if (isServ) {
+        setPortalModeState("serviser");
+      } else if (isWh) {
         setPortalModeState("warehouse");
         if (pageParam && WAREHOUSE_SLUG_TO_TAB[pageParam]) {
           setActiveWhTabState(WAREHOUSE_SLUG_TO_TAB[pageParam]);
@@ -231,8 +247,16 @@ function DashboardContent() {
   useEffect(() => {
     if (activeUser?.role === "warehouse_specialist") {
       setPortalModeState("warehouse");
+    } else if (activeUser?.role === "serviser") {
+      setPortalModeState("serviser");
     } else if (currentRole?.defaultPortal) {
-      setPortalModeState(currentRole.defaultPortal === "warehouse" ? "warehouse" : "transport");
+      setPortalModeState(
+        currentRole.defaultPortal === "warehouse"
+          ? "warehouse"
+          : currentRole.defaultPortal === "serviser"
+          ? "serviser"
+          : "transport"
+      );
     }
   }, [activeUser, currentRole]);
 
@@ -305,6 +329,46 @@ function DashboardContent() {
         <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
         <h2 className="text-xl font-bold tracking-tight">Analiza Transporta & Voznog Parka</h2>
         <p className="text-xs text-slate-400 font-mono">{loadProgress}</p>
+      </div>
+    );
+  }
+
+  // Serviserski namjenski portal (čista radionica bez teških finansijskih menija)
+  if (portalMode === "serviser") {
+    return (
+      <div className="flex h-screen w-full overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+        <ServiserDashboard
+          masterFleet={masterFleet}
+          costData={costData}
+          activeUser={activeUser}
+          onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
+          onLogout={logout}
+          onSwitchPortal={
+            currentRole?.permissions?.canSwitchPortal || activeUser?.role === "superadmin"
+              ? () => setPortalMode("transport")
+              : null
+          }
+        />
+
+        {/* Karton Vozila Modal */}
+        <VehicleCardModal
+          isOpen={!!vehicleModalReg}
+          onClose={() => setVehicleModalReg(null)}
+          reg={vehicleModalReg || ""}
+          masterFleet={masterFleet}
+          costData={costData}
+          onOpenEditVehicle={(v) => setEditingVehicle(v)}
+          currentRole={currentRole}
+          activeUser={activeUser}
+        />
+
+        {/* Izmjena Lozinke Modal */}
+        <ChangePasswordModal
+          isOpen={isPasswordModalOpen}
+          onClose={() => setIsPasswordModalOpen(false)}
+          user={activeUser}
+          onSaveUser={saveUserToFirestore}
+        />
       </div>
     );
   }
@@ -472,6 +536,7 @@ function DashboardContent() {
         costData={costData}
         onOpenEditVehicle={(v) => setEditingVehicle(v)}
         currentRole={currentRole}
+        activeUser={activeUser}
       />
 
       {/* Rekapitulacija Internih / Eksternih Servisa Modal */}
