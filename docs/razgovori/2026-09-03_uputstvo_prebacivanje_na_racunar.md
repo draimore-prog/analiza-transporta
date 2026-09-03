@@ -7,12 +7,15 @@
 
 - 📦 **Direktan ZIP Download koda**:  
   [https://github.com/draimore-prog/analiza-transporta/archive/refs/heads/master.zip](https://github.com/draimore-prog/analiza-transporta/archive/refs/heads/master.zip)
+- ⚙️ **Direktan ZIP Download Antigravity & Agent Postavki**:  
+  [https://raw.githubusercontent.com/draimore-prog/analiza-transporta/master/antigravity_and_agent_settings.zip](https://raw.githubusercontent.com/draimore-prog/analiza-transporta/master/antigravity_and_agent_settings.zip)
 - 🌐 **Web Aplikacija (Uživo sa svim podacima)**:  
   [https://analiza-transporta-flota.web.app](https://analiza-transporta-flota.web.app)
 - 🐙 **GitHub Repozitorij**:  
   [https://github.com/draimore-prog/analiza-transporta](https://github.com/draimore-prog/analiza-transporta)
 
 ---
+
 
 ## 1. Web Pristup (Najbrži način bez instalacije)
 
