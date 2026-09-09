@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import { formatDate, formatKM } from "@/lib/calculations.js";
+import { formatDate, formatKM, formatOperatingHours } from "@/lib/calculations.js";
 import { exportTransactionsToExcel } from "@/lib/exportExcel.js";
 import { InvoicePreviewModal } from "@/components/modals/InvoicePreviewModal.jsx";
 import {
@@ -276,6 +276,7 @@ export function WarehouseRepairs({
                   <th className="py-2.5 px-3 w-32">Interna Oznaka / Reg</th>
                   <th className="py-2.5 px-3 w-24">Garažni Br.</th>
                   <th className="py-2.5 px-3 w-28">Marka</th>
+                  <th className="py-2.5 px-3 w-28 text-right font-mono">Radni sati</th>
                   <th className="py-2.5 px-3 w-36">Segment</th>
                   <th className="py-2.5 px-3 w-64">Opis Popravke</th>
                   <th className="py-2.5 px-3 w-40">Serviser / Dobavljač</th>
@@ -337,6 +338,9 @@ export function WarehouseRepairs({
                       ))}
                     </select>
                   </th>
+
+                  {/* Radni sati placeholder */}
+                  <th className="p-1.5 text-center text-[10px] text-slate-400 font-mono">-</th>
 
                   {/* Segment */}
                   <th className="p-1.5">
@@ -418,6 +422,11 @@ export function WarehouseRepairs({
                       <td className="py-2 px-3 text-slate-600 dark:text-slate-400">
                         {item.markaVoz || "-"}
                       </td>
+                      <td className="py-2 px-3 text-right font-mono font-semibold text-amber-700 dark:text-amber-400 whitespace-nowrap">
+                        <span className="bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded text-[11px] font-bold">
+                          {formatOperatingHours(item.radniSati ?? 0)}
+                        </span>
+                      </td>
                       <td className="py-2 px-3 font-semibold text-slate-700 dark:text-slate-300">
                         {item.segment || "-"}
                       </td>
@@ -465,10 +474,10 @@ export function WarehouseRepairs({
                 ) : (
                   <tr>
                     <td
-                      colSpan={8}
+                      colSpan={9}
                       className="py-8 text-center text-slate-400 font-medium italic"
                     >
-                      Nema popravki skladišne mehanizacije koje odgovaraju odabranim filterima.
+                      Nema zapisa koji odgovaraju odabranim kolonskim filterima.
                     </td>
                   </tr>
                 )}

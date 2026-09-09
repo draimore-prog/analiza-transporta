@@ -47,14 +47,19 @@ export function useFleetData() {
       const cached = await IDBCache.get(DATASET_CACHE_KEY);
       if (cached && Array.isArray(cached) && cached.length > 0) {
         // Obnovi Date objekte iz keša
-        const revived = cached.map((c) => ({
-          ...c,
-          datumObj: c.datum ? new Date(c.datum) : (c.datumObj ? new Date(c.datumObj) : null),
-          cost: parseFloat(c.cost || 0) || 0,
-          year: parseInt(c.year) || 2026,
-          month: parseInt(c.month) || 1,
-          tipMehan: cleanVehicleType(c.tipMehan)
-        }));
+        const revived = cached.map((c) => {
+          const cleanT = cleanVehicleType(c.tipMehan);
+          return {
+            ...c,
+            datumObj: c.datum ? new Date(c.datum) : (c.datumObj ? new Date(c.datumObj) : null),
+            cost: parseFloat(c.cost || 0) || 0,
+            year: parseInt(c.year) || 2026,
+            month: parseInt(c.month) || 1,
+            tipMehan: cleanT,
+            kilometraza: c.kilometraza != null ? Number(c.kilometraza) : null,
+            radniSati: c.radniSati != null ? Number(c.radniSati) : (cleanT === "Radna mašina" || cleanT === "Skladišna mehanizacija" ? 0 : null)
+          };
+        });
         setCostData(revived);
       } else {
         const res = await fetch("/fleet_data.json");
@@ -63,13 +68,16 @@ export function useFleetData() {
           const list = Array.isArray(raw) ? raw : (raw.records || []);
           const parsed = list.map((c) => {
             const datumObj = c.datum ? new Date(c.datum) : null;
+            const cleanT = cleanVehicleType(c.tipMehan);
             return {
               ...c,
               datumObj,
               cost: parseFloat(c.cost || 0) || 0,
               year: parseInt(c.year) || (datumObj ? datumObj.getFullYear() : 2026),
               month: parseInt(c.month) || (datumObj ? datumObj.getMonth() + 1 : 1),
-              tipMehan: cleanVehicleType(c.tipMehan)
+              tipMehan: cleanT,
+              kilometraza: c.kilometraza != null ? Number(c.kilometraza) : null,
+              radniSati: c.radniSati != null ? Number(c.radniSati) : (cleanT === "Radna mašina" || cleanT === "Skladišna mehanizacija" ? 0 : null)
             };
           });
           setCostData(parsed);
@@ -117,6 +125,8 @@ export function useFleetData() {
               item.year = parseInt(item.year) || (item.datumObj ? item.datumObj.getFullYear() : 2026);
               item.month = parseInt(item.month) || (item.datumObj ? item.datumObj.getMonth() + 1 : 1);
               item.tipMehan = cleanVehicleType(item.tipMehan);
+              item.kilometraza = item.kilometraza != null ? Number(item.kilometraza) : null;
+              item.radniSati = item.radniSati != null ? Number(item.radniSati) : (item.tipMehan === "Radna mašina" || item.tipMehan === "Skladišna mehanizacija" ? 0 : null);
 
               if (change.type === "added") {
                 if (!updated.some((c) => c.id === item.id)) {

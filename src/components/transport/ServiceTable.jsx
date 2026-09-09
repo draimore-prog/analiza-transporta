@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import { formatDate, formatKM, cleanVehicleType } from "@/lib/calculations.js";
+import { formatDate, formatKM, cleanVehicleType, formatMileage, formatOperatingHours } from "@/lib/calculations.js";
 import { exportTransactionsToExcel } from "@/lib/exportExcel.js";
 import { InvoicePreviewModal } from "@/components/modals/InvoicePreviewModal.jsx";
 import {
@@ -41,6 +41,17 @@ export function ServiceTable({
   const sentinelRef = useRef(null);
 
   const BATCH_SIZE = 60;
+
+  const isPrikljucnaFilter = colFilterType === "Priključna vozila";
+  const colUsageHeader = useMemo(() => {
+    if (colFilterType === "Radna mašina" || colFilterType === "Skladišna mehanizacija") {
+      return "Radni sati";
+    }
+    if (colFilterType === "Teretna vozila" || colFilterType === "Putnička vozila") {
+      return "Kilometraža";
+    }
+    return "Kilometraža / R. sati";
+  }, [colFilterType]);
 
   // Raspoložive godine
   const availableYears = useMemo(() => {
@@ -301,6 +312,9 @@ export function ServiceTable({
                   <th className="py-2.5 px-3 w-24">Garažni Br.</th>
                   <th className="py-2.5 px-3 w-36">Tip Mehanizacije</th>
                   <th className="py-2.5 px-3 w-28">Marka</th>
+                  {!isPrikljucnaFilter && (
+                    <th className="py-2.5 px-3 w-28 text-right font-mono">{colUsageHeader}</th>
+                  )}
                   <th className="py-2.5 px-3 w-36">Segment</th>
                   <th className="py-2.5 px-3 w-64">Opis Popravke</th>
                   <th className="py-2.5 px-3 w-40">Serviser / Dobavljač</th>
@@ -378,6 +392,11 @@ export function ServiceTable({
                       ))}
                     </select>
                   </th>
+
+                  {/* Kilometraža / Radni sati placeholder */}
+                  {!isPrikljucnaFilter && (
+                    <th className="p-1.5 text-center text-[10px] text-slate-400 font-mono">-</th>
+                  )}
 
                   {/* Segment filter */}
                   <th className="p-1.5">
@@ -464,6 +483,23 @@ export function ServiceTable({
                         <td className="py-2 px-3 text-slate-600 dark:text-slate-400">
                           {item.markaVoz || "-"}
                         </td>
+                        {!isPrikljucnaFilter && (
+                          <td className="py-2 px-3 text-right font-mono font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                            {displayType === "Priključna vozila" ? (
+                              <span className="text-slate-300 dark:text-slate-600">-</span>
+                            ) : displayType === "Radna mašina" || displayType === "Skladišna mehanizacija" ? (
+                              <span className="text-amber-700 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded text-[11px]">
+                                {formatOperatingHours(item.radniSati ?? 0)}
+                              </span>
+                            ) : item.kilometraza != null ? (
+                              <span className="text-blue-700 dark:text-blue-400 font-bold">
+                                {formatMileage(item.kilometraza)}
+                              </span>
+                            ) : (
+                              <span className="text-slate-300 dark:text-slate-600">-</span>
+                            )}
+                          </td>
+                        )}
                         <td className="py-2 px-3 font-semibold text-slate-700 dark:text-slate-300">
                           {item.segment || "-"}
                         </td>
@@ -512,7 +548,7 @@ export function ServiceTable({
                 ) : (
                   <tr>
                     <td
-                      colSpan={9}
+                      colSpan={isPrikljucnaFilter ? 9 : 10}
                       className="py-8 text-center text-slate-400 font-medium italic"
                     >
                       Nema zapisa koji odgovaraju odabranim kolonskim filterima.

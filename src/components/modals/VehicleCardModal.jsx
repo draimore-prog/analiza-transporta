@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo, useState } from "react";
-import { formatKM, formatDate } from "@/lib/calculations.js";
+import { formatKM, formatDate, cleanVehicleType, formatMileage, formatOperatingHours } from "@/lib/calculations.js";
 import { Chart, registerables } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { InvoicePreviewModal } from "./InvoicePreviewModal.jsx";
@@ -579,6 +579,9 @@ export function VehicleCardModal({
                   {/* 1. RED */}
                   <tr>
                     <th className="p-2.5 w-24">Datum</th>
+                    {!isPrikljucno && (
+                      <th className="p-2.5 w-28 text-right font-mono">{usageColTitle}</th>
+                    )}
                     <th className="p-2.5 w-32">Segment</th>
                     <th className="p-2.5">Opis Radova / Dijelovi</th>
                     <th className="p-2.5 w-40">Serviser</th>
@@ -606,6 +609,11 @@ export function VehicleCardModal({
                         ))}
                       </select>
                     </th>
+
+                    {/* Kilometraža / Radni sati placeholder */}
+                    {!isPrikljucno && (
+                      <th className="p-1 text-center text-[10px] text-slate-400 font-mono">-</th>
+                    )}
 
                     {/* Segment filter */}
                     <th className="p-1">
@@ -667,6 +675,21 @@ export function VehicleCardModal({
                         <td className="p-2.5 font-medium whitespace-nowrap text-slate-700 dark:text-slate-300 print:text-slate-900">
                           {formatDate(c.datumObj || c.datum)}
                         </td>
+                        {!isPrikljucno && (
+                          <td className="p-2.5 text-right font-mono font-bold whitespace-nowrap">
+                            {cleanType === "Radna mašina" || cleanType === "Skladišna mehanizacija" ? (
+                              <span className="text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded text-[11px]">
+                                {formatOperatingHours(c.radniSati ?? 0)}
+                              </span>
+                            ) : c.kilometraza != null ? (
+                              <span className="text-blue-700 dark:text-blue-400">
+                                {formatMileage(c.kilometraza)}
+                              </span>
+                            ) : (
+                              <span className="text-slate-300 dark:text-slate-600">-</span>
+                            )}
+                          </td>
+                        )}
                         <td className="p-2.5 font-bold text-slate-800 dark:text-slate-200 print:text-slate-900">
                           {c.segment || "-"}
                         </td>
@@ -732,7 +755,7 @@ export function VehicleCardModal({
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="p-6 text-center text-slate-400 italic">
+                      <td colSpan={isPrikljucno ? 5 : 6} className="p-6 text-center text-slate-400 italic">
                         Nema zabilježenih servisa za odabrane filtere.
                       </td>
                     </tr>

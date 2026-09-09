@@ -94,3 +94,26 @@ export function formatDate(d) {
   const year = dateObj.getFullYear();
   return `${day}.${month}.${year}.`;
 }
+
+export function formatMileage(val) {
+  if (val === null || val === undefined || isNaN(val)) return '-';
+  return Math.round(Number(val)).toLocaleString('bs-BA') + ' km';
+}
+
+export function formatOperatingHours(val) {
+  if (val === null || val === undefined || isNaN(val)) return '0 h';
+  return Math.round(Number(val)).toLocaleString('bs-BA') + ' h';
+}
+
+export function formatServiceUsage(item) {
+  if (!item) return '-';
+  const cleanType = cleanVehicleType(item.tipMehan);
+  if (cleanType === 'Priključna vozila') return '-';
+  if (cleanType === 'Radna mašina' || cleanType === 'Skladišna mehanizacija') {
+    return formatOperatingHours(item.radniSati ?? 0);
+  }
+  if (cleanType === 'Teretna vozila' || cleanType === 'Putnička vozila') {
+    return item.kilometraza != null ? formatMileage(item.kilometraza) : '-';
+  }
+  return '-';
+}

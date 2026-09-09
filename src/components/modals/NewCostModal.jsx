@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { X, PlusCircle, FileText, Upload, Trash2, Loader2, CheckCircle2, Paperclip } from "lucide-react";
+import { X, PlusCircle, FileText, Upload, Trash2, Loader2, CheckCircle2, Paperclip, Sparkles } from "lucide-react";
 import { uploadMediaFile } from "@/lib/fileUpload.js";
+import { cleanVehicleType, formatDate } from "@/lib/calculations.js";
 
 export function NewCostModal({
   isOpen,
@@ -22,6 +23,13 @@ export function NewCostModal({
   const [dobavljac, setDobavljac] = useState("");
   const [cost, setCost] = useState("");
   
+  // Kilometraža / Radni sati
+  const [kilometraza, setKilometraza] = useState("");
+  const [radniSati, setRadniSati] = useState("0");
+  const [isMatchingMileage, setIsMatchingMileage] = useState(false);
+  const [matchMessage, setMatchMessage] = useState(null);
+  const odometerDataRef = useRef(null);
+
   // Priloženi račun / faktura
   const [invoiceUrl, setInvoiceUrl] = useState("");
   const [invoiceName, setInvoiceName] = useState("");
@@ -33,6 +41,85 @@ export function NewCostModal({
 
   if (!isOpen) return null;
 
+  const normalizePlate = (str) => {
+    if (!str) return "";
+    return str.toString().trim().toUpperCase()
+      .replace(/[Š]/g, "S")
+      .replace(/[ČĆ]/g, "C")
+      .replace(/[Ž]/g, "Z")
+      .replace(/[Đ]/g, "DJ")
+      .replace(/[^A-Z0-9]/g, "");
+  };
+
+  const fetchOdometerData = async () => {
+    if (odometerDataRef.current) return odometerDataRef.current;
+    try {
+      const res = await fetch("/fleet_odometer.json");
+      if (res.ok) {
+        const data = await res.json();
+        odometerDataRef.current = data;
+        return data;
+      }
+    } catch (err) {
+      console.warn("Notice loading fleet_odometer.json:", err);
+    }
+    return null;
+  };
+
+  const triggerOdometerMatch = async (vehicleReg, vehicleGb, serviceDate) => {
+    setIsMatchingMileage(true);
+    setMatchMessage(null);
+    try {
+      const data = await fetchOdometerData();
+      if (!data) {
+        setMatchMessage({ success: false, text: "Baza točenja goriva trenutno nije dostupna." });
+        return;
+      }
+
+      const rNorm = normalizePlate(vehicleReg);
+      const mNorm = normalizePlate(vehicleGb);
+
+      const readings = (rNorm && data[rNorm]) || (mNorm && data[mNorm]) || null;
+
+      if (!readings || readings.length === 0) {
+        setMatchMessage({
+          success: false,
+          text: `Nema evidentiranih točenja sa pumpe za vozilo ${vehicleReg || vehicleGb}. Unesite kilometražu ručno.`
+        });
+        return;
+      }
+
+      const targetTime = serviceDate ? new Date(serviceDate).getTime() : Date.now();
+      let bestKm = null;
+      let bestDate = null;
+      let bestDiff = Infinity;
+
+      readings.forEach(([dStr, kmVal]) => {
+        const dTime = new Date(dStr).getTime();
+        const diff = Math.abs(targetTime - dTime);
+        if (diff < bestDiff) {
+          bestDiff = diff;
+          bestKm = kmVal;
+          bestDate = dStr;
+        }
+      });
+
+      if (bestKm != null) {
+        setKilometraza(bestKm.toString());
+        const daysDiff = Math.round(bestDiff / (1000 * 60 * 60 * 24));
+        const diffText = daysDiff === 0 ? "isti dan" : `odstupanje ${daysDiff} d.`;
+        setMatchMessage({
+          success: true,
+          text: `Pronađeno točenje od ${formatDate(bestDate)} (${diffText}): ${bestKm.toLocaleString("bs-BA")} km`
+        });
+      }
+    } catch (e) {
+      setMatchMessage({ success: false, text: "Greška pri pretrazi točenja: " + e.message });
+    } finally {
+      setIsMatchingMileage(false);
+    }
+  };
+
   const handleRegChange = (val) => {
     setReg(val);
     const upper = val.trim().toUpperCase();
@@ -40,11 +127,41 @@ export function NewCostModal({
     if (found) {
       setReg(found.reg);
       setGarazniBroj(found.garazniBroj || "-");
-      setTipMehan(found.tipMehan || "Teretna vozila");
+      const cleanT = cleanVehicleType(found.tipMehan || "Teretna vozila");
+      setTipMehan(cleanT);
       setMarkaVoz(found.markaVoz || "-");
       setModelVoz(found.modelVoz || "-");
+      setMatchMessage(null);
+
+      if (cleanT === "Priključna vozila") {
+        setKilometraza("");
+        setRadniSati("");
+      } else if (cleanT === "Radna mašina" || cleanT === "Skladišna mehanizacija") {
+        setRadniSati("0");
+        setKilometraza("");
+      } else {
+        triggerOdometerMatch(found.reg, found.garazniBroj, datum);
+      }
     }
   };
+
+  const handleTipMehanChange = (newTip) => {
+    const cleanT = cleanVehicleType(newTip);
+    setTipMehan(cleanT);
+    setMatchMessage(null);
+    if (cleanT === "Priključna vozila") {
+      setKilometraza("");
+      setRadniSati("");
+    } else if (cleanT === "Radna mašina" || cleanT === "Skladišna mehanizacija") {
+      setRadniSati("0");
+      setKilometraza("");
+    } else {
+      if (reg.trim()) {
+        triggerOdometerMatch(reg, garazniBroj, datum);
+      }
+    }
+  };
+
 
   const handleInvoiceFileChange = async (e) => {
     const file = e.target.files?.[0];
@@ -85,16 +202,33 @@ export function NewCostModal({
       const year = isNaN(dateObj.getFullYear()) ? new Date().getFullYear() : dateObj.getFullYear();
       const month = isNaN(dateObj.getMonth()) ? (new Date().getMonth() + 1) : (dateObj.getMonth() + 1);
 
+      let finalKm = null;
+      let finalHours = null;
+      const cleanT = cleanVehicleType(tipMehan);
+
+      if (cleanT === "Priključna vozila") {
+        finalKm = null;
+        finalHours = null;
+      } else if (cleanT === "Radna mašina" || cleanT === "Skladišna mehanizacija") {
+        finalHours = radniSati !== "" ? parseFloat(radniSati) : 0;
+        finalKm = null;
+      } else {
+        finalKm = kilometraza !== "" ? parseInt(kilometraza) : null;
+        finalHours = null;
+      }
+
       const newRecord = {
         reg: reg.trim().toUpperCase(),
         garazniBroj: garazniBroj.trim() || "-",
-        tipMehan: tipMehan,
+        tipMehan: cleanT,
         markaVoz: markaVoz.trim() || "-",
         modelVoz: modelVoz.trim() || "-",
         datum: datum,
         datumObj: dateObj,
         year: year,
         month: month,
+        kilometraza: finalKm,
+        radniSati: finalHours,
         segment: segment,
         opisPopravke: opis.trim(),
         opisRadova: opis.trim(),
@@ -183,7 +317,7 @@ export function NewCostModal({
               <label className="block font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Tip Mehanizacije</label>
               <select
                 value={tipMehan}
-                onChange={(e) => setTipMehan(e.target.value)}
+                onChange={(e) => handleTipMehanChange(e.target.value)}
                 className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-semibold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white cursor-pointer"
               >
                 <option value="Teretna vozila">Teretna vozila</option>
@@ -275,6 +409,78 @@ export function NewCostModal({
                 className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-semibold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
+
+            {/* Dinamičko polje: Kilometraža ili Radni Sati (sakriveno za priključna vozila) */}
+            {cleanVehicleType(tipMehan) !== "Priključna vozila" && (
+              <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700/80">
+                {cleanVehicleType(tipMehan) === "Radna mašina" || cleanVehicleType(tipMehan) === "Skladišna mehanizacija" ? (
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block font-bold uppercase text-slate-700 dark:text-slate-300">
+                        Radni Sati (h)
+                      </label>
+                      <span className="text-[10px] text-amber-700 dark:text-amber-400 font-extrabold bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded">
+                        🚜 Radna mašina / Skladište (početno 0 h)
+                      </span>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={radniSati}
+                      onChange={(e) => setRadniSati(e.target.value)}
+                      placeholder="0"
+                      className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
+                      <label className="block font-bold uppercase text-slate-700 dark:text-slate-300">
+                        Kilometraža (km)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => triggerOdometerMatch(reg, garazniBroj, datum)}
+                        disabled={isMatchingMileage || !reg.trim()}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/70 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {isMatchingMileage ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                        )}
+                        <span>⚡ Poklopi sa točenjem goriva</span>
+                      </button>
+                    </div>
+
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={kilometraza}
+                      onChange={(e) => {
+                        setKilometraza(e.target.value);
+                        setMatchMessage(null);
+                      }}
+                      placeholder="Npr. 245000 (ili kliknite 'Poklopi sa točenjem')"
+                      className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-mono font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm"
+                    />
+
+                    {matchMessage && (
+                      <div className={`mt-2 p-2 rounded-lg text-xs flex items-center gap-1.5 font-medium ${
+                        matchMessage.success 
+                          ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800" 
+                          : "bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
+                      }`}>
+                        {matchMessage.success ? <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" /> : <X className="w-4 h-4 shrink-0 text-amber-600" />}
+                        <span>{matchMessage.text}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="sm:col-span-2">
               <label className="block font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Opis Radova / Dijelova</label>
