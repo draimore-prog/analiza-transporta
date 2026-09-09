@@ -1,0 +1,104 @@
+[
+  {
+    "id": "anisa.bosnjic",
+    "fullname": "Anisa Bošnjak",
+    "createdAt": "2026-07-30",
+    "role": "editor",
+    "username": "anisa.bosnjic"
+  },
+  {
+    "id": "dzenis",
+    "fullname": "musanovic",
+    "createdAt": "3. 9. 2026.",
+    "role": "viewer",
+    "username": "dzenis",
+    "password": "Dzenis2027",
+    "email": "dzenis.musanovic@bingotuzla.ba"
+  },
+  {
+    "id": "emir.durakovic",
+    "fullname": "Emir Duraković",
+    "createdAt": "2026-07-30",
+    "role": "superadmin",
+    "username": "emir.durakovic",
+    "password": "Emir.D"
+  },
+  {
+    "id": "jasenko",
+    "email": "jasenko.mitrovic@bingotuzla.ba",
+    "password": "Jasenko2027",
+    "username": "jasenko",
+    "fullname": "Jasenko Mitrović",
+    "role": "serviser",
+    "createdAt": "3. 9. 2026."
+  },
+  {
+    "id": "jasmin",
+    "email": "jasmin.avdic@bingotuzla.ba",
+    "fullname": "avdic",
+    "password": "Jasmin2027",
+    "username": "jasmin",
+    "createdAt": "3. 9. 2026.",
+    "role": "viewer"
+  },
+  {
+    "id": "jasmin.avdic",
+    "password": "Jasmin2027",
+    "username": "jasmin.avdic",
+    "email": "jasmin.avdic@bingotuzla.ba",
+    "fullname": "avdic",
+    "role": "viewer",
+    "createdAt": "3. 9. 2026."
+  },
+  {
+    "id": "milos",
+    "password": "Milos2027",
+    "username": "milos",
+    "role": "viewer",
+    "email": "milos.milos@bingotuzla.ba",
+    "createdAt": "3. 9. 2026.",
+    "fullname": "milos"
+  },
+  {
+    "id": "nedim",
+    "email": "nedim.kisic@bingotuzla.ba",
+    "password": "Nedim2027",
+    "username": "nedim",
+    "role": "viewer",
+    "createdAt": "3. 9. 2026.",
+    "fullname": "kisic"
+  },
+  {
+    "id": "nedim.kisic",
+    "email": "nedim.kisic@bingotuzla.ba",
+    "fullname": "kisic",
+    "createdAt": "3. 9. 2026.",
+    "username": "nedim.kisic",
+    "password": "Nedim2027",
+    "role": "viewer"
+  },
+  {
+    "id": "selma.durakovic",
+    "fullname": "Selma Duraković",
+    "role": "editor",
+    "username": "selma.durakovic",
+    "createdAt": "2026-07-30"
+  },
+  {
+    "id": "silvio.suljic",
+    "username": "silvio.suljic",
+    "password": "Silvio2027",
+    "createdAt": "7. 9. 2026.",
+    "fullname": "Silvio Suljić",
+    "email": "silvio.suljic@bingotuzla.ba",
+    "role": "superadmin"
+  },
+  {
+    "id": "skladisna.mehanizacija",
+    "role": "warehouse_specialist",
+    "email": "skladisna.mehanizacija@bingotuzla.ba",
+    "fullname": "Skladišna Mehanizacija",
+    "createdAt": "2026-08-31",
+    "username": "skladisna.mehanizacija"
+  }
+]

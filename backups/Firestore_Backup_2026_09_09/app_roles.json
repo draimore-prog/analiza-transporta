@@ -1,0 +1,336 @@
+[
+  {
+    "id": "editor",
+    "defaultPortal": "transport",
+    "description": "Pristup Glavnom Transportnom portalu sa pravima unosa troškova, upload-a Excel evidencija i registracije vozila.",
+    "permissions": {
+      "canRegisterVehicle": true,
+      "canExportExcel": true,
+      "canSwitchPortal": false,
+      "canInputCost": true,
+      "canEditCost": true,
+      "canUploadExcel": true,
+      "canDeleteCost": false,
+      "canAccessAdminPanel": false
+    },
+    "roleIcon": "✍️",
+    "roleBadge": "✍️ Admin (Unos faktura)",
+    "roleId": "editor",
+    "roleName": "Admin (Unos faktura)",
+    "navigationPanels": [
+      {
+        "id": "tab1",
+        "name": "Pregled Flote & KPI",
+        "portal": "transport",
+        "icon": "📊",
+        "tabId": 1
+      },
+      {
+        "id": "tab2",
+        "name": "Analiza Održavanja",
+        "portal": "transport",
+        "icon": "📈",
+        "tabId": 2
+      },
+      {
+        "id": "tab3",
+        "name": "YoY Komparacija",
+        "portal": "transport",
+        "icon": "🔄",
+        "tabId": 3
+      },
+      {
+        "id": "tab4",
+        "name": "Tabela Servisa",
+        "portal": "transport",
+        "icon": "🔧",
+        "tabId": 4
+      },
+      {
+        "id": "tab5",
+        "name": "Matična baza podataka",
+        "portal": "transport",
+        "icon": "🚛",
+        "tabId": 5
+      }
+    ],
+    "allowedPortals": [
+      "transport"
+    ]
+  },
+  {
+    "id": "serviser",
+    "roleBadge": "🔧 Serviser (Karton vozila)",
+    "defaultPortal": "serviser",
+    "roleIcon": "🔧",
+    "navigationPanels": [
+      {
+        "id": "serviserSearch",
+        "name": "Karton Vozila / Pretraga",
+        "portal": "serviser",
+        "icon": "🔍",
+        "tabId": 1
+      }
+    ],
+    "allowedPortals": [
+      "serviser"
+    ],
+    "roleId": "serviser",
+    "roleName": "Serviser (Karton vozila)",
+    "description": "Namjenski pristup isključivo pretrazi kartona i servisne historije pojedinačnih motornih vozila.",
+    "permissions": {
+      "canExportExcel": false,
+      "canInputCost": false,
+      "canEditCost": false,
+      "canDeleteCost": false,
+      "canUploadExcel": false,
+      "canAccessAdminPanel": false,
+      "canSwitchPortal": false,
+      "canRegisterVehicle": false
+    }
+  },
+  {
+    "id": "superadmin",
+    "roleName": "Super Administrator",
+    "roleId": "superadmin",
+    "navigationPanels": [
+      {
+        "id": "tab1",
+        "name": "Pregled Flote & KPI",
+        "portal": "transport",
+        "icon": "📊",
+        "tabId": 1
+      },
+      {
+        "id": "tab2",
+        "name": "Analiza Održavanja",
+        "portal": "transport",
+        "icon": "📈",
+        "tabId": 2
+      },
+      {
+        "id": "tab3",
+        "name": "YoY Komparacija",
+        "portal": "transport",
+        "icon": "🔄",
+        "tabId": 3
+      },
+      {
+        "id": "tab4",
+        "name": "Tabela Servisa",
+        "portal": "transport",
+        "icon": "🔧",
+        "tabId": 4
+      },
+      {
+        "id": "tab5",
+        "name": "Matična baza podataka",
+        "portal": "transport",
+        "icon": "🚛",
+        "tabId": 5
+      },
+      {
+        "id": "wh1",
+        "name": "Analitika & Finansije",
+        "portal": "warehouse",
+        "icon": "📊",
+        "tabId": 1
+      },
+      {
+        "id": "wh2",
+        "name": "Šifrarnik Flote (594)",
+        "portal": "warehouse",
+        "icon": "🚜",
+        "tabId": 2
+      },
+      {
+        "id": "wh3",
+        "name": "Pregled Svih Opravki",
+        "portal": "warehouse",
+        "icon": "🔧",
+        "tabId": 3
+      },
+      {
+        "id": "wh4",
+        "name": "Segmenti & Dijelovi",
+        "portal": "warehouse",
+        "icon": "⚡",
+        "tabId": 4
+      },
+      {
+        "id": "wh5",
+        "name": "Serviseri & Dobavljači",
+        "portal": "warehouse",
+        "icon": "🏢",
+        "tabId": 5
+      },
+      {
+        "id": "serviserSearch",
+        "name": "Karton Vozila / Pretraga",
+        "portal": "serviser",
+        "icon": "🔍",
+        "tabId": 1
+      }
+    ],
+    "roleIcon": "👑",
+    "roleBadge": "👑 Super Administrator",
+    "description": "Potpuni pristup svim ograncima (Glavni Transport, Skladišna Mehanizacija, Serviser), administraciji korisnika i Firestore ulogama.",
+    "permissions": {
+      "canRegisterVehicle": true,
+      "canDeleteCost": true,
+      "canSwitchPortal": true,
+      "canInputCost": true,
+      "canUploadExcel": true,
+      "canEditCost": true,
+      "canExportExcel": true,
+      "canAccessAdminPanel": true
+    },
+    "defaultPortal": "transport",
+    "allowedPortals": [
+      "transport",
+      "warehouse",
+      "serviser"
+    ]
+  },
+  {
+    "id": "viewer",
+    "allowedPortals": [
+      "transport"
+    ],
+    "roleIcon": "📊",
+    "roleBadge": "📊 Analitičar (Samo pregled)",
+    "navigationPanels": [
+      {
+        "id": "tab1",
+        "name": "Pregled Flote & KPI",
+        "portal": "transport",
+        "icon": "📊",
+        "tabId": 1
+      },
+      {
+        "id": "tab2",
+        "name": "Analiza Održavanja",
+        "portal": "transport",
+        "icon": "📈",
+        "tabId": 2
+      },
+      {
+        "id": "tab3",
+        "name": "YoY Komparacija",
+        "portal": "transport",
+        "icon": "🔄",
+        "tabId": 3
+      },
+      {
+        "id": "tab4",
+        "name": "Tabela Servisa",
+        "portal": "transport",
+        "icon": "🔧",
+        "tabId": 4
+      },
+      {
+        "id": "tab5",
+        "name": "Matična baza podataka",
+        "portal": "transport",
+        "icon": "🚛",
+        "tabId": 5
+      }
+    ],
+    "roleName": "Analitičar (Samo pregled)",
+    "roleId": "viewer",
+    "permissions": {
+      "canAccessAdminPanel": false,
+      "canExportExcel": true,
+      "canInputCost": false,
+      "canUploadExcel": false,
+      "canRegisterVehicle": false,
+      "canDeleteCost": false,
+      "canEditCost": false,
+      "canSwitchPortal": false
+    },
+    "description": "Pristup Glavnom Transportnom portalu u režimu samo za čitanje i analizu (bez mogućnosti unosa i brisanja).",
+    "defaultPortal": "transport"
+  },
+  {
+    "id": "warehouse_specialist",
+    "roleName": "Specijalist skladišne mehanizacije",
+    "defaultPortal": "warehouse",
+    "allowedPortals": [
+      "transport",
+      "warehouse",
+      "serviser"
+    ],
+    "description": "Namjenski pristup isključivo ogranku za Skladišnu Mehanizaciju (viljuškari, paletari, analitika, opravke, baterije, serviseri).",
+    "permissions": {
+      "canDeleteCost": false,
+      "canAccessAdminPanel": false,
+      "canEditCost": false,
+      "canSwitchPortal": false,
+      "canRegisterVehicle": false,
+      "canUploadExcel": false,
+      "canInputCost": false,
+      "canExportExcel": true
+    },
+    "roleBadge": "🏗️ Specijalist skladišne mehanizacije",
+    "roleIcon": "🏗️",
+    "roleId": "warehouse_specialist",
+    "navigationPanels": [
+      {
+        "id": "tab4",
+        "name": "Tabela Servisa",
+        "portal": "transport",
+        "icon": "🔧",
+        "tabId": 4
+      },
+      {
+        "id": "tab5",
+        "name": "Matična baza podataka",
+        "portal": "transport",
+        "icon": "🚛",
+        "tabId": 5
+      },
+      {
+        "id": "wh1",
+        "name": "Analitika & Finansije",
+        "portal": "warehouse",
+        "icon": "📊",
+        "tabId": 1
+      },
+      {
+        "id": "wh2",
+        "name": "Šifrarnik Flote (594)",
+        "portal": "warehouse",
+        "icon": "🚜",
+        "tabId": 2
+      },
+      {
+        "id": "wh3",
+        "name": "Pregled Svih Opravki",
+        "portal": "warehouse",
+        "icon": "🔧",
+        "tabId": 3
+      },
+      {
+        "id": "wh4",
+        "name": "Segmenti & Dijelovi",
+        "portal": "warehouse",
+        "icon": "⚡",
+        "tabId": 4
+      },
+      {
+        "id": "wh5",
+        "name": "Serviseri & Dobavljači",
+        "portal": "warehouse",
+        "icon": "🏢",
+        "tabId": 5
+      },
+      {
+        "id": "serviserSearch",
+        "name": "Karton Vozila / Pretraga",
+        "portal": "serviser",
+        "icon": "🔍",
+        "tabId": 1
+      }
+    ]
+  }
+]
