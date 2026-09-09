@@ -200,6 +200,7 @@ function DashboardContent() {
 
   // Filteri
   const [selectedServiceYear, setSelectedServiceYear] = useState("all");
+  const [selectedWarehouseYear, setSelectedWarehouseYear] = useState("all");
 
   // Stanja modala
   const [vehicleModalReg, setVehicleModalReg] = useState(null);
@@ -483,9 +484,15 @@ function DashboardContent() {
                 <WarehouseKpis
                   warehouseMasterFleet={warehouseMasterFleet}
                   warehouseCostData={warehouseCostData}
-                  onSelectYear={() => setActiveWhTab(3)}
+                  onSelectYear={(y) => {
+                    setSelectedWarehouseYear(y ? String(y) : "all");
+                    setActiveWhTab(3);
+                  }}
                   onOpenFleetTab={() => setActiveWhTab(2)}
                   onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
+                  onOpenIntExtRecap={(type) => setIntExtModalTarget(type)}
+                  onOpenSupplierDetail={(s) => setSupplierModalTarget(s)}
+                  onOpenSegmentDetail={(s) => setSegmentModalTarget(s)}
                 />
               )}
 
@@ -501,6 +508,8 @@ function DashboardContent() {
               {activeWhTab === 3 && (
                 <WarehouseRepairs
                   warehouseCostData={warehouseCostData}
+                  selectedYear={selectedWarehouseYear}
+                  setSelectedYear={setSelectedWarehouseYear}
                   onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
                   onDeleteCostRecord={deleteCostRecord}
                   activeUser={activeUser}
@@ -544,7 +553,8 @@ function DashboardContent() {
         isOpen={!!intExtModalTarget}
         onClose={() => setIntExtModalTarget(null)}
         targetType={intExtModalTarget || "Interno"}
-        costData={costData}
+        costData={portalMode === "warehouse" ? warehouseCostData : costData}
+        isWarehouseMode={portalMode === "warehouse"}
         onOpenVehicleModal={(reg) => {
           setIntExtModalTarget(null);
           setVehicleModalReg(reg);
@@ -556,7 +566,8 @@ function DashboardContent() {
         isOpen={!!supplierModalTarget}
         onClose={() => setSupplierModalTarget(null)}
         supplierName={supplierModalTarget || ""}
-        costData={costData}
+        costData={portalMode === "warehouse" ? warehouseCostData : costData}
+        isWarehouseMode={portalMode === "warehouse"}
         onOpenVehicleModal={(reg) => {
           setSupplierModalTarget(null);
           setVehicleModalReg(reg);
@@ -568,7 +579,8 @@ function DashboardContent() {
         isOpen={!!segmentModalTarget}
         onClose={() => setSegmentModalTarget(null)}
         segmentName={segmentModalTarget || ""}
-        costData={costData}
+        costData={portalMode === "warehouse" ? warehouseCostData : costData}
+        isWarehouseMode={portalMode === "warehouse"}
         onOpenVehicleModal={(reg) => {
           setSegmentModalTarget(null);
           setVehicleModalReg(reg);

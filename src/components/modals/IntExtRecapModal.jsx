@@ -21,7 +21,8 @@ export function IntExtRecapModal({
   onClose,
   targetType = "Interno", // 'Interno' or 'Eksterno'
   costData,
-  onOpenVehicleModal
+  onOpenVehicleModal,
+  isWarehouseMode = false
 }) {
   const [selectedYear, setSelectedYear] = useState("all");
   const [colFilterReg, setColFilterReg] = useState("");
@@ -211,6 +212,11 @@ export function IntExtRecapModal({
             <div>
               <h2 className="text-lg font-black tracking-tight flex items-center gap-2">
                 <span>Rekapitulacija {isTargetInternal ? "Internih" : "Eksternih"} Servisa</span>
+                {isWarehouseMode && (
+                  <span className="bg-amber-500/30 border border-amber-400 text-amber-200 text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
+                    🚜 Skladišna mehanizacija
+                  </span>
+                )}
                 <span className="text-xs bg-white/20 border border-white/30 px-2.5 py-0.5 rounded-full font-mono">
                   {allTypeTransactions.length.toLocaleString("bs-BA")} naloga
                 </span>

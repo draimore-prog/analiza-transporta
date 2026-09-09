@@ -22,7 +22,8 @@ export function SegmentDetailModal({
   onClose,
   segmentName,
   costData,
-  onOpenVehicleModal
+  onOpenVehicleModal,
+  isWarehouseMode = false
 }) {
   const [selectedYear, setSelectedYear] = useState("all");
   const [colFilterReg, setColFilterReg] = useState("");
@@ -225,9 +226,15 @@ export function SegmentDetailModal({
                 <h2 className="text-lg font-black tracking-tight truncate max-w-md">
                   Segment: {segmentName}
                 </h2>
-                <span className="bg-emerald-500/30 border border-emerald-400 text-emerald-200 text-[10px] px-2.5 py-0.5 rounded-full font-bold">
-                  Kategorija Održavanja
-                </span>
+                {isWarehouseMode ? (
+                  <span className="bg-amber-500/30 border border-amber-400 text-amber-200 text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
+                    🚜 Skladišna mehanizacija
+                  </span>
+                ) : (
+                  <span className="bg-emerald-500/30 border border-emerald-400 text-emerald-200 text-[10px] px-2.5 py-0.5 rounded-full font-bold">
+                    Kategorija Održavanja
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-300 mt-0.5">
                 Detaljan pregled ugrađenih dijelova, radova, popravki i dinamike troškova

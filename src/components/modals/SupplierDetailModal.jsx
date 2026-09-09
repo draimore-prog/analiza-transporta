@@ -21,7 +21,8 @@ export function SupplierDetailModal({
   onClose,
   supplierName,
   costData,
-  onOpenVehicleModal
+  onOpenVehicleModal,
+  isWarehouseMode = false
 }) {
   const [selectedYear, setSelectedYear] = useState("all");
   const [colFilterReg, setColFilterReg] = useState("");
@@ -207,9 +208,15 @@ export function SupplierDetailModal({
                 <h2 className="text-lg font-black tracking-tight truncate max-w-md">
                   Dobavljač / Serviser: {supplierName}
                 </h2>
-                <span className="bg-indigo-500/30 border border-indigo-400 text-indigo-200 text-[10px] px-2.5 py-0.5 rounded-full font-bold">
-                  Partner
-                </span>
+                {isWarehouseMode ? (
+                  <span className="bg-amber-500/30 border border-amber-400 text-amber-200 text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
+                    🚜 Skladišna mehanizacija
+                  </span>
+                ) : (
+                  <span className="bg-indigo-500/30 border border-indigo-400 text-indigo-200 text-[10px] px-2.5 py-0.5 rounded-full font-bold">
+                    Partner
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-300 mt-0.5">
                 Pregled realizovanih popravki, faktura, historije i prosjeka troškova

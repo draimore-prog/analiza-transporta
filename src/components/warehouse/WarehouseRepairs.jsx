@@ -15,12 +15,17 @@ import {
 
 export function WarehouseRepairs({
   warehouseCostData,
+  selectedYear: propSelectedYear,
+  setSelectedYear: propSetSelectedYear,
   onOpenVehicleModal,
   onDeleteCostRecord,
   activeUser
 }) {
   const [previewInvoice, setPreviewInvoice] = useState(null);
-  const [selectedYear, setSelectedYear] = useState("all");
+  const [localSelectedYear, setLocalSelectedYear] = useState("all");
+
+  const selectedYear = propSelectedYear !== undefined ? propSelectedYear : localSelectedYear;
+  const setSelectedYear = propSetSelectedYear !== undefined ? propSetSelectedYear : setLocalSelectedYear;
   const [colFilterReg, setColFilterReg] = useState("");
   const [colFilterGb, setColFilterGb] = useState("");
   const [colFilterBrand, setColFilterBrand] = useState("all");
