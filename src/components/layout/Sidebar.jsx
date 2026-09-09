@@ -30,16 +30,16 @@ export function Sidebar({
       {/* Gornji dio Sidebara */}
       <div className="p-4 flex flex-col gap-4">
         {/* Brending & Logo */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3" title="Logistika - Servis motornih vozila">
           <div className="bg-gradient-to-tr from-blue-700 to-indigo-600 text-white p-2.5 rounded-xl shadow-md flex items-center justify-center shrink-0">
             <Truck className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-sm font-black text-slate-900 dark:text-white leading-tight tracking-tight uppercase">
-              Analiza Transporta
+            <h1 className="text-xs font-black text-slate-900 dark:text-white leading-tight tracking-tight uppercase">
+              Logistika - Servis
             </h1>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold leading-none mt-0.5">
-              Servis motornih vozila
+            <p className="text-[10px] text-blue-600 dark:text-blue-400 font-extrabold uppercase tracking-wider leading-none mt-0.5">
+              Motornih vozila
             </p>
           </div>
         </div>
@@ -234,7 +234,7 @@ export function Sidebar({
               onClick={() => setPortalMode("transport")}
               className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-xs font-bold transition-all text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 border border-blue-200 dark:border-blue-800 mt-4 cursor-pointer"
             >
-              <ChevronLeft className="w-3.5 h-3.5" /> Glavni Transport
+              <ChevronLeft className="w-3.5 h-3.5" /> Servis motornih vozila
             </button>
           </div>
         )}

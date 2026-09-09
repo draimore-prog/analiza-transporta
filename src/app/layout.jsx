@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Servis motornih vozila - Održavanje voznog parka",
+  title: "Logistika - Servis motornih vozila",
   description: "Interaktivna analitika održavanja voznog parka, skladišne mehanizacije i KPI komparacija"
 };
 

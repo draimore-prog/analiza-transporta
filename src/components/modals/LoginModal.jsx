@@ -39,8 +39,8 @@ export function LoginModal({ isOpen, onLogin, onGoogleLogin }) {
           <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
             Prijava u Sistem
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Servis motornih vozila & Održavanje voznog parka
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-semibold">
+            Logistika - Servis motornih vozila
           </p>
         </div>
 

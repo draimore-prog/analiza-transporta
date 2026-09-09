@@ -101,7 +101,7 @@ export const DEFAULT_APP_ROLES = {
     roleName: 'Analitičar (Samo pregled)',
     roleIcon: '📊',
     roleBadge: '📊 Analitičar (Samo pregled)',
-    description: 'Pristup Glavnom Transportnom portalu u režimu samo za čitanje i analizu (bez mogućnosti unosa i brisanja).',
+    description: 'Pristup portalu Servis motornih vozila u režimu samo za čitanje i analizu (bez mogućnosti unosa i brisanja).',
     defaultPortal: 'transport',
     allowedPortals: ['transport'],
     navigationPanels: [

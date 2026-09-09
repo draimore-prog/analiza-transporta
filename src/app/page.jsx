@@ -372,7 +372,7 @@ function DashboardContent() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white gap-4 p-4">
         <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        <h2 className="text-xl font-bold tracking-tight">Analiza Transporta & Voznog Parka</h2>
+        <h2 className="text-xl font-bold tracking-tight">Logistika - Servis motornih vozila</h2>
         <p className="text-xs text-slate-400 font-mono">{loadProgress}</p>
       </div>
     );
