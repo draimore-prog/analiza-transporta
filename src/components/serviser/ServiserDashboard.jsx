@@ -133,10 +133,20 @@ export function ServiserDashboard({
     }
   };
 
+  const getVehicleIcon = (tip) => {
+    const t = (tip || "").toLowerCase();
+    if (t.includes("teretn")) return "🚛";
+    if (t.includes("putničk") || t.includes("putnick")) return "🚗";
+    if (t.includes("priključn") || t.includes("prikljucn")) return "🚚";
+    if (t.includes("radn")) return "🏗️";
+    if (t.includes("skladi") || t.includes("viljuš") || t.includes("viljusk")) return "🚜";
+    return "🚛";
+  };
+
   return (
     <div className="min-h-screen w-full bg-slate-100 dark:bg-slate-950 flex flex-col justify-between overflow-y-auto">
       {/* Gornja traka */}
-      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between shadow-xs">
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between shadow-xs relative z-30">
         <div className="flex items-center gap-3">
           <div className="bg-gradient-to-tr from-indigo-700 to-blue-600 text-white p-2.5 rounded-2xl shadow-sm flex items-center justify-center">
             <Wrench className="w-5 h-5" />
@@ -184,25 +194,27 @@ export function ServiserDashboard({
       </header>
 
       {/* Glavni sadržaj: Centrirana kartica za pretragu */}
-      <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 max-w-4xl mx-auto w-full">
-        <div className="w-full bg-white dark:bg-slate-900 p-8 sm:p-12 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 text-center relative overflow-hidden">
-          {/* Pozadinski sjaj */}
-          <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 max-w-4xl mx-auto w-full relative z-20">
+        <div className="w-full bg-white dark:bg-slate-900 p-8 sm:p-12 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 text-center relative z-20">
+          {/* Pozadinski sjaj - u zasebnom overflow-hidden sloju da ne siječe dropdown menu */}
+          <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none">
+            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+          </div>
 
-          <div className="inline-flex bg-gradient-to-tr from-indigo-100 to-blue-100 dark:from-indigo-950 dark:to-blue-950 text-indigo-700 dark:text-indigo-300 p-5 rounded-3xl mb-6 shadow-inner border border-indigo-200/50 dark:border-indigo-800/50">
+          <div className="inline-flex bg-gradient-to-tr from-indigo-100 to-blue-100 dark:from-indigo-950 dark:to-blue-950 text-indigo-700 dark:text-indigo-300 p-5 rounded-3xl mb-6 shadow-inner border border-indigo-200/50 dark:border-indigo-800/50 relative z-10">
             <Wrench className="w-12 h-12" />
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-2">
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-2 relative z-10">
             Servisna Radionica & Kartoteka
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-8 max-w-lg mx-auto font-medium">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-8 max-w-lg mx-auto font-medium relative z-10">
             Unesite registraciju, garažni broj ili broj šasije za trenutni uvid u historiju popravki, zamijenjene dijelove i karton vozila
           </p>
 
           {/* Forma i Autocomplete Pretraga */}
-          <div ref={containerRef} className="relative max-w-2xl mx-auto mb-6">
+          <div ref={containerRef} className="relative z-40 max-w-2xl mx-auto mb-6">
             <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-2.5">
               <div className="relative flex-1">
                 <input
@@ -231,8 +243,8 @@ export function ServiserDashboard({
 
             {/* Dropdown sa rezultatima */}
             {isDropdownOpen && (
-              <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 text-left animate-in fade-in zoom-in-95 duration-150">
-                <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex justify-between items-center">
+              <div className="absolute left-0 right-0 top-full mt-2 bg-white/98 dark:bg-slate-900/98 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 text-left animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/5 dark:ring-white/10">
+                <div className="p-2.5 bg-slate-50/80 dark:bg-slate-800/80 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex justify-between items-center sticky top-0 backdrop-blur-xs z-10 border-b border-slate-100 dark:border-slate-800">
                   <span>Pronađena vozila ({filteredVehicles.length})</span>
                   <span className="font-mono">Tipka Enter za otvaranje</span>
                 </div>
@@ -256,7 +268,7 @@ export function ServiserDashboard({
                       >
                         <div className="flex items-center gap-3">
                           <div className={`p-2 rounded-xl text-lg ${isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"}`}>
-                            🚛
+                            {getVehicleIcon(v.tipMehan)}
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
@@ -298,6 +310,7 @@ export function ServiserDashboard({
               </div>
             )}
           </div>
+
 
           {/* Brzi pregled nedavnih pretraga */}
           {recentVehicles.length > 0 && (
