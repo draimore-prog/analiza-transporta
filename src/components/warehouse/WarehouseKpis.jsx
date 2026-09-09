@@ -21,7 +21,15 @@ import {
   Sparkles
 } from "lucide-react";
 
+// Brzi helper za internu radionicu
+function checkIsInternalSupplier(dobavljac) {
+  if (!dobavljac) return false;
+  const d = String(dobavljac).toLowerCase();
+  return d.includes("bingo") || d.includes("vlastit") || d.includes("intern");
+}
+
 export function WarehouseKpis({
+  isActive = true,
   warehouseMasterFleet = [],
   warehouseCostData = [],
   onSelectYear,
@@ -31,6 +39,24 @@ export function WarehouseKpis({
   onOpenSupplierDetail,
   onOpenSegmentDetail
 }) {
+  // Stabilna referenca za callback funkcije kako bi se spriječilo bespotrebno uništavanje grafikona
+  const callbacksRef = useRef({
+    onSelectYear,
+    onOpenFleetTab,
+    onOpenVehicleModal,
+    onOpenIntExtRecap,
+    onOpenSupplierDetail,
+    onOpenSegmentDetail
+  });
+  callbacksRef.current = {
+    onSelectYear,
+    onOpenFleetTab,
+    onOpenVehicleModal,
+    onOpenIntExtRecap,
+    onOpenSupplierDetail,
+    onOpenSegmentDetail
+  };
+
   // Stanja filtera unutar Skladišnog KPI pregleda
   const [selectedYearFilter, setSelectedYearFilter] = useState("all");
   const [selectedMonthFilter, setSelectedMonthFilter] = useState("all");
@@ -45,6 +71,29 @@ export function WarehouseKpis({
 
   // Instanca chartova
   const chartInstances = useRef({});
+
+  // Automatski resize chartova kada se tab ponovo aktivira
+  useEffect(() => {
+    if (isActive) {
+      requestAnimationFrame(() => {
+        Object.values(chartInstances.current).forEach((ch) => {
+          try {
+            ch?.resize();
+          } catch (e) {}
+        });
+      });
+    }
+  }, [isActive]);
+
+  // Brza O(1) mapa flote po registraciji
+  const fleetRegMap = useMemo(() => {
+    const map = new Map();
+    warehouseMasterFleet.forEach((v) => {
+      const r = (v.reg || "").trim().toUpperCase();
+      if (r) map.set(r, v);
+    });
+    return map;
+  }, [warehouseMasterFleet]);
 
   // Raspoložive godine
   const availableYears = useMemo(() => {
@@ -70,21 +119,20 @@ export function WarehouseKpis({
 
   // Filtrirani podaci na osnovu selektovane godine, mjeseca i načina održavanja
   const filteredCostData = useMemo(() => {
+    const yearNum = selectedYearFilter !== "all" ? parseInt(selectedYearFilter) : null;
+    const monthNum = selectedMonthFilter !== "all" ? parseInt(selectedMonthFilter) : null;
+
     return warehouseCostData.filter((c) => {
-      if (selectedYearFilter !== "all" && c.year !== parseInt(selectedYearFilter)) {
+      if (yearNum !== null && c.year !== yearNum) {
         return false;
       }
-      if (selectedMonthFilter !== "all") {
+      if (monthNum !== null) {
         const m = c.month || (c.datumObj ? c.datumObj.getMonth() + 1 : (c.datum ? new Date(c.datum).getMonth() + 1 : null));
-        if (m !== parseInt(selectedMonthFilter)) {
+        if (m !== monthNum) {
           return false;
         }
       }
-      const isInt =
-        (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("bingo") ||
-        (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("vlastit") ||
-        (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("intern");
-
+      const isInt = checkIsInternalSupplier(c.dobavljacOrig || c.dobavljac);
       if (supplierMode === "external" && isInt) return false;
       if (supplierMode === "internal" && !isInt) return false;
 
@@ -111,11 +159,7 @@ export function WarehouseKpis({
       const cost = c.cost || 0;
       totalCost += cost;
 
-      const isInt =
-        (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("bingo") ||
-        (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("vlastit") ||
-        (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("intern");
-
+      const isInt = checkIsInternalSupplier(c.dobavljacOrig || c.dobavljac);
       if (isInt) internalCost += cost;
       else externalCost += cost;
 
@@ -151,6 +195,7 @@ export function WarehouseKpis({
       internalPerc,
       externalPerc,
       avgPerIntervention,
+      avgCostPerIntervention: avgPerIntervention,
       topSeg,
       topSegCost,
       dailyAvgPerMachine
@@ -172,7 +217,7 @@ export function WarehouseKpis({
       .slice(0, 6);
 
     return sorted.map(([reg, cost]) => {
-      const vInfo = warehouseMasterFleet.find((v) => (v.reg || "").toUpperCase() === reg);
+      const vInfo = fleetRegMap.get(reg);
       return {
         reg,
         cost,
@@ -182,7 +227,7 @@ export function WarehouseKpis({
         radniSati: vInfo?.radniSati ?? 0
       };
     });
-  }, [filteredCostData, warehouseMasterFleet]);
+  }, [filteredCostData, fleetRegMap]);
 
   // Reset filtera
   const resetFilters = () => {
@@ -245,6 +290,7 @@ export function WarehouseKpis({
             ]
           },
           options: {
+            animation: { duration: 200 },
             responsive: true,
             maintainAspectRatio: false,
             scales: {
@@ -283,11 +329,7 @@ export function WarehouseKpis({
           if (c.year === parseInt(selectedYearFilter)) {
             const m = c.month || (c.datumObj ? c.datumObj.getMonth() + 1 : null);
             if (m && m >= 1 && m <= 12) {
-              const isInt =
-                (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("bingo") ||
-                (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("vlastit") ||
-                (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("intern");
-
+              const isInt = checkIsInternalSupplier(c.dobavljacOrig || c.dobavljac);
               if (isInt) intMonths[m - 1] += c.cost || 0;
               else extMonths[m - 1] += c.cost || 0;
             }
@@ -314,6 +356,7 @@ export function WarehouseKpis({
             ]
           },
           options: {
+            animation: { duration: 200 },
             responsive: true,
             maintainAspectRatio: false,
             scales: {
@@ -330,8 +373,8 @@ export function WarehouseKpis({
               }
             },
             onClick: (e, els) => {
-              if (els.length > 0 && onSelectYear) {
-                onSelectYear(selectedYearFilter);
+              if (els.length > 0 && callbacksRef.current.onSelectYear) {
+                callbacksRef.current.onSelectYear(selectedYearFilter);
               }
             }
           }
@@ -361,6 +404,7 @@ export function WarehouseKpis({
           ]
         },
         options: {
+          animation: { duration: 200 },
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
@@ -385,9 +429,9 @@ export function WarehouseKpis({
             }
           },
           onClick: (evt, elements) => {
-            if (elements.length > 0 && onOpenIntExtRecap) {
+            if (elements.length > 0 && callbacksRef.current.onOpenIntExtRecap) {
               const idx = elements[0].index;
-              onOpenIntExtRecap(idx === 0 ? "Interno" : "Eksterno");
+              callbacksRef.current.onOpenIntExtRecap(idx === 0 ? "Interno" : "Eksterno");
             }
           }
         }
@@ -414,7 +458,7 @@ export function WarehouseKpis({
         .slice(0, 10);
 
       const labels = sortedVehicles.map(([reg]) => {
-        const v = warehouseMasterFleet.find((x) => (x.reg || "").toUpperCase() === reg);
+        const v = fleetRegMap.get(reg);
         return v?.garazniBroj ? `${reg} (GB: ${v.garazniBroj})` : reg;
       });
 
@@ -432,6 +476,7 @@ export function WarehouseKpis({
           ]
         },
         options: {
+          animation: { duration: 200 },
           indexAxis: "y",
           responsive: true,
           maintainAspectRatio: false,
@@ -460,9 +505,9 @@ export function WarehouseKpis({
             }
           },
           onClick: (e, els) => {
-            if (els.length > 0 && onOpenVehicleModal) {
+            if (els.length > 0 && callbacksRef.current.onOpenVehicleModal) {
               const reg = sortedVehicles[els[0].index][0];
-              onOpenVehicleModal(reg);
+              callbacksRef.current.onOpenVehicleModal(reg);
             }
           }
         }
@@ -503,6 +548,7 @@ export function WarehouseKpis({
           ]
         },
         options: {
+          animation: { duration: 200 },
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
@@ -527,9 +573,9 @@ export function WarehouseKpis({
             }
           },
           onClick: (e, els, ch) => {
-            if (els.length > 0 && onOpenSegmentDetail) {
+            if (els.length > 0 && callbacksRef.current.onOpenSegmentDetail) {
               const segName = ch.data.labels[els[0].index];
-              onOpenSegmentDetail(segName);
+              callbacksRef.current.onOpenSegmentDetail(segName);
             }
           }
         }
@@ -569,6 +615,7 @@ export function WarehouseKpis({
           ]
         },
         options: {
+          animation: { duration: 200 },
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
@@ -598,14 +645,14 @@ export function WarehouseKpis({
           onClick: (e, els, ch) => {
             if (els.length > 0) {
               const supName = ch.data.labels[els[0].index];
-              if (
-                supName.toLowerCase().includes("vlastit") ||
-                supName.toLowerCase().includes("bingo") ||
-                supName.toLowerCase().includes("intern")
-              ) {
-                if (onOpenIntExtRecap) onOpenIntExtRecap("Interno");
+              if (checkIsInternalSupplier(supName)) {
+                if (callbacksRef.current.onOpenIntExtRecap) {
+                  callbacksRef.current.onOpenIntExtRecap("Interno");
+                }
               } else {
-                if (onOpenSupplierDetail) onOpenSupplierDetail(supName);
+                if (callbacksRef.current.onOpenSupplierDetail) {
+                  callbacksRef.current.onOpenSupplierDetail(supName);
+                }
               }
             }
           }
@@ -623,12 +670,7 @@ export function WarehouseKpis({
     selectedMonthFilter,
     supplierMode,
     kpiStats,
-    warehouseMasterFleet,
-    onOpenIntExtRecap,
-    onOpenVehicleModal,
-    onOpenSegmentDetail,
-    onOpenSupplierDetail,
-    onSelectYear
+    fleetRegMap
   ]);
 
   return (
@@ -844,7 +886,7 @@ export function WarehouseKpis({
             </span>
           </div>
           <div className="text-xl font-black text-slate-900 dark:text-white">
-            {formatKM(kpiStats.avgCostPerIntervention)}
+            {formatKM(kpiStats.avgCostPerIntervention ?? kpiStats.avgPerIntervention ?? 0)}
           </div>
           <p className="text-[10px] text-slate-400 mt-1 font-medium">
             Top segment: <strong className="text-slate-700 dark:text-slate-300">{kpiStats.topSeg}</strong>

@@ -202,6 +202,20 @@ function DashboardContent() {
   const [selectedServiceYear, setSelectedServiceYear] = useState("all");
   const [selectedWarehouseYear, setSelectedWarehouseYear] = useState("all");
 
+  // Perzistentno stanje posjećenih tabova skladišne mehanizacije za instantnu navigaciju
+  const [visitedWhTabs, setVisitedWhTabs] = useState(() => new Set([1]));
+
+  useEffect(() => {
+    if (portalMode === "warehouse") {
+      setVisitedWhTabs((prev) => {
+        if (prev.has(activeWhTab)) return prev;
+        const next = new Set(prev);
+        next.add(activeWhTab);
+        return next;
+      });
+    }
+  }, [portalMode, activeWhTab]);
+
   // Stanja modala
   const [vehicleModalReg, setVehicleModalReg] = useState(null);
   const [isNewCostOpen, setIsNewCostOpen] = useState(false);
@@ -274,6 +288,36 @@ function DashboardContent() {
   const handleSelectBrandDrilldown = useCallback((brand) => {
     setActiveTab(4);
   }, [setActiveTab]);
+
+  // Stabilni warehouse handler-i
+  const handleWhSelectYear = useCallback((year) => {
+    setSelectedWarehouseYear(year ? String(year) : "all");
+    setActiveWhTab(3);
+  }, [setActiveWhTab]);
+
+  const handleWhOpenFleetTab = useCallback(() => {
+    setActiveWhTab(2);
+  }, [setActiveWhTab]);
+
+  const handleWhOpenVehicleModal = useCallback((reg) => {
+    setVehicleModalReg(reg);
+  }, []);
+
+  const handleWhOpenEditVehicle = useCallback((v) => {
+    setEditingVehicle(v);
+  }, []);
+
+  const handleWhOpenIntExtRecap = useCallback((type) => {
+    setIntExtModalTarget(type);
+  }, []);
+
+  const handleWhOpenSupplierDetail = useCallback((s) => {
+    setSupplierModalTarget(s);
+  }, []);
+
+  const handleWhOpenSegmentDetail = useCallback((seg) => {
+    setSegmentModalTarget(seg);
+  }, []);
 
   // Zaključavanje pozadinskog skrola kada je bilo koji modal otvoren
   const isAnyModalOpen = Boolean(
@@ -478,56 +522,64 @@ function DashboardContent() {
               )}
             </>
           ) : (
-            /* Skladišna Mehanizacija Tabovi */
+            /* Skladišna Mehanizacija Tabovi - Instantna navigacija sa perzistentnim stanjem */
             <>
-              {activeWhTab === 1 && (
-                <WarehouseKpis
-                  warehouseMasterFleet={warehouseMasterFleet}
-                  warehouseCostData={warehouseCostData}
-                  onSelectYear={(y) => {
-                    setSelectedWarehouseYear(y ? String(y) : "all");
-                    setActiveWhTab(3);
-                  }}
-                  onOpenFleetTab={() => setActiveWhTab(2)}
-                  onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
-                  onOpenIntExtRecap={(type) => setIntExtModalTarget(type)}
-                  onOpenSupplierDetail={(s) => setSupplierModalTarget(s)}
-                  onOpenSegmentDetail={(s) => setSegmentModalTarget(s)}
-                />
+              {(visitedWhTabs.has(1) || activeWhTab === 1) && (
+                <div className={activeWhTab === 1 ? "block" : "hidden"}>
+                  <WarehouseKpis
+                    isActive={activeWhTab === 1}
+                    warehouseMasterFleet={warehouseMasterFleet}
+                    warehouseCostData={warehouseCostData}
+                    onSelectYear={handleWhSelectYear}
+                    onOpenFleetTab={handleWhOpenFleetTab}
+                    onOpenVehicleModal={handleWhOpenVehicleModal}
+                    onOpenIntExtRecap={handleWhOpenIntExtRecap}
+                    onOpenSupplierDetail={handleWhOpenSupplierDetail}
+                    onOpenSegmentDetail={handleWhOpenSegmentDetail}
+                  />
+                </div>
               )}
 
-              {activeWhTab === 2 && (
-                <WarehouseFleet
-                  warehouseMasterFleet={warehouseMasterFleet}
-                  onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
-                  onOpenEditVehicle={(v) => setEditingVehicle(v)}
-                  currentRole={currentRole}
-                />
+              {(visitedWhTabs.has(2) || activeWhTab === 2) && (
+                <div className={activeWhTab === 2 ? "block" : "hidden"}>
+                  <WarehouseFleet
+                    warehouseMasterFleet={warehouseMasterFleet}
+                    onOpenVehicleModal={handleWhOpenVehicleModal}
+                    onOpenEditVehicle={handleWhOpenEditVehicle}
+                    currentRole={currentRole}
+                  />
+                </div>
               )}
 
-              {activeWhTab === 3 && (
-                <WarehouseRepairs
-                  warehouseCostData={warehouseCostData}
-                  selectedYear={selectedWarehouseYear}
-                  setSelectedYear={setSelectedWarehouseYear}
-                  onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
-                  onDeleteCostRecord={deleteCostRecord}
-                  activeUser={activeUser}
-                />
+              {(visitedWhTabs.has(3) || activeWhTab === 3) && (
+                <div className={activeWhTab === 3 ? "block" : "hidden"}>
+                  <WarehouseRepairs
+                    warehouseCostData={warehouseCostData}
+                    selectedYear={selectedWarehouseYear}
+                    setSelectedYear={setSelectedWarehouseYear}
+                    onOpenVehicleModal={handleWhOpenVehicleModal}
+                    onDeleteCostRecord={deleteCostRecord}
+                    activeUser={activeUser}
+                  />
+                </div>
               )}
 
-              {activeWhTab === 4 && (
-                <WarehouseSegments
-                  warehouseCostData={warehouseCostData}
-                  onSelectSegment={(s) => setSegmentModalTarget(s)}
-                />
+              {(visitedWhTabs.has(4) || activeWhTab === 4) && (
+                <div className={activeWhTab === 4 ? "block" : "hidden"}>
+                  <WarehouseSegments
+                    warehouseCostData={warehouseCostData}
+                    onSelectSegment={handleWhOpenSegmentDetail}
+                  />
+                </div>
               )}
 
-              {activeWhTab === 5 && (
-                <WarehouseSuppliers
-                  warehouseCostData={warehouseCostData}
-                  onSelectSupplier={(s) => setSupplierModalTarget(s)}
-                />
+              {(visitedWhTabs.has(5) || activeWhTab === 5) && (
+                <div className={activeWhTab === 5 ? "block" : "hidden"}>
+                  <WarehouseSuppliers
+                    warehouseCostData={warehouseCostData}
+                    onSelectSupplier={handleWhOpenSupplierDetail}
+                  />
+                </div>
               )}
             </>
           )}
