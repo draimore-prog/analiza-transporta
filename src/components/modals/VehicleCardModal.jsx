@@ -86,6 +86,12 @@ export function VehicleCardModal({
     };
   }, [reg, masterFleet, costData]);
 
+  const cleanType = cleanVehicleType(vehicleInfo?.tipMehan);
+  const isPrikljucno = cleanType === "Priključna vozila";
+  const usageColTitle = (cleanType === "Radna mašina" || cleanType === "Skladišna mehanizacija")
+    ? "Radni sati"
+    : "Kilometraža";
+
   // Hronološka historija servisa za ovo vozilo
   const history = useMemo(() => {
     if (!reg) return [];
