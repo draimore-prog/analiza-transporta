@@ -247,74 +247,121 @@ export function WarehouseKpis({
       if (chartInstances.current.trend) chartInstances.current.trend.destroy();
       const ctx = trendCanvasRef.current.getContext("2d");
 
-      if (selectedYearFilter === "all") {
-        // Prikaz svih godina (2021-2026) sa internim i eksternim troškom
+      if (selectedYearFilter === "all" && selectedMonthFilter === "all") {
+        // Multi-line prikaz svih godina (2021-2026) kroz 12 mjeseci - identično glavnom portalu
         const years = [2021, 2022, 2023, 2024, 2025, 2026];
-        const intCosts = Array(years.length).fill(0);
-        const extCosts = Array(years.length).fill(0);
+        const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
-        warehouseCostData.forEach((c) => {
-          const yIdx = years.indexOf(c.year);
-          if (yIdx !== -1) {
-            if (selectedMonthFilter !== "all") {
-              const m = c.month || (c.datumObj ? c.datumObj.getMonth() + 1 : null);
-              if (m !== parseInt(selectedMonthFilter)) return;
+        const datasets = years.map((y, idx) => {
+          const monthData = Array(12).fill(0);
+          warehouseCostData.forEach((c) => {
+            if (c.year === y) {
+              const isInt = checkIsInternalSupplier(c.dobavljacOrig || c.dobavljac);
+              if (supplierMode === "external" && isInt) return;
+              if (supplierMode === "internal" && !isInt) return;
+
+              const m = c.month || (c.datumObj ? c.datumObj.getMonth() + 1 : (c.datum ? new Date(c.datum).getMonth() + 1 : null));
+              if (m && m >= 1 && m <= 12) {
+                monthData[m - 1] += c.cost || 0;
+              }
             }
-            const isInt =
-              (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("bingo") ||
-              (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("vlastit") ||
-              (c.dobavljacOrig || c.dobavljac || "").toLowerCase().includes("intern");
+          });
+          return {
+            label: `${y}. godina`,
+            data: monthData,
+            borderColor: colors[idx % colors.length],
+            backgroundColor: "transparent",
+            tension: 0.3,
+            borderWidth: 2.5
+          };
+        });
 
-            if (isInt) intCosts[yIdx] += c.cost || 0;
-            else extCosts[yIdx] += c.cost || 0;
+        chartInstances.current.trend = new ChartJS(ctx, {
+          type: "line",
+          data: {
+            labels: ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"],
+            datasets
+          },
+          options: {
+            animation: { duration: 200 },
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              datalabels: { display: false },
+              legend: { position: "bottom", labels: { font: { size: 11, weight: "bold" } } },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => {
+                    const yTot = datasets[ctx.datasetIndex]?.data.reduce((a, b) => a + b, 0) || 1;
+                    const p = ((ctx.raw / yTot) * 100).toFixed(1);
+                    return ` ${ctx.dataset.label}: ${formatKM(ctx.raw)} (${p}% godišnjeg troška)`;
+                  }
+                }
+              }
+            },
+            onClick: (e, els) => {
+              if (els.length > 0) {
+                const datasetIdx = els[0].datasetIndex;
+                const clickedYear = years[datasetIdx];
+                if (clickedYear) {
+                  setSelectedYearFilter(String(clickedYear));
+                }
+              }
+            }
           }
         });
+      } else if (selectedYearFilter === "all" && selectedMonthFilter !== "all") {
+        // Prikaz odabranog mjeseca kroz godine (2021-2026)
+        const years = [2021, 2022, 2023, 2024, 2025, 2026];
+        const monthInterno = Array(6).fill(0);
+        const monthEksterno = Array(6).fill(0);
+
+        years.forEach((y, idx) => {
+          warehouseCostData.forEach((c) => {
+            if (c.year === y) {
+              const m = c.month || (c.datumObj ? c.datumObj.getMonth() + 1 : (c.datum ? new Date(c.datum).getMonth() + 1 : null));
+              if (m === parseInt(selectedMonthFilter)) {
+                const isInt = checkIsInternalSupplier(c.dobavljacOrig || c.dobavljac);
+                if (supplierMode === "external" && isInt) return;
+                if (supplierMode === "internal" && !isInt) return;
+
+                if (isInt) monthInterno[idx] += c.cost || 0;
+                else monthEksterno[idx] += c.cost || 0;
+              }
+            }
+          });
+        });
+
+        const monthNames = ["", "Januar", "Februar", "Mart", "April", "Maj", "Juni", "Juli", "August", "Septembar", "Oktobar", "Novembar", "Decembar"];
+        const mLabel = monthNames[parseInt(selectedMonthFilter)] || "Mjesec";
 
         chartInstances.current.trend = new ChartJS(ctx, {
           type: "bar",
           data: {
-            labels: years.map((y) => `${y}.`),
+            labels: years.map((y) => `${mLabel} ${y}.`),
             datasets: [
-              {
-                label: "Vlastita Radionica (Interno)",
-                data: intCosts,
-                backgroundColor: "#2563eb",
-                borderRadius: 6
-              },
-              {
-                label: "Vanjski Servisi (Eksterno)",
-                data: extCosts,
-                backgroundColor: "#f59e0b",
-                borderRadius: 6
-              }
+              { label: "Vlastita Radionica (Interno)", data: monthInterno, backgroundColor: "#2563eb", borderRadius: 4 },
+              { label: "Vanjski Servisi (Eksterno)", data: monthEksterno, backgroundColor: "#f59e0b", borderRadius: 4 }
             ]
           },
           options: {
             animation: { duration: 200 },
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-              x: { stacked: true, grid: { display: false } },
-              y: { stacked: true, ticks: { callback: (v) => formatKM(v) } }
-            },
+            scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: (v) => formatKM(v) } } },
             plugins: {
-              datalabels: {
-                display: true,
-                color: "#ffffff",
-                font: { weight: "bold", size: 10 },
-                formatter: (val) => (val > 10000 ? `${(val / 1000).toFixed(0)}k` : "")
-              },
-              legend: { position: "top", labels: { font: { weight: "bold", size: 11 } } },
+              datalabels: { display: false },
+              legend: { position: "bottom", labels: { font: { size: 11, weight: "bold" } } },
               tooltip: {
                 callbacks: {
                   label: (ctx) => ` ${ctx.dataset.label}: ${formatKM(ctx.raw)}`
                 }
               }
             },
-            onClick: (e, els, ch) => {
+            onClick: (e, els) => {
               if (els.length > 0) {
                 const clickedYear = years[els[0].index];
-                setSelectedYearFilter(String(clickedYear));
+                if (clickedYear) setSelectedYearFilter(String(clickedYear));
               }
             }
           }
@@ -327,9 +374,12 @@ export function WarehouseKpis({
 
         warehouseCostData.forEach((c) => {
           if (c.year === parseInt(selectedYearFilter)) {
-            const m = c.month || (c.datumObj ? c.datumObj.getMonth() + 1 : null);
+            const m = c.month || (c.datumObj ? c.datumObj.getMonth() + 1 : (c.datum ? new Date(c.datum).getMonth() + 1 : null));
             if (m && m >= 1 && m <= 12) {
               const isInt = checkIsInternalSupplier(c.dobavljacOrig || c.dobavljac);
+              if (supplierMode === "external" && isInt) return;
+              if (supplierMode === "internal" && !isInt) return;
+
               if (isInt) intMonths[m - 1] += c.cost || 0;
               else extMonths[m - 1] += c.cost || 0;
             }
@@ -373,8 +423,9 @@ export function WarehouseKpis({
               }
             },
             onClick: (e, els) => {
-              if (els.length > 0 && callbacksRef.current.onSelectYear) {
-                callbacksRef.current.onSelectYear(selectedYearFilter);
+              if (els.length > 0) {
+                const clickedMonthIndex = els[0].index;
+                setSelectedMonthFilter(String(clickedMonthIndex + 1));
               }
             }
           }
@@ -905,11 +956,13 @@ export function WarehouseKpis({
           <div className="flex justify-between items-center mb-3">
             <div>
               <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <TrendingUp className="w-4 h-4 text-amber-500" /> Dinamika i Trend Troškova Održavanja
+                <TrendingUp className="w-4 h-4 text-amber-500" /> Mjesečna Dinamika Troškova
               </h4>
               <p className="text-[11px] text-slate-400 mt-0.5">
-                {selectedYearFilter === "all"
-                  ? "Poređenje troškova kroz godine 2021-2026 (Kliknite na stubac za analizu te godine)"
+                {selectedYearFilter === "all" && selectedMonthFilter === "all"
+                  ? "Poređenje mjesečne dinamike troškova kroz godine (2021-2026)"
+                  : selectedYearFilter === "all" && selectedMonthFilter !== "all"
+                  ? "Poređenje troškova odabranog mjeseca kroz godine (2021-2026)"
                   : `Mjesečna distribucija troškova u ${selectedYearFilter}. godini`}
               </p>
             </div>
