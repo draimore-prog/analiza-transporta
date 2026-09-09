@@ -1,7 +1,7 @@
 {
   "metadata": {
     "exportedAt": "2026-07-30T10:16:16.016Z",
-    "totalRecords": 31011,
+    "totalRecords": 30990,
     "fleetByYear": {
       "2021": {
         "Total": 661,
@@ -56,7 +56,9 @@
     "lastExportedAt": "2026-09-02T10:29:56.122Z",
     "firestoreVerified": true,
     "lastCleanedPodvozari": "2026-09-08T16:32:00Z",
-    "podvozariRemovedCount": 299
+    "podvozariRemovedCount": 299,
+    "lastCleanedRound2": "2026-09-09T06:55:14.572Z",
+    "round2DeletedCount": 21
   },
   "records": [
     {
@@ -18067,19 +18069,20 @@
       "id": "cost_rec_10440_CATERPILLAR",
       "dobavljacOrig": "Bingo Interna faktura",
       "costPart": 44.11,
-      "reg": "CATERPILLAR",
+      "reg": "MINI CATERPILLAR",
       "godProizvodnje": "/",
       "type": "Eksterno",
       "segment": "Tečnost",
       "datum": "2023-01-24T23:00:00.000Z",
       "costService": 0,
       "cost": 44.11,
-      "garazniBroj": "Tuzla Remont",
+      "garazniBroj": "/",
       "opisPopravke": "Dosipanje rashladne tečnosti G12-2l.",
       "year": 2023,
       "markaVoz": "Caterpillar",
       "tipMehan": "Radna mašina",
-      "month": 1
+      "month": 1,
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_10442_A48_E_363",
@@ -18769,19 +18772,20 @@
       "id": "cost_rec_10477_CATERPILLAR",
       "dobavljacOrig": "Bingo Interna faktura",
       "opisPopravke": "Reparacija bosh brave.",
-      "reg": "CATERPILLAR",
+      "reg": "MINI CATERPILLAR",
       "datum": "2023-01-26T23:00:00.000Z",
       "costPart": 0,
       "type": "Eksterno",
       "tipMehan": "Radna mašina",
-      "garazniBroj": "Tuzla Remont",
+      "garazniBroj": "/",
       "month": 1,
       "cost": 35.1,
       "costService": 35.1,
       "year": 2023,
       "godProizvodnje": "/",
       "segment": "Mehanika",
-      "markaVoz": "Caterpillar"
+      "markaVoz": "Caterpillar",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_10478_K56_O_567",
@@ -23359,7 +23363,7 @@
       "id": "cost_rec_10714_CATERPILLAR",
       "markaVoz": "Caterpillar",
       "tipMehan": "Radna mašina",
-      "garazniBroj": "Tuzla Remont",
+      "garazniBroj": "/",
       "year": 2023,
       "type": "Eksterno",
       "cost": 210.6,
@@ -23367,11 +23371,12 @@
       "opisPopravke": "Pregled kompletne instalacije dovoda goriva.",
       "segment": "Mehanika",
       "dobavljacOrig": "Bingo Interna faktura",
-      "reg": "CATERPILLAR",
+      "reg": "MINI CATERPILLAR",
       "datum": "2023-02-08T23:00:00.000Z",
       "godProizvodnje": "/",
       "month": 2,
-      "costService": 210.6
+      "costService": 210.6,
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_10715_E74_M_457",
@@ -24929,15 +24934,16 @@
       "opisPopravke": "Zamjena filtera goriva,čišćenje AC pumpe,čišćenje i montaža rezervoara.",
       "godProizvodnje": "/",
       "dobavljacOrig": "Bingo Interna faktura",
-      "garazniBroj": "Tuzla Remont",
+      "garazniBroj": "/",
       "segment": "Redovan servis",
-      "reg": "CATERPILLAR",
+      "reg": "MINI CATERPILLAR",
       "costService": 0,
       "markaVoz": "Caterpillar",
       "tipMehan": "Radna mašina",
       "datum": "2023-02-14T23:00:00.000Z",
       "month": 2,
-      "costPart": 218.74
+      "costPart": 218.74,
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_10798_16",
@@ -28582,16 +28588,17 @@
       "godProizvodnje": "/",
       "costService": 0,
       "month": 2,
-      "garazniBroj": "Tuzla Remont",
+      "garazniBroj": "/",
       "markaVoz": "Caterpillar",
       "dobavljacOrig": "Bingo Interna faktura",
-      "reg": "CATERPILLAR",
+      "reg": "MINI CATERPILLAR",
       "costPart": 54.99,
       "tipMehan": "Radna mašina",
       "year": 2023,
       "opisPopravke": "Dosipanje hidrauličnog ulja HD46-5l.",
       "segment": "Hidraulika",
-      "cost": 54.99
+      "cost": 54.99,
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_10988_E19_J_311",
@@ -36406,24 +36413,6 @@
       "garazniBroj": "Tuzla Remont"
     },
     {
-      "id": "cost_rec_11389_K26_A_072",
-      "datum": "2023-03-22T23:00:00.000Z",
-      "tipMehan": "Teretna vozila",
-      "segment": "Tečnost",
-      "costService": 0,
-      "type": "Eksterno",
-      "garazniBroj": "Tuzla Remont",
-      "year": 2023,
-      "month": 3,
-      "markaVoz": "MAN",
-      "dobavljacOrig": "Bingo Interna faktura",
-      "costPart": 6.14,
-      "cost": 6.14,
-      "reg": "K26-A-072",
-      "opisPopravke": "Tečnost za vjetrobransko staklo-20 AUTO BRILLA,1kom.",
-      "godProizvodnje": "/"
-    },
-    {
       "id": "cost_rec_1138_J13_O_424",
       "type": "Interno",
       "month": 3,
@@ -38010,11 +37999,11 @@
     {
       "id": "cost_rec_11472_M74_A_818",
       "tipMehan": "Teretna vozila",
-      "garazniBroj": "Tuzla Remont",
+      "garazniBroj": "40450",
       "costPart": 538.2,
       "segment": "Mehanika",
       "type": "Eksterno",
-      "reg": "M74-A-818",
+      "reg": "M47-A-818",
       "opisPopravke": "Zamjena šajbe.",
       "cost": 538.2,
       "dobavljacOrig": "Bingo Interna faktura",
@@ -38024,24 +38013,6 @@
       "markaVoz": "MAN",
       "month": 3,
       "datum": "2023-03-28T22:00:00.000Z"
-    },
-    {
-      "id": "cost_rec_11475_E90_A_536",
-      "datum": "2023-03-28T22:00:00.000Z",
-      "month": 3,
-      "year": 2023,
-      "garazniBroj": "Spole doo",
-      "opisPopravke": "Popravka rampe.",
-      "cost": 166.72,
-      "type": "Eksterno",
-      "markaVoz": "Mercedes Benz",
-      "costService": 166.72,
-      "segment": "Mehanika",
-      "tipMehan": "Teretna vozila",
-      "godProizvodnje": "/",
-      "reg": "E90-A-536",
-      "dobavljacOrig": "Bingo Interna faktura",
-      "costPart": 0
     },
     {
       "id": "cost_rec_11476_102I",
@@ -53219,8 +53190,8 @@
     },
     {
       "id": "cost_rec_12249_CATERPILLAR",
-      "reg": "CATERPILLAR",
-      "garazniBroj": "Tuzla Remont",
+      "reg": "MINI CATERPILLAR",
+      "garazniBroj": "/",
       "year": 2023,
       "tipMehan": "Radna mašina",
       "month": 5,
@@ -53233,7 +53204,8 @@
       "cost": 62.95,
       "segment": "Hidraulika",
       "godProizvodnje": "/",
-      "type": "Eksterno"
+      "type": "Eksterno",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_1224_K76_E_534",
@@ -57026,12 +56998,13 @@
       "month": 5,
       "datum": "2023-05-17T22:00:00.000Z",
       "dobavljacOrig": "Bingo Interna faktura",
-      "reg": "CATERPILLAR",
+      "reg": "MINI CATERPILLAR",
       "opisPopravke": "Dosipanje hidrauličnog ulja HD 68-5l,dosipanje hidrauličnog ulja HD 46-2l.",
-      "garazniBroj": "Tuzla Remont",
+      "garazniBroj": "/",
       "costPart": 63.24,
       "costService": 0,
-      "godProizvodnje": "/"
+      "godProizvodnje": "/",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_12441_151I",
@@ -61174,24 +61147,6 @@
       "month": 5
     },
     {
-      "id": "cost_rec_12655_J03_T_485",
-      "costPart": 0,
-      "type": "Eksterno",
-      "godProizvodnje": "/",
-      "cost": 140.4,
-      "segment": "Hidraulika",
-      "tipMehan": "Teretna vozila",
-      "markaVoz": "Mercedes Benz",
-      "datum": "2023-05-29T22:00:00.000Z",
-      "garazniBroj": "Spole doo",
-      "costService": 140.4,
-      "year": 2023,
-      "month": 5,
-      "reg": "J03-T-485",
-      "opisPopravke": "Popravka rampe.",
-      "dobavljacOrig": "Bingo Interna faktura"
-    },
-    {
       "id": "cost_rec_12657_J54_T_571",
       "reg": "J54-T-571",
       "godProizvodnje": "2015",
@@ -62779,7 +62734,7 @@
       "id": "cost_rec_12738_MINI_BAGER",
       "segment": "Hidraulika",
       "year": 2023,
-      "reg": "MINI BAGER",
+      "reg": "MINI CATERPILLAR",
       "godProizvodnje": "/",
       "datum": "2023-06-02T22:00:00.000Z",
       "dobavljacOrig": "Bingo Interna faktura",
@@ -62787,11 +62742,12 @@
       "cost": 874.22,
       "opisPopravke": "Dosipanje ulja Hidrol HM-8l.",
       "tipMehan": "Radna mašina",
-      "garazniBroj": "Tuzla Remont",
+      "garazniBroj": "/",
       "costService": 874.22,
       "month": 6,
       "costPart": 0,
-      "type": "Eksterno"
+      "type": "Eksterno",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_12739_199",
@@ -71626,10 +71582,11 @@
       "costPart": 0,
       "cost": 1036.97,
       "datum": "2023-06-26T22:00:00.000Z",
-      "garazniBroj": "Tuzla Remont",
-      "reg": "CATERPILLAR",
+      "garazniBroj": "/",
+      "reg": "MINI CATERPILLAR",
       "tipMehan": "Radna mašina",
-      "segment": "Mehanika"
+      "segment": "Mehanika",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_13193_O62_K_911",
@@ -74192,7 +74149,7 @@
       "opisPopravke": "Demontaža gume, dopuna alata Ruski ključ ",
       "datum": "2023-07-05T22:00:00.000Z",
       "godProizvodnje": "/",
-      "markaVoz": "Mercedes Benz",
+      "markaVoz": "MAN",
       "costService": 0,
       "cost": 221.94,
       "year": 2023,
@@ -74200,8 +74157,8 @@
       "tipMehan": "Teretna vozila",
       "segment": "Guma",
       "type": "Eksterno",
-      "garazniBroj": "Tuzla Remont",
-      "reg": "K26-M-053",
+      "garazniBroj": "40375",
+      "reg": "K26-M-071",
       "dobavljacOrig": "Bingo Interna faktura",
       "costPart": 221.94
     },
@@ -81118,24 +81075,6 @@
       "cost": 184.5
     },
     {
-      "id": "cost_rec_13679_T24_E_105",
-      "markaVoz": "MAN",
-      "opisPopravke": "Zamjena prednjeg jastuka ",
-      "tipMehan": "Teretna vozila",
-      "type": "Eksterno",
-      "month": 7,
-      "year": 2023,
-      "dobavljacOrig": "Bingo Interna faktura",
-      "datum": "2023-07-25T22:00:00.000Z",
-      "godProizvodnje": "/",
-      "cost": 140.4,
-      "costPart": 0,
-      "segment": "Mehanika",
-      "reg": "T24-E-105",
-      "garazniBroj": "AMD SCONTO",
-      "costService": 140.4
-    },
-    {
       "id": "cost_rec_1367_J13_O_424",
       "garazniBroj": "40253",
       "datum": "2021-04-14T22:00:00.000Z",
@@ -84592,24 +84531,6 @@
       "godProizvodnje": "/"
     },
     {
-      "id": "cost_rec_13856_E16_J_572",
-      "costPart": 269.1,
-      "cost": 269.1,
-      "dobavljacOrig": "Bingo Interna faktura",
-      "datum": "2023-08-06T22:00:00.000Z",
-      "reg": "E16-J-572",
-      "month": 8,
-      "markaVoz": "Mercedes Benz",
-      "opisPopravke": "Popravka rampe i zamjena četkica rotora ",
-      "tipMehan": "Teretna vozila",
-      "type": "Eksterno",
-      "costService": 0,
-      "year": 2023,
-      "godProizvodnje": "/",
-      "garazniBroj": "Kera & Disk",
-      "segment": "Autoelektrika"
-    },
-    {
       "id": "cost_rec_13857_O07_T_990",
       "markaVoz": "Opel",
       "type": "Interno",
@@ -85925,21 +85846,22 @@
     },
     {
       "id": "cost_rec_13922_MINI_BAGER",
-      "garazniBroj": "Tuzla Remont",
+      "garazniBroj": "/",
       "tipMehan": "Radna mašina",
       "costService": 10.26,
       "costPart": 0,
       "type": "Eksterno",
       "segment": "Hidraulika",
       "cost": 10.26,
-      "markaVoz": "Case",
+      "markaVoz": "Caterpillar",
       "godProizvodnje": "/",
       "dobavljacOrig": "Bingo Interna faktura",
       "month": 8,
       "year": 2023,
       "datum": "2023-08-09T22:00:00.000Z",
       "opisPopravke": "Dosipanje motoronog ulja 1,5l ",
-      "reg": "MINI BAGER"
+      "reg": "MINI CATERPILLAR",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_13923_DAMPER",
@@ -104302,24 +104224,6 @@
       "garazniBroj": "40447"
     },
     {
-      "id": "cost_rec_14859_T37_E_428",
-      "costPart": 234,
-      "type": "Eksterno",
-      "garazniBroj": "A.D. Trade",
-      "cost": 234,
-      "opisPopravke": "Popravka utovarno/istovarne rampe , ispitivanje el.instalacije . Zamijena četkica 4 komada .",
-      "month": 10,
-      "markaVoz": "Mercedes Benz",
-      "godProizvodnje": "/",
-      "reg": "T37-E-428",
-      "datum": "2023-10-03T22:00:00.000Z",
-      "year": 2023,
-      "tipMehan": "Teretna vozila",
-      "dobavljacOrig": "Bingo Interna faktura",
-      "segment": "Hidraulika",
-      "costService": 0
-    },
-    {
       "id": "cost_rec_1485_E67_K_159",
       "tipMehan": "Priključna vozila",
       "year": 2021,
@@ -104750,24 +104654,6 @@
       "month": 10,
       "segment": "Redovan servis",
       "opisPopravke": "Zamjena ulja u motoru TItan GT1 5W40-4,5l.Zamjena filtera ulja,goriva,zraka i kabine.Zamjena remena.Zamjena španera remena.Zamjena vodene pumpe i seta zubčastog remena.Dosipanje antifriza-3l."
-    },
-    {
-      "id": "cost_rec_14881_J87_A_235",
-      "costService": 245.7,
-      "costPart": 0,
-      "opisPopravke": "Popravka auspuha ",
-      "dobavljacOrig": "Bingo Interna faktura",
-      "month": 10,
-      "reg": "J87-A-235",
-      "segment": "Mehanika",
-      "markaVoz": "Dacia",
-      "year": 2023,
-      "tipMehan": "Putnička vozila",
-      "godProizvodnje": "/",
-      "cost": 245.7,
-      "type": "Eksterno",
-      "datum": "2023-10-04T22:00:00.000Z",
-      "garazniBroj": "Džananović doo"
     },
     {
       "id": "cost_rec_14882_A13_J_000",
@@ -111866,18 +111752,19 @@
       "month": 10,
       "costService": 105.3,
       "godProizvodnje": "/",
-      "tipMehan": "Teretna vozila",
+      "tipMehan": "Radna mašina",
       "opisPopravke": "Postavljanje lijeve gusjenice.",
       "segment": "Mehanika",
       "cost": 105.3,
       "type": "Eksterno",
-      "reg": "CATERPILLAR",
-      "garazniBroj": "Tuzla Remont",
+      "reg": "MINI CATERPILLAR",
+      "garazniBroj": "/",
       "year": 2023,
       "dobavljacOrig": "Bingo Interna faktura",
       "costPart": 0,
-      "markaVoz": "Mini Bager",
-      "datum": "2023-10-22T22:00:00.000Z"
+      "markaVoz": "Caterpillar",
+      "datum": "2023-10-22T22:00:00.000Z",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_1523_117_M_350",
@@ -112475,21 +112362,22 @@
     },
     {
       "id": "cost_rec_15270_CATERPILLAR",
-      "reg": "CATERPILLAR",
+      "reg": "MINI CATERPILLAR",
       "cost": 331.75,
       "segment": "Mehanika",
       "type": "Eksterno",
       "datum": "2023-10-23T22:00:00.000Z",
-      "garazniBroj": "Tuzla Remont",
-      "tipMehan": "Teretna vozila",
+      "garazniBroj": "/",
+      "tipMehan": "Radna mašina",
       "opisPopravke": "Zamjena ležaja na gusjenicama 2kom, zamjena semeringa 2kom. Podmazivanje gusjenica ELDONS GREASE 1,5kg.",
       "month": 10,
-      "markaVoz": "Mini Bager",
+      "markaVoz": "Caterpillar",
       "dobavljacOrig": "Bingo Interna faktura",
       "godProizvodnje": "/",
       "costPart": 331.75,
       "year": 2023,
-      "costService": 0
+      "costService": 0,
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_15271_325",
@@ -114889,19 +114777,20 @@
       "id": "cost_rec_15391_MINI_BAGER",
       "costPart": 168.83,
       "segment": "Hidraulika",
-      "reg": "MINI BAGER",
+      "reg": "MINI CATERPILLAR",
       "dobavljacOrig": "Bingo Interna faktura",
       "costService": 0,
       "month": 10,
       "cost": 168.83,
       "markaVoz": "Caterpillar",
       "type": "Eksterno",
-      "garazniBroj": "Tuzla Remont",
-      "tipMehan": "Teretna vozila",
+      "garazniBroj": "/",
+      "tipMehan": "Radna mašina",
       "datum": "2023-10-26T22:00:00.000Z",
       "year": 2023,
       "opisPopravke": "Reparacija metalne cijevi što ide do kašike , nasuto ulje NISOTEC HIDROL HM46 9l.",
-      "godProizvodnje": "/"
+      "godProizvodnje": "/",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_15392_T29_O_326",
@@ -115789,19 +115678,20 @@
       "id": "cost_rec_15437_MINI_BAGER",
       "costService": 70.2,
       "type": "Eksterno",
-      "tipMehan": "Teretna vozila",
+      "tipMehan": "Radna mašina",
       "month": 10,
       "dobavljacOrig": "Bingo Interna faktura",
       "cost": 70.2,
       "year": 2023,
-      "garazniBroj": "Tuzla Remont",
+      "garazniBroj": "/",
       "markaVoz": "Caterpillar",
       "datum": "2023-10-29T23:00:00.000Z",
       "segment": "Mehanika",
       "godProizvodnje": "/",
       "costPart": 0,
       "opisPopravke": "Reparacija instalacije goriva ( skidanje seperatora goriva i pranje).",
-      "reg": "MINI BAGER"
+      "reg": "MINI CATERPILLAR",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_15438_A48_E_363",
@@ -115820,24 +115710,6 @@
       "opisPopravke": "Reparacija instalacije zraka.",
       "costService": 70.2,
       "type": "Eksterno"
-    },
-    {
-      "id": "cost_rec_15439_K49_T_912",
-      "garazniBroj": "Džajić Komerc",
-      "type": "Eksterno",
-      "segment": "Autoelektrika",
-      "cost": 107.21,
-      "reg": "K49-T-912",
-      "tipMehan": "Teretna vozila",
-      "dobavljacOrig": "Bingo Interna faktura",
-      "datum": "2023-10-29T23:00:00.000Z",
-      "month": 10,
-      "costService": 107.21,
-      "markaVoz": "DAF",
-      "year": 2023,
-      "godProizvodnje": "/",
-      "opisPopravke": "Reparacija rampe (popravka el. Instalacije).",
-      "costPart": 0
     },
     {
       "id": "cost_rec_1543_A82_J_885",
@@ -119156,18 +119028,19 @@
       "dobavljacOrig": "Bingo Interna faktura",
       "type": "Eksterno",
       "datum": "2023-11-02T23:00:00.000Z",
-      "tipMehan": "Teretna vozila",
+      "tipMehan": "Radna mašina",
       "segment": "Mehanika",
       "markaVoz": "Caterpillar",
       "opisPopravke": "Postavljanje lijeve gusjenice.",
-      "reg": "CATERPILLAR",
+      "reg": "MINI CATERPILLAR",
       "month": 11,
       "year": 2023,
-      "garazniBroj": "Tuzla Remont",
+      "garazniBroj": "/",
       "cost": 70.2,
       "costService": 70.2,
       "costPart": 0,
-      "godProizvodnje": "/"
+      "godProizvodnje": "/",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_15606_O89_E_957",
@@ -121423,19 +121296,20 @@
       "id": "cost_rec_15724_CATERPILLAR",
       "markaVoz": "Caterpillar",
       "segment": "Mehanika",
-      "tipMehan": "Teretna vozila",
+      "tipMehan": "Radna mašina",
       "datum": "2023-11-08T23:00:00.000Z",
       "dobavljacOrig": "Bingo Interna faktura",
       "type": "Eksterno",
-      "garazniBroj": "Tuzla Remont",
+      "garazniBroj": "/",
       "costService": 0,
       "opisPopravke": "Zamjena filtera goriva 1kom, dosipanje antifriza POLO 100% 4l.",
       "year": 2023,
       "costPart": 266.39,
-      "reg": "CATERPILLAR",
+      "reg": "MINI CATERPILLAR",
       "cost": 266.39,
       "godProizvodnje": "/",
-      "month": 11
+      "month": 11,
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_15725_K35_A_745",
@@ -122662,24 +122536,6 @@
       "opisPopravke": "Kompletno pranje vozila."
     },
     {
-      "id": "cost_rec_15788_RADNA_MA_INA",
-      "reg": "RADNA MAŠINA",
-      "cost": 105.3,
-      "year": 2023,
-      "costService": 105.3,
-      "dobavljacOrig": "Bingo Interna faktura",
-      "tipMehan": "Teretna vozila",
-      "type": "Eksterno",
-      "month": 11,
-      "markaVoz": "Vibraciona žaba",
-      "costPart": 0,
-      "garazniBroj": "Tuzla Remont",
-      "datum": "2023-11-12T23:00:00.000Z",
-      "segment": "Mehanika",
-      "godProizvodnje": "/",
-      "opisPopravke": "Reparacija opruge na starteru."
-    },
-    {
       "id": "cost_rec_15789_A39_E_904",
       "reg": "A39-E-904",
       "tipMehan": "Teretna vozila",
@@ -123238,42 +123094,6 @@
       "costPart": 0
     },
     {
-      "id": "cost_rec_15817_K49_T_912",
-      "markaVoz": "DAF",
-      "godProizvodnje": "/",
-      "costPart": 115.25,
-      "datum": "2023-11-13T23:00:00.000Z",
-      "costService": 0,
-      "opisPopravke": "Ispuštanje vode iz sistema, nasuto antifriza G12 100% 10l.",
-      "cost": 115.25,
-      "segment": "Tečnost",
-      "dobavljacOrig": "Bingo Interna faktura",
-      "type": "Eksterno",
-      "garazniBroj": "Džajić Komerc",
-      "tipMehan": "Teretna vozila",
-      "month": 11,
-      "year": 2023,
-      "reg": "K49-T-912"
-    },
-    {
-      "id": "cost_rec_15818_K09_J_619",
-      "dobavljacOrig": "Bingo Interna faktura",
-      "costService": 0,
-      "markaVoz": "Iveco",
-      "datum": "2023-11-13T23:00:00.000Z",
-      "segment": "Tečnost",
-      "costPart": 92.72,
-      "cost": 92.72,
-      "tipMehan": "Teretna vozila",
-      "garazniBroj": "Džajić Komerc",
-      "opisPopravke": "Ispuštanje vode iz sistema, nasuto antifriza G12 100% 5l.",
-      "month": 11,
-      "type": "Eksterno",
-      "godProizvodnje": "/",
-      "reg": "K09-J-619",
-      "year": 2023
-    },
-    {
       "id": "cost_rec_15819_E67_K_159",
       "costPart": 1158.3,
       "cost": 1158.3,
@@ -123776,24 +123596,6 @@
       "costService": 0,
       "cost": 86.03,
       "godProizvodnje": "/"
-    },
-    {
-      "id": "cost_rec_15844_E86_A_884",
-      "year": 2023,
-      "month": 11,
-      "godProizvodnje": "/",
-      "type": "Eksterno",
-      "markaVoz": "Volkswagen",
-      "costPart": 8.4,
-      "garazniBroj": "Tuzla Remont",
-      "cost": 8.4,
-      "reg": "E86-A-884",
-      "segment": "Tečnost",
-      "tipMehan": "Teretna vozila",
-      "costService": 0,
-      "opisPopravke": "Dosipanje tečnosti za brisače 1 kom",
-      "datum": "2023-11-14T23:00:00.000Z",
-      "dobavljacOrig": "Bingo Interna faktura"
     },
     {
       "id": "cost_rec_15845_O18_M_907",
@@ -124370,42 +124172,6 @@
       "dobavljacOrig": "Autopraona Bingo Plus",
       "reg": "K16-J-694",
       "costService": 8
-    },
-    {
-      "id": "cost_rec_15874_J87_A_235",
-      "year": 2023,
-      "type": "Eksterno",
-      "tipMehan": "Teretna vozila",
-      "datum": "2023-11-15T23:00:00.000Z",
-      "costService": 0,
-      "cost": 180,
-      "segment": "Mehanika",
-      "month": 11,
-      "garazniBroj": "Džananović doo",
-      "godProizvodnje": "/",
-      "reg": "J87-A-235",
-      "opisPopravke": "Dosipanje antifriza G12 100% 1l, izrada pregradne rešetke (demontaža zadnjih sjedišta, zavarivanje,farbanje).",
-      "costPart": 180,
-      "markaVoz": "Dacia",
-      "dobavljacOrig": "Bingo Interna faktura"
-    },
-    {
-      "id": "cost_rec_15876_J87_A_235",
-      "godProizvodnje": "/",
-      "datum": "2023-11-15T23:00:00.000Z",
-      "costPart": 0,
-      "costService": 8.4,
-      "markaVoz": "Dacia",
-      "year": 2023,
-      "garazniBroj": "Džananović doo",
-      "reg": "J87-A-235",
-      "month": 11,
-      "tipMehan": "Teretna vozila",
-      "type": "Eksterno",
-      "segment": "Tečnost",
-      "opisPopravke": "Dosipanje tečnosti za brisače 1 kom",
-      "cost": 8.4,
-      "dobavljacOrig": "Bingo Interna faktura"
     },
     {
       "id": "cost_rec_15877_T46_A_557",
@@ -130294,24 +130060,6 @@
       "datum": "2023-11-26T23:00:00.000Z"
     },
     {
-      "id": "cost_rec_16174_O37_E_846",
-      "type": "Eksterno",
-      "tipMehan": "Teretna vozila",
-      "year": 2023,
-      "costService": 105.3,
-      "month": 11,
-      "datum": "2023-11-26T23:00:00.000Z",
-      "cost": 105.3,
-      "segment": "Autoelektrika",
-      "markaVoz": "Mercedes Benz",
-      "garazniBroj": "Old Gold Komerc",
-      "godProizvodnje": "/",
-      "opisPopravke": "Popravka rampe. Ispitivanje džojstika i magnetnih ventila. Demontaža i montaža elektronike za komandovanje .",
-      "reg": "O37-E-846",
-      "dobavljacOrig": "Bingo Interna faktura",
-      "costPart": 0
-    },
-    {
       "id": "cost_rec_16175_M71_A_140",
       "markaVoz": "Volkswagen",
       "opisPopravke": "Zamjena filtera ulja,zraka,kabine i goriva . Motorno ulje 5w40 5 l. ",
@@ -132420,24 +132168,6 @@
       "markaVoz": "Fiat"
     },
     {
-      "id": "cost_rec_16283_K49_T_912",
-      "godProizvodnje": "/",
-      "costPart": 405.43,
-      "dobavljacOrig": "Bingo Interna faktura",
-      "segment": "Redovan servis",
-      "opisPopravke": "Zamjena filtera ulja, zraka,kabine,goriva,isušivača zraka. Dosipanje motornog ulja cargo la 10w40 13 l. Dosipanje rashladne tečnosti G12 100% 2 L ",
-      "tipMehan": "Teretna vozila",
-      "cost": 405.43,
-      "costService": 0,
-      "datum": "2023-12-01T23:00:00.000Z",
-      "month": 12,
-      "reg": "K49-T-912",
-      "markaVoz": "DAF",
-      "year": 2023,
-      "garazniBroj": "Džajić Komerc",
-      "type": "Eksterno"
-    },
-    {
       "id": "cost_rec_16284_E67_K_168",
       "opisPopravke": "Zamjena guma Protekt 385/65 R22.5-2kom.",
       "dobavljacOrig": "PGL Protekt",
@@ -133376,24 +133106,6 @@
       "reg": "J62-M-166"
     },
     {
-      "id": "cost_rec_16331_J98_E_405",
-      "opisPopravke": "Popravka rampe. Demontaža i montaža klipa . Izrada vodilica za kablo i postavljanje na vozilo. Spajnaje utikača u tovarnom prostoru.",
-      "markaVoz": "Mercedes Benz",
-      "datum": "2023-12-04T23:00:00.000Z",
-      "reg": "J98-E-405",
-      "segment": "Autoelektrika",
-      "godProizvodnje": "/",
-      "costPart": 0,
-      "garazniBroj": "Violeta",
-      "cost": 483.44,
-      "costService": 483.44,
-      "year": 2023,
-      "tipMehan": "Teretna vozila",
-      "dobavljacOrig": "Bingo Interna faktura",
-      "type": "Eksterno",
-      "month": 12
-    },
-    {
       "id": "cost_rec_16332_A39_E_904",
       "cost": 55.63,
       "segment": "Hidraulika",
@@ -133957,7 +133669,7 @@
       "costPart": 45.37,
       "godProizvodnje": "/",
       "year": 2023,
-      "garazniBroj": "Tuzla Remont",
+      "garazniBroj": "/",
       "type": "Eksterno",
       "markaVoz": "Caterpillar",
       "opisPopravke": "Dosipanje motornog ulja 15w40 - 1,5l",
@@ -133965,9 +133677,10 @@
       "segment": "Hidraulika",
       "costService": 0,
       "cost": 45.37,
-      "reg": "MINI BAGER",
+      "reg": "MINI CATERPILLAR",
       "tipMehan": "Radna mašina",
-      "month": 12
+      "month": 12,
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_16363_M30_K_134",
@@ -134850,24 +134563,6 @@
       "tipMehan": "Priključna vozila",
       "datum": "2023-12-07T23:00:00.000Z",
       "garazniBroj": "Tuzla Remont"
-    },
-    {
-      "id": "cost_rec_16407_J87_A_235",
-      "tipMehan": "Teretna vozila",
-      "reg": "J87-A-235",
-      "datum": "2023-12-07T23:00:00.000Z",
-      "dobavljacOrig": "Bingo Interna faktura",
-      "type": "Eksterno",
-      "year": 2023,
-      "garazniBroj": "Džananović doo",
-      "godProizvodnje": "/",
-      "markaVoz": "Dacia",
-      "segment": "Redovan servis",
-      "cost": 334,
-      "costService": 0,
-      "month": 12,
-      "opisPopravke": "Zamjena filtera ulja,zraka,kabine,goriva. Zamjena motornog ulja GT1 5W30 4 L. Zamjena prednje lijeve krajnice. Zamjena prednjih dsk pločica . Spajanje dijagnostike .",
-      "costPart": 334
     },
     {
       "id": "cost_rec_16408_48",
@@ -236540,13 +236235,13 @@
       "month": 10,
       "type": "Interno",
       "tipMehan": "Radna mašina",
-      "reg": "CATERPILLAR",
-      "garazniBroj": "SERVIS MOTORNIH VOZILA",
+      "reg": "MINI CATERPILLAR",
+      "garazniBroj": "/",
       "cost": 137.74,
-      "markaVoz": "CATERPILLAR",
+      "markaVoz": "Caterpillar",
       "dobavljacOrig": "Bingo Interna faktura",
       "costPart": 137.74,
-      "modelVoz": "CATERPILLAR"
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_21492_M49_J_382",
@@ -308026,15 +307721,15 @@
       "month": 6,
       "garazniBroj": "/",
       "type": "Interno",
-      "reg": "CATERPILLAR",
+      "reg": "MINI CATERPILLAR",
       "costService": 60,
       "opisPopravke": "Ugradnja hidrauličnog crijeva.",
-      "markaVoz": "CATERPILLAR",
+      "markaVoz": "Caterpillar",
       "datum": "2025-06-15T22:00:00.000Z",
       "godProizvodnje": "/",
       "cost": 60,
       "costPart": 0,
-      "modelVoz": "CATERPILLAR"
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_25065_A52_O_235",
@@ -310031,10 +309726,10 @@
       "datum": "2025-06-15T22:00:00.000Z",
       "costPart": 59.85,
       "costService": 0,
-      "reg": "CATERPILLAR",
+      "reg": "MINI CATERPILLAR",
       "year": 2025,
-      "markaVoz": "CATERPILLAR",
-      "modelVoz": "CATERPILLAR"
+      "markaVoz": "Caterpillar",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_25165_M02_T_338",
@@ -437458,7 +437153,7 @@
     {
       "id": "cost_rec_37_MINI_BAGER",
       "opisPopravke": "Zamjena grijača na motoru 6kom",
-      "garazniBroj": "40692",
+      "garazniBroj": "/",
       "dobavljacOrig": "Bingo Interna faktura",
       "markaVoz": "Caterpillar",
       "costService": 0,
@@ -437471,7 +437166,8 @@
       "tipMehan": "Radna mašina",
       "godProizvodnje": "/",
       "year": 2021,
-      "reg": "MINI BAGER"
+      "reg": "MINI CATERPILLAR",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_3800_A14_K_205",
@@ -449876,24 +449572,6 @@
       "segment": "Mehanika"
     },
     {
-      "id": "cost_rec_4432_O36_K_271",
-      "costService": 0,
-      "godProizvodnje": "/",
-      "costPart": 35.1,
-      "garazniBroj": "Duka",
-      "month": 4,
-      "segment": "Mehanika",
-      "cost": 35.1,
-      "reg": "O36-K-271",
-      "markaVoz": "Mercedes Benz",
-      "year": 2021,
-      "opisPopravke": "Zamjena master modula u garanciji",
-      "datum": "2021-04-19T22:00:00.000Z",
-      "tipMehan": "Teretna vozila",
-      "dobavljacOrig": "Bingo Interna faktura",
-      "type": "Eksterno"
-    },
-    {
       "id": "cost_rec_4433_K21_M_389",
       "garazniBroj": "Dita",
       "reg": "K21-M-389",
@@ -450414,24 +450092,6 @@
       "segment": "Mehanika",
       "dobavljacOrig": "Bingo Interna faktura",
       "year": 2021
-    },
-    {
-      "id": "cost_rec_4478_E58_T_682",
-      "opisPopravke": "Zamjena ventila.",
-      "costPart": 245.7,
-      "type": "Eksterno",
-      "godProizvodnje": "/",
-      "datum": "2021-09-26T22:00:00.000Z",
-      "year": 2021,
-      "month": 9,
-      "markaVoz": "MAN",
-      "cost": 245.7,
-      "tipMehan": "Teretna vozila",
-      "costService": 0,
-      "dobavljacOrig": "Bingo Interna faktura",
-      "reg": "E58-T-682",
-      "segment": "Mehanika",
-      "garazniBroj": "Duka"
     },
     {
       "id": "cost_rec_4479_KONTEJNER",
@@ -453708,24 +453368,6 @@
       "markaVoz": "Suzuki",
       "garazniBroj": "40051",
       "costService": 0
-    },
-    {
-      "id": "cost_rec_4665_E58_T_682",
-      "cost": 35.1,
-      "godProizvodnje": "/",
-      "reg": "E58-T-682",
-      "costService": 0,
-      "dobavljacOrig": "Bingo Interna faktura",
-      "tipMehan": "Teretna vozila",
-      "garazniBroj": "Duka",
-      "segment": "Signalizacija",
-      "datum": "2022-01-11T23:00:00.000Z",
-      "month": 1,
-      "opisPopravke": "Popravka signalizacije",
-      "type": "Eksterno",
-      "year": 2022,
-      "markaVoz": "MAN",
-      "costPart": 35.1
     },
     {
       "id": "cost_rec_4666_160",
@@ -478603,9 +478245,10 @@
       "month": 3,
       "datum": "2022-03-23T23:00:00.000Z",
       "opisPopravke": "Demontaža vodećeg točka i vraćanje klipa na prvobitni položaj, postavljanje gusjenice i španovanje iste, podmazivanje (1kg masti)",
-      "reg": "MINI BAGER",
-      "garazniBroj": "40692",
-      "segment": "Mehanika"
+      "reg": "MINI CATERPILLAR",
+      "garazniBroj": "/",
+      "segment": "Mehanika",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_5923_107I",
@@ -486681,13 +486324,14 @@
       "costPart": 99.23,
       "tipMehan": "Radna mašina",
       "datum": "2022-04-20T22:00:00.000Z",
-      "garazniBroj": "40692",
+      "garazniBroj": "/",
       "costService": 0,
       "opisPopravke": "Zamjena crijeva za dovod goriva, popravka el. instalacije od ručice hidrauličnih komandi",
       "type": "Interno",
       "markaVoz": "Caterpillar",
-      "reg": "MINI BAGER",
-      "segment": "Mehanika"
+      "reg": "MINI CATERPILLAR",
+      "segment": "Mehanika",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_6332_203",
@@ -500935,8 +500579,8 @@
       "costService": 120,
       "cost": 120,
       "godProizvodnje": "/",
-      "garazniBroj": "40692",
-      "reg": "MINI BAGER",
+      "garazniBroj": "/",
+      "reg": "MINI CATERPILLAR",
       "tipMehan": "Radna mašina",
       "opisPopravke": "Opravka vrata i prednje šofer šajbe, zavarivanje oštećenih dijelova na vodilici.",
       "dobavljacOrig": "Bingo Interna faktura",
@@ -500946,7 +500590,8 @@
       "year": 2022,
       "markaVoz": "Caterpillar",
       "segment": "Mehanika",
-      "datum": "2022-06-06T22:00:00.000Z"
+      "datum": "2022-06-06T22:00:00.000Z",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_7052_T96_M_052",
@@ -516505,7 +516150,7 @@
     {
       "id": "cost_rec_7843_MINI_BAGER",
       "cost": 109.57,
-      "reg": "MINI BAGER",
+      "reg": "MINI CATERPILLAR",
       "markaVoz": "Caterpillar",
       "godProizvodnje": "/",
       "dobavljacOrig": "Bingo Interna faktura",
@@ -516517,8 +516162,9 @@
       "costService": 0,
       "datum": "2022-08-03T22:00:00.000Z",
       "costPart": 109.57,
-      "garazniBroj": "40692",
-      "opisPopravke": "Zamjena ulja u motoru TITAN CARGO MC 10w40 3,5l , zamjena filtera ulja, zraka"
+      "garazniBroj": "/",
+      "opisPopravke": "Zamjena ulja u motoru TITAN CARGO MC 10w40 3,5l , zamjena filtera ulja, zraka",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_7844_O62_K_911",
@@ -517209,7 +516855,7 @@
       "opisPopravke": "Dosipanje ulja X HIDRO 46 5l.",
       "tipMehan": "Radna mašina",
       "markaVoz": "Caterpillar",
-      "reg": "MINI BAGER",
+      "reg": "MINI CATERPILLAR",
       "datum": "2022-08-07T22:00:00.000Z",
       "month": 8,
       "cost": 44.5,
@@ -517219,8 +516865,9 @@
       "segment": "Tečnost",
       "costPart": 0,
       "type": "Interno",
-      "garazniBroj": "40692",
-      "year": 2022
+      "garazniBroj": "/",
+      "year": 2022,
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_7881_50",
@@ -525184,17 +524831,18 @@
       "dobavljacOrig": "Bingo Interna faktura",
       "cost": 244.5,
       "costService": 244.5,
-      "garazniBroj": "40692",
+      "garazniBroj": "/",
       "costPart": 0,
       "opisPopravke": "Popravka vrata (postavljanje novog lima, varenje, farbanje).",
       "datum": "2022-09-13T22:00:00.000Z",
-      "reg": "MINI BAGER",
+      "reg": "MINI CATERPILLAR",
       "year": 2022,
       "month": 9,
       "markaVoz": "Caterpillar",
       "type": "Interno",
       "tipMehan": "Radna mašina",
-      "segment": "Mehanika"
+      "segment": "Mehanika",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_8286_M40_A_811",
@@ -528047,16 +527695,17 @@
       "opisPopravke": "Postavljanje gusjenica.",
       "costPart": 0,
       "cost": 30,
-      "garazniBroj": "40692",
+      "garazniBroj": "/",
       "markaVoz": "Caterpillar",
       "godProizvodnje": "/",
       "tipMehan": "Radna mašina",
       "type": "Interno",
       "month": 9,
-      "reg": "MINI BAGER",
+      "reg": "MINI CATERPILLAR",
       "dobavljacOrig": "Bingo Interna faktura",
       "year": 2022,
-      "segment": "Mehanika"
+      "segment": "Mehanika",
+      "modelVoz": "Mini Caterpillar"
     },
     {
       "id": "cost_rec_842_A36_J_651",
@@ -551107,7 +550756,7 @@
       "costPart": 0,
       "markaVoz": "MAN",
       "dobavljacOrig": "Bingo Interna faktura",
-      "garazniBroj": "Tuzla Remont",
+      "garazniBroj": "40375",
       "type": "Eksterno",
       "month": 12,
       "year": 2022,
@@ -551115,7 +550764,7 @@
       "costService": 42.47,
       "godProizvodnje": "/",
       "datum": "2022-12-01T23:00:00.000Z",
-      "reg": "K26-M-074",
+      "reg": "K26-M-071",
       "opisPopravke": "Reparacija crijeva zraka."
     },
     {
