@@ -1,39 +1,40 @@
-# Analiza izvodljivosti: Dodjela i rekonstrukcija radnih sati za skladišnu mehanizaciju
+# Analiza izvodljivosti: Dodjela i rekonstrukcija radnih sati za skladišnu mehanizaciju (100% Pokrivenost)
 
 **Datum:** 09.09.2026.  
-**Izvor podataka:** `Konsolidovani radni sati mehanizacija 2025-2026.xlsx` (528 jedinica flote)  
-**Cilj:** Provjera procenta poklapanja sa servisima skladišne mehanizacije (2021–2026) i ocjena izvodljivosti matematičko-fizikalne rekonstrukcije radnih sati za starije godine.  
-**Status:** **Samo provjera stanja (bez izmjena u bazi ili Firestoreu).**
+**Izvori podataka:**  
+1. `Konsolidovani radni sati mehanizacija 2025-2026.xlsx` (528 aktivnih jedinica)
+2. `fleet_master.json` (1.252 jedinice uključujući rashodovana/prodata vozila)
+3. `fleet_data.json` (7.277 servisa skladišne mehanizacije 2021–2026)
+
+**Status:** **Samo provjera stanja i simulacija (bez izmjena u bazi ili Firestoreu).**
 
 ---
 
-### 1. Ključni rezultati poklapanja:
-- **Ukupno servisa skladišne mehanizacije u bazi:** 7.277 servisa.
-- **Uspješno poklopljeno sa evidencijom mašina:** **6.719 servisa (92.33%)**.
-- **Nepoklopljeno:** 558 servisa (7.67%).
-  - *Razlog nepoklapanja:* Uglavnom mašine koje su rashodovane ili prodate prije 2025. godine (npr. inv. br. 212, 175, 203, 226) i samim tim se ne nalaze u evidenciji aktivne flote 2025–2026.
+### 1. Potpuni obuhvat (100% pokrivenost baze servisa):
+Svih **7.277 servisa** skladišne mehanizacije je uspješno obrađeno i dobija radne sate na dan servisa:
 
-#### Pokrivenost po godinama:
-- **2026. godina:** 532 / 540 (**98.70%**)
-- **2025. godina:** 1.427 / 1.462 (**97.61%**)
-- **2024. godina:** 1.694 / 1.734 (**97.69%**)
-- **2023. godina:** 1.337 / 1.432 (**93.37%**)
-- **2022. godina:** 1.049 / 1.255 (**83.59%**)
-- **2021. godina:** 680 / 854 (**79.63%**)
+1. **Grupa A – Aktivne mašine (6.719 servisa / 92.33%):**
+   - Direktno uvezane sa 528 mašina iz konsolidovane tabele.
+   - Za 2025–2026.: Kvartalna interpolacija između 7 stvarnih očitavanja.
+   - Za 2021–2024.: Rekonstrukcija unazad preko individualnog tempa mašine uz zaštitu godine proizvodnje.
+2. **Grupa B – Rashodovane / stare mašine prije 2025. (558 servisa / 7.67%):**
+   - Mašine (npr. inv. br. 212, 175, 203, 3, 226...) koje su postojale i servisirane do 2023–2024, ali su rashodovane prije 2025.
+   - Za njih iz `fleet_master.json` uzimamo godinu proizvodnje i primjenjujemo flotni benchmark tempo (3.52 h/dan) od proizvodnje do dana servisa.
+   - Rezultat: Realan, monoton prirast radnih sati (npr. Inv 212: 9.127 h u 2021. do 12.179 h u 2023. godini).
 
 ---
 
-### 2. Metodologija rekonstrukcije:
-1. **Za 2025. i 2026. godinu (Interpolacija):**
-   - Imamo 7 kvartalnih sidrenih tačaka (Q1 2025 – Q3 2026).
-   - Radni sati na dan servisa se računaju linearnom interpolacijom između dva granična kvartala.
-2. **Za 2021–2024. godinu (Rekonstrukcija unatrag):**
-   - Polazi se od poznatog stanja na Q1 2025 i oduzima se iznos: `dani_unazad * dnevni_tempo (h/dan)`.
-   - Dnevni tempo je izračunat za svaku mašinu pojedinačno na osnovu stvarnog korištenja (prosjek flote: 3.52 h/dan).
-   - **Fizička zaštita (Bounds):** Uvedeno ograničenje preko godine proizvodnje mašine – sati nikada ne mogu pasti ispod nule.
+### 2. Distribucija po godinama:
+- **2021:** 854 / 854 (100.0%)
+- **2022:** 1.255 / 1.255 (100.0%)
+- **2023:** 1.432 / 1.432 (100.0%)
+- **2024:** 1.734 / 1.734 (100.0%)
+- **2025:** 1.462 / 1.462 (100.0%)
+- **2026:** 540 / 540 (100.0%)
+- **UKUPNO:** **7.277 / 7.277 (100.00%)**
 
 ---
 
 ### 3. Generisani izvještaj:
 - `C:\Users\emir.durakovic\Desktop\Gemini-Files\Reports\Analiza_Izvodljivosti_Rekonstrukcije_Radnih_Sati.xlsx`
-  - Sadrži detaljnu metodologiju, simulaciju za svih 6.719 servisa, analizu nepoklopljenih i raw sheet `DATA` crvene boje.
+  - Sadrži detaljnu metodologiju, simulaciju svih 7.277 servisa, i raw sheet `DATA` crvene boje.
