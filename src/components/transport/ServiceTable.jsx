@@ -42,9 +42,9 @@ export function ServiceTable({
 
   const BATCH_SIZE = 60;
 
-  const isPrikljucnaFilter = colFilterType === "Priključna vozila";
+  const isPrikljucnaFilter = colFilterType === "Priključna vozila" || colFilterType === "Radna mašina";
   const colUsageHeader = useMemo(() => {
-    if (colFilterType === "Radna mašina" || colFilterType === "Skladišna mehanizacija") {
+    if (colFilterType === "Skladišna mehanizacija") {
       return "Radni sati";
     }
     if (colFilterType === "Teretna vozila" || colFilterType === "Putnička vozila") {
@@ -485,9 +485,9 @@ export function ServiceTable({
                         </td>
                         {!isPrikljucnaFilter && (
                           <td className="py-2 px-3 text-right font-mono font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                            {displayType === "Priključna vozila" ? (
+                            {displayType === "Priključna vozila" || displayType === "Radna mašina" ? (
                               <span className="text-slate-300 dark:text-slate-600">-</span>
-                            ) : displayType === "Radna mašina" || displayType === "Skladišna mehanizacija" ? (
+                            ) : displayType === "Skladišna mehanizacija" ? (
                               <span className="text-amber-700 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded text-[11px]">
                                 {formatOperatingHours(item.radniSati ?? 0)}
                               </span>

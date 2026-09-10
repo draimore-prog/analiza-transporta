@@ -132,8 +132,8 @@ export function formatOperatingHours(val) {
 export function formatServiceUsage(item) {
   if (!item) return '-';
   const cleanType = cleanVehicleType(item.tipMehan);
-  if (cleanType === 'Priključna vozila') return '-';
-  if (cleanType === 'Radna mašina' || cleanType === 'Skladišna mehanizacija') {
+  if (cleanType === 'Priključna vozila' || cleanType === 'Radna mašina') return '-';
+  if (cleanType === 'Skladišna mehanizacija') {
     return formatOperatingHours(item.radniSati ?? 0);
   }
   if (cleanType === 'Teretna vozila' || cleanType === 'Putnička vozila') {

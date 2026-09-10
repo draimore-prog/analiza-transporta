@@ -133,10 +133,10 @@ export function NewCostModal({
       setModelVoz(found.modelVoz || "-");
       setMatchMessage(null);
 
-      if (cleanT === "Priključna vozila") {
+      if (cleanT === "Priključna vozila" || cleanT === "Radna mašina") {
         setKilometraza("");
         setRadniSati("");
-      } else if (cleanT === "Radna mašina" || cleanT === "Skladišna mehanizacija") {
+      } else if (cleanT === "Skladišna mehanizacija") {
         setRadniSati("0");
         setKilometraza("");
       } else {
@@ -149,10 +149,10 @@ export function NewCostModal({
     const cleanT = cleanVehicleType(newTip);
     setTipMehan(cleanT);
     setMatchMessage(null);
-    if (cleanT === "Priključna vozila") {
+    if (cleanT === "Priključna vozila" || cleanT === "Radna mašina") {
       setKilometraza("");
       setRadniSati("");
-    } else if (cleanT === "Radna mašina" || cleanT === "Skladišna mehanizacija") {
+    } else if (cleanT === "Skladišna mehanizacija") {
       setRadniSati("0");
       setKilometraza("");
     } else {
@@ -206,10 +206,10 @@ export function NewCostModal({
       let finalHours = null;
       const cleanT = cleanVehicleType(tipMehan);
 
-      if (cleanT === "Priključna vozila") {
+      if (cleanT === "Priključna vozila" || cleanT === "Radna mašina") {
         finalKm = null;
         finalHours = null;
-      } else if (cleanT === "Radna mašina" || cleanT === "Skladišna mehanizacija") {
+      } else if (cleanT === "Skladišna mehanizacija") {
         finalHours = radniSati !== "" ? parseFloat(radniSati) : 0;
         finalKm = null;
       } else {
@@ -410,17 +410,17 @@ export function NewCostModal({
               />
             </div>
 
-            {/* Dinamičko polje: Kilometraža ili Radni Sati (sakriveno za priključna vozila) */}
-            {cleanVehicleType(tipMehan) !== "Priključna vozila" && (
+            {/* Dinamičko polje: Kilometraža ili Radni Sati (sakriveno za priključna vozila i radne mašine) */}
+            {cleanVehicleType(tipMehan) !== "Priključna vozila" && cleanVehicleType(tipMehan) !== "Radna mašina" && (
               <div className="sm:col-span-2 bg-slate-50 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700/80">
-                {cleanVehicleType(tipMehan) === "Radna mašina" || cleanVehicleType(tipMehan) === "Skladišna mehanizacija" ? (
+                {cleanVehicleType(tipMehan) === "Skladišna mehanizacija" ? (
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="block font-bold uppercase text-slate-700 dark:text-slate-300">
                         Radni Sati (h)
                       </label>
                       <span className="text-[10px] text-amber-700 dark:text-amber-400 font-extrabold bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded">
-                        🚜 Radna mašina / Skladište (početno 0 h)
+                        🚜 Skladišna mehanizacija (početno 0 h)
                       </span>
                     </div>
                     <input

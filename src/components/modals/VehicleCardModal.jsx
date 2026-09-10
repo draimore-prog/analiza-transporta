@@ -89,8 +89,8 @@ export function VehicleCardModal({
   }, [reg, masterFleet, costData]);
 
   const cleanType = cleanVehicleType(vehicleInfo?.tipMehan);
-  const isPrikljucno = cleanType === "Priključna vozila";
-  const usageColTitle = (cleanType === "Radna mašina" || cleanType === "Skladišna mehanizacija")
+  const isPrikljucno = cleanType === "Priključna vozila" || cleanType === "Radna mašina";
+  const usageColTitle = cleanType === "Skladišna mehanizacija"
     ? "Radni sati"
     : "Kilometraža";
 
@@ -699,7 +699,7 @@ export function VehicleCardModal({
                         </td>
                         {!isPrikljucno && (
                           <td className="p-2.5 text-right font-mono font-bold whitespace-nowrap">
-                            {cleanType === "Radna mašina" || cleanType === "Skladišna mehanizacija" ? (
+                            {cleanType === "Skladišna mehanizacija" ? (
                               <span className="text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded text-[11px]">
                                 {formatOperatingHours(c.radniSati ?? 0)}
                               </span>

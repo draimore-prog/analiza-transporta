@@ -57,7 +57,9 @@ export function useFleetData() {
             month: parseInt(c.month) || 1,
             tipMehan: cleanT,
             kilometraza: c.kilometraza != null ? Number(c.kilometraza) : null,
-            radniSati: c.radniSati != null ? Number(c.radniSati) : (cleanT === "Radna mašina" || cleanT === "Skladišna mehanizacija" ? 0 : null)
+            radniSati: (cleanT === "Radna mašina" || cleanT === "Priključna vozila")
+              ? null
+              : (c.radniSati != null ? Number(c.radniSati) : (cleanT === "Skladišna mehanizacija" ? 0 : null))
           };
         });
         setCostData(revived);
@@ -77,7 +79,9 @@ export function useFleetData() {
               month: parseInt(c.month) || (datumObj ? datumObj.getMonth() + 1 : 1),
               tipMehan: cleanT,
               kilometraza: c.kilometraza != null ? Number(c.kilometraza) : null,
-              radniSati: c.radniSati != null ? Number(c.radniSati) : (cleanT === "Radna mašina" || cleanT === "Skladišna mehanizacija" ? 0 : null)
+              radniSati: (cleanT === "Radna mašina" || cleanT === "Priključna vozila")
+                ? null
+                : (c.radniSati != null ? Number(c.radniSati) : (cleanT === "Skladišna mehanizacija" ? 0 : null))
             };
           });
           setCostData(parsed);
@@ -126,7 +130,9 @@ export function useFleetData() {
               item.month = parseInt(item.month) || (item.datumObj ? item.datumObj.getMonth() + 1 : 1);
               item.tipMehan = cleanVehicleType(item.tipMehan);
               item.kilometraza = item.kilometraza != null ? Number(item.kilometraza) : null;
-              item.radniSati = item.radniSati != null ? Number(item.radniSati) : (item.tipMehan === "Radna mašina" || item.tipMehan === "Skladišna mehanizacija" ? 0 : null);
+              item.radniSati = (item.tipMehan === "Radna mašina" || item.tipMehan === "Priključna vozila")
+                ? null
+                : (item.radniSati != null ? Number(item.radniSati) : (item.tipMehan === "Skladišna mehanizacija" ? 0 : null));
 
               if (change.type === "added") {
                 if (!updated.some((c) => c.id === item.id)) {
