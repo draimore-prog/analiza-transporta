@@ -1,8 +1,20 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    match /{folder}/{fileName} {
+      // Dozvoli čitanje svih priloga i računa
+      allow read: if true;
+      
+      // Zaštita uploada: maksimalno 15MB, dozvoljene samo slike i PDF dokumenti
+      allow write: if request.resource.size < 15 * 1024 * 1024
+                   && (request.resource.contentType.matches('image/.*')
+                       || request.resource.contentType == 'application/pdf');
+    }
+    
+    // Sve ostale putanje su zabranjene za pisanje
     match /{allPaths=**} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if false;
     }
   }
 }

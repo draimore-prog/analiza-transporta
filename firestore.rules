@@ -1,8 +1,47 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // 1. Matična baza voznog parka (fleet_master)
+    // Dozvoljeno čitanje svima, ažuriranje uz validan reg, brisanje iz klijenta zabranjeno
+    match /fleet_master/{docId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.reg is string;
+      allow delete: if false;
+    }
+
+    // 2. Glavna historijska baza troškova (fleet_costs - 30.000+ zapisa)
+    // Čitanje i ažuriranje (skripte) dozvoljeno, brisanje zabranjeno radi zaštite integriteta
+    match /fleet_costs/{docId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if false;
+    }
+
+    // 3. Real-time evidencija troškova i servisa iz aplikacije (cost_records)
+    match /cost_records/{docId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.cost is number;
+      allow delete: if true;
+    }
+
+    // 4. Korisnički nalozi (app_users)
+    match /app_users/{docId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.username is string;
+      allow delete: if true;
+    }
+
+    // 5. Uloge i sistemske privilegije (app_roles)
+    match /app_roles/{docId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.roleId is string;
+      allow delete: if false;
+    }
+
+    // Zabrani pristup svim ostalim nedefinisanim kolekcijama
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

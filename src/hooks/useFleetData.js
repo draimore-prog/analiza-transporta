@@ -116,12 +116,17 @@ export function useFleetData() {
   // Inicijalizacija oba dataseta
   useEffect(() => {
     async function init() {
-      setIsLoading(true);
-      setLoadProgress("Učitavanje baze voznog parka...");
-      await loadMasterFleet();
-      setLoadProgress("Učitavanje historije servisa...");
-      await loadCostData();
-      setIsLoading(false);
+      try {
+        setIsLoading(true);
+        setLoadProgress("Učitavanje baze voznog parka...");
+        await loadMasterFleet();
+        setLoadProgress("Učitavanje historije servisa...");
+        await loadCostData();
+      } catch (err) {
+        console.error("Critical error during data initialization:", err);
+      } finally {
+        setIsLoading(false);
+      }
     }
     init();
   }, [loadMasterFleet, loadCostData]);
