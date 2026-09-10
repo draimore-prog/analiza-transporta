@@ -3,9 +3,27 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
+  html, body {
+    touch-action: pan-y;
+    -webkit-touch-callout: none;
+    overscroll-behavior-y: none;
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-slate-100 text-slate-900 antialiased;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  /* Spriječi automatski zoom na unosu na mobilnim telefonima */
+  @media (max-width: 768px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  button, a, input, select, textarea {
+    touch-action: manipulation;
   }
 }
 
