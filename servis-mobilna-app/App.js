@@ -12,9 +12,17 @@ import {
   StatusBar,
   Image
 } from "react-native";
-import { collection, onSnapshot, doc, updateDoc, setDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, setDoc, getDocs } from "firebase/firestore";
 import * as ImagePicker from "expo-image-picker";
 import { db } from "./firebase";
+
+const DEFAULT_SUPERADMIN = {
+  username: "emir.durakovic",
+  fullname: "Emir Duraković",
+  email: "emir.durakovic@bingotuzla.ba",
+  password: "BingoTransport2026!",
+  role: "superadmin"
+};
 
 const CHECKLIST_ITEMS = [
   { key: "wheels", label: "Točkovi i gume", desc: "Habanje, napuknuća" },
@@ -46,16 +54,24 @@ const PHOTO_SLOTS = [
 ];
 
 export default function App() {
-  // Lista zadataka dodijeljenih u sistemu
-  const [assignedOrders, setAssignedOrders] = useState([]);
-  const [loadingOrders, setLoadingOrders] = useState(true);
+  // Tema: Tamna (dark) ili Svijetla (white)
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
-  // Aktivni nalog koji se popunjava (null = novi unos na terenu)
+  // Autentifikacija
+  const [activeUser, setActiveUser] = useState(null);
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loggingIn, setLoggingIn] = useState(false);
+  const [usersList, setUsersList] = useState([DEFAULT_SUPERADMIN]);
+
+  // Lista dodijeljenih naloga u sistemu
+  const [assignedOrders, setAssignedOrders] = useState([]);
   const [activeOrder, setActiveOrder] = useState(null);
 
   // Stanje forme
   const [vehicleId, setVehicleId] = useState("");
-  const [orderType, setOrderType] = useState("preventive"); // "preventive" | "corrective"
+  const [orderType, setOrderType] = useState("preventive");
   const [workHours, setWorkHours] = useState("");
   const [workDescription, setWorkDescription] = useState("");
   const [usedMaterials, setUsedMaterials] = useState("");
@@ -72,30 +88,108 @@ export default function App() {
   const [submitting, setSubmitting] = useState(false);
   const [submittedOrderNumber, setSubmittedOrderNumber] = useState(null);
 
+  // Učitavanje korisnika iz Firestore-a
+  useEffect(() => {
+    try {
+      const qUsers = collection(db, "app_users");
+      const unsub = onSnapshot(qUsers, (snapshot) => {
+        const list = [];
+        snapshot.forEach((d) => {
+          const u = d.data();
+          if (u && u.username) list.push(u);
+        });
+        if (list.length > 0) {
+          setUsersList(list);
+        }
+      });
+      return () => unsub();
+    } catch (e) {
+      console.warn("User listener error:", e);
+    }
+  }, []);
+
   // Učitavanje radnih naloga u realnom vremenu
   useEffect(() => {
+    if (!activeUser) return;
+
     const q = collection(db, "warehouse_work_orders");
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
         const list = [];
+        const userClean = (activeUser.fullname || activeUser.username || "").toLowerCase();
+
         snapshot.forEach((d) => {
           const data = d.data();
           if (data.status === "pending" || data.status === "in_progress") {
-            list.push({ id: d.id, ...data });
+            const assigned = (data.assignedTo || "").toLowerCase();
+            const isForMe = !userClean || assigned.includes(userClean) || assigned.includes("svi") || assigned === "";
+            if (isForMe) {
+              list.push({ id: d.id, ...data });
+            }
           }
         });
         list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
         setAssignedOrders(list);
-        setLoadingOrders(false);
       },
       (err) => {
         console.warn("Firestore listener error:", err);
-        setLoadingOrders(false);
       }
     );
     return () => unsubscribe();
-  }, []);
+  }, [activeUser]);
+
+  // Prijava korisnika
+  const handleLogin = async () => {
+    const uClean = loginUsername.trim().toLowerCase();
+    const pClean = loginPassword.trim();
+
+    if (!uClean || !pClean) {
+      setLoginError("Molimo unesite korisničko ime i lozinku!");
+      return;
+    }
+
+    setLoggingIn(true);
+    setLoginError("");
+
+    try {
+      // 1. Provjera u bazi
+      let found = usersList.find(
+        (u) =>
+          (u.username && u.username.toLowerCase() === uClean) ||
+          (u.email && u.email.toLowerCase() === uClean)
+      );
+
+      // 2. Default superadmin provjera
+      if (!found && (DEFAULT_SUPERADMIN.username.toLowerCase() === uClean || DEFAULT_SUPERADMIN.email.toLowerCase() === uClean)) {
+        found = DEFAULT_SUPERADMIN;
+      }
+
+      if (found && found.password === pClean) {
+        setActiveUser(found);
+        setLoginUsername("");
+        setLoginPassword("");
+        setLoginError("");
+      } else {
+        setLoginError("Neispravno korisničko ime ili lozinka!");
+      }
+    } catch (e) {
+      setLoginError("Došlo je do greške prilikom prijave.");
+    } finally {
+      setLoggingIn(false);
+    }
+  };
+
+  const handleLogout = () => {
+    setActiveUser(null);
+    setActiveOrder(null);
+    setSubmittedOrderNumber(null);
+  };
+
+  // Prebacivanje teme
+  const toggleTheme = () => {
+    setIsDarkMode((prev) => !prev);
+  };
 
   // Prebacivanje na dodijeljeni nalog
   const handleSelectAssignedOrder = (order) => {
@@ -166,7 +260,8 @@ export default function App() {
       });
 
       if (!result.canceled && result.assets && result.assets[0]) {
-        const base64Uri = `data:image/jpeg;base64,${result.assets[0].base64}`;
+        const asset = result.assets[0];
+        const base64Uri = `data:image/jpeg;base64,${asset.base64}`;
         setPhotos((prev) => ({ ...prev, [slotKey]: base64Uri }));
       }
     } catch (e) {
@@ -188,7 +283,6 @@ export default function App() {
     setSubmitting(true);
     try {
       if (activeOrder && activeOrder.id) {
-        // Završi dodijeljeni nalog
         const docRef = doc(db, "warehouse_work_orders", activeOrder.id);
         await updateDoc(docRef, {
           workHours: Number(workHours) || 0,
@@ -198,11 +292,11 @@ export default function App() {
           usedMaterials,
           photos,
           status: "completed",
-          completedAt: new Date().toISOString()
+          completedAt: new Date().toISOString(),
+          completedBy: activeUser?.fullname || activeUser?.username || "Serviser"
         });
         setSubmittedOrderNumber(activeOrder.orderNumber);
       } else {
-        // Kreiraj novi završeni nalog sa terena
         const now = new Date();
         const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
         const randomSuffix = Math.floor(1000 + Math.random() * 9000);
@@ -222,7 +316,7 @@ export default function App() {
           status: "completed",
           createdAt: new Date().toISOString(),
           completedAt: new Date().toISOString(),
-          createdBy: "Serviser Mobilna App"
+          createdBy: activeUser?.fullname || activeUser?.username || "Serviser Mobilna App"
         });
         setSubmittedOrderNumber(orderNumber);
       }
@@ -233,27 +327,144 @@ export default function App() {
     }
   };
 
-  // EKRAN POTVRDE NAKON SLANJA
+  // Boje prema odabranoj temi
+  const theme = {
+    bg: isDarkMode ? "#0f172a" : "#f8fafc",
+    cardBg: isDarkMode ? "#1e293b" : "#ffffff",
+    border: isDarkMode ? "#334155" : "#e2e8f0",
+    textPrimary: isDarkMode ? "#ffffff" : "#0f172a",
+    textSecondary: isDarkMode ? "#94a3b8" : "#64748b",
+    inputBg: isDarkMode ? "#0f172a" : "#f1f5f9",
+    inputBorder: isDarkMode ? "#334155" : "#cbd5e1"
+  };
+
+  // ==========================================
+  // EKRAN 1: PRIJAVA U SISTEM (IDENTIČAN KAO WEB)
+  // ==========================================
+  if (!activeUser) {
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bg }]}>
+        <StatusBar
+          barStyle={isDarkMode ? "light-content" : "dark-content"}
+          backgroundColor={theme.bg}
+        />
+
+        {/* Dugme za promjenu teme na vrhu ekrana za prijavu */}
+        <View style={styles.loginTopBar}>
+          <TouchableOpacity
+            style={[styles.themeToggleBtn, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+            onPress={toggleTheme}
+          >
+            <Text style={styles.themeToggleBtnText}>
+              {isDarkMode ? "☀️ Svijetla Tema" : "🌙 Tamna Tema"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView contentContainerStyle={styles.loginScrollContent}>
+          <View style={[styles.loginCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+            {/* Ikona katanca */}
+            <View style={styles.loginIconCircle}>
+              <Text style={styles.loginIconLock}>🔐</Text>
+            </View>
+
+            <Text style={[styles.loginTitle, { color: theme.textPrimary }]}>Prijava u Sistem</Text>
+            <Text style={[styles.loginSubtitle, { color: theme.textSecondary }]}>
+              Bingo Servisna Radionica & Mehanizacija
+            </Text>
+
+            {/* Greška pri prijavi */}
+            {loginError ? (
+              <View style={styles.loginErrorBox}>
+                <Text style={styles.loginErrorText}>⚠️ {loginError}</Text>
+              </View>
+            ) : null}
+
+            {/* Korisničko ime */}
+            <View style={styles.loginFieldGroup}>
+              <Text style={[styles.loginFieldLabel, { color: theme.textSecondary }]}>
+                KORISNIČKO IME ILI EMAIL
+              </Text>
+              <TextInput
+                style={[
+                  styles.loginInput,
+                  {
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder,
+                    color: theme.textPrimary
+                  }
+                ]}
+                placeholder="Unesite korisničko ime..."
+                placeholderTextColor={isDarkMode ? "#64748b" : "#94a3b8"}
+                value={loginUsername}
+                onChangeText={setLoginUsername}
+                autoCapitalize="none"
+              />
+            </View>
+
+            {/* Lozinka */}
+            <View style={styles.loginFieldGroup}>
+              <Text style={[styles.loginFieldLabel, { color: theme.textSecondary }]}>LOZINKA</Text>
+              <TextInput
+                style={[
+                  styles.loginInput,
+                  {
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder,
+                    color: theme.textPrimary
+                  }
+                ]}
+                placeholder="Unesite lozinku..."
+                placeholderTextColor={isDarkMode ? "#64748b" : "#94a3b8"}
+                value={loginPassword}
+                onChangeText={setLoginPassword}
+                secureTextEntry
+              />
+            </View>
+
+            {/* Dugme za prijavu */}
+            <TouchableOpacity
+              style={[styles.loginSubmitBtn, loggingIn && { opacity: 0.6 }]}
+              onPress={handleLogin}
+              disabled={loggingIn}
+            >
+              {loggingIn ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.loginSubmitBtnText}>PRIJAVI SE U SISTEM</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // ==========================================
+  // EKRAN 2: POTVRDA NAKON SLANJA NALOGA
+  // ==========================================
   if (submittedOrderNumber) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bg }]}>
+        <StatusBar
+          barStyle={isDarkMode ? "light-content" : "dark-content"}
+          backgroundColor={theme.bg}
+        />
         <View style={styles.successScreen}>
           <View style={styles.successIconCircle}>
             <Text style={styles.successIconText}>✓</Text>
           </View>
-          <Text style={styles.successTitle}>Radni Nalog Uspješno Poslan!</Text>
+          <Text style={[styles.successTitle, { color: theme.textPrimary }]}>
+            Radni Nalog Uspješno Poslan!
+          </Text>
           <View style={styles.successOrderBadge}>
             <Text style={styles.successOrderText}>{submittedOrderNumber}</Text>
           </View>
-          <Text style={styles.successDesc}>
+          <Text style={[styles.successDesc, { color: theme.textSecondary }]}>
             Radni sati ({workHours} h), kontrolna ček-lista i fotografije su uspješno zabilježeni u sistem.
           </Text>
 
-          <TouchableOpacity
-            style={styles.successBtn}
-            onPress={handleStartFreshOrder}
-          >
+          <TouchableOpacity style={styles.successBtn} onPress={handleStartFreshOrder}>
             <Text style={styles.successBtnText}>POKRENI NOVI PREGLED</Text>
           </TouchableOpacity>
         </View>
@@ -263,33 +474,56 @@ export default function App() {
 
   const isLockedUnit = !!activeOrder;
 
+  // ==========================================
+  // EKRAN 3: TERENSKI UNOS (KOMPLETAN SADRŽAJ)
+  // ==========================================
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#1e293b" />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bg }]}>
+      <StatusBar
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
+        backgroundColor={theme.cardBg}
+      />
 
-      {/* GORNJE ZAGLAVLJE: KAO U MODALU TERENSKI UNOS */}
-      <View style={styles.header}>
+      {/* GORNJA TRAKA SA PRIJAVLJENIM SERVISEROM, DUGMETOM ZA TEMU I ODJAVU */}
+      <View style={[styles.header, { backgroundColor: theme.cardBg, borderBottomColor: theme.border }]}>
         <View style={styles.headerLeft}>
           <Text style={styles.headerIcon}>📱</Text>
           <View>
-            <Text style={styles.headerTitle}>TERENSKI RADNI NALOG</Text>
-            <Text style={styles.headerSubtitle}>
-              {activeOrder ? `Nalog: ${activeOrder.orderNumber}` : "Novi redovni pregled mehanizacije"}
+            <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>TERENSKI UNOS</Text>
+            <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
+              {activeUser.fullname || activeUser.username}
             </Text>
           </View>
         </View>
-        <View style={styles.headerBadge}>
-          <Text style={styles.headerBadgeText}>ONLINE</Text>
+
+        <View style={styles.headerRight}>
+          {/* Dugme za promjenu teme ☀️ / 🌙 */}
+          <TouchableOpacity
+            style={[styles.themeHeaderBtn, { borderColor: theme.border }]}
+            onPress={toggleTheme}
+            title="Promijeni temu"
+          >
+            <Text style={styles.themeHeaderBtnText}>{isDarkMode ? "☀️" : "🌙"}</Text>
+          </TouchableOpacity>
+
+          {/* Dugme za odjavu */}
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+            <Text style={styles.logoutBtnText}>Odjava</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* BRZI IZBOR: DODIJELJENI ZADACI VODITELJA */}
+      {/* TRAKA ZA BRZI IZBOR DODIJELJENIH ZADATAKA */}
       {assignedOrders.length > 0 && (
-        <View style={styles.assignedBar}>
+        <View style={[styles.assignedBar, { backgroundColor: theme.cardBg, borderBottomColor: theme.border }]}>
           <Text style={styles.assignedBarTitle}>ZADACI OD VODITELJA:</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.assignedScroll}>
             <TouchableOpacity
-              style={[styles.assignedPill, !activeOrder && styles.assignedPillActive]}
+              style={[
+                styles.assignedPill,
+                !activeOrder && styles.assignedPillActive,
+                { borderColor: theme.border }
+              ]}
               onPress={handleStartFreshOrder}
             >
               <Text style={[styles.assignedPillText, !activeOrder && styles.assignedPillTextActive]}>
@@ -302,7 +536,11 @@ export default function App() {
               return (
                 <TouchableOpacity
                   key={order.id}
-                  style={[styles.assignedPill, isSelected && styles.assignedPillOrderActive]}
+                  style={[
+                    styles.assignedPill,
+                    isSelected && styles.assignedPillOrderActive,
+                    { borderColor: theme.border }
+                  ]}
                   onPress={() => handleSelectAssignedOrder(order)}
                 >
                   <Text style={[styles.assignedPillText, isSelected && styles.assignedPillTextActive]}>
@@ -315,40 +553,55 @@ export default function App() {
         </View>
       )}
 
-      {/* GLAVNI SADRŽAJ: IDENTIČAN MODALU TERENSKI UNOS */}
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        {/* KORAK 1: JEDINICA MEHANIZACIJE */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>1. JEDINICA SKLADIŠNE MEHANIZACIJE</Text>
+      {/* TIJELO FORME TERENSKOG UNOSA */}
+      <ScrollView
+        style={[styles.container, { backgroundColor: theme.bg }]}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* 1. JEDINICA SKLADIŠNE MEHANIZACIJE */}
+        <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+          <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>
+            1. JEDINICA SKLADIŠNE MEHANIZACIJE
+          </Text>
 
           {isLockedUnit ? (
-            /* ZAKLJUČANO OD VODITELJA */
             <View style={styles.lockedBox}>
-              <View style={styles.lockedHeaderRow}>
-                <Text style={styles.lockedBadgeText}>🔒 ZADATAK OD VODITELJA (FIKSIRANO)</Text>
-              </View>
-              <Text style={styles.lockedVehicleId}>{vehicleId}</Text>
-              <Text style={styles.lockedVehicleModel}>
+              <Text style={styles.lockedBadgeText}>🔒 ZADATAK OD VODITELJA (FIKSIRANO)</Text>
+              <Text style={[styles.lockedVehicleId, { color: isDarkMode ? "#fff" : "#0f172a" }]}>
+                {vehicleId}
+              </Text>
+              <Text style={[styles.lockedVehicleModel, { color: theme.textPrimary }]}>
                 {activeOrder.vehicleDetails?.proizvodjac || ""} {activeOrder.vehicleDetails?.model || ""}
               </Text>
-              <Text style={styles.lockedVehicleLocation}>
+              <Text style={[styles.lockedVehicleLocation, { color: theme.textSecondary }]}>
                 📍 Lokacija: {activeOrder.vehicleDetails?.lokacija || "PJ Skladište"}
               </Text>
 
               {activeOrder.workDescription ? (
-                <View style={styles.managerInstructionBox}>
+                <View style={[styles.managerInstructionBox, { backgroundColor: isDarkMode ? "#0f172a" : "#fff" }]}>
                   <Text style={styles.managerInstructionLabel}>NALOG VODITELJA:</Text>
-                  <Text style={styles.managerInstructionText}>{activeOrder.workDescription}</Text>
+                  <Text style={[styles.managerInstructionText, { color: theme.textPrimary }]}>
+                    {activeOrder.workDescription}
+                  </Text>
                 </View>
               ) : null}
             </View>
           ) : (
-            /* SLOBODAN UNOS ZA NOVI PREGLED */
             <View>
-              <Text style={styles.inputLabel}>Broj / Oznaka viljuškara:</Text>
+              <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>
+                Broj / Oznaka viljuškara:
+              </Text>
               <TextInput
-                style={styles.textInput}
+                style={[
+                  styles.textInput,
+                  {
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder,
+                    color: theme.textPrimary
+                  }
+                ]}
                 placeholder="Npr. 342 RX 17 ili SM-042"
+                placeholderTextColor={isDarkMode ? "#64748b" : "#94a3b8"}
                 value={vehicleId}
                 onChangeText={setVehicleId}
                 autoCapitalize="characters"
@@ -357,13 +610,19 @@ export default function App() {
           )}
         </View>
 
-        {/* KORAK 2: VRSTA PREGLEDA & RADNI SATI (MTH) */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>2. VRSTA PREGLEDA I RADNI SATI</Text>
+        {/* 2. VRSTA PREGLEDA I RADNI SATI */}
+        <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+          <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>
+            2. VRSTA PREGLEDA I RADNI SATI
+          </Text>
 
           <View style={styles.typeSelectorRow}>
             <TouchableOpacity
-              style={[styles.typeBtn, orderType === "preventive" && styles.typeBtnActivePreventive]}
+              style={[
+                styles.typeBtn,
+                { backgroundColor: theme.inputBg, borderColor: theme.inputBorder },
+                orderType === "preventive" && styles.typeBtnActivePreventive
+              ]}
               onPress={() => setOrderType("preventive")}
             >
               <Text style={[styles.typeBtnText, orderType === "preventive" && styles.typeBtnTextActive]}>
@@ -372,7 +631,11 @@ export default function App() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.typeBtn, orderType === "corrective" && styles.typeBtnActiveCorrective]}
+              style={[
+                styles.typeBtn,
+                { backgroundColor: theme.inputBg, borderColor: theme.inputBorder },
+                orderType === "corrective" && styles.typeBtnActiveCorrective
+              ]}
               onPress={() => setOrderType("corrective")}
             >
               <Text style={[styles.typeBtnText, orderType === "corrective" && styles.typeBtnTextActive]}>
@@ -381,14 +644,14 @@ export default function App() {
             </TouchableOpacity>
           </View>
 
-          {/* OBAVEZNO POLJE: MTH */}
-          <Text style={[styles.inputLabel, { marginTop: 14 }]}>
+          <Text style={[styles.inputLabel, { color: theme.textSecondary, marginTop: 14 }]}>
             Radni sati sa table (MTH) - <Text style={{ color: "#EF4444" }}>OBAVEZNO</Text>:
           </Text>
-          <View style={styles.mthInputWrapper}>
+          <View style={[styles.mthInputWrapper, { backgroundColor: theme.inputBg }]}>
             <TextInput
               style={styles.mthInput}
               placeholder="0"
+              placeholderTextColor="#64748b"
               value={workHours}
               onChangeText={setWorkHours}
               keyboardType="numeric"
@@ -397,11 +660,11 @@ export default function App() {
           </View>
         </View>
 
-        {/* KORAK 3: KONTROLNA ČEK-LISTA (8 SKLOPOVA) */}
-        <View style={styles.card}>
-          <View style={styles.checklistTitleRow}>
-            <Text style={styles.cardTitle}>3. KONTROLNA ČEK-LISTA (8 SKLOPOVA)</Text>
-          </View>
+        {/* 3. KONTROLNA ČEK-LISTA (8 SKLOPOVA) */}
+        <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+          <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>
+            3. KONTROLNA ČEK-LISTA (8 SKLOPOVA)
+          </Text>
 
           <TouchableOpacity style={styles.markAllOkBtn} onPress={handleMarkAllOk}>
             <Text style={styles.markAllOkBtnText}>✓ KLIKNI OVDJE: OZNAČI SVE KAO ISPRAVNO</Text>
@@ -411,15 +674,22 @@ export default function App() {
             const isOk = checklist[item.key]?.status === "ok";
 
             return (
-              <View key={item.key} style={styles.checklistItem}>
+              <View
+                key={item.key}
+                style={[styles.checklistItem, { borderBottomColor: theme.border }]}
+              >
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.checklistLabel}>{item.label}</Text>
-                  <Text style={styles.checklistDesc}>{item.desc}</Text>
+                  <Text style={[styles.checklistLabel, { color: theme.textPrimary }]}>{item.label}</Text>
+                  <Text style={[styles.checklistDesc, { color: theme.textSecondary }]}>{item.desc}</Text>
                 </View>
 
                 <View style={styles.toggleRow}>
                   <TouchableOpacity
-                    style={[styles.toggleBtn, isOk && styles.toggleOkActive]}
+                    style={[
+                      styles.toggleBtn,
+                      { backgroundColor: theme.inputBg, borderColor: theme.inputBorder },
+                      isOk && styles.toggleOkActive
+                    ]}
                     onPress={() =>
                       setChecklist((prev) => ({ ...prev, [item.key]: { status: "ok" } }))
                     }
@@ -430,7 +700,11 @@ export default function App() {
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={[styles.toggleBtn, !isOk && styles.toggleDefectActive]}
+                    style={[
+                      styles.toggleBtn,
+                      { backgroundColor: theme.inputBg, borderColor: theme.inputBorder },
+                      !isOk && styles.toggleDefectActive
+                    ]}
                     onPress={() =>
                       setChecklist((prev) => ({ ...prev, [item.key]: { status: "defect" } }))
                     }
@@ -445,17 +719,18 @@ export default function App() {
           })}
         </View>
 
-        {/* KORAK 4: OPIS POSLA I MATERIJAL */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>4. OPIS OBAVLJENOG POSLA</Text>
+        {/* 4. OPIS OBAVLJENOG POSLA */}
+        <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+          <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>4. OPIS OBAVLJENOG POSLA</Text>
 
-          {/* Brzi predlošci */}
-          <Text style={styles.templatesTitle}>Brzi predlošci (kliknite za dodavanje):</Text>
+          <Text style={[styles.templatesTitle, { color: theme.textSecondary }]}>
+            Brzi predlošci (kliknite za dodavanje):
+          </Text>
           <View style={styles.templatesWrap}>
             {COMMON_TEMPLATES.map((tmpl) => (
               <TouchableOpacity
                 key={tmpl}
-                style={styles.templateChip}
+                style={[styles.templateChip, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder }]}
                 onPress={() => handleAddTemplate(tmpl)}
               >
                 <Text style={styles.templateChipText}>+ {tmpl}</Text>
@@ -464,32 +739,56 @@ export default function App() {
           </View>
 
           <TextInput
-            style={[styles.textInput, styles.textArea]}
+            style={[
+              styles.textInput,
+              styles.textArea,
+              {
+                backgroundColor: theme.inputBg,
+                borderColor: theme.inputBorder,
+                color: theme.textPrimary
+              }
+            ]}
             placeholder="Unesite detaljan opis šta je pregledano ili popravljeno..."
+            placeholderTextColor={isDarkMode ? "#64748b" : "#94a3b8"}
             value={workDescription}
             onChangeText={setWorkDescription}
             multiline
             numberOfLines={4}
           />
 
-          <Text style={[styles.cardTitle, { marginTop: 16 }]}>UTROŠENI DIJELOVI / MATERIJAL</Text>
+          <Text style={[styles.cardTitle, { color: theme.textPrimary, marginTop: 16 }]}>
+            UTROŠENI DIJELOVI / MATERIJAL
+          </Text>
           <TextInput
-            style={styles.textInput}
+            style={[
+              styles.textInput,
+              {
+                backgroundColor: theme.inputBg,
+                borderColor: theme.inputBorder,
+                color: theme.textPrimary
+              }
+            ]}
             placeholder="Npr. 1x točak 230x75, 2L ulja HD46..."
+            placeholderTextColor={isDarkMode ? "#64748b" : "#94a3b8"}
             value={usedMaterials}
             onChangeText={setUsedMaterials}
           />
         </View>
 
-        {/* KORAK 5: FOTOGRAFIJE (5 UGLOVA) */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>5. FOTOGRAFIJE SA KAMERE (5 UGLOVA)</Text>
+        {/* 5. FOTOGRAFIJE (5 UGLOVA) */}
+        <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+          <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>
+            5. FOTOGRAFIJE SA KAMERE (5 UGLOVA)
+          </Text>
 
           {PHOTO_SLOTS.map((slot) => {
             const uri = photos[slot.key];
             return (
-              <View key={slot.key} style={styles.photoRow}>
-                <Text style={styles.photoSlotLabel}>{slot.label}</Text>
+              <View
+                key={slot.key}
+                style={[styles.photoRow, { backgroundColor: theme.inputBg, borderColor: theme.inputBorder }]}
+              >
+                <Text style={[styles.photoSlotLabel, { color: theme.textPrimary }]}>{slot.label}</Text>
 
                 {uri ? (
                   <View style={styles.photoPreviewWrapper}>
@@ -503,11 +802,13 @@ export default function App() {
                   </View>
                 ) : (
                   <TouchableOpacity
-                    style={styles.cameraCaptureBtn}
+                    style={[styles.cameraCaptureBtn, { backgroundColor: isDarkMode ? "#334155" : "#e2e8f0" }]}
                     onPress={() => handleTakePhoto(slot.key)}
                   >
                     <Text style={styles.cameraCaptureIcon}>📷</Text>
-                    <Text style={styles.cameraCaptureText}>USLIKAJ</Text>
+                    <Text style={[styles.cameraCaptureText, { color: isDarkMode ? "#fff" : "#0f172a" }]}>
+                      USLIKAJ
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -515,7 +816,7 @@ export default function App() {
           })}
         </View>
 
-        {/* TASTER ZA SLANJE NALOGA */}
+        {/* TASTER ZA POTVRDU I SLANJE */}
         <TouchableOpacity
           style={[styles.submitBtn, submitting && { opacity: 0.6 }]}
           onPress={handleSubmit}
@@ -534,57 +835,175 @@ export default function App() {
 
 const styles = StyleSheet.create({
   safeArea: {
-    flex: 1,
-    backgroundColor: "#0f172a"
+    flex: 1
   },
+
+  // LOGIN EKRAN
+  loginTopBar: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    alignItems: "flex-end"
+  },
+  themeToggleBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 14,
+    borderWidth: 1
+  },
+  themeToggleBtnText: {
+    fontWeight: "800",
+    fontSize: 12,
+    color: "#60A5FA"
+  },
+  loginScrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    padding: 20
+  },
+  loginCard: {
+    borderRadius: 28,
+    padding: 24,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 8
+  },
+  loginIconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: "rgba(37, 99, 235, 0.15)",
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "center",
+    marginBottom: 16
+  },
+  loginIconLock: {
+    fontSize: 32
+  },
+  loginTitle: {
+    fontSize: 22,
+    fontWeight: "900",
+    textAlign: "center"
+  },
+  loginSubtitle: {
+    fontSize: 12,
+    fontWeight: "600",
+    textAlign: "center",
+    marginTop: 4,
+    marginBottom: 20
+  },
+  loginErrorBox: {
+    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    borderColor: "#EF4444",
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 16
+  },
+  loginErrorText: {
+    color: "#EF4444",
+    fontSize: 12,
+    fontWeight: "800",
+    textAlign: "center"
+  },
+  loginFieldGroup: {
+    marginBottom: 14
+  },
+  loginFieldLabel: {
+    fontSize: 11,
+    fontWeight: "800",
+    marginBottom: 6,
+    letterSpacing: 0.5
+  },
+  loginInput: {
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    fontWeight: "700",
+    borderWidth: 1
+  },
+  loginSubmitBtn: {
+    backgroundColor: "#2563EB",
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginTop: 10,
+    shadowColor: "#2563EB",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6
+  },
+  loginSubmitBtnText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "900",
+    letterSpacing: 0.5
+  },
+
+  // HEADER GLAVNOG EKRANA
   header: {
-    backgroundColor: "#1e293b",
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 12,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    borderBottomWidth: 2,
-    borderBottomColor: "#334155"
+    borderBottomWidth: 1
   },
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10
+    gap: 8
   },
   headerIcon: {
-    fontSize: 24
+    fontSize: 22
   },
   headerTitle: {
-    color: "#fff",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "900",
     letterSpacing: 0.5
   },
   headerSubtitle: {
-    color: "#94a3b8",
-    fontSize: 12,
-    fontWeight: "600"
+    fontSize: 11,
+    fontWeight: "700"
   },
-  headerBadge: {
-    backgroundColor: "rgba(16, 185, 129, 0.2)",
-    borderColor: "#10B981",
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8
+  },
+  themeHeaderBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1
+  },
+  themeHeaderBtnText: {
+    fontSize: 14
+  },
+  logoutBtn: {
+    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    borderColor: "#EF4444",
     borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10
   },
-  headerBadgeText: {
-    color: "#10B981",
-    fontSize: 10,
+  logoutBtnText: {
+    color: "#EF4444",
+    fontSize: 11,
     fontWeight: "900"
   },
+
+  // TRAKA SA DODIJELJENIM ZADACIMA
   assignedBar: {
-    backgroundColor: "#1e293b",
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#334155"
+    borderBottomWidth: 1
   },
   assignedBarTitle: {
     color: "#F59E0B",
@@ -597,48 +1016,45 @@ const styles = StyleSheet.create({
     gap: 8
   },
   assignedPill: {
-    backgroundColor: "#334155",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#475569"
+    backgroundColor: "rgba(100, 116, 139, 0.2)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1
   },
   assignedPillActive: {
     backgroundColor: "#10B981",
-    borderColor: "#059669"
+    borderColor: "#10B981"
   },
   assignedPillOrderActive: {
     backgroundColor: "#F59E0B",
-    borderColor: "#D97706"
+    borderColor: "#F59E0B"
   },
   assignedPillText: {
-    color: "#cbd5e1",
-    fontSize: 12,
+    color: "#94a3b8",
+    fontSize: 11,
     fontWeight: "800"
   },
   assignedPillTextActive: {
     color: "#fff"
   },
+
+  // FORMA I KARTICE
   container: {
-    flex: 1,
-    backgroundColor: "#0f172a"
+    flex: 1
   },
   scrollContent: {
     padding: 14,
     paddingBottom: 60
   },
   card: {
-    backgroundColor: "#1e293b",
     borderRadius: 20,
     padding: 16,
     marginBottom: 14,
-    borderWidth: 2,
-    borderColor: "#334155"
+    borderWidth: 1
   },
   cardTitle: {
-    color: "#fff",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "900",
     marginBottom: 10,
     letterSpacing: 0.5
@@ -650,33 +1066,27 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 14
   },
-  lockedHeaderRow: {
-    marginBottom: 6
-  },
   lockedBadgeText: {
     color: "#F59E0B",
     fontSize: 11,
-    fontWeight: "900"
+    fontWeight: "900",
+    marginBottom: 4
   },
   lockedVehicleId: {
-    color: "#fff",
     fontSize: 26,
     fontWeight: "900",
     fontFamily: "monospace"
   },
   lockedVehicleModel: {
-    color: "#e2e8f0",
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
     marginTop: 2
   },
   lockedVehicleLocation: {
-    color: "#94a3b8",
-    fontSize: 13,
+    fontSize: 12,
     marginTop: 4
   },
   managerInstructionBox: {
-    backgroundColor: "#0f172a",
     borderRadius: 10,
     padding: 10,
     marginTop: 10,
@@ -689,27 +1099,22 @@ const styles = StyleSheet.create({
     fontWeight: "900"
   },
   managerInstructionText: {
-    color: "#fff",
     fontSize: 13,
     fontWeight: "700",
     marginTop: 2
   },
   inputLabel: {
-    color: "#e2e8f0",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "700",
     marginBottom: 6
   },
   textInput: {
-    backgroundColor: "#0f172a",
-    color: "#fff",
-    fontSize: 16,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
     fontWeight: "700",
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderWidth: 2,
-    borderColor: "#334155"
+    borderWidth: 1
   },
   typeSelectorRow: {
     flexDirection: "row",
@@ -717,24 +1122,22 @@ const styles = StyleSheet.create({
   },
   typeBtn: {
     flex: 1,
-    backgroundColor: "#0f172a",
-    paddingVertical: 14,
-    borderRadius: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#334155"
+    borderWidth: 1
   },
   typeBtnActivePreventive: {
     backgroundColor: "#2563EB",
-    borderColor: "#3B82F6"
+    borderColor: "#2563EB"
   },
   typeBtnActiveCorrective: {
     backgroundColor: "#DC2626",
-    borderColor: "#EF4444"
+    borderColor: "#DC2626"
   },
   typeBtnText: {
     color: "#94a3b8",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "900"
   },
   typeBtnTextActive: {
@@ -743,11 +1146,10 @@ const styles = StyleSheet.create({
   mthInputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#0f172a",
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 2,
     borderColor: "#F59E0B",
-    paddingHorizontal: 14
+    paddingHorizontal: 12
   },
   mthInput: {
     flex: 1,
@@ -755,15 +1157,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "900",
     fontFamily: "monospace",
-    paddingVertical: 10
+    paddingVertical: 8
   },
   mthUnitText: {
     color: "#94a3b8",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "900"
-  },
-  checklistTitleRow: {
-    marginBottom: 10
   },
   markAllOkBtn: {
     backgroundColor: "#10B981",
@@ -782,16 +1181,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#334155"
+    borderBottomWidth: 1
   },
   checklistLabel: {
-    color: "#fff",
     fontSize: 13,
     fontWeight: "800"
   },
   checklistDesc: {
-    color: "#64748b",
     fontSize: 11,
     marginTop: 2
   },
@@ -803,9 +1199,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: "#0f172a",
-    borderWidth: 1,
-    borderColor: "#334155"
+    borderWidth: 1
   },
   toggleOkActive: {
     backgroundColor: "#10B981",
@@ -824,7 +1218,6 @@ const styles = StyleSheet.create({
     color: "#fff"
   },
   templatesTitle: {
-    color: "#94a3b8",
     fontSize: 11,
     fontWeight: "700",
     marginBottom: 6
@@ -836,51 +1229,44 @@ const styles = StyleSheet.create({
     marginBottom: 10
   },
   templateChip: {
-    backgroundColor: "#0f172a",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#334155"
+    borderWidth: 1
   },
   templateChipText: {
-    color: "#60A5FA",
+    color: "#2563EB",
     fontSize: 11,
     fontWeight: "700"
   },
   textArea: {
-    minHeight: 90,
+    minHeight: 80,
     textAlignVertical: "top"
   },
   photoRow: {
-    marginBottom: 12,
-    backgroundColor: "#0f172a",
+    marginBottom: 10,
     padding: 12,
     borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#334155"
+    borderWidth: 1
   },
   photoSlotLabel: {
-    color: "#fff",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "800",
     marginBottom: 8
   },
   cameraCaptureBtn: {
-    backgroundColor: "#334155",
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
-    gap: 8
+    gap: 6
   },
   cameraCaptureIcon: {
-    fontSize: 18
+    fontSize: 16
   },
   cameraCaptureText: {
-    color: "#fff",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "900"
   },
   photoPreviewWrapper: {
@@ -889,38 +1275,38 @@ const styles = StyleSheet.create({
     justifyContent: "space-between"
   },
   photoThumb: {
-    width: 80,
-    height: 80,
+    width: 72,
+    height: 72,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#10B981"
   },
   photoRetakeBtn: {
-    backgroundColor: "#334155",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10
+    backgroundColor: "#2563EB",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8
   },
   photoRetakeBtnText: {
     color: "#fff",
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "800"
   },
   submitBtn: {
     backgroundColor: "#10B981",
-    paddingVertical: 18,
-    borderRadius: 22,
+    paddingVertical: 16,
+    borderRadius: 20,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 8,
     shadowColor: "#10B981",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 8
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6
   },
   submitBtnText: {
     color: "#fff",
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "900",
     letterSpacing: 0.5
   },
@@ -933,61 +1319,59 @@ const styles = StyleSheet.create({
     padding: 24
   },
   successIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     backgroundColor: "rgba(16, 185, 129, 0.2)",
     borderColor: "#10B981",
     borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 20
+    marginBottom: 16
   },
   successIconText: {
     color: "#10B981",
-    fontSize: 40,
+    fontSize: 36,
     fontWeight: "900"
   },
   successTitle: {
-    color: "#fff",
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "900",
     textAlign: "center",
     marginBottom: 10
   },
   successOrderBadge: {
-    backgroundColor: "#1e293b",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
+    backgroundColor: "rgba(37, 99, 235, 0.15)",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#3B82F6",
-    marginBottom: 14
+    borderColor: "#2563EB",
+    marginBottom: 12
   },
   successOrderText: {
-    color: "#60A5FA",
-    fontSize: 16,
+    color: "#2563EB",
+    fontSize: 15,
     fontWeight: "900",
     fontFamily: "monospace"
   },
   successDesc: {
-    color: "#94a3b8",
-    fontSize: 13,
+    fontSize: 12,
     textAlign: "center",
-    lineHeight: 20,
-    marginBottom: 30
+    lineHeight: 18,
+    marginBottom: 24
   },
   successBtn: {
     backgroundColor: "#10B981",
-    paddingVertical: 16,
-    paddingHorizontal: 30,
-    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 14,
     width: "100%",
     alignItems: "center"
   },
   successBtnText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "900"
   }
 });
