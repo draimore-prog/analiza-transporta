@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "Bingo Servis Mehanizacije",
+    "slug": "bingo-servis-mehanizacije",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "ba.bingo.servismehanizacije",
+      "adaptiveIcon": {
+        "backgroundColor": "#10B981",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      }
+    }
+  }
+}
