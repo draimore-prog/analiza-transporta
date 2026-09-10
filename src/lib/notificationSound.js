@@ -96,6 +96,17 @@ class SoundNotificationService {
           renotify: true
         });
       }
+
+      // Slanje i u React Native aplikaciju ako se pokreće unutar WebView-a
+      if (typeof window !== "undefined" && window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(
+          JSON.stringify({
+            type: "NOTIFICATION",
+            title,
+            body
+          })
+        );
+      }
     } catch (e) {
       console.warn("System notification error:", e);
     }

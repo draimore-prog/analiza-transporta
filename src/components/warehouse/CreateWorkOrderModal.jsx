@@ -1,31 +1,61 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { X, Search, PlusCircle, AlertCircle, Wrench, Shield, Check } from "lucide-react";
+import React, { useState, useMemo, useEffect } from "react";
+import { X, Search, PlusCircle, AlertCircle, Wrench, Shield, Check, UserCheck } from "lucide-react";
+import { normalizeVehicleStatus } from "@/lib/calculations.js";
 
 export function CreateWorkOrderModal({
   isOpen,
   onClose,
   warehouseMasterFleet = [],
   onCreateWorkOrder,
-  activeUser
+  activeUser,
+  users = []
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [orderType, setOrderType] = useState("preventive");
   const [priority, setPriority] = useState("normal");
   const [assignedTo, setAssignedTo] = useState("");
+  const [isCustomAssigned, setIsCustomAssigned] = useState(false);
+  const [customAssignedName, setCustomAssignedName] = useState("");
   const [instructions, setInstructions] = useState("");
   const [workHours, setWorkHours] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  // Pretraga mehanizacije za brzi odabir
+  // Izdvajanje korisnika sa rolom mobilnog servisera ili servisera
+  const mobileServisers = useMemo(() => {
+    if (!users || !Array.isArray(users)) return [];
+    return users.filter(
+      (u) =>
+        u.role === "mobile_serviser" ||
+        u.role === "serviser" ||
+        (u.fullname && u.fullname.toLowerCase().includes("servis"))
+    );
+  }, [users]);
+
+  // Automatski odaberi prvog mobilnog servisera ako je dostupan i ništa nije odabrano
+  useEffect(() => {
+    if (isOpen && !assignedTo && mobileServisers.length > 0) {
+      const defaultServiser = mobileServisers[0].fullname || mobileServisers[0].username;
+      setAssignedTo(defaultServiser);
+    }
+  }, [isOpen, mobileServisers, assignedTo]);
+
+  // Filtriraj SAMO aktivna vozila (isključi rashodovana, prodata i neaktivna)
+  const activeWarehouseFleet = useMemo(() => {
+    return warehouseMasterFleet.filter(
+      (v) => normalizeVehicleStatus(v.status) === "Aktivno"
+    );
+  }, [warehouseMasterFleet]);
+
+  // Pretraga aktivne mehanizacije za brzi odabir
   const filteredVehicles = useMemo(() => {
-    if (!searchTerm.trim()) return warehouseMasterFleet.slice(0, 10);
+    if (!searchTerm.trim()) return activeWarehouseFleet.slice(0, 15);
     const term = searchTerm.toLowerCase();
 
-    return warehouseMasterFleet
+    return activeWarehouseFleet
       .filter((v) => {
         const id = (v.reg || "").toLowerCase();
         const tip = (v.tipMehan || "").toLowerCase();
@@ -43,8 +73,8 @@ export function CreateWorkOrderModal({
           lok.includes(term)
         );
       })
-      .slice(0, 10);
-  }, [warehouseMasterFleet, searchTerm]);
+      .slice(0, 15);
+  }, [activeWarehouseFleet, searchTerm]);
 
   if (!isOpen) return null;
 
@@ -52,6 +82,15 @@ export function CreateWorkOrderModal({
     e.preventDefault();
     if (!selectedVehicle) {
       setError("Molimo odaberite jedinicu skladišne mehanizacije!");
+      return;
+    }
+
+    const finalAssignedTo = isCustomAssigned
+      ? customAssignedName.trim()
+      : (assignedTo.trim() || (mobileServisers[0]?.fullname || "Mobilni serviser"));
+
+    if (!finalAssignedTo) {
+      setError("Molimo odaberite ili upišite zaduženog servisera!");
       return;
     }
 
@@ -63,7 +102,7 @@ export function CreateWorkOrderModal({
         status: "pending",
         type: orderType,
         priority: priority,
-        assignedTo: assignedTo.trim() || "Interni serviser",
+        assignedTo: finalAssignedTo,
         createdBy: activeUser?.fullname || activeUser?.username || "Voditelj mehanizacije",
         vehicleId: selectedVehicle.reg || "",
         vehicleDetails: {
@@ -222,16 +261,49 @@ export function CreateWorkOrderModal({
           {/* Serviser & Radni Sati */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-300 mb-1">
-                4. Zaduženi Serviser
+              <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-300 mb-1 flex items-center justify-between">
+                <span>4. Zaduženi Mobilni Serviser</span>
+                {mobileServisers.length > 0 && (
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold lowercase">
+                    ({mobileServisers.length} dostupno)
+                  </span>
+                )}
               </label>
-              <input
-                type="text"
-                value={assignedTo}
-                onChange={(e) => setAssignedTo(e.target.value)}
-                placeholder="Ime servisera ili naziv servisa..."
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-xs font-bold outline-none text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500"
-              />
+              <select
+                value={isCustomAssigned ? "__custom__" : assignedTo}
+                onChange={(e) => {
+                  if (e.target.value === "__custom__") {
+                    setIsCustomAssigned(true);
+                  } else {
+                    setIsCustomAssigned(false);
+                    setAssignedTo(e.target.value);
+                  }
+                }}
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-xs font-bold outline-none text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              >
+                <option value="">-- Odaberite mobilnog servisera --</option>
+                {mobileServisers.map((u) => {
+                  const displayName = u.fullname || u.username;
+                  return (
+                    <option key={u.username || displayName} value={displayName}>
+                      🔧 {displayName} ({u.role === "mobile_serviser" ? "Mobilni serviser" : "Serviser"})
+                    </option>
+                  );
+                })}
+                <option value="Interni servis - Svi serviseri">👥 Interni servis - Svi serviseri</option>
+                <option value="__custom__">✏️ Unesi drugo ime / vanjski servis...</option>
+              </select>
+
+              {isCustomAssigned && (
+                <input
+                  type="text"
+                  value={customAssignedName}
+                  onChange={(e) => setCustomAssignedName(e.target.value)}
+                  placeholder="Upišite ime servisera ili naziv servisa..."
+                  className="mt-2 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-2 text-xs font-semibold outline-none text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 animate-in fade-in"
+                  autoFocus
+                />
+              )}
             </div>
 
             <div>

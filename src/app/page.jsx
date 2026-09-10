@@ -826,6 +826,7 @@ function DashboardContent() {
         warehouseMasterFleet={warehouseMasterFleet}
         onCreateWorkOrder={createWorkOrder}
         activeUser={activeUser}
+        users={users}
       />
 
       {/* Terenski Unos Radnog Naloga (Mobilna Forma) Modal */}

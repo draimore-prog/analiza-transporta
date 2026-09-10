@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { CHECKLIST_ITEMS } from "@/hooks/useWarehouseWorkOrders.js";
 import { compressImage } from "@/lib/imageCompression.js";
+import { normalizeVehicleStatus } from "@/lib/calculations.js";
 
 const PHOTO_SLOTS = [
   { key: "front", label: "1. Pogled Naprijed", hint: "Cijeli viljuškar sa prednje strane" },
@@ -137,12 +138,19 @@ export function FieldWorkOrderForm({
     }
   }, [initialOrder, isOpen]);
 
+  // Filtriraj SAMO aktivna vozila (isključi rashodovana, prodata i neaktivna)
+  const activeWarehouseFleet = useMemo(() => {
+    return warehouseMasterFleet.filter(
+      (v) => normalizeVehicleStatus(v.status) === "Aktivno"
+    );
+  }, [warehouseMasterFleet]);
+
   // Filtriranje vozila za pretragu
   const filteredVehicles = useMemo(() => {
-    if (!searchVehicleTerm.trim()) return warehouseMasterFleet.slice(0, 8);
+    if (!searchVehicleTerm.trim()) return activeWarehouseFleet.slice(0, 8);
     const term = searchVehicleTerm.toLowerCase();
 
-    return warehouseMasterFleet
+    return activeWarehouseFleet
       .filter((v) => {
         const id = (v.reg || "").toLowerCase();
         const tip = (v.tipMehan || "").toLowerCase();
@@ -161,7 +169,7 @@ export function FieldWorkOrderForm({
         );
       })
       .slice(0, 10);
-  }, [warehouseMasterFleet, searchVehicleTerm]);
+  }, [activeWarehouseFleet, searchVehicleTerm]);
 
   if (!isOpen) return null;
 
