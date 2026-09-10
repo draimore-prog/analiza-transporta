@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "npx -y serve out -p 3000",
     "deploy": "next build && firebase deploy --only hosting"
   },
   "dependencies": {
