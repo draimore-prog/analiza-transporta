@@ -31,25 +31,29 @@ export function YoYComparison({ costData }) {
     return activeMonthsForYearA.length > 0 ? activeMonthsForYearA : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
   }, [selectedMonth, activeMonthsForYearA]);
 
+  // Hronološki poredak za godišnja poređenja (starija godina uvijek lijevo, novija desno)
+  const olderYear = Math.min(yearA, yearB);
+  const newerYear = Math.max(yearA, yearB);
+
   const periodLabel = useMemo(() => {
     if (selectedMonth !== "all") {
-      return `${MONTH_NAMES[parseInt(selectedMonth) - 1]} (${yearA}. vs ${yearB}.)`;
+      return `${MONTH_NAMES[parseInt(selectedMonth) - 1]} (${olderYear}. vs ${newerYear}.)`;
     }
     const startM = Math.min(...targetPeriodMonths);
     const endM = Math.max(...targetPeriodMonths);
-    return `Period ${startM < 10 ? "0" + startM : startM}.-${endM < 10 ? "0" + endM : endM}. (${yearA}. vs ${yearB}.)`;
-  }, [selectedMonth, targetPeriodMonths, yearA, yearB]);
+    return `Period ${startM < 10 ? "0" + startM : startM}.-${endM < 10 ? "0" + endM : endM}. (${olderYear}. vs ${newerYear}.)`;
+  }, [selectedMonth, targetPeriodMonths, olderYear, newerYear]);
 
   // Podaci za period A i period B
-  const dataPeriodA = useMemo(() => {
-    return costData.filter((c) => c.year === yearA && targetPeriodMonths.includes(c.month));
-  }, [costData, yearA, targetPeriodMonths]);
+  const dataPeriodOlder = useMemo(() => {
+    return costData.filter((c) => c.year === olderYear && targetPeriodMonths.includes(c.month));
+  }, [costData, olderYear, targetPeriodMonths]);
 
-  const dataPeriodB = useMemo(() => {
-    return costData.filter((c) => c.year === yearB && targetPeriodMonths.includes(c.month));
-  }, [costData, yearB, targetPeriodMonths]);
+  const dataPeriodNewer = useMemo(() => {
+    return costData.filter((c) => c.year === newerYear && targetPeriodMonths.includes(c.month));
+  }, [costData, newerYear, targetPeriodMonths]);
 
-  // Podaci za MoM (Tekući mjesec vs Prethodni mjesec)
+  // Podaci za MoM (Stariji/prethodni mjesec vs Noviji/tekući mjesec)
   const currentMonthNum = selectedMonth !== "all" ? parseInt(selectedMonth) : (activeMonthsForYearA.length > 0 ? Math.max(...activeMonthsForYearA) : 6);
   const prevMonthNum = currentMonthNum > 1 ? currentMonthNum - 1 : 12;
   const prevMonthYear = currentMonthNum > 1 ? yearA : yearA - 1;
@@ -62,59 +66,55 @@ export function YoYComparison({ costData }) {
     return costData.filter((c) => c.year === prevMonthYear && c.month === prevMonthNum);
   }, [costData, prevMonthYear, prevMonthNum]);
 
-  // Funkcija za generisanje komparativne tabele (UVIJEK RAČUNA RAZLIKU OD VEĆE PREMA MANJOJ GODINI)
-  const generateComparisonRows = (currData, prevData, groupKey, labelA, labelB, actualYearA, actualYearB) => {
-    const mapA = {};
-    const mapB = {};
+  // Funkcija za generisanje komparativne tabele:
+  // UVIJEK Hronološki: Stariji period (1. kolona) -> Noviji period (2. kolona) -> Razlika -> Promjena %
+  // Crvena boja (🔴) = Rast troška, Zelena boja (🟢) = Smanjenje troška (Ušteda)
+  const renderComparisonTable = (olderData, newerData, groupKey, olderLabel, newerLabel, percHeader = "YoY %") => {
+    const mapOlder = {};
+    const mapNewer = {};
     const allKeys = new Set();
 
-    currData.forEach((d) => {
+    olderData.forEach((d) => {
       const k = d[groupKey] || "Ostalo";
-      mapA[k] = (mapA[k] || 0) + (d.cost || 0);
+      mapOlder[k] = (mapOlder[k] || 0) + (d.cost || 0);
       allKeys.add(k);
     });
 
-    prevData.forEach((d) => {
+    newerData.forEach((d) => {
       const k = d[groupKey] || "Ostalo";
-      mapB[k] = (mapB[k] || 0) + (d.cost || 0);
+      mapNewer[k] = (mapNewer[k] || 0) + (d.cost || 0);
       allKeys.add(k);
     });
 
     const sorted = Array.from(allKeys).sort((a, b) => {
-      const sumA = (mapA[a] || 0) + (mapB[a] || 0);
-      const sumB = (mapA[b] || 0) + (mapB[b] || 0);
-      return sumB - sumA;
+      const sumNewer = mapNewer[b] || 0;
+      const sumOlder = mapOlder[b] || 0;
+      return (sumNewer + sumOlder) - ((mapNewer[a] || 0) + (mapOlder[a] || 0));
     });
 
-    let totalA = 0;
-    let totalB = 0;
-
-    // Određivanje koja je godina veća (novija) a koja manja (starija)
-    const isANewer = actualYearA >= actualYearB;
+    let totalOlder = 0;
+    let totalNewer = 0;
 
     const rows = sorted.map((k) => {
-      const costA = mapA[k] || 0;
-      const costB = mapB[k] || 0;
-      totalA += costA;
-      totalB += costB;
+      const costOlder = mapOlder[k] || 0;
+      const costNewer = mapNewer[k] || 0;
+      totalOlder += costOlder;
+      totalNewer += costNewer;
 
-      // Razlika se računa uvijek: Novija Godina - Starija Godina
-      const costNewer = isANewer ? costA : costB;
-      const costOlder = isANewer ? costB : costA;
-
+      // Razlika se računa uvijek: Noviji period - Stariji period
       const diffKM = costNewer - costOlder;
       const diffPerc = costOlder > 0 ? ((costNewer - costOlder) / costOlder) * 100 : (costNewer > 0 ? 100 : 0);
 
       let badge = <span className="text-slate-400 font-bold text-[11px]">0.0%</span>;
       if (diffKM > 0) {
-        // Porast troška u novijoj godini = CRVENO 🔴
+        // Porast troška u novijem periodu = CRVENO 🔴
         badge = (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-black bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800 shadow-2xs">
             🔴 +{diffPerc.toFixed(1)}%
           </span>
         );
       } else if (diffKM < 0) {
-        // Smanjenje troška u novijoj godini (Ušteda) = ZELENO 🟢
+        // Smanjenje troška u novijem periodu (Ušteda) = ZELENO 🟢
         badge = (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shadow-2xs">
             🟢 {diffPerc.toFixed(1)}%
@@ -127,11 +127,11 @@ export function YoYComparison({ costData }) {
           <td className="py-2 px-3 font-bold text-slate-800 dark:text-slate-200 border-r border-slate-200 dark:border-slate-700">
             {k}
           </td>
-          <td className="py-2 px-3 text-right font-semibold text-slate-900 dark:text-white">
-            {formatKM(costA)}
-          </td>
           <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400">
-            {formatKM(costB)}
+            {formatKM(costOlder)}
+          </td>
+          <td className="py-2 px-3 text-right font-semibold text-slate-900 dark:text-white bg-indigo-50/20 dark:bg-indigo-950/20">
+            {formatKM(costNewer)}
           </td>
           <td className="py-2 px-3 text-right font-mono font-bold text-slate-700 dark:text-slate-300">
             {diffKM >= 0 ? `+${formatKM(diffKM)}` : formatKM(diffKM)}
@@ -141,16 +141,14 @@ export function YoYComparison({ costData }) {
       );
     });
 
-    const totalNewer = isANewer ? totalA : totalB;
-    const totalOlder = isANewer ? totalB : totalA;
     const grandDiffKM = totalNewer - totalOlder;
     const grandDiffPerc = totalOlder > 0 ? ((totalNewer - totalOlder) / totalOlder) * 100 : (totalNewer > 0 ? 100 : 0);
 
     const grandTotalRow = (
       <tr key="total" className="bg-slate-100 dark:bg-slate-800 font-black text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-600">
         <td className="py-2.5 px-3 uppercase border-r border-slate-300 dark:border-slate-600">Grand Total</td>
-        <td className="py-2.5 px-3 text-right text-indigo-900 dark:text-indigo-300 font-black">{formatKM(totalA)}</td>
-        <td className="py-2.5 px-3 text-right">{formatKM(totalB)}</td>
+        <td className="py-2.5 px-3 text-right text-slate-600 dark:text-slate-400 font-bold">{formatKM(totalOlder)}</td>
+        <td className="py-2.5 px-3 text-right text-indigo-900 dark:text-indigo-300 font-black bg-indigo-100/40 dark:bg-indigo-950/40">{formatKM(totalNewer)}</td>
         <td className="py-2.5 px-3 text-right">{grandDiffKM >= 0 ? `+${formatKM(grandDiffKM)}` : formatKM(grandDiffKM)}</td>
         <td className="py-2.5 px-3 text-center">
           {grandDiffKM > 0 ? (
@@ -171,10 +169,10 @@ export function YoYComparison({ costData }) {
         <thead className="bg-slate-100 dark:bg-slate-900 font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
           <tr>
             <th className="py-2.5 px-3 border-r border-slate-200 dark:border-slate-700">Stavka</th>
-            <th className="py-2.5 px-3 text-right font-black text-indigo-700 dark:text-indigo-400">{labelA}</th>
-            <th className="py-2.5 px-3 text-right">{labelB}</th>
+            <th className="py-2.5 px-3 text-right">{olderLabel}</th>
+            <th className="py-2.5 px-3 text-right font-black text-indigo-700 dark:text-indigo-400">{newerLabel}</th>
             <th className="py-2.5 px-3 text-right">Razlika (KM)</th>
-            <th className="py-2.5 px-3 text-center">YoY %</th>
+            <th className="py-2.5 px-3 text-center">{percHeader}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 bg-white dark:bg-slate-900">
@@ -184,6 +182,7 @@ export function YoYComparison({ costData }) {
       </table>
     );
   };
+
 
   // 5. Višegodišnja mjesečna matrica troškova (2021-2026)
   const matrixYears = [2021, 2022, 2023, 2024, 2025, 2026];
@@ -328,7 +327,7 @@ export function YoYComparison({ costData }) {
             <span>1. Komparacija po Tipu Mehanizacije</span>
           </h3>
           <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-            {generateComparisonRows(dataPeriodA, dataPeriodB, "tipMehan", `${yearA}.`, `${yearB}.`, yearA, yearB)}
+            {renderComparisonTable(dataPeriodOlder, dataPeriodNewer, "tipMehan", `${olderYear}.`, `${newerYear}.`, "YoY %")}
           </div>
         </div>
 
@@ -339,7 +338,7 @@ export function YoYComparison({ costData }) {
             <span>2. Komparacija po Segmentima Troškova</span>
           </h3>
           <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-            {generateComparisonRows(dataPeriodA, dataPeriodB, "segment", `${yearA}.`, `${yearB}.`, yearA, yearB)}
+            {renderComparisonTable(dataPeriodOlder, dataPeriodNewer, "segment", `${olderYear}.`, `${newerYear}.`, "YoY %")}
           </div>
         </div>
       </div>
@@ -353,14 +352,13 @@ export function YoYComparison({ costData }) {
             <span>3. Mjesec na Isti Mjesec Prošle Godine ({MONTH_NAMES[currentMonthNum - 1]})</span>
           </h3>
           <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-            {generateComparisonRows(
-              costData.filter((c) => c.year === yearA && c.month === currentMonthNum),
-              costData.filter((c) => c.year === yearB && c.month === currentMonthNum),
+            {renderComparisonTable(
+              costData.filter((c) => c.year === olderYear && c.month === currentMonthNum),
+              costData.filter((c) => c.year === newerYear && c.month === currentMonthNum),
               "tipMehan",
-              `${MONTH_NAMES[currentMonthNum - 1]} ${yearA}.`,
-              `${MONTH_NAMES[currentMonthNum - 1]} ${yearB}.`,
-              yearA,
-              yearB
+              `${MONTH_NAMES[currentMonthNum - 1]} ${olderYear}.`,
+              `${MONTH_NAMES[currentMonthNum - 1]} ${newerYear}.`,
+              "YoY %"
             )}
           </div>
         </div>
@@ -372,14 +370,13 @@ export function YoYComparison({ costData }) {
             <span>4. Mjesec na Prethodni Mjesec (MoM)</span>
           </h3>
           <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-            {generateComparisonRows(
-              dataCurrentMonth,
+            {renderComparisonTable(
               dataPrevMonth,
+              dataCurrentMonth,
               "tipMehan",
-              `${MONTH_NAMES[currentMonthNum - 1]} ${yearA}.`,
               `${MONTH_NAMES[prevMonthNum - 1]} ${prevMonthYear}.`,
-              yearA,
-              prevMonthYear
+              `${MONTH_NAMES[currentMonthNum - 1]} ${yearA}.`,
+              "MoM %"
             )}
           </div>
         </div>
