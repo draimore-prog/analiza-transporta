@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, Suspense } from "react";
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useAuth } from "@/hooks/useAuth.js";
 import { useFleetData } from "@/hooks/useFleetData.js";
 import { Sidebar } from "@/components/layout/Sidebar.jsx";
@@ -21,6 +21,7 @@ import { WarehouseFleet } from "@/components/warehouse/WarehouseFleet.jsx";
 import { WarehouseRepairs } from "@/components/warehouse/WarehouseRepairs.jsx";
 import { WarehouseSegments } from "@/components/warehouse/WarehouseSegments.jsx";
 import { WarehouseSuppliers } from "@/components/warehouse/WarehouseSuppliers.jsx";
+import { WarehouseWorkOrders } from "@/components/warehouse/WarehouseWorkOrders.jsx";
 
 // Serviser Portal
 import { ServiserDashboard } from "@/components/serviser/ServiserDashboard.jsx";
@@ -37,6 +38,10 @@ import { ChangePasswordModal } from "@/components/modals/ChangePasswordModal.jsx
 import { IntExtRecapModal } from "@/components/modals/IntExtRecapModal.jsx";
 import { SupplierDetailModal } from "@/components/modals/SupplierDetailModal.jsx";
 import { SegmentDetailModal } from "@/components/modals/SegmentDetailModal.jsx";
+import { WorkOrderDetailModal } from "@/components/warehouse/WorkOrderDetailModal.jsx";
+import { WorkOrderPrintModal } from "@/components/warehouse/WorkOrderPrintModal.jsx";
+import { CreateWorkOrderModal } from "@/components/warehouse/CreateWorkOrderModal.jsx";
+import { useWarehouseWorkOrders } from "@/hooks/useWarehouseWorkOrders.js";
 
 // Mape za čitljive nazive stranica u URL-u
 const TRANSPORT_TAB_SLUGS = {
@@ -71,7 +76,8 @@ const WAREHOUSE_TAB_SLUGS = {
   2: "sifrarnik-flote",
   3: "pregled-svih-opravki",
   4: "segmenti-dijelovi",
-  5: "serviseri-dobavljaci"
+  5: "serviseri-dobavljaci",
+  6: "radni-nalozi"
 };
 
 const WAREHOUSE_SLUG_TO_TAB = {
@@ -84,7 +90,9 @@ const WAREHOUSE_SLUG_TO_TAB = {
   "segmenti-dijelovi": 4,
   "4": 4,
   "serviseri-dobavljaci": 5,
-  "5": 5
+  "5": 5,
+  "radni-nalozi": 6,
+  "6": 6
 };
 
 function DashboardContent() {
@@ -113,6 +121,69 @@ function DashboardContent() {
     deleteCostRecord,
     saveVehicle
   } = useFleetData();
+
+  const {
+    workOrders,
+    isLoading: isWorkOrdersLoading,
+    createWorkOrder,
+    updateWorkOrder,
+    deleteWorkOrder,
+    setOrderStatus,
+    pendingReviewCount
+  } = useWarehouseWorkOrders();
+
+  // Stanja modala za radne naloge skladišne mehanizacije
+  const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
+  const [printingWorkOrder, setPrintingWorkOrder] = useState(null);
+  const [isCreateWorkOrderOpen, setIsCreateWorkOrderOpen] = useState(false);
+
+  const pendingWorkOrders = useMemo(() => {
+    return workOrders.filter((o) => o.status === "completed");
+  }, [workOrders]);
+
+  const handleSeedDemoWorkOrder = useCallback(async () => {
+    try {
+      await createWorkOrder({
+        orderNumber: "RN-SM-2026-0001",
+        status: "completed",
+        type: "preventive",
+        priority: "normal",
+        assignedTo: "Mirnes Hasić",
+        createdBy: "Emir Duraković",
+        vehicleId: "SM-042",
+        vehicleDetails: {
+          tip: "Regalni viljuškar",
+          proizvodjac: "Jungheinrich",
+          model: "ETV 214",
+          serijskiBroj: "91045231",
+          lokacija: "PJ Centralno Skladište Sarajevo"
+        },
+        workHours: 4820,
+        checklist: {
+          wheels: { status: "ok", label: "Točkovi i gume" },
+          mast_forks: { status: "ok", label: "Kran, viljuške i lanci" },
+          battery: { status: "ok", label: "Baterija i punjač" },
+          hydraulics: { status: "issue", label: "Hidraulika i ulje", note: "Uočeno blago vlaženje na gornjem spoju crijeva podizanja krana. Crijevo dotegnuto." },
+          brakes: { status: "ok", label: "Kočioni sistem" },
+          steering_electronics: { status: "ok", label: "Ruda i elektronika" },
+          chassis_seat: { status: "ok", label: "Šasija i sjedište" },
+          safety_signals: { status: "ok", label: "Signalizacija i sigurnost" }
+        },
+        workDescription: "Izvršen kompletan redovni preventivni pregled jedinice. Zamijenjen prednji desni vodeći točkić krana (85mm), očišćeni terminali baterije, dotočena 2 litra hidrauličnog ulja HD46.",
+        usedMaterials: "1x Vodeći točkić krana 85mm poliuretan, 2L Hidraulično ulje HD46, 1x Sprej za odmašćivanje",
+        photos: {
+          front: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&auto=format&fit=crop&q=80",
+          back: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&auto=format&fit=crop&q=80",
+          left: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&auto=format&fit=crop&q=80",
+          right: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&auto=format&fit=crop&q=80",
+          interior: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&auto=format&fit=crop&q=80"
+        },
+        notes: "Jedinica vraćena u operativan i siguran rad."
+      });
+    } catch (e) {
+      console.warn("Seed demo error:", e);
+    }
+  }, [createWorkOrder]);
 
   // Stanje portala i tabova sa čitljivim URL slugovima
   const [portalMode, setPortalModeState] = useState("transport");
@@ -440,6 +511,7 @@ function DashboardContent() {
         onOpenAdminPanel={() => setIsAdminPanelOpen(true)}
         onOpenPasswordModal={() => setIsPasswordModalOpen(true)}
         onLogout={logout}
+        pendingWorkOrdersCount={pendingReviewCount}
       />
 
       {/* Glavni Kontejner - 100% širina browsera */}
@@ -458,6 +530,8 @@ function DashboardContent() {
             setEditingVehicle(null);
             setIsNewVehicleOpen(true);
           }}
+          pendingWorkOrders={pendingWorkOrders}
+          onOpenWorkOrder={(order) => setSelectedWorkOrder(order)}
         />
 
         {/* Skrolabilni Body Dashboarda - 100% širina */}
@@ -586,6 +660,21 @@ function DashboardContent() {
                   />
                 </div>
               )}
+
+              {(visitedWhTabs.has(6) || activeWhTab === 6) && (
+                <div className={activeWhTab === 6 ? "block" : "hidden"}>
+                  <WarehouseWorkOrders
+                    workOrders={workOrders}
+                    isLoading={isWorkOrdersLoading}
+                    onCreateOrderClick={() => setIsCreateWorkOrderOpen(true)}
+                    onViewOrder={(o) => setSelectedWorkOrder(o)}
+                    onPrintOrder={(o) => setPrintingWorkOrder(o)}
+                    onApproveOrder={(id) => setOrderStatus(id, "approved", activeUser?.fullname || activeUser?.username)}
+                    onDeleteOrder={deleteWorkOrder}
+                    onSeedDemoOrder={handleSeedDemoWorkOrder}
+                  />
+                </div>
+              )}
             </>
           )}
         </main>
@@ -706,6 +795,36 @@ function DashboardContent() {
         onClose={() => setIsPasswordModalOpen(false)}
         user={activeUser}
         onSaveUser={saveUserToFirestore}
+      />
+
+      {/* Detaljan Pregled Radnog Naloga Modal */}
+      <WorkOrderDetailModal
+        isOpen={!!selectedWorkOrder}
+        onClose={() => setSelectedWorkOrder(null)}
+        workOrder={selectedWorkOrder}
+        onPrint={(order) => {
+          setSelectedWorkOrder(null);
+          setPrintingWorkOrder(order);
+        }}
+        onUpdateOrder={updateWorkOrder}
+        onApproveOrder={(id) => setOrderStatus(id, "approved", activeUser?.fullname || activeUser?.username)}
+        activeUser={activeUser}
+      />
+
+      {/* Štampa Radnog Naloga A4 Modal */}
+      <WorkOrderPrintModal
+        isOpen={!!printingWorkOrder}
+        onClose={() => setPrintingWorkOrder(null)}
+        workOrder={printingWorkOrder}
+      />
+
+      {/* Kreiranje & Dispečing Radnog Naloga Modal */}
+      <CreateWorkOrderModal
+        isOpen={isCreateWorkOrderOpen}
+        onClose={() => setIsCreateWorkOrderOpen(false)}
+        warehouseMasterFleet={warehouseMasterFleet}
+        onCreateWorkOrder={createWorkOrder}
+        activeUser={activeUser}
       />
     </div>
   );

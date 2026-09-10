@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { PlusCircle, Search, X, ChevronRight, Sun, Moon } from "lucide-react";
+import { PlusCircle, Search, X, ChevronRight, Sun, Moon, Bell, ClipboardList } from "lucide-react";
 
 export function Header({
   portalMode,
@@ -12,13 +12,17 @@ export function Header({
   setIsDarkMode,
   onOpenVehicleModal,
   onOpenNewCostModal,
-  onOpenNewVehicleModal
+  onOpenNewVehicleModal,
+  pendingWorkOrders = [],
+  onOpenWorkOrder
 }) {
   const [searchReg, setSearchReg] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const containerRef = useRef(null);
+  const notifRef = useRef(null);
   const inputRef = useRef(null);
 
   // Filtriranje vozila za search dropdown
@@ -60,6 +64,9 @@ export function Header({
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         setIsDropdownOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setIsNotificationOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -246,6 +253,71 @@ export function Header({
             <span>Unos Troška</span>
           </button>
         )}
+
+        {/* Notification Bell (Radni nalozi sa terena) */}
+        <div className="relative" ref={notifRef}>
+          <button
+            onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 shadow-xs cursor-pointer relative"
+            title="Pristigli radni nalozi sa terena"
+          >
+            <Bell className="w-4 h-4" />
+            {pendingWorkOrders.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center animate-bounce shadow-xs">
+                {pendingWorkOrders.length}
+              </span>
+            )}
+          </button>
+
+          {/* Notifikacijski Dropdown */}
+          {isNotificationOpen && (
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in duration-150">
+              <div className="p-3 bg-gradient-to-r from-slate-900 to-indigo-950 text-white flex justify-between items-center border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <ClipboardList className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs font-black uppercase tracking-wider">Radni Nalozi Sa Terena</span>
+                </div>
+                <span className="text-[10px] font-black bg-purple-600 text-white px-2 py-0.5 rounded-full">
+                  {pendingWorkOrders.length} čekaju pregled
+                </span>
+              </div>
+
+              <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+                {pendingWorkOrders.length > 0 ? (
+                  pendingWorkOrders.map((order) => (
+                    <div
+                      key={order.id}
+                      onClick={() => {
+                        setIsNotificationOpen(false);
+                        if (onOpenWorkOrder) onOpenWorkOrder(order);
+                      }}
+                      className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors cursor-pointer"
+                    >
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="font-mono text-xs font-black text-blue-700 dark:text-blue-400">
+                          {order.orderNumber}
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-400">
+                          {order.createdAt ? new Date(order.createdAt).toLocaleTimeString("bs-BA", { hour: "2-digit", minute: "2-digit" }) : ""}
+                        </span>
+                      </div>
+                      <p className="text-xs font-extrabold text-slate-900 dark:text-white">
+                        {order.vehicleId} • {order.vehicleDetails?.proizvodjac || ""} {order.vehicleDetails?.model || ""}
+                      </p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        Serviser: <strong>{order.assignedTo}</strong> • {order.vehicleDetails?.lokacija || ""}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-6 text-center text-xs text-slate-400">
+                    Nema naloga koji čekaju pregled voditelja.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Theme Toggle u Headeru */}
         {setIsDarkMode && (

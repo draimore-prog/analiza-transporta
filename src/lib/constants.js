@@ -31,6 +31,7 @@ export const DEFAULT_APP_ROLES = {
       { id: 'wh3', name: 'Pregled Svih Opravki', portal: 'warehouse', icon: '🔧', tabId: 3 },
       { id: 'wh4', name: 'Segmenti & Dijelovi', portal: 'warehouse', icon: '⚡', tabId: 4 },
       { id: 'wh5', name: 'Serviseri & Dobavljači', portal: 'warehouse', icon: '🏢', tabId: 5 },
+      { id: 'wh6', name: 'Radni Nalozi & Pregledi', portal: 'warehouse', icon: '📋', tabId: 6 },
       { id: 'serviserSearch', name: 'Karton Vozila / Pretraga', portal: 'serviser', icon: '🔍', tabId: 1 }
     ],
     permissions: {
@@ -57,7 +58,8 @@ export const DEFAULT_APP_ROLES = {
       { id: 'wh2', name: 'Šifrarnik Flote (594)', portal: 'warehouse', icon: '🚜', tabId: 2 },
       { id: 'wh3', name: 'Pregled Svih Opravki', portal: 'warehouse', icon: '🔧', tabId: 3 },
       { id: 'wh4', name: 'Segmenti & Dijelovi', portal: 'warehouse', icon: '⚡', tabId: 4 },
-      { id: 'wh5', name: 'Serviseri & Dobavljači', portal: 'warehouse', icon: '🏢', tabId: 5 }
+      { id: 'wh5', name: 'Serviseri & Dobavljači', portal: 'warehouse', icon: '🏢', tabId: 5 },
+      { id: 'wh6', name: 'Radni Nalozi & Pregledi', portal: 'warehouse', icon: '📋', tabId: 6 }
     ],
     permissions: {
       canUploadExcel: false,
