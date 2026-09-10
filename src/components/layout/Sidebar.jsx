@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 import { ClockWidget } from "./ClockWidget.jsx";
 import { Truck, Shield, Key, LogOut } from "lucide-react";
-import { APP_NAV_SECTIONS } from "@/lib/constants.js";
+import { APP_NAV_SECTIONS, hasPageAccess } from "@/lib/constants.js";
 
 export function Sidebar({
   activePage = "kpi-pregled",
@@ -17,33 +17,11 @@ export function Sidebar({
   onLogout,
   pendingWorkOrdersCount = 0
 }) {
-  // Dozvoljeni paneli za trenutnu ulogu
-  const allowedPanelIds = useMemo(() => {
-    if (!currentRole || currentRole.roleId === "superadmin") {
-      return null; // Superadmin ima pristup svemu
-    }
-    if (Array.isArray(currentRole.navigationPanels)) {
-      return new Set(currentRole.navigationPanels.map((p) => p.id));
-    }
-    return null;
-  }, [currentRole]);
-
-  // Filtrirane sekcije i stranice na osnovu permisija
+  // Filtrirane sekcije i stranice na osnovu granularnih permisija uloge
   const visibleSections = useMemo(() => {
     return APP_NAV_SECTIONS.map((sec) => {
-      // Posebna provjera za servisnu radionicu
-      if (sec.id === "serviser") {
-        const canSeeServiser =
-          activeUser?.role === "superadmin" ||
-          activeUser?.role === "serviser" ||
-          activeUser?.role === "mobile_serviser" ||
-          (allowedPanelIds && allowedPanelIds.has("servisna-radionica"));
-        if (!canSeeServiser) return null;
-      }
-
       const visibleItems = sec.items.filter((item) => {
-        if (!allowedPanelIds) return true;
-        return allowedPanelIds.has(item.id);
+        return hasPageAccess(currentRole, item.id);
       });
 
       if (visibleItems.length === 0) return null;
@@ -53,7 +31,7 @@ export function Sidebar({
         items: visibleItems
       };
     }).filter(Boolean);
-  }, [allowedPanelIds, activeUser]);
+  }, [currentRole]);
 
   return (
     <aside className="w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col justify-between flex-shrink-0 z-20 shadow-sm transition-colors duration-200 h-full">

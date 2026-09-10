@@ -3,13 +3,15 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { exportMasterFleetToExcel } from "@/lib/exportExcel.js";
 import { normalizeVehicleStatus, getVehicleStatusBadge } from "@/lib/calculations.js";
+import { canEditPage } from "@/lib/constants.js";
 import { Download, RotateCcw, ArrowDown as ScrollDown, CheckCircle2, Loader2, Edit3, FilterX } from "lucide-react";
 
 export function WarehouseFleet({
   warehouseMasterFleet,
   onOpenVehicleModal,
   onOpenEditVehicle,
-  currentRole
+  currentRole,
+  canEdit
 }) {
   const [colFilterGarazni, setColFilterGarazni] = useState("");
   const [colFilterReg, setColFilterReg] = useState("");
@@ -149,10 +151,7 @@ export function WarehouseFleet({
   };
 
   const canEditVehicle =
-    currentRole?.permissions?.canRegisterVehicle ||
-    currentRole?.permissions?.canEditCosts ||
-    currentRole?.roleId === "superadmin" ||
-    currentRole?.roleId === "warehouse_specialist";
+    canEdit !== undefined ? canEdit : canEditPage(currentRole, "skladiste-sifrarnik");
 
   return (
     <div className="space-y-6">

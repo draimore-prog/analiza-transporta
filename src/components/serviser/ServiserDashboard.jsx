@@ -42,7 +42,8 @@ export function ServiserDashboard({
   onViewWorkOrder,
   onPrintWorkOrder,
   onLogout,
-  onSwitchPortal
+  onSwitchPortal,
+  canEdit = true
 }) {
   // Filter za radne naloge: "pending" (aktivni/dodijeljeni) ili "completed" (završeni)
   const [ordersFilter, setOrdersFilter] = useState("pending");
@@ -517,7 +518,7 @@ export function ServiserDashboard({
 
                     {/* Akcija na kartici */}
                     <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                      {isPending && onOpenFieldForm ? (
+                      {isPending && onOpenFieldForm && canEdit ? (
                         <button
                           type="button"
                           onClick={() => onOpenFieldForm(order)}

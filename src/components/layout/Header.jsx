@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { PlusCircle, Search, X, ChevronRight, Sun, Moon, Bell, ClipboardList, Plus } from "lucide-react";
 import { normalizeVehicleStatus, getVehicleStatusBadge } from "@/lib/calculations.js";
-import { APP_NAV_SECTIONS } from "@/lib/constants.js";
+import { APP_NAV_SECTIONS, canEditPage } from "@/lib/constants.js";
 
 export function Header({
   activePage = "kpi-pregled",
@@ -255,7 +255,7 @@ export function Header({
         </div>
 
         {/* Novo Vozilo Dugme */}
-        {currentRole?.permissions?.canRegisterVehicle && onOpenNewVehicleModal && (
+        {canEditPage(currentRole, "maticna-baza-flote") && onOpenNewVehicleModal && (
           <button
             onClick={onOpenNewVehicleModal}
             className="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold px-3 py-1.5 rounded-lg transition-colors text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
@@ -267,7 +267,7 @@ export function Header({
         )}
 
         {/* Unos Troška Dugme */}
-        {currentRole?.permissions?.canInputCost && (
+        {canEditPage(currentRole, "tabela-servisa") && (
           <button
             onClick={onOpenNewCostModal}
             className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3 py-1.5 rounded-lg transition-colors text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"

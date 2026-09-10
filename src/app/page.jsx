@@ -43,6 +43,7 @@ import { WorkOrderPrintModal } from "@/components/warehouse/WorkOrderPrintModal.
 import { CreateWorkOrderModal } from "@/components/warehouse/CreateWorkOrderModal.jsx";
 import { FieldWorkOrderForm } from "@/components/serviser/FieldWorkOrderForm.jsx";
 import { useWarehouseWorkOrders } from "@/hooks/useWarehouseWorkOrders.js";
+import { hasPageAccess, canEditPage, APP_NAV_SECTIONS } from "@/lib/constants.js";
 
 // Mape za čitljive nazive stranica u URL-u i kompatibilnost starih linkova
 const PAGE_SLUG_MAPPINGS = {
@@ -294,22 +295,40 @@ function DashboardContent() {
     }
   }, [isDarkMode]);
 
-  // Automatska dodjela početne stranice na osnovu uloge korisnika (samo ako stranica nije zadana u URL-u)
+  // Automatska dodjela početne stranice ili zaštita ako korisnik nema pristup traženoj stranici
   useEffect(() => {
+    if (!currentRole) return;
+
+    // Ako korisnik nema dozvolu za activePage, preusmjeri ga na dozvoljenu
+    if (!hasPageAccess(currentRole, activePage)) {
+      if (currentRole.defaultPage && hasPageAccess(currentRole, currentRole.defaultPage)) {
+        setActivePageState(currentRole.defaultPage);
+        return;
+      }
+      for (const sec of APP_NAV_SECTIONS) {
+        const firstAllowed = sec.items.find((i) => hasPageAccess(currentRole, i.id));
+        if (firstAllowed) {
+          setActivePageState(firstAllowed.id);
+          return;
+        }
+      }
+      return;
+    }
+
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       if (params.get("stranica") || params.get("portal") || params.get("tab") || params.get("whTab")) {
         return;
       }
     }
-    if (currentRole?.defaultPage) {
+    if (currentRole?.defaultPage && hasPageAccess(currentRole, currentRole.defaultPage)) {
       setActivePageState(currentRole.defaultPage);
     } else if (activeUser?.role === "warehouse_specialist") {
       setActivePageState("skladiste-analitika");
     } else if (activeUser?.role === "serviser" || activeUser?.role === "mobile_serviser") {
       setActivePageState("servisna-radionica");
     }
-  }, [activeUser, currentRole]);
+  }, [activeUser, currentRole, activePage]);
 
   // Drilldown akcije
   const handleSelectYearDrilldown = useCallback((year) => {
@@ -437,6 +456,7 @@ function DashboardContent() {
           onPrintWorkOrder={(o) => setPrintingWorkOrder(o)}
           onLogout={logout}
           onSwitchPortal={() => navigateToPage("kpi-pregled")}
+          canEdit={canEditPage(currentRole, "servisna-radionica")}
         />
 
         {/* Terenski Radni Nalog Modal za Servisere */}
@@ -587,6 +607,7 @@ function DashboardContent() {
               onOpenEditVehicle={(v) => setEditingVehicle(v)}
               activeUser={activeUser}
               currentRole={currentRole}
+              canEdit={canEditPage(currentRole, "maticna-baza-flote")}
             />
           )}
 
@@ -598,6 +619,7 @@ function DashboardContent() {
               onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
               onDeleteCostRecord={deleteCostRecord}
               activeUser={activeUser}
+              canEdit={canEditPage(currentRole, "tabela-servisa")}
             />
           )}
 
@@ -625,6 +647,7 @@ function DashboardContent() {
                 onOpenVehicleModal={handleWhOpenVehicleModal}
                 onOpenEditVehicle={handleWhOpenEditVehicle}
                 currentRole={currentRole}
+                canEdit={canEditPage(currentRole, "skladiste-sifrarnik")}
               />
             </div>
           )}
@@ -638,6 +661,7 @@ function DashboardContent() {
                 onOpenVehicleModal={handleWhOpenVehicleModal}
                 onDeleteCostRecord={deleteCostRecord}
                 activeUser={activeUser}
+                canEdit={canEditPage(currentRole, "skladiste-opravke")}
               />
             </div>
           )}
@@ -675,6 +699,7 @@ function DashboardContent() {
                 onApproveOrder={(id) => setOrderStatus(id, "approved", activeUser?.fullname || activeUser?.username)}
                 onDeleteOrder={deleteWorkOrder}
                 onSeedDemoOrder={handleSeedDemoWorkOrder}
+                canEdit={canEditPage(currentRole, "skladiste-nalozi")}
               />
             </div>
           )}

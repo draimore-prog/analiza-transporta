@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { exportMasterFleetToExcel } from "@/lib/exportExcel.js";
 import { cleanVehicleType, normalizeVehicleStatus, getVehicleStatusBadge } from "@/lib/calculations.js";
+import { canEditPage } from "@/lib/constants.js";
 import {
   Download,
   Plus,
@@ -22,7 +23,8 @@ export function MasterFleetTable({
   onOpenVehicleModal,
   onOpenNewVehicleModal,
   onOpenEditVehicle,
-  currentRole
+  currentRole,
+  canEdit
 }) {
   // Pojedinačni filteri po kolonama unutar tabele
   const [colFilterGarazni, setColFilterGarazni] = useState("");
@@ -234,9 +236,7 @@ export function MasterFleetTable({
   };
 
   const canEditVehicle =
-    currentRole?.permissions?.canRegisterVehicle ||
-    currentRole?.permissions?.canEditCosts ||
-    currentRole?.roleId === "superadmin";
+    canEdit !== undefined ? canEdit : canEditPage(currentRole, "maticna-baza-flote");
 
   return (
     <div className="space-y-6">

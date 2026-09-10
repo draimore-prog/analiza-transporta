@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { X, Check, Shield, Eye, Edit3, Slash } from "lucide-react";
+import { isEditablePage, getRolePagePermission } from "@/lib/constants.js";
 
-const ALL_AVAILABLE_PANELS = [
+const ALL_PAGES = [
   // Analitika
   { id: "kpi-pregled", name: "KPI Pregled Flote", category: "analitika", icon: "📊" },
   { id: "analiza-odrzavanja", name: "Analiza Održavanja", category: "analitika", icon: "📈" },
@@ -26,6 +27,13 @@ const ALL_AVAILABLE_PANELS = [
   { id: "servisna-radionica", name: "Serviserski Portal / Terenski Unos", category: "serviser", icon: "🛠️" }
 ];
 
+const CATEGORY_HEADERS = [
+  { id: "analitika", title: "Analitika", icon: "📊", color: "text-blue-600 dark:text-blue-400" },
+  { id: "baza-podataka", title: "Baza Podataka", icon: "🗄️", color: "text-emerald-600 dark:text-emerald-400" },
+  { id: "skladisna-mehanizacija", title: "Skladišna Mehanizacija", icon: "🚜", color: "text-amber-600 dark:text-amber-400" },
+  { id: "serviser", title: "Servisna Radionica", icon: "🔧", color: "text-indigo-600 dark:text-indigo-400" }
+];
+
 export function EditRoleModal({
   isOpen,
   onClose,
@@ -35,8 +43,8 @@ export function EditRoleModal({
   const [roleName, setRoleName] = useState("");
   const [roleIcon, setRoleIcon] = useState("🛡️");
   const [description, setDescription] = useState("");
-  const [defaultPortal, setDefaultPortal] = useState("transport");
-  const [selectedPanelIds, setSelectedPanelIds] = useState(new Set());
+  const [defaultPage, setDefaultPage] = useState("kpi-pregled");
+  const [pagePermissions, setPagePermissions] = useState({});
   const [permissions, setPermissions] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
@@ -45,21 +53,32 @@ export function EditRoleModal({
       setRoleName(role.roleName || "");
       setRoleIcon(role.roleIcon || "🛡️");
       setDescription(role.description || "");
-      setDefaultPortal(role.defaultPortal || "transport");
-      setSelectedPanelIds(new Set((role.navigationPanels || []).map((p) => p.id)));
+      setDefaultPage(role.defaultPage || "kpi-pregled");
+
+      // Inicijalizuj dozvole za svaku definisanu stranicu
+      const initialPerms = {};
+      ALL_PAGES.forEach((page) => {
+        initialPerms[page.id] = getRolePagePermission(role, page.id);
+      });
+      setPagePermissions(initialPerms);
       setPermissions({ ...(role.permissions || {}) });
     }
   }, [role]);
 
   if (!isOpen || !role) return null;
 
-  const togglePanel = (panelId) => {
-    setSelectedPanelIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(panelId)) next.delete(panelId);
-      else next.add(panelId);
-      return next;
-    });
+  const toggleBooleanPage = (pageId) => {
+    setPagePermissions((prev) => ({
+      ...prev,
+      [pageId]: !prev[pageId]
+    }));
+  };
+
+  const setEditableLevel = (pageId, level) => {
+    setPagePermissions((prev) => ({
+      ...prev,
+      [pageId]: level
+    }));
   };
 
   const togglePermission = (key) => {
@@ -70,10 +89,11 @@ export function EditRoleModal({
     e.preventDefault();
     setIsSaving(true);
     try {
-      const selectedPanels = ALL_AVAILABLE_PANELS.filter((p) => selectedPanelIds.has(p.id));
-      const allowedPortalsSet = new Set();
-      selectedPanels.forEach((p) => allowedPortalsSet.add(p.portal));
-      if (allowedPortalsSet.size === 0) allowedPortalsSet.add(defaultPortal);
+      // Filtriraj panele koji imaju pristup
+      const selectedPanels = ALL_PAGES.filter((p) => {
+        const val = pagePermissions[p.id];
+        return val === true || val === "view" || val === "edit";
+      });
 
       const updatedRole = {
         roleId: role.roleId,
@@ -81,23 +101,22 @@ export function EditRoleModal({
         roleIcon: roleIcon.trim(),
         roleBadge: `${roleIcon.trim()} ${roleName.trim()}`,
         description: description.trim(),
-        defaultPortal: defaultPortal,
-        allowedPortals: Array.from(allowedPortalsSet),
+        defaultPage: defaultPage,
+        pagePermissions: pagePermissions,
         navigationPanels: selectedPanels,
         permissions: {
           canUploadExcel: !!permissions.canUploadExcel,
-          canInputCost: !!permissions.canInputCost,
-          canRegisterVehicle: !!permissions.canRegisterVehicle,
+          canInputCost: pagePermissions["tabela-servisa"] === "edit" || pagePermissions["skladiste-nalozi"] === "edit",
+          canRegisterVehicle: pagePermissions["maticna-baza-flote"] === "edit" || pagePermissions["skladiste-sifrarnik"] === "edit",
           canAccessAdminPanel: !!permissions.canAccessAdminPanel,
-          canSwitchPortal: !!permissions.canSwitchPortal,
-          canExportExcel: !!permissions.canExportExcel,
-          canEditCost: !!permissions.canEditCost,
-          canDeleteCost: !!permissions.canDeleteCost
+          canExportExcel: permissions.canExportExcel !== false,
+          canEditCost: pagePermissions["tabela-servisa"] === "edit" || pagePermissions["skladiste-sifrarnik"] === "edit",
+          canDeleteCost: pagePermissions["tabela-servisa"] === "edit" || pagePermissions["skladiste-opravke"] === "edit"
         }
       };
 
       await onSaveRole(updatedRole);
-      alert(`Uloga "${updatedRole.roleName}" i njena prava su uspješno ažurirani na Firebase bazi!`);
+      alert(`Uloga "${updatedRole.roleName}" i njene dozvole su uspješno ažurirane!`);
       onClose();
     } catch (err) {
       alert("Greška pri snimanju uloge: " + err.message);
@@ -108,17 +127,17 @@ export function EditRoleModal({
 
   return (
     <div onClick={onClose} className="fixed inset-0 bg-slate-900/80 flex justify-center items-center z-[80] backdrop-blur-xs p-4 cursor-pointer">
-      <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 cursor-default">
+      <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[94vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 cursor-default">
         {/* Header */}
-        <div className="p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white flex justify-between items-center">
+        <div className="p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
             <span className="text-3xl">{roleIcon}</span>
             <div>
               <h3 className="text-base font-extrabold tracking-tight">
-                Uređivanje Uloge: <span className="text-amber-400">{roleName}</span>
+                Podešavanje Dozvola: <span className="text-amber-400">{roleName}</span>
               </h3>
               <p className="text-[11px] text-indigo-200">
-                Dinamičko podešavanje navigacijskih panela i prava pristupa u Firestore-u
+                Granularne dozvole po tabu (Pregled vs Unos) i početna stranica uloge
               </p>
             </div>
           </div>
@@ -132,8 +151,8 @@ export function EditRoleModal({
 
         {/* Content Forma */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5 text-xs flex-1 bg-slate-50 dark:bg-slate-900/50">
-          {/* Metadata */}
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Osnovni Podaci o Ulozi */}
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2">
               <label className="block font-bold uppercase text-slate-500 mb-1">Naziv Uloge</label>
               <input
@@ -141,7 +160,7 @@ export function EditRoleModal({
                 required
                 value={roleName}
                 onChange={(e) => setRoleName(e.target.value)}
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                className="w-full border border-slate-300 dark:border-slate-600 rounded-xl p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
             <div>
@@ -151,7 +170,7 @@ export function EditRoleModal({
                 required
                 value={roleIcon}
                 onChange={(e) => setRoleIcon(e.target.value)}
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-bold text-center outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                className="w-full border border-slate-300 dark:border-slate-600 rounded-xl p-2.5 font-bold text-center outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
             <div className="sm:col-span-2">
@@ -160,170 +179,193 @@ export function EditRoleModal({
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                className="w-full border border-slate-300 dark:border-slate-600 rounded-xl p-2.5 font-medium outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
             </div>
             <div>
-              <label className="block font-bold uppercase text-slate-500 mb-1">Default Portal</label>
+              <label className="block font-bold uppercase text-slate-500 mb-1">Početna Stranica (Default)</label>
               <select
-                value={defaultPortal}
-                onChange={(e) => setDefaultPortal(e.target.value)}
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                value={defaultPage}
+                onChange={(e) => setDefaultPage(e.target.value)}
+                className="w-full border border-slate-300 dark:border-slate-600 rounded-xl p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               >
-                <option value="transport">🚛 Glavni Transport</option>
-                <option value="warehouse">🏗️ Skladišna Mehanizacija</option>
-                <option value="serviser">🔧 Serviser (Karton)</option>
+                {ALL_PAGES.map((page) => (
+                  <option key={page.id} value={page.id}>
+                    {page.icon} {page.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
 
-          {/* Navigacijski Paneli */}
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-3">
-            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-2">
-              <h4 className="font-extrabold text-slate-900 dark:text-white">
-                📑 Dozvoljeni Navigacijski Paneli & Tabovi
-              </h4>
-              <span className="text-[10px] text-indigo-600 font-bold bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded">
-                Odaberite tabove vidljive ovoj ulozi
+          {/* Granularne Dozvole po Stranicama */}
+          <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 dark:border-slate-700 pb-3 gap-1">
+              <div>
+                <h4 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>📑</span> Dozvole po Tabovima i Stranicama
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Tabovi sa unosom podataka podržavaju: <strong>Bez pristupa</strong>, <strong>Samo pregled (View)</strong> ili <strong>Puni unos & izmjene (Edit)</strong>
+                </p>
+              </div>
+              <span className="text-[10px] text-indigo-700 dark:text-indigo-400 font-black bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 rounded-full shrink-0">
+                Granularni RBAC
               </span>
             </div>
 
-            {/* Analitika */}
-            <div>
-              <p className="text-[10px] font-extrabold text-blue-700 dark:text-blue-400 uppercase mb-1.5 flex items-center gap-1">
-                <span>📊</span> <span>Analitika:</span>
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {ALL_AVAILABLE_PANELS.filter((p) => p.category === "analitika").map((p) => (
-                  <label
-                    key={p.id}
-                    className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedPanelIds.has(p.id)}
-                      onChange={() => togglePanel(p.id)}
-                      className="rounded text-indigo-600 w-4 h-4"
-                    />
-                    <span className="font-bold text-slate-800 dark:text-slate-200">
-                      {p.icon} {p.name}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
+            {/* Iteracija po 4 glavne kategorije */}
+            {CATEGORY_HEADERS.map((cat) => {
+              const pagesInCat = ALL_PAGES.filter((p) => p.category === cat.id);
+              if (pagesInCat.length === 0) return null;
 
-            {/* Baza podataka */}
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
-              <p className="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase mb-1.5 flex items-center gap-1">
-                <span>🗄️</span> <span>Baza Podataka:</span>
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {ALL_AVAILABLE_PANELS.filter((p) => p.category === "baza-podataka").map((p) => (
-                  <label
-                    key={p.id}
-                    className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedPanelIds.has(p.id)}
-                      onChange={() => togglePanel(p.id)}
-                      className="rounded text-emerald-600 w-4 h-4"
-                    />
-                    <span className="font-bold text-slate-800 dark:text-slate-200">
-                      {p.icon} {p.name}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
+              return (
+                <div key={cat.id} className="pt-2 border-t border-slate-100 dark:border-slate-700 first:border-t-0 first:pt-0">
+                  <p className={`text-[11px] font-black uppercase mb-2 flex items-center gap-1.5 ${cat.color}`}>
+                    <span>{cat.icon}</span> <span>{cat.title}</span>
+                  </p>
 
-            {/* Skladišna mehanizacija */}
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
-              <p className="text-[10px] font-extrabold text-amber-700 dark:text-amber-400 uppercase mb-1.5 flex items-center gap-1">
-                <span>🚜</span> <span>Skladišna Mehanizacija:</span>
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {ALL_AVAILABLE_PANELS.filter((p) => p.category === "skladisna-mehanizacija").map((p) => (
-                  <label
-                    key={p.id}
-                    className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedPanelIds.has(p.id)}
-                      onChange={() => togglePanel(p.id)}
-                      className="rounded text-amber-600 w-4 h-4"
-                    />
-                    <span className="font-bold text-slate-800 dark:text-slate-200">
-                      {p.icon} {p.name}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
+                  <div className="space-y-2">
+                    {pagesInCat.map((p) => {
+                      const isEditable = isEditablePage(p.id);
+                      const currentVal = pagePermissions[p.id];
 
-            {/* Servisna radionica */}
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
-              <p className="text-[10px] font-extrabold text-indigo-700 dark:text-indigo-400 uppercase mb-1.5 flex items-center gap-1">
-                <span>🔧</span> <span>Servisna Radionica:</span>
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {ALL_AVAILABLE_PANELS.filter((p) => p.category === "serviser").map((p) => (
-                  <label
-                    key={p.id}
-                    className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedPanelIds.has(p.id)}
-                      onChange={() => togglePanel(p.id)}
-                      className="rounded text-indigo-600 w-4 h-4"
-                    />
-                    <span className="font-bold text-slate-800 dark:text-slate-200">
-                      {p.icon} {p.name}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
+                      if (isEditable) {
+                        // 3-state birač za stranice sa unosom
+                        const activeLevel = (currentVal === "edit" || currentVal === "view") ? currentVal : "none";
+
+                        return (
+                          <div
+                            key={p.id}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-colors gap-2"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="text-base shrink-0">{p.icon}</span>
+                              <div>
+                                <span className="font-extrabold text-slate-900 dark:text-slate-100 block">
+                                  {p.name}
+                                </span>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                                  Sadrži akcije unosa, izmjena ili brisanja
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0 self-start sm:self-auto">
+                              <button
+                                type="button"
+                                onClick={() => setEditableLevel(p.id, "none")}
+                                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all flex items-center gap-1 cursor-pointer ${
+                                  activeLevel === "none"
+                                    ? "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-2xs"
+                                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                }`}
+                              >
+                                <Slash className="w-3 h-3" />
+                                <span>Bez pristupa</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setEditableLevel(p.id, "view")}
+                                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all flex items-center gap-1 cursor-pointer ${
+                                  activeLevel === "view"
+                                    ? "bg-blue-600 text-white shadow-xs"
+                                    : "text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-300"
+                                }`}
+                              >
+                                <Eye className="w-3 h-3" />
+                                <span>Samo Pregled</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setEditableLevel(p.id, "edit")}
+                                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all flex items-center gap-1 cursor-pointer ${
+                                  activeLevel === "edit"
+                                    ? "bg-emerald-600 text-white shadow-xs"
+                                    : "text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-300"
+                                }`}
+                              >
+                                <Edit3 className="w-3 h-3" />
+                                <span>Puni Unos (Edit)</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      } else {
+                        // Boolean birač za čiste analitičke / izvještajne stranice
+                        const isGranted = Boolean(currentVal);
+
+                        return (
+                          <div
+                            key={p.id}
+                            onClick={() => toggleBooleanPage(p.id)}
+                            className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="text-base shrink-0">{p.icon}</span>
+                              <div>
+                                <span className="font-extrabold text-slate-900 dark:text-slate-100 block">
+                                  {p.name}
+                                </span>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                                  Analitički pregled i vizualizacije
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className={`text-[10px] font-bold ${isGranted ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>
+                                {isGranted ? "Dozvoljeno" : "Onemogućeno"}
+                              </span>
+                              <input
+                                type="checkbox"
+                                checked={isGranted}
+                                onChange={() => {}} // kontrolisano klikom na cijeli red
+                                className="rounded text-indigo-600 w-4 h-4 cursor-pointer"
+                              />
+                            </div>
+                          </div>
+                        );
+                      }
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Akcijske Dozvole */}
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-3">
+          {/* Administrativne i Sistemske Permisije */}
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-3">
             <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-2">
               <h4 className="font-extrabold text-slate-900 dark:text-white">
-                ⚡ Akcijska Prava & Permisije
+                ⚡ Sistemske & Administrativne Dozvole
               </h4>
-              <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded">
-                Dozvole unosa, izmjena i admin pristupa
+              <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded">
+                Administracija & Export
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {[
-                { key: "canUploadExcel", title: "📥 Excel Upload", desc: "Uvoz Excel evidencija" },
-                { key: "canInputCost", title: "➕ Unos Troška", desc: "Ručni unos naloga i servisa" },
-                { key: "canRegisterVehicle", title: "🚛 Registracija Vozila", desc: "Unos novih vozila u bazu" },
-                { key: "canAccessAdminPanel", title: "⚙️ Pristup Admin Panelu", desc: "Upravljanje korisnicima i ulogama" },
-                { key: "canSwitchPortal", title: "🔄 Portal Switcher", desc: "Prebacivanje Transport / Skladište" },
-                { key: "canExportExcel", title: "📊 Excel Export", desc: "Preuzimanje tabela u XLSX" },
-                { key: "canEditCost", title: "✏️ Uređivanje Troškova", desc: "Izmjena unesenih servisa" },
-                { key: "canDeleteCost", title: "🗑️ Brisanje Troškova", desc: "Uklanjanje stavki iz baze" }
+                { key: "canAccessAdminPanel", title: "⚙️ Admin Panel", desc: "Upravljanje korisnicima i rolama" },
+                { key: "canUploadExcel", title: "📥 Excel Uvoz", desc: "Masovni uvoz mjesečnih evidencija" },
+                { key: "canExportExcel", title: "📊 Excel Export", desc: "Preuzimanje tabela u XLSX fajl" }
               ].map((perm) => (
                 <label
                   key={perm.key}
-                  className="flex items-center gap-2.5 p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer"
+                  className="flex items-start gap-2.5 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer"
                 >
                   <input
                     type="checkbox"
                     checked={!!permissions[perm.key]}
                     onChange={() => togglePermission(perm.key)}
-                    className="rounded text-indigo-600 w-4 h-4"
+                    className="rounded text-indigo-600 w-4 h-4 mt-0.5"
                   />
                   <div>
                     <span className="font-bold text-slate-800 dark:text-slate-200 block">{perm.title}</span>
-                    <span className="text-[10px] text-slate-500">{perm.desc}</span>
+                    <span className="text-[10px] text-slate-500 block leading-tight">{perm.desc}</span>
                   </div>
                 </label>
               ))}

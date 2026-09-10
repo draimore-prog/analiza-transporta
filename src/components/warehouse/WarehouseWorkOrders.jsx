@@ -30,7 +30,8 @@ export function WarehouseWorkOrders({
   onPrintOrder,
   onApproveOrder,
   onDeleteOrder,
-  onSeedDemoOrder
+  onSeedDemoOrder,
+  canEdit = true
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -95,47 +96,49 @@ export function WarehouseWorkOrders({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 w-full sm:w-auto">
-          <button
-            onClick={async () => {
-              setIsSeeding(true);
-              try {
-                if (onSeedDemoOrder) await onSeedDemoOrder();
-              } finally {
-                setIsSeeding(false);
-              }
-            }}
-            disabled={isSeeding}
-            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
-            title="Kreiraj ogledni primjer naloga sa 5 fotografija i ček-listom"
-          >
-            {isSeeding ? (
-              <div className="w-3.5 h-3.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Sparkles className="w-4 h-4 text-amber-500" />
-            )}
-            <span>{isSeeding ? "Generisanje..." : "Generiši Primjer Naloga"}</span>
-          </button>
-
-          {onOpenFieldForm && (
+        {canEdit && (
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
             <button
-              onClick={onOpenFieldForm}
-              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto"
-              title="Otvori prilagođenu mobilnu formu za unos pregleda sa terena"
+              onClick={async () => {
+                setIsSeeding(true);
+                try {
+                  if (onSeedDemoOrder) await onSeedDemoOrder();
+                } finally {
+                  setIsSeeding(false);
+                }
+              }}
+              disabled={isSeeding}
+              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+              title="Kreiraj ogledni primjer naloga sa 5 fotografija i ček-listom"
             >
-              <Smartphone className="w-4 h-4" />
-              <span>📱 Terenski Unos</span>
+              {isSeeding ? (
+                <div className="w-3.5 h-3.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4 text-amber-500" />
+              )}
+              <span>{isSeeding ? "Generisanje..." : "Generiši Primjer Naloga"}</span>
             </button>
-          )}
 
-          <button
-            onClick={onCreateOrderClick}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>Novi Radni Nalog</span>
-          </button>
-        </div>
+            {onOpenFieldForm && (
+              <button
+                onClick={onOpenFieldForm}
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto"
+                title="Otvori prilagođenu mobilnu formu za unos pregleda sa terena"
+              >
+                <Smartphone className="w-4 h-4" />
+                <span>📱 Terenski Unos</span>
+              </button>
+            )}
+
+            <button
+              onClick={onCreateOrderClick}
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Novi Radni Nalog</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* KPI Kartice */}
@@ -399,7 +402,7 @@ export function WarehouseWorkOrders({
                           >
                             <Printer className="w-4 h-4" />
                           </button>
-                          {order.status === "completed" && (
+                          {order.status === "completed" && canEdit && (
                             <button
                               onClick={() => onApproveOrder(order.id)}
                               className="p-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-lg transition-colors cursor-pointer"
@@ -408,17 +411,19 @@ export function WarehouseWorkOrders({
                               <Check className="w-4 h-4" />
                             </button>
                           )}
-                          <button
-                            onClick={() => {
-                              if (confirm(`Sigurno želite obrisati radni nalog ${order.orderNumber}?`)) {
-                                onDeleteOrder(order.id);
-                              }
-                            }}
-                            className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-rose-500 rounded-lg transition-colors cursor-pointer"
-                            title="Obriši radni nalog"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {canEdit && (
+                            <button
+                              onClick={() => {
+                                if (confirm(`Sigurno želite obrisati radni nalog ${order.orderNumber}?`)) {
+                                  onDeleteOrder(order.id);
+                                }
+                              }}
+                              className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-rose-500 rounded-lg transition-colors cursor-pointer"
+                              title="Obriši radni nalog"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
