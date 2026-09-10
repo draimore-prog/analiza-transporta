@@ -44,9 +44,15 @@ U datoteci `src/components/modals/NewCostModal.jsx`:
   - Omogućava pretragu po registraciji ili po garažnom broju (npr. unos `40567` automatski pronalazi vozilo i puni registraciju `M04-E-456`).
 - **Vizuelni dizajn:**
   - Usklađen sa V1 i modernim Tailwind standardom (zeleni emerald akcenti, podrška za dark mode, jasne sekcije 1-4).
+  - Proširen modal na `max-w-5xl` kako bi forma imala dovoljno prostora bez sabijanja elemenata.
+  - Sekcija 1 "Osnovni Podaci o Vozilu" precizno poravnata u 4 kolone:
+    - Red 1: Reg. Oznaka | Garažni Broj (MT) | Tip Mehanizacije | Godište
+    - Red 2: Marka Vozila | Model Vozila | Dinamičko polje (Kilometraža ili Radni sati preko raspona 2 kolone)
+    - Sve visine labela (`h-4 mb-1.5`) i inputa (`h-10 rounded-xl px-3`) ujednačene za besprijekorno horizontalno i vertikalno poravnanje.
 
 ---
 
 ## 3. Verifikacija
 - `npm run build`: uspješno kompajlirano bez grešaka.
 - Testiran mehanizam automatskog zaključavanja polja, kalkulacija cijene i povezivanje točenja goriva.
+

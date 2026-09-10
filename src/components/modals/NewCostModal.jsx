@@ -415,13 +415,13 @@ export function NewCostModal({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 bg-slate-900/80 flex justify-center items-center z-[70] backdrop-blur-xs p-3 sm:p-4 cursor-pointer"
+      className="fixed inset-0 bg-slate-900/80 flex justify-center items-center z-[70] backdrop-blur-xs p-3 sm:p-5 cursor-pointer"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 cursor-default"
+        className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 cursor-default"
       >
-        {/* Header - V1 stil */}
+        {/* Header */}
         <div className="p-4 sm:p-5 bg-gradient-to-r from-emerald-800 to-teal-950 text-white flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-white/10 rounded-xl">
@@ -438,7 +438,7 @@ export function NewCostModal({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all cursor-pointer"
+            className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all cursor-pointer"
             title="Zatvori"
           >
             <X className="w-5 h-5" />
@@ -459,42 +459,53 @@ export function NewCostModal({
           )}
 
           {/* SEKCIJA 1: OSNOVNI PODACI O VOZILU / MEHANIZACIJI */}
-          <div className="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-3.5">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700 pb-2.5">
-              <div className="flex items-center gap-2">
-                <Truck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <h4 className="text-xs font-black uppercase text-emerald-900 dark:text-emerald-300 tracking-wider">
-                  1. Osnovni Podaci o Vozilu / Mehanizaciji
-                </h4>
+          <div className="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-700/80 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 bg-emerald-100 dark:bg-emerald-950/60 rounded-lg text-emerald-700 dark:text-emerald-400">
+                  <Truck className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider">
+                    1. Osnovni Podaci o Vozilu / Mehanizaciji
+                  </h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Izborom registracije ili garažnog broja automatski se popunjavaju i zaključavaju podaci iz šifrarnika
+                  </p>
+                </div>
               </div>
+
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                  (izborom vozila automatski se popunjavaju ostala polja)
-                </span>
                 {isVehicleLocked ? (
-                  <button
-                    type="button"
-                    onClick={() => setIsVehicleLocked(false)}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 text-[10px] font-extrabold cursor-pointer transition-colors"
-                    title="Kliknite za ručnu izmjenu polja šifrarnika"
-                  >
-                    <Lock className="w-3 h-3 text-emerald-600" />
-                    <span>Zaključano</span>
-                    <span className="underline ml-0.5 text-emerald-600">Otključaj</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold">
+                      <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>Šifrarnik: Zaključano</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsVehicleLocked(false)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 text-xs font-bold transition-all cursor-pointer"
+                      title="Kliknite ako želite ručno promijeniti podatke o vozilu"
+                    >
+                      <Unlock className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Otključaj polja</span>
+                    </button>
+                  </div>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-bold">
-                    <Unlock className="w-3 h-3 text-slate-500" />
-                    <span>Ručni unos</span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-xs font-bold">
+                    <Unlock className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Ručni unos / Otključano</span>
                   </span>
                 )}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {/* Reg oznaka */}
+            {/* Fino poravnat grid 4 kolone na većim ekranima */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Red 1 - Kolona 1: Reg oznaka */}
               <div>
-                <label className="block font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
                   Reg. Oznaka <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -503,8 +514,8 @@ export function NewCostModal({
                   required
                   value={reg}
                   onChange={(e) => handleRegChange(e.target.value)}
-                  placeholder="Ukucajte reg. ili garažni..."
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-black uppercase outline-none focus:ring-2 focus:ring-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20 text-slate-900 dark:text-white shadow-2xs"
+                  placeholder="Npr. M04-E-456 ili 40567"
+                  className="w-full h-10 border border-slate-300 dark:border-slate-600 rounded-xl px-3 font-black uppercase outline-none focus:ring-2 focus:ring-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 text-slate-900 dark:text-white shadow-2xs text-xs"
                 />
                 <datalist id="modalVehicleList">
                   {masterFleet.map((v, i) => {
@@ -522,19 +533,21 @@ export function NewCostModal({
                 </datalist>
               </div>
 
-              {/* MT / Garažni broj */}
+              {/* Red 1 - Kolona 2: Garažni broj */}
               <div>
-                <label className="block font-extrabold uppercase text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
-                  <span>Garažni Broj (MT)</span>
-                  <span className="text-[9px] text-slate-400 font-semibold">🔒 Šifrarnik</span>
-                </label>
+                <div className="flex items-center justify-between mb-1.5 h-4">
+                  <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-400">
+                    Garažni Broj (MT)
+                  </label>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">🔒 Šifrarnik</span>
+                </div>
                 <input
                   type="text"
                   readOnly={isVehicleLocked}
                   value={garazniBroj}
                   onChange={(e) => setGarazniBroj(e.target.value)}
                   placeholder="Garažni broj..."
-                  className={`w-full border rounded-lg p-2.5 font-bold outline-none transition-all ${
+                  className={`w-full h-10 border rounded-xl px-3 font-bold outline-none text-xs transition-all ${
                     isVehicleLocked
                       ? "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 cursor-not-allowed"
                       : "bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-emerald-500"
@@ -542,37 +555,19 @@ export function NewCostModal({
                 />
               </div>
 
-              {/* Godište */}
+              {/* Red 1 - Kolona 3: Tip mehanizacije */}
               <div>
-                <label className="block font-extrabold uppercase text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
-                  <span>Godište</span>
-                  <span className="text-[9px] text-slate-400 font-semibold">🔒 Šifrarnik</span>
-                </label>
-                <input
-                  type="text"
-                  readOnly={isVehicleLocked}
-                  value={godProizvodnje}
-                  onChange={(e) => setGodProizvodnje(e.target.value)}
-                  placeholder="Godište..."
-                  className={`w-full border rounded-lg p-2.5 font-semibold outline-none transition-all ${
-                    isVehicleLocked
-                      ? "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 cursor-not-allowed"
-                      : "bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-emerald-500"
-                  }`}
-                />
-              </div>
-
-              {/* Tip Mehanizacije */}
-              <div>
-                <label className="block font-extrabold uppercase text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
-                  <span>Tip Mehanizacije</span>
-                  <span className="text-[9px] text-slate-400 font-semibold">🔒 Šifrarnik</span>
-                </label>
+                <div className="flex items-center justify-between mb-1.5 h-4">
+                  <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-400">
+                    Tip Mehanizacije
+                  </label>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">🔒 Šifrarnik</span>
+                </div>
                 <select
                   disabled={isVehicleLocked}
                   value={tipMehan}
                   onChange={(e) => handleTipMehanChange(e.target.value)}
-                  className={`w-full border rounded-lg p-2.5 font-bold outline-none transition-all ${
+                  className={`w-full h-10 border rounded-xl px-3 font-bold outline-none text-xs transition-all ${
                     isVehicleLocked
                       ? "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 cursor-not-allowed"
                       : "bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-emerald-500 cursor-pointer"
@@ -586,62 +581,92 @@ export function NewCostModal({
                   <option value="Servis motornih vozila">Servis motornih vozila</option>
                 </select>
               </div>
-            </div>
 
-            {/* Red 2: Marka/Model i Dinamičko polje (Kilometraža ili Radni sati) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              {/* Red 1 - Kolona 4: Godište */}
               <div>
-                <label className="block font-extrabold uppercase text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
-                  <span>Marka i Model Vozila</span>
-                  <span className="text-[9px] text-slate-400 font-semibold">🔒 Šifrarnik</span>
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    readOnly={isVehicleLocked}
-                    value={markaVoz}
-                    onChange={(e) => setMarkaVoz(e.target.value)}
-                    placeholder="Marka"
-                    className={`w-full border rounded-lg p-2.5 font-semibold outline-none transition-all ${
-                      isVehicleLocked
-                        ? "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 cursor-not-allowed"
-                        : "bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-emerald-500"
-                    }`}
-                  />
-                  <input
-                    type="text"
-                    readOnly={isVehicleLocked}
-                    value={modelVoz}
-                    onChange={(e) => setModelVoz(e.target.value)}
-                    placeholder="Model"
-                    className={`w-full border rounded-lg p-2.5 font-semibold outline-none transition-all ${
-                      isVehicleLocked
-                        ? "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 cursor-not-allowed"
-                        : "bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-emerald-500"
-                    }`}
-                  />
+                <div className="flex items-center justify-between mb-1.5 h-4">
+                  <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-400">
+                    Godište
+                  </label>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">🔒 Šifrarnik</span>
                 </div>
+                <input
+                  type="text"
+                  readOnly={isVehicleLocked}
+                  value={godProizvodnje}
+                  onChange={(e) => setGodProizvodnje(e.target.value)}
+                  placeholder="Godište..."
+                  className={`w-full h-10 border rounded-xl px-3 font-semibold outline-none text-xs transition-all ${
+                    isVehicleLocked
+                      ? "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 cursor-not-allowed"
+                      : "bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-emerald-500"
+                  }`}
+                />
               </div>
 
-              {/* Dinamičko polje po pravilima iz V1 */}
+              {/* Red 2 - Kolona 1: Marka vozila */}
               <div>
+                <div className="flex items-center justify-between mb-1.5 h-4">
+                  <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-400">
+                    Marka Vozila
+                  </label>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">🔒 Šifrarnik</span>
+                </div>
+                <input
+                  type="text"
+                  readOnly={isVehicleLocked}
+                  value={markaVoz}
+                  onChange={(e) => setMarkaVoz(e.target.value)}
+                  placeholder="Marka..."
+                  className={`w-full h-10 border rounded-xl px-3 font-semibold outline-none text-xs transition-all ${
+                    isVehicleLocked
+                      ? "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 cursor-not-allowed"
+                      : "bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-emerald-500"
+                  }`}
+                />
+              </div>
+
+              {/* Red 2 - Kolona 2: Model vozila */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5 h-4">
+                  <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-400">
+                    Model Vozila
+                  </label>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">🔒 Šifrarnik</span>
+                </div>
+                <input
+                  type="text"
+                  readOnly={isVehicleLocked}
+                  value={modelVoz}
+                  onChange={(e) => setModelVoz(e.target.value)}
+                  placeholder="Model..."
+                  className={`w-full h-10 border rounded-xl px-3 font-semibold outline-none text-xs transition-all ${
+                    isVehicleLocked
+                      ? "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 cursor-not-allowed"
+                      : "bg-white dark:bg-slate-900 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-emerald-500"
+                  }`}
+                />
+              </div>
+
+              {/* Red 2 - Kolone 3 & 4 (raspon 2 kolone): Dinamičko polje Kilometraža / Radni sati */}
+              <div className="sm:col-span-2">
                 {isKmApplicable ? (
                   <div>
-                    <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
-                      <label className="block font-extrabold uppercase text-indigo-900 dark:text-indigo-300">
+                    <div className="flex items-center justify-between mb-1.5 h-4">
+                      <label className="block text-xs font-bold uppercase text-indigo-900 dark:text-indigo-300">
                         🛣️ Kilometraža na datum servisa (km)
                       </label>
                       <button
                         type="button"
                         onClick={() => triggerOdometerMatch(reg, garazniBroj, datum)}
                         disabled={isMatchingMileage || !reg.trim()}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/70 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[11px] font-bold transition-all cursor-pointer disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/70 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[11px] font-bold transition-all cursor-pointer disabled:opacity-50"
                         title="Pretražuje najbliže točenje goriva za ovo vozilo"
                       >
                         {isMatchingMileage ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <Loader2 className="w-3 h-3 animate-spin" />
                         ) : (
-                          <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                          <Sparkles className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                         )}
                         <span>⚡ Poklopi sa točenjem goriva</span>
                       </button>
@@ -656,8 +681,8 @@ export function NewCostModal({
                         setKilometraza(e.target.value);
                         setMatchMessage(null);
                       }}
-                      placeholder="Npr. 285400"
-                      className="w-full border border-indigo-300 dark:border-indigo-700/80 rounded-lg p-2.5 font-mono font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/30 text-slate-900 dark:text-white"
+                      placeholder="Npr. 285400 (ili kliknite 'Poklopi sa točenjem')"
+                      className="w-full h-10 border border-indigo-300 dark:border-indigo-700/80 rounded-xl px-3 font-mono font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/30 text-slate-900 dark:text-white text-xs"
                     />
 
                     {matchMessage && (
@@ -679,8 +704,8 @@ export function NewCostModal({
                   </div>
                 ) : isHoursApplicable ? (
                   <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block font-extrabold uppercase text-amber-900 dark:text-amber-300">
+                    <div className="flex items-center justify-between mb-1.5 h-4">
+                      <label className="block text-xs font-bold uppercase text-amber-900 dark:text-amber-300">
                         ⏱️ Radni Sati na datum servisa (h)
                       </label>
                       <span className="text-[10px] text-amber-700 dark:text-amber-400 font-extrabold bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded">
@@ -693,13 +718,20 @@ export function NewCostModal({
                       step="0.1"
                       value={radniSati}
                       onChange={(e) => setRadniSati(e.target.value)}
-                      placeholder="npr. 4250"
-                      className="w-full border border-amber-300 dark:border-amber-700 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-amber-500 bg-amber-50/40 dark:bg-amber-950/30 text-slate-900 dark:text-white"
+                      placeholder="Npr. 4250"
+                      className="w-full h-10 border border-amber-300 dark:border-amber-700 rounded-xl px-3 font-bold outline-none focus:ring-2 focus:ring-amber-500 bg-amber-50/40 dark:bg-amber-950/30 text-slate-900 dark:text-white text-xs"
                     />
                   </div>
                 ) : (
-                  <div className="p-3 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center text-center font-medium h-[42px] mt-6">
-                    <span>Za ovaj tip mehanizacije se ne prate kilometraža ni radni sati</span>
+                  <div>
+                    <div className="mb-1.5 h-4">
+                      <label className="block text-xs font-bold uppercase text-slate-400 dark:text-slate-500">
+                        Status očitanja (KM / Sati)
+                      </label>
+                    </div>
+                    <div className="w-full h-10 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl px-3 bg-slate-50/80 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500 flex items-center justify-center text-xs font-medium">
+                      <span>Ovaj tip mehanizacije ne bilježi kilometre ni radne sate</span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -707,17 +739,21 @@ export function NewCostModal({
           </div>
 
           {/* SEKCIJA 2: DETALJI SERVISA I FAKTURE */}
-          <div className="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-3.5">
-            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-2.5">
-              <Wrench className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <h4 className="text-xs font-black uppercase text-emerald-900 dark:text-emerald-300 tracking-wider">
-                2. Detalji Servisa i Fakture
-              </h4>
+          <div className="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-4">
+            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-700/80 pb-3">
+              <div className="p-1.5 bg-emerald-100 dark:bg-emerald-950/60 rounded-lg text-emerald-700 dark:text-emerald-400">
+                <Wrench className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider">
+                  2. Detalji Servisa i Fakture
+                </h4>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
                   Datum Intervencije <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -730,25 +766,25 @@ export function NewCostModal({
                       triggerOdometerMatch(reg, garazniBroj, e.target.value);
                     }
                   }}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white cursor-pointer"
+                  className="w-full h-10 border border-slate-300 dark:border-slate-600 rounded-xl px-3 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white cursor-pointer text-xs"
                 />
               </div>
 
               <div>
-                <label className="block font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
                   Broj Računa / RN
                 </label>
                 <input
                   type="text"
                   value={brojRacuna}
                   onChange={(e) => setBrojRacuna(e.target.value)}
-                  placeholder="npr. RN-2026/014"
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-mono font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                  placeholder="Npr. RN-2026/014"
+                  className="w-full h-10 border border-slate-300 dark:border-slate-600 rounded-xl px-3 font-mono font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               <div>
-                <label className="block font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
                   Serviser / Izvođač
                 </label>
                 <input
@@ -756,8 +792,8 @@ export function NewCostModal({
                   list="modalSupplierList"
                   value={dobavljac}
                   onChange={(e) => setDobavljac(e.target.value)}
-                  placeholder="npr. Centralni Servis, MAN..."
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-semibold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                  placeholder="Npr. Centralni Servis, MAN..."
+                  className="w-full h-10 border border-slate-300 dark:border-slate-600 rounded-xl px-3 font-semibold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs"
                 />
                 <datalist id="modalSupplierList">
                   {commonSuppliers.map((s) => (
@@ -768,7 +804,7 @@ export function NewCostModal({
             </div>
 
             <div>
-              <label className="block font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
                 Opis Kvara / Servisnih Radova <span className="text-red-500">*</span>
               </label>
               <textarea
@@ -777,12 +813,12 @@ export function NewCostModal({
                 value={opis}
                 onChange={(e) => setOpis(e.target.value)}
                 placeholder="Unesite detaljan opis zamijenjenih dijelova ili izvršenih usluga..."
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-medium outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                className="w-full border border-slate-300 dark:border-slate-600 rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs"
               />
             </div>
 
             {/* Cloud Prilog / Upload računa */}
-            <div className="bg-emerald-50/60 dark:bg-emerald-950/20 p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-800/60 space-y-2">
+            <div className="bg-emerald-50/60 dark:bg-emerald-950/20 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/60 space-y-2">
               <label className="block font-extrabold uppercase text-emerald-900 dark:text-emerald-300 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <Paperclip className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -794,7 +830,7 @@ export function NewCostModal({
                     onClick={handleRemoveInvoice}
                     className="text-[11px] text-red-600 dark:text-red-400 hover:underline flex items-center gap-1 font-bold cursor-pointer"
                   >
-                    <Trash2 className="w-3 h-3" /> Ukloni račun
+                    <Trash2 className="w-3.5 h-3.5" /> Ukloni račun
                   </button>
                 ) : (
                   <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-normal">☁️ Cloud Prilog</span>
@@ -810,24 +846,24 @@ export function NewCostModal({
               />
 
               {invoiceUrl ? (
-                <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 rounded-xl">
+                <div className="flex items-center justify-between p-3.5 bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 rounded-xl">
                   <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 rounded-lg shrink-0">
+                    <div className="p-2.5 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 rounded-lg shrink-0">
                       <FileText className="w-5 h-5" />
                     </div>
                     <div className="overflow-hidden">
                       <p className="font-extrabold text-slate-900 dark:text-white truncate">
                         {invoiceName || "Priloženi Račun"}
                       </p>
-                      <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Račun je spreman za spremanje uz nalog
+                      <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Račun je spreman za spremanje uz nalog
                       </p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-3 py-1.5 bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 font-bold rounded-lg text-[11px] shadow-2xs cursor-pointer"
+                    className="px-3.5 py-1.5 bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 font-bold rounded-lg text-xs shadow-2xs cursor-pointer"
                   >
                     Zamijeni
                   </button>
@@ -837,7 +873,7 @@ export function NewCostModal({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploadingInvoice}
-                  className="w-full border-2 border-dashed border-emerald-300/80 dark:border-emerald-700/80 hover:border-emerald-500 bg-white/70 dark:bg-slate-800/60 hover:bg-emerald-50/50 p-3.5 rounded-xl transition-all flex flex-col items-center justify-center gap-1 cursor-pointer disabled:opacity-50 text-center"
+                  className="w-full border-2 border-dashed border-emerald-300/80 dark:border-emerald-700/80 hover:border-emerald-500 bg-white/70 dark:bg-slate-800/60 hover:bg-emerald-50/50 p-4 rounded-xl transition-all flex flex-col items-center justify-center gap-1 cursor-pointer disabled:opacity-50 text-center"
                 >
                   {isUploadingInvoice ? (
                     <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold py-1">
@@ -861,23 +897,27 @@ export function NewCostModal({
           </div>
 
           {/* SEKCIJA 3: KATEGORIZACIJA I VRSTA TROŠKA */}
-          <div className="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-3.5">
-            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-2.5">
-              <Tag className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <h4 className="text-xs font-black uppercase text-emerald-900 dark:text-emerald-300 tracking-wider">
-                3. Kategorizacija i Vrsta Troška
-              </h4>
+          <div className="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-4">
+            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-700/80 pb-3">
+              <div className="p-1.5 bg-emerald-100 dark:bg-emerald-950/60 rounded-lg text-emerald-700 dark:text-emerald-400">
+                <Tag className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider">
+                  3. Kategorizacija i Vrsta Troška
+                </h4>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
                   Segment Troška <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={segment}
                   onChange={(e) => setSegment(e.target.value)}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white cursor-pointer"
+                  className="w-full h-10 border border-slate-300 dark:border-slate-600 rounded-xl px-3 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white cursor-pointer text-xs"
                 >
                   <option value="Redovan servis">Redovan servis</option>
                   <option value="Mehanika">Mehanika</option>
@@ -891,13 +931,13 @@ export function NewCostModal({
               </div>
 
               <div>
-                <label className="block font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
                   Vrsta Troška
                 </label>
                 <select
                   value={vrstaTroska}
                   onChange={(e) => setVrstaTroska(e.target.value)}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white cursor-pointer"
+                  className="w-full h-10 border border-slate-300 dark:border-slate-600 rounded-xl px-3 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white cursor-pointer text-xs"
                 >
                   <option value="Eksterni dobavljač">Eksterni dobavljač</option>
                   <option value="Interni rad / servis">Interni rad / servis</option>
@@ -907,13 +947,13 @@ export function NewCostModal({
               </div>
 
               <div>
-                <label className="block font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
                   Vrsta Fakture
                 </label>
                 <select
                   value={vrstaFakture}
                   onChange={(e) => setVrstaFakture(e.target.value)}
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white cursor-pointer"
+                  className="w-full h-10 border border-slate-300 dark:border-slate-600 rounded-xl px-3 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white cursor-pointer text-xs"
                 >
                   <option value="Kombinovana faktura (Dijelovi + Usluga)">
                     Kombinovana faktura (Dijelovi + Usluga)
@@ -926,18 +966,22 @@ export function NewCostModal({
             </div>
           </div>
 
-          {/* SEKCIJA 4: FINANSIJSKI OBRAČUN (AUTOMATSKI TOTAL KAO U V1) */}
-          <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-800 dark:to-emerald-950/40 p-4 sm:p-5 rounded-2xl border border-emerald-200 dark:border-emerald-800/70 shadow-xs space-y-3.5">
-            <div className="flex items-center gap-2 border-b border-emerald-200/70 dark:border-emerald-800/60 pb-2.5">
-              <DollarSign className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
-              <h4 className="text-xs font-black uppercase text-emerald-950 dark:text-emerald-200 tracking-wider">
-                4. Finansijski Obračun (Automatski Total)
-              </h4>
+          {/* SEKCIJA 4: FINANSIJSKI OBRAČUN (AUTOMATSKI TOTAL) */}
+          <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-800 dark:to-emerald-950/40 p-4 sm:p-5 rounded-2xl border border-emerald-200 dark:border-emerald-800/70 shadow-xs space-y-4">
+            <div className="flex items-center gap-2 border-b border-emerald-200/70 dark:border-emerald-800/60 pb-3">
+              <div className="p-1.5 bg-emerald-200/70 dark:bg-emerald-900/60 rounded-lg text-emerald-800 dark:text-emerald-300">
+                <DollarSign className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-black uppercase text-emerald-950 dark:text-emerald-200 tracking-wider">
+                  4. Finansijski Obračun (Automatski Total)
+                </h4>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
               <div>
-                <label className="block font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
                   Cijena Rezervnog Dijela (KM)
                 </label>
                 <input
@@ -947,12 +991,12 @@ export function NewCostModal({
                   value={costPart}
                   onChange={(e) => handleCostPartChange(e.target.value)}
                   placeholder="0.00"
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                  className="w-full h-10 border border-slate-300 dark:border-slate-600 rounded-xl px-3 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               <div>
-                <label className="block font-bold uppercase text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
                   Cijena Usluge / Rada (KM)
                 </label>
                 <input
@@ -962,12 +1006,12 @@ export function NewCostModal({
                   value={costService}
                   onChange={(e) => handleCostServiceChange(e.target.value)}
                   placeholder="0.00"
-                  className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                  className="w-full h-10 border border-slate-300 dark:border-slate-600 rounded-xl px-3 font-bold outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs"
                 />
               </div>
 
               <div>
-                <label className="block font-black uppercase text-emerald-950 dark:text-emerald-200 mb-1">
+                <label className="block text-xs font-black uppercase text-emerald-950 dark:text-emerald-200 mb-1.5">
                   Total Trošak (KM sa PDV) <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -978,7 +1022,7 @@ export function NewCostModal({
                   value={cost}
                   onChange={(e) => setCost(e.target.value)}
                   placeholder="0.00"
-                  className="w-full border-2 border-emerald-600 dark:border-emerald-500 rounded-lg p-2 font-black text-emerald-700 dark:text-emerald-300 outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-sm shadow-inner"
+                  className="w-full h-10 border-2 border-emerald-600 dark:border-emerald-500 rounded-xl px-3 font-black text-emerald-700 dark:text-emerald-300 outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-sm shadow-inner"
                 />
               </div>
             </div>
@@ -989,14 +1033,14 @@ export function NewCostModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold rounded-xl transition-all cursor-pointer"
+              className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold rounded-xl transition-all cursor-pointer text-xs"
             >
               Odustani
             </button>
             <button
               type="submit"
               disabled={isSubmitting || isUploadingInvoice}
-              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl shadow-lg transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl shadow-lg transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2 text-xs"
             >
               {isSubmitting ? (
                 <>
