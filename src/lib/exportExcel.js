@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import { formatDate } from "./calculations.js";
+import { formatDate, normalizeVehicleStatus } from "./calculations.js";
 
 export function exportMasterFleetToExcel(fleet, filename = "Sifrarnik_Voznog_Parka_2026.xlsx") {
   const rows = fleet.map((v, i) => ({
@@ -11,7 +11,7 @@ export function exportMasterFleetToExcel(fleet, filename = "Sifrarnik_Voznog_Par
     "Model": v.modelVoz || "-",
     "Godište": v.godProizvodnje || "-",
     "Broj Šasije": v.brojSasije || "-",
-    "Status": v.status || "Aktivno"
+    "Status": normalizeVehicleStatus(v.status)
   }));
 
   const ws = XLSX.utils.json_to_sheet(rows);

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { PlusCircle, Search, X, ChevronRight, Sun, Moon, Bell, ClipboardList } from "lucide-react";
+import { normalizeVehicleStatus, getVehicleStatusBadge } from "@/lib/calculations.js";
 
 export function Header({
   portalMode,
@@ -30,7 +31,7 @@ export function Header({
     const term = searchReg.trim().toLowerCase();
     if (!term) {
       // Ako nema unosa a dropdown je otvoren, prikaži prvih 8 aktivnih vozila
-      return masterFleet.filter((v) => (v.status || "Aktivno") === "Aktivno").slice(0, 8);
+      return masterFleet.filter((v) => normalizeVehicleStatus(v.status) === "Aktivno").slice(0, 8);
     }
 
     return masterFleet
@@ -172,10 +173,7 @@ export function Header({
                 {matchingVehicles.length > 0 ? (
                   matchingVehicles.map((v, index) => {
                     const isSelected = index === selectedIndex;
-                    const st = v.status || "Aktivno";
-                    let stBadge = "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300";
-                    if (st === "Prodato") stBadge = "bg-purple-100 text-purple-900 dark:bg-purple-950 dark:text-purple-300";
-                    else if (st === "Rashodovano") stBadge = "bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-300";
+                    const statusBadge = getVehicleStatusBadge(v.status);
 
                     return (
                       <div
@@ -210,8 +208,8 @@ export function Header({
                         </div>
 
                         <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${stBadge}`}>
-                            {st}
+                          <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${statusBadge.className}`}>
+                            {statusBadge.status}
                           </span>
                           <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60" />
                         </div>

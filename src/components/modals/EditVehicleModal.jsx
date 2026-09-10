@@ -16,6 +16,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { uploadVehicleImages } from "@/lib/fileUpload.js";
+import { normalizeVehicleStatus } from "@/lib/calculations.js";
 
 const MAX_IMAGES = 10;
 
@@ -52,7 +53,7 @@ export function EditVehicleModal({
       setModelVoz(initialVehicle.modelVoz && initialVehicle.modelVoz !== "-" ? initialVehicle.modelVoz : "");
       setGodProizvodnje(initialVehicle.godProizvodnje && initialVehicle.godProizvodnje !== "-" ? initialVehicle.godProizvodnje : "");
       setBrojSasije(initialVehicle.brojSasije && initialVehicle.brojSasije !== "-" ? initialVehicle.brojSasije : "");
-      setStatus(initialVehicle.status || "Aktivno");
+      setStatus(normalizeVehicleStatus(initialVehicle.status));
 
       // Inicijalizacija niza slika
       if (Array.isArray(initialVehicle.images) && initialVehicle.images.length > 0) {

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo, useState } from "react";
-import { formatKM, formatDate, cleanVehicleType, formatMileage, formatOperatingHours } from "@/lib/calculations.js";
+import { formatKM, formatDate, cleanVehicleType, formatMileage, formatOperatingHours, getVehicleStatusBadge } from "@/lib/calculations.js";
 import Chart from "@/lib/chartSetup.js";
 import { InvoicePreviewModal } from "./InvoicePreviewModal.jsx";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary.jsx";
@@ -414,6 +414,8 @@ export function VehicleCardModal({
       currentRole?.permissions?.canEditCosts ||
       currentRole?.roleId === "superadmin");
 
+  const statusBadge = getVehicleStatusBadge(vehicleInfo?.status);
+
   return (
     <ErrorBoundary title="Greška pri prikazu servisnog kartona" onClose={onClose}>
       <div
@@ -476,8 +478,8 @@ export function VehicleCardModal({
                   <span className="text-xs bg-indigo-500/40 text-indigo-200 border border-indigo-400/50 px-2.5 py-0.5 rounded-full font-mono print:border-slate-400 print:text-slate-800 print:bg-slate-200">
                     GB: {vehicleInfo.garazniBroj || "-"}
                   </span>
-                  <span className="text-xs bg-emerald-500/30 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 rounded-full font-bold print:border-emerald-600 print:text-emerald-800 print:bg-emerald-100">
-                    {vehicleInfo.status || "Aktivno"}
+                  <span className={`text-xs border px-2.5 py-0.5 rounded-full font-bold ${statusBadge.headerBadge}`}>
+                    {statusBadge.status}
                   </span>
                 </h3>
                 <p className="text-xs text-indigo-200 mt-0.5 print:text-slate-700 font-semibold">

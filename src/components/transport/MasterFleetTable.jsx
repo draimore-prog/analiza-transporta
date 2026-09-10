@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { exportMasterFleetToExcel } from "@/lib/exportExcel.js";
-import { cleanVehicleType } from "@/lib/calculations.js";
+import { cleanVehicleType, normalizeVehicleStatus, getVehicleStatusBadge } from "@/lib/calculations.js";
 import {
   Download,
   Plus,
@@ -73,11 +73,10 @@ export function MasterFleetTable({
 
     const filtered = masterFleet.filter((v) => {
       // 1. Status filter
-      const vStatus = v.status || "Aktivno";
+      const vStatus = normalizeVehicleStatus(v.status);
       const matchStatus =
         colFilterStatus === "all" ||
-        vStatus.toLowerCase() === colFilterStatus.toLowerCase() ||
-        (colFilterStatus === "Aktivno" && !vStatus.toLowerCase().includes("prodat") && !vStatus.toLowerCase().includes("rashod"));
+        vStatus === colFilterStatus;
 
       // 2. Tip vozila filter
       const cleanT = cleanVehicleType(v.tipMehan);
@@ -478,17 +477,7 @@ export function MasterFleetTable({
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50 bg-white dark:bg-slate-900">
               {visibleItems.length > 0 ? (
                 visibleItems.map((v, idx) => {
-                  const st = v.status || "Aktivno";
-                  let stClass =
-                    "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300";
-                  if (st === "Prodato") {
-                    stClass =
-                      "bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-950 dark:text-purple-300";
-                  } else if (st === "Rashodovano") {
-                    stClass =
-                      "bg-red-100 text-red-900 border-red-300 dark:bg-red-950 dark:text-red-300";
-                  }
-
+                  const statusBadge = getVehicleStatusBadge(v.status);
                   const displayType = cleanVehicleType(v.tipMehan);
 
                   return (
@@ -540,8 +529,8 @@ export function MasterFleetTable({
                         {v.brojSasije || "-"}
                       </td>
                       <td className="p-3 text-center">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${stClass}`}>
-                          {st}
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${statusBadge.className}`}>
+                          {statusBadge.status}
                         </span>
                       </td>
                       <td className="p-3 text-center">

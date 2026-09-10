@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { IDBCache } from "@/lib/idbCache.js";
 import { MASTER_CACHE_KEY, DATASET_CACHE_KEY } from "@/lib/constants.js";
-import { cleanVehicleType } from "@/lib/calculations.js";
+import { cleanVehicleType, normalizeVehicleStatus } from "@/lib/calculations.js";
 import { db } from "@/lib/firebase.js";
 import { collection, onSnapshot, doc, setDoc, deleteDoc, query, where } from "firebase/firestore";
 
@@ -32,10 +32,13 @@ export function useFleetData() {
       }
 
       if (list && list.length > 0) {
-        let cleaned = list.map((v) => ({
-          ...v,
-          tipMehan: cleanVehicleType(v.tipMehan)
-        }));
+        let cleaned = list
+          .filter((v) => v && v.reg && typeof v.reg === "string" && v.reg.trim() !== "" && v.reg !== "undefined")
+          .map((v) => ({
+            ...v,
+            status: normalizeVehicleStatus(v.status),
+            tipMehan: cleanVehicleType(v.tipMehan)
+          }));
 
         // Primijeni sve pristigle custom izmjene iz Firestore-a
         if (customEditsRef.current.size > 0) {
@@ -205,6 +208,7 @@ export function useFleetData() {
               const regUpper = v.reg.toUpperCase();
               const cleanV = {
                 ...v,
+                status: normalizeVehicleStatus(v.status),
                 tipMehan: cleanVehicleType(v.tipMehan)
               };
               if (change.type === "added" || change.type === "modified") {
@@ -227,6 +231,7 @@ export function useFleetData() {
               if (v && v.reg) {
                 const cleanV = {
                   ...v,
+                  status: normalizeVehicleStatus(v.status),
                   tipMehan: cleanVehicleType(v.tipMehan)
                 };
                 const regUpper = v.reg.toUpperCase();
@@ -312,6 +317,7 @@ export function useFleetData() {
     const docId = vehicle.reg.replace(/[\/\\#\?]/g, "_").trim();
     const cleanV = {
       ...vehicle,
+      status: normalizeVehicleStatus(vehicle.status),
       tipMehan: cleanVehicleType(vehicle.tipMehan),
       isCustomEdit: true
     };

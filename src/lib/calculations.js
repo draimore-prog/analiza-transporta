@@ -40,6 +40,41 @@ export function cleanBrandName(brandRaw) {
   return b;
 }
 
+export function normalizeVehicleStatus(status) {
+  if (!status) return "Aktivno";
+  const s = status.toString().trim().toLowerCase();
+  if (s.includes("rashod") || s.includes("neaktiv")) return "Rashodovano";
+  if (s.includes("prodat")) return "Prodato";
+  if (s.includes("aktiv")) return "Aktivno";
+  return "Aktivno";
+}
+
+export function getVehicleStatusBadge(status) {
+  const norm = normalizeVehicleStatus(status);
+  if (norm === "Prodato") {
+    return {
+      status: "Prodato",
+      className: "bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-950 dark:text-purple-300",
+      headerBadge: "bg-purple-500/30 text-purple-200 border-purple-400/40 print:border-purple-600 print:text-purple-800 print:bg-purple-100",
+      dot: "🟣"
+    };
+  }
+  if (norm === "Rashodovano") {
+    return {
+      status: "Rashodovano",
+      className: "bg-red-100 text-red-900 border-red-300 dark:bg-red-950 dark:text-red-300",
+      headerBadge: "bg-red-500/30 text-red-200 border-red-400/40 print:border-red-600 print:text-red-800 print:bg-red-100",
+      dot: "🔴"
+    };
+  }
+  return {
+    status: "Aktivno",
+    className: "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300",
+    headerBadge: "bg-emerald-500/30 text-emerald-300 border-emerald-400/40 print:border-emerald-600 print:text-emerald-800 print:bg-emerald-100",
+    dot: "🟢"
+  };
+}
+
 export function calculateFleetByYear(masterFleet) {
   const dynamic2026 = calculateDynamic2026(masterFleet);
   return {

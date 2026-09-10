@@ -3444,7 +3444,7 @@
   {
     "godProizvodnje": 2011,
     "brojSasije": "WDB9061331N486815",
-    "status": "prodato",
+    "status": "Prodato",
     "garazniBroj": "40393",
     "reg": "M06-T-413",
     "tipMehan": "Teretno vozilo",
@@ -3464,7 +3464,7 @@
     "reg": "404"
   },
   {
-    "status": "prodato",
+    "status": "Prodato",
     "reg": "M47-A-818",
     "brojSasije": "WMA37SZZ3JM776691",
     "createdAt": "2026-08-27T09:53:10.973Z",
@@ -3494,7 +3494,7 @@
     "markaVoz": "Moeslin",
     "garazniBroj": "40538",
     "reg": "O03-T-237",
-    "status": "prodato"
+    "status": "Prodato"
   },
   {
     "godProizvodnje": "2018",
@@ -3510,7 +3510,7 @@
   {
     "garazniBroj": "40603",
     "brojSasije": "H2X116E00230",
-    "status": "rashodovano",
+    "status": "Rashodovano",
     "markaVoz": "Linde",
     "tipMehan": "Skladišna mehanizacija",
     "reg": "304",
@@ -3519,7 +3519,7 @@
     "godProizvodnje": 2015
   },
   {
-    "status": "aktivno",
+    "status": "Aktivno",
     "brojSasije": "KMTWB024CLUF31625",
     "tipMehan": "Radna mašina",
     "markaVoz": "Komatsu",
@@ -3537,14 +3537,14 @@
     "markaVoz": "Linde",
     "tipMehan": "Skladišna mehanizacija",
     "reg": "263",
-    "status": "rashodovano",
+    "status": "Rashodovano",
     "modelVoz": "L14"
   },
   {
     "brojSasije": "W4X372B04447",
     "garazniBroj": "40697",
     "modelVoz": "L14I",
-    "status": "rashodovano",
+    "status": "Rashodovano",
     "reg": "226",
     "markaVoz": "Linde",
     "tipMehan": "Skladišna mehanizacija",
@@ -3571,10 +3571,10 @@
     "tipMehan": "Skladišna mehanizacija",
     "markaVoz": "Pobeda",
     "brojSasije": "09.87-461",
-    "status": "rashodovano"
+    "status": "Rashodovano"
   },
   {
-    "status": "rashodovano",
+    "status": "Rashodovano",
     "modelVoz": "H20",
     "brojSasije": "H2X391E01354",
     "markaVoz": "Linde",
@@ -3592,7 +3592,7 @@
     "godProizvodnje": 2006,
     "markaVoz": "Jungheinrich",
     "tipMehan": "Skladišna mehanizacija",
-    "status": "rashodovano",
+    "status": "Rashodovano",
     "modelVoz": "ESE116"
   },
   {
@@ -3600,7 +3600,7 @@
     "tipMehan": "Skladišna mehanizacija",
     "reg": "346",
     "markaVoz": "Toyota",
-    "status": "rashodovano",
+    "status": "Rashodovano",
     "modelVoz": "BT Reflex",
     "brojSasije": "6178206 / 5632772",
     "godProizvodnje": 2011,
@@ -3624,14 +3624,14 @@
     "modelVoz": "H16T",
     "brojSasije": "350G11108616",
     "godProizvodnje": 1997,
-    "status": "rashodovano",
+    "status": "Rashodovano",
     "reg": "189",
     "garazniBroj": "40805"
   },
   {
     "reg": "175",
     "createdAt": "2026-08-27T09:53:27.195Z",
-    "status": "rashodovano",
+    "status": "Rashodovano",
     "godProizvodnje": 2007,
     "garazniBroj": "40819",
     "brojSasije": "H2X391U04455",
@@ -3643,7 +3643,7 @@
     "createdAt": "2026-08-27T09:53:14.336Z",
     "garazniBroj": "40869",
     "godProizvodnje": 2008,
-    "status": "rashodovano",
+    "status": "Rashodovano",
     "reg": "125 i",
     "brojSasije": "FN388539",
     "modelVoz": "EFG115",
@@ -3652,7 +3652,7 @@
   },
   {
     "garazniBroj": "40873",
-    "status": "rashodovano",
+    "status": "Rashodovano",
     "brojSasije": "FN388540",
     "createdAt": "2026-08-27T09:53:20.976Z",
     "modelVoz": "EFG115",
@@ -3670,7 +3670,7 @@
     "brojSasije": "517069203988",
     "modelVoz": "R70-25T",
     "reg": "116 i",
-    "status": "rashodovano"
+    "status": "Rashodovano"
   },
   {
     "status": "Aktivno",
@@ -3687,7 +3687,7 @@
     "godProizvodnje": null,
     "reg": "83 i",
     "garazniBroj": "40911",
-    "status": "rashodovano",
+    "status": "Rashodovano",
     "modelVoz": "R70-20T",
     "brojSasije": "N/A",
     "createdAt": "2026-08-27T09:53:14.117Z",
@@ -3696,7 +3696,7 @@
   },
   {
     "godProizvodnje": 2007,
-    "status": "rashodovano",
+    "status": "Rashodovano",
     "brojSasije": "H2X350U00448",
     "reg": "68",
     "markaVoz": "Linde",
@@ -3706,7 +3706,7 @@
     "modelVoz": "H20D-03"
   },
   {
-    "status": "rashodovano",
+    "status": "Rashodovano",
     "garazniBroj": "40961",
     "brojSasije": "H2X335P02221",
     "reg": "33",
@@ -3717,7 +3717,7 @@
     "createdAt": "2026-08-27T09:53:20.784Z"
   },
   {
-    "status": "rashodovano",
+    "status": "Rashodovano",
     "reg": "20",
     "garazniBroj": "40974",
     "tipMehan": "Skladišna mehanizacija",
@@ -11311,10 +11311,6 @@
     "rb": 288
   },
   {
-    "garazniBroj": "40393",
-    "tipMehan": "Teretna vozila"
-  },
-  {
     "status": "Aktivno",
     "markaVoz": "Mercedes Benz",
     "modelVoz": "Sprinter 313 cdi",
@@ -13068,9 +13064,6 @@
     "garazniBroj": "/",
     "godProizvodnje": "/",
     "reg": "SERVIS MOTORNIH VOZILA"
-  },
-  {
-    "tipMehan": "Servis motornih vozila"
   },
   {
     "godProizvodnje": "2014",
