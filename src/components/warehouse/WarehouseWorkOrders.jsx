@@ -16,7 +16,8 @@ import {
   Camera,
   Trash2,
   Sparkles,
-  Check
+  Check,
+  Smartphone
 } from "lucide-react";
 import { WORK_ORDER_STATUSES } from "@/hooks/useWarehouseWorkOrders.js";
 
@@ -24,6 +25,7 @@ export function WarehouseWorkOrders({
   workOrders = [],
   isLoading = false,
   onCreateOrderClick,
+  onOpenFieldForm,
   onViewOrder,
   onPrintOrder,
   onApproveOrder,
@@ -114,6 +116,17 @@ export function WarehouseWorkOrders({
             )}
             <span>{isSeeding ? "Generisanje..." : "Generiši Primjer Naloga"}</span>
           </button>
+
+          {onOpenFieldForm && (
+            <button
+              onClick={onOpenFieldForm}
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto"
+              title="Otvori prilagođenu mobilnu formu za unos pregleda sa terena"
+            >
+              <Smartphone className="w-4 h-4" />
+              <span>📱 Terenski Unos</span>
+            </button>
+          )}
 
           <button
             onClick={onCreateOrderClick}

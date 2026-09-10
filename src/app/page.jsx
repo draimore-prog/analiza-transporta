@@ -41,6 +41,7 @@ import { SegmentDetailModal } from "@/components/modals/SegmentDetailModal.jsx";
 import { WorkOrderDetailModal } from "@/components/warehouse/WorkOrderDetailModal.jsx";
 import { WorkOrderPrintModal } from "@/components/warehouse/WorkOrderPrintModal.jsx";
 import { CreateWorkOrderModal } from "@/components/warehouse/CreateWorkOrderModal.jsx";
+import { FieldWorkOrderForm } from "@/components/serviser/FieldWorkOrderForm.jsx";
 import { useWarehouseWorkOrders } from "@/hooks/useWarehouseWorkOrders.js";
 
 // Mape za čitljive nazive stranica u URL-u
@@ -136,6 +137,20 @@ function DashboardContent() {
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [printingWorkOrder, setPrintingWorkOrder] = useState(null);
   const [isCreateWorkOrderOpen, setIsCreateWorkOrderOpen] = useState(false);
+  const [isFieldFormOpen, setIsFieldFormOpen] = useState(false);
+  const [fieldFormInitialOrder, setFieldFormInitialOrder] = useState(null);
+
+  const handleFieldFormSubmit = useCallback(
+    async (orderPayload) => {
+      if (orderPayload.id) {
+        await updateWorkOrder(orderPayload.id, orderPayload);
+        return { success: true, orderNumber: orderPayload.orderNumber };
+      } else {
+        return await createWorkOrder(orderPayload);
+      }
+    },
+    [createWorkOrder, updateWorkOrder]
+  );
 
   const pendingWorkOrders = useMemo(() => {
     return workOrders.filter((o) => o.status === "completed");
@@ -459,14 +474,57 @@ function DashboardContent() {
         <ServiserDashboard
           masterFleet={masterFleet}
           costData={costData}
+          warehouseMasterFleet={warehouseMasterFleet}
+          warehouseCostData={warehouseCostData}
+          workOrders={workOrders}
           activeUser={activeUser}
           onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
+          onOpenFieldForm={(initialOrder = null) => {
+            setFieldFormInitialOrder(initialOrder);
+            setIsFieldFormOpen(true);
+          }}
+          onViewWorkOrder={(o) => setSelectedWorkOrder(o)}
+          onPrintWorkOrder={(o) => setPrintingWorkOrder(o)}
           onLogout={logout}
           onSwitchPortal={
             currentRole?.permissions?.canSwitchPortal || activeUser?.role === "superadmin"
               ? () => setPortalMode("transport")
               : null
           }
+        />
+
+        {/* Terenski Radni Nalog Modal za Servisere */}
+        <FieldWorkOrderForm
+          isOpen={isFieldFormOpen}
+          onClose={() => {
+            setIsFieldFormOpen(false);
+            setFieldFormInitialOrder(null);
+          }}
+          warehouseMasterFleet={warehouseMasterFleet}
+          onSubmitOrder={handleFieldFormSubmit}
+          activeUser={activeUser}
+          initialOrder={fieldFormInitialOrder}
+        />
+
+        {/* Detaljan Pregled Radnog Naloga Modal */}
+        <WorkOrderDetailModal
+          isOpen={!!selectedWorkOrder}
+          onClose={() => setSelectedWorkOrder(null)}
+          workOrder={selectedWorkOrder}
+          onPrint={(order) => {
+            setSelectedWorkOrder(null);
+            setPrintingWorkOrder(order);
+          }}
+          onUpdateOrder={updateWorkOrder}
+          onApproveOrder={(id) => setOrderStatus(id, "approved", activeUser?.fullname || activeUser?.username)}
+          activeUser={activeUser}
+        />
+
+        {/* Štampa Radnog Naloga A4 Modal */}
+        <WorkOrderPrintModal
+          isOpen={!!printingWorkOrder}
+          onClose={() => setPrintingWorkOrder(null)}
+          workOrder={printingWorkOrder}
         />
 
         {/* Karton Vozila Modal */}
@@ -667,6 +725,10 @@ function DashboardContent() {
                     workOrders={workOrders}
                     isLoading={isWorkOrdersLoading}
                     onCreateOrderClick={() => setIsCreateWorkOrderOpen(true)}
+                    onOpenFieldForm={() => {
+                      setFieldFormInitialOrder(null);
+                      setIsFieldFormOpen(true);
+                    }}
                     onViewOrder={(o) => setSelectedWorkOrder(o)}
                     onPrintOrder={(o) => setPrintingWorkOrder(o)}
                     onApproveOrder={(id) => setOrderStatus(id, "approved", activeUser?.fullname || activeUser?.username)}
@@ -825,6 +887,19 @@ function DashboardContent() {
         warehouseMasterFleet={warehouseMasterFleet}
         onCreateWorkOrder={createWorkOrder}
         activeUser={activeUser}
+      />
+
+      {/* Terenski Unos Radnog Naloga (Mobilna Forma) Modal */}
+      <FieldWorkOrderForm
+        isOpen={isFieldFormOpen}
+        onClose={() => {
+          setIsFieldFormOpen(false);
+          setFieldFormInitialOrder(null);
+        }}
+        warehouseMasterFleet={warehouseMasterFleet}
+        onSubmitOrder={handleFieldFormSubmit}
+        activeUser={activeUser}
+        initialOrder={fieldFormInitialOrder}
       />
     </div>
   );
