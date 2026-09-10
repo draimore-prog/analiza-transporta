@@ -3447,7 +3447,7 @@
     "status": "Prodato",
     "garazniBroj": "40393",
     "reg": "M06-T-413",
-    "tipMehan": "Teretno vozilo",
+    "tipMehan": "Teretna vozila",
     "markaVoz": "Mercedes Benz",
     "modelVoz": "Sprinter 310 cdi",
     "createdAt": "2026-08-27T09:53:29.824Z"
@@ -3471,7 +3471,7 @@
     "modelVoz": "TGS 35.460",
     "garazniBroj": "40450",
     "markaVoz": "MAN",
-    "tipMehan": "Teretno vozilo",
+    "tipMehan": "Teretna vozila",
     "godProizvodnje": 2018
   },
   {
@@ -3490,7 +3490,7 @@
     "brojSasije": "W09TTT211ESM39962",
     "godProizvodnje": 2014,
     "createdAt": "2026-08-27T09:53:11.277Z",
-    "tipMehan": "Priključno vozilo",
+    "tipMehan": "Priključna vozila",
     "markaVoz": "Moeslin",
     "garazniBroj": "40538",
     "reg": "O03-T-237",
@@ -10503,7 +10503,7 @@
     "markaVoz": "Schmitz",
     "rb": 225,
     "garazniBroj": "40556",
-    "tipMehan": "Priklju��na vozila",
+    "tipMehan": "Priključna vozila",
     "modelVoz": "/",
     "brojSasije": "WSM00000003399959"
   },

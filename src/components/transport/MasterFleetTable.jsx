@@ -68,6 +68,20 @@ export function MasterFleetTable({
       .sort();
   }, [masterFleet]);
 
+  // Brojači po statusima (Aktivno: 940, Prodato: 260, Rashodovano: 50, Ukupno: 1250)
+  const statusCounts = useMemo(() => {
+    let aktivno = 0;
+    let prodato = 0;
+    let rashodovano = 0;
+    masterFleet.forEach((v) => {
+      const st = normalizeVehicleStatus(v.status);
+      if (st === "Aktivno") aktivno++;
+      else if (st === "Prodato") prodato++;
+      else if (st === "Rashodovano") rashodovano++;
+    });
+    return { aktivno, prodato, rashodovano, total: masterFleet.length };
+  }, [masterFleet]);
+
   // Filtrirani i sortirani podaci na osnovu kolonskih filtera
   const filteredData = useMemo(() => {
     const gbTerm = colFilterGarazni.trim().toLowerCase();
@@ -255,12 +269,59 @@ export function MasterFleetTable({
             <h2 className="text-2xl font-black tracking-tight flex items-center gap-2">
               <span>🏢 Matična baza podataka voznog parka</span>
               <span className="text-xs bg-indigo-500/30 text-indigo-200 border border-indigo-400 px-3 py-0.5 rounded-full font-mono font-bold">
-                {visibleItems.length.toLocaleString("bs-BA")} / {filteredData.length.toLocaleString("bs-BA")} vozila
+                {filteredData.length.toLocaleString("bs-BA")} / {masterFleet.length.toLocaleString("bs-BA")} vozila
               </span>
             </h2>
-            <p className="text-xs text-slate-300 mt-1">
-              Filteri su integrisani direktno u zaglavlje svake kolone tabele ispod
-            </p>
+            <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
+              <button
+                type="button"
+                onClick={() => { setColFilterStatus("all"); setVisibleCount(BATCH_SIZE); }}
+                className={`px-3 py-1 rounded-xl font-extrabold transition-all cursor-pointer border ${
+                  colFilterStatus === "all"
+                    ? "bg-white text-slate-900 border-white shadow-sm scale-102"
+                    : "bg-slate-800/80 hover:bg-slate-800 text-slate-300 border-slate-700"
+                }`}
+                title="Prikaži sva vozila u bazi"
+              >
+                📋 Sva vozila ({statusCounts.total})
+              </button>
+              <button
+                type="button"
+                onClick={() => { setColFilterStatus("Aktivno"); setVisibleCount(BATCH_SIZE); }}
+                className={`px-3 py-1 rounded-xl font-extrabold transition-all cursor-pointer border ${
+                  colFilterStatus === "Aktivno"
+                    ? "bg-emerald-500 text-white border-emerald-400 shadow-sm shadow-emerald-500/30 scale-102"
+                    : "bg-emerald-950/40 hover:bg-emerald-950/60 text-emerald-300 border-emerald-800/60"
+                }`}
+                title="Prikaži samo aktivna vozila"
+              >
+                🟢 Aktivno ({statusCounts.aktivno})
+              </button>
+              <button
+                type="button"
+                onClick={() => { setColFilterStatus("Prodato"); setVisibleCount(BATCH_SIZE); }}
+                className={`px-3 py-1 rounded-xl font-extrabold transition-all cursor-pointer border ${
+                  colFilterStatus === "Prodato"
+                    ? "bg-purple-600 text-white border-purple-400 shadow-sm shadow-purple-600/30 scale-102"
+                    : "bg-purple-950/40 hover:bg-purple-950/60 text-purple-300 border-purple-800/60"
+                }`}
+                title="Prikaži prodata vozila"
+              >
+                🟣 Prodato ({statusCounts.prodato})
+              </button>
+              <button
+                type="button"
+                onClick={() => { setColFilterStatus("Rashodovano"); setVisibleCount(BATCH_SIZE); }}
+                className={`px-3 py-1 rounded-xl font-extrabold transition-all cursor-pointer border ${
+                  colFilterStatus === "Rashodovano"
+                    ? "bg-red-600 text-white border-red-400 shadow-sm shadow-red-600/30 scale-102"
+                    : "bg-red-950/40 hover:bg-red-950/60 text-red-300 border-red-800/60"
+                }`}
+                title="Prikaži rashodovana vozila"
+              >
+                🔴 Rashodovano ({statusCounts.rashodovano})
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">

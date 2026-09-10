@@ -7,9 +7,9 @@ export function cleanVehicleType(tipRaw) {
 
   if (lower.includes('teretn')) return 'Teretna vozila';
   if (lower.includes('putničk') || lower.includes('putnick')) return 'Putnička vozila';
-  if (lower.includes('priključn') || lower.includes('prikljucn')) return 'Priključna vozila';
+  if (lower.includes('priključn') || lower.includes('prikljucn') || lower.includes('priklju')) return 'Priključna vozila';
   if (lower.includes('radn')) return 'Radna mašina';
-  if (lower.includes('skladi') || lower.includes('viljuš') || lower.includes('viljusk')) return 'Skladišna mehanizacija';
+  if (lower.includes('skladi') || lower.includes('viljuš') || lower.includes('viljusk') || lower.includes('paletar')) return 'Skladišna mehanizacija';
   if (lower.includes('servis') || lower === 'ostalo' || lower.includes('služb') || lower.includes('sluzb')) return 'Servis motornih vozila';
 
   return 'Servis motornih vozila';

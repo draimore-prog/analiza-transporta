@@ -1,4 +1,4 @@
-export const MASTER_CACHE_KEY = 'fleet_master_v16_full_fleet_safe';
+export const MASTER_CACHE_KEY = 'fleet_master_v19_canonical_1250';
 export const DATASET_CACHE_KEY = 'fleet_dataset_v18_no_workmachine_hours';
 export const SESSION_ACTIVE_USER_KEY = 'analiza_transporta_active_user';
 
