@@ -11,6 +11,50 @@ export const LOCKED_2026_BASELINE = {
   total: 938
 };
 
+export const APP_NAV_SECTIONS = [
+  {
+    id: "analitika",
+    title: "Analitika",
+    icon: "📊",
+    items: [
+      { id: "kpi-pregled", name: "KPI Pregled Flote", icon: "📊", category: "analitika" },
+      { id: "analiza-odrzavanja", name: "Analiza Održavanja", icon: "📈", category: "analitika" },
+      { id: "yoy-komparacija", name: "YoY Komparacija", icon: "⚖️", category: "analitika" },
+      { id: "tco-zamjena", name: "TCO & Zamjena Vozila", icon: "🔄", category: "analitika" }
+    ]
+  },
+  {
+    id: "baza-podataka",
+    title: "Baza Podataka",
+    icon: "🗄️",
+    items: [
+      { id: "maticna-baza-flote", name: "Matična Baza Voznog Parka", icon: "🏢", category: "baza-podataka" },
+      { id: "tabela-servisa", name: "Tabela Servisa & Troškova", icon: "📋", category: "baza-podataka" }
+    ]
+  },
+  {
+    id: "skladisna-mehanizacija",
+    title: "Skladišna Mehanizacija",
+    icon: "🚜",
+    items: [
+      { id: "skladiste-analitika", name: "Analitika & Finansije Skladišta", icon: "📊", category: "skladisna-mehanizacija" },
+      { id: "skladiste-sifrarnik", name: "Šifrarnik Mehanizacije (594)", icon: "🚜", category: "skladisna-mehanizacija" },
+      { id: "skladiste-opravke", name: "Pregled Svih Opravki", icon: "🔧", category: "skladisna-mehanizacija" },
+      { id: "skladiste-segmenti", name: "Segmenti & Dijelovi", icon: "⚡", category: "skladisna-mehanizacija" },
+      { id: "skladiste-dobavljaci", name: "Serviseri & Dobavljači", icon: "🏢", category: "skladisna-mehanizacija" },
+      { id: "skladiste-nalozi", name: "Radni Nalozi & Pregledi", icon: "📋", category: "skladisna-mehanizacija", hasBadge: true }
+    ]
+  },
+  {
+    id: "serviser",
+    title: "Servisna Radionica",
+    icon: "🔧",
+    items: [
+      { id: "servisna-radionica", name: "Serviserski Portal / Terenski Unos", icon: "🛠️", category: "serviser" }
+    ]
+  }
+];
+
 export const DEFAULT_APP_ROLES = {
   superadmin: {
     roleId: 'superadmin',
@@ -18,21 +62,21 @@ export const DEFAULT_APP_ROLES = {
     roleIcon: '👑',
     roleBadge: '👑 Super Administrator',
     description: 'Pun pristup svim modulima, unosu, brisanju, uređivanju, upravljanju nalozima i podešavanju rola.',
-    defaultPortal: 'transport',
-    allowedPortals: ['transport', 'warehouse', 'serviser'],
+    defaultPage: 'kpi-pregled',
     navigationPanels: [
-      { id: 'tab1', name: 'Pregled Flote & KPI', portal: 'transport', icon: '📊', tabId: 1 },
-      { id: 'tab2', name: 'Analiza Održavanja', portal: 'transport', icon: '📈', tabId: 2 },
-      { id: 'tab3', name: 'YoY Komparacija', portal: 'transport', icon: '🔄', tabId: 3 },
-      { id: 'tab4', name: 'Tabela Servisa', portal: 'transport', icon: '🔧', tabId: 4 },
-      { id: 'tab5', name: 'Matična baza podataka', portal: 'transport', icon: '🚛', tabId: 5 },
-      { id: 'wh1', name: 'Analitika & Finansije', portal: 'warehouse', icon: '📊', tabId: 1 },
-      { id: 'wh2', name: 'Šifrarnik Flote (594)', portal: 'warehouse', icon: '🚜', tabId: 2 },
-      { id: 'wh3', name: 'Pregled Svih Opravki', portal: 'warehouse', icon: '🔧', tabId: 3 },
-      { id: 'wh4', name: 'Segmenti & Dijelovi', portal: 'warehouse', icon: '⚡', tabId: 4 },
-      { id: 'wh5', name: 'Serviseri & Dobavljači', portal: 'warehouse', icon: '🏢', tabId: 5 },
-      { id: 'wh6', name: 'Radni Nalozi & Pregledi', portal: 'warehouse', icon: '📋', tabId: 6 },
-      { id: 'serviserSearch', name: 'Karton Vozila / Pretraga', portal: 'serviser', icon: '🔍', tabId: 1 }
+      { id: 'kpi-pregled', name: 'KPI Pregled Flote', category: 'analitika', icon: '📊' },
+      { id: 'analiza-odrzavanja', name: 'Analiza Održavanja', category: 'analitika', icon: '📈' },
+      { id: 'yoy-komparacija', name: 'YoY Komparacija', category: 'analitika', icon: '⚖️' },
+      { id: 'tco-zamjena', name: 'TCO & Zamjena Vozila', category: 'analitika', icon: '🔄' },
+      { id: 'maticna-baza-flote', name: 'Matična Baza Voznog Parka', category: 'baza-podataka', icon: '🏢' },
+      { id: 'tabela-servisa', name: 'Tabela Servisa & Troškova', category: 'baza-podataka', icon: '📋' },
+      { id: 'skladiste-analitika', name: 'Analitika & Finansije Skladišta', category: 'skladisna-mehanizacija', icon: '📊' },
+      { id: 'skladiste-sifrarnik', name: 'Šifrarnik Mehanizacije (594)', category: 'skladisna-mehanizacija', icon: '🚜' },
+      { id: 'skladiste-opravke', name: 'Pregled Svih Opravki', category: 'skladisna-mehanizacija', icon: '🔧' },
+      { id: 'skladiste-segmenti', name: 'Segmenti & Dijelovi', category: 'skladisna-mehanizacija', icon: '⚡' },
+      { id: 'skladiste-dobavljaci', name: 'Serviseri & Dobavljači', category: 'skladisna-mehanizacija', icon: '🏢' },
+      { id: 'skladiste-nalozi', name: 'Radni Nalozi & Pregledi', category: 'skladisna-mehanizacija', icon: '📋' },
+      { id: 'servisna-radionica', name: 'Serviserski Portal / Terenski Unos', category: 'serviser', icon: '🛠️' }
     ],
     permissions: {
       canUploadExcel: true,
@@ -50,16 +94,15 @@ export const DEFAULT_APP_ROLES = {
     roleName: 'Specijalist skladišne mehanizacije',
     roleIcon: '🏗️',
     roleBadge: '🏗️ Specijalist skladišne mehanizacije',
-    description: 'Namjenski pristup ogranku skladišne mehanizacije (viljuškari, paletari, baterije, servisi i šifrarnik mehanizacije).',
-    defaultPortal: 'warehouse',
-    allowedPortals: ['warehouse'],
+    description: 'Namjenski pristup kategoriji Skladišna mehanizacija (radni nalozi, pregled opravki, dijelovi, serviseri i šifrarnik).',
+    defaultPage: 'skladiste-analitika',
     navigationPanels: [
-      { id: 'wh1', name: 'Analitika & Finansije', portal: 'warehouse', icon: '📊', tabId: 1 },
-      { id: 'wh2', name: 'Šifrarnik Flote (594)', portal: 'warehouse', icon: '🚜', tabId: 2 },
-      { id: 'wh3', name: 'Pregled Svih Opravki', portal: 'warehouse', icon: '🔧', tabId: 3 },
-      { id: 'wh4', name: 'Segmenti & Dijelovi', portal: 'warehouse', icon: '⚡', tabId: 4 },
-      { id: 'wh5', name: 'Serviseri & Dobavljači', portal: 'warehouse', icon: '🏢', tabId: 5 },
-      { id: 'wh6', name: 'Radni Nalozi & Pregledi', portal: 'warehouse', icon: '📋', tabId: 6 }
+      { id: 'skladiste-analitika', name: 'Analitika & Finansije Skladišta', category: 'skladisna-mehanizacija', icon: '📊' },
+      { id: 'skladiste-sifrarnik', name: 'Šifrarnik Mehanizacije (594)', category: 'skladisna-mehanizacija', icon: '🚜' },
+      { id: 'skladiste-opravke', name: 'Pregled Svih Opravki', category: 'skladisna-mehanizacija', icon: '🔧' },
+      { id: 'skladiste-segmenti', name: 'Segmenti & Dijelovi', category: 'skladisna-mehanizacija', icon: '⚡' },
+      { id: 'skladiste-dobavljaci', name: 'Serviseri & Dobavljači', category: 'skladisna-mehanizacija', icon: '🏢' },
+      { id: 'skladiste-nalozi', name: 'Radni Nalozi & Pregledi', category: 'skladisna-mehanizacija', icon: '📋' }
     ],
     permissions: {
       canUploadExcel: false,
@@ -74,18 +117,16 @@ export const DEFAULT_APP_ROLES = {
   },
   editor: {
     roleId: 'editor',
-    roleName: 'Administrator (Unos troškova)',
+    roleName: 'Administrator (Unos podataka i faktura)',
     roleIcon: '✍️',
-    roleBadge: '✍️ Admin (Unos faktura)',
-    description: 'Mogućnost unosa novih faktura, uvoza Excel evidencija i registracije novih nabavki vozila.',
-    defaultPortal: 'transport',
-    allowedPortals: ['transport'],
+    roleBadge: '✍️ Admin (Unos podataka)',
+    description: 'Mogućnost unosa novih faktura, uvoza Excel evidencija i registracije novih vozila i mehanizacije.',
+    defaultPage: 'maticna-baza-flote',
     navigationPanels: [
-      { id: 'tab1', name: 'Pregled Flote & KPI', portal: 'transport', icon: '📊', tabId: 1 },
-      { id: 'tab2', name: 'Analiza Održavanja', portal: 'transport', icon: '📈', tabId: 2 },
-      { id: 'tab3', name: 'YoY Komparacija', portal: 'transport', icon: '🔄', tabId: 3 },
-      { id: 'tab4', name: 'Tabela Servisa', portal: 'transport', icon: '🔧', tabId: 4 },
-      { id: 'tab5', name: 'Matična baza podataka', portal: 'transport', icon: '🚛', tabId: 5 }
+      { id: 'kpi-pregled', name: 'KPI Pregled Flote', category: 'analitika', icon: '📊' },
+      { id: 'analiza-odrzavanja', name: 'Analiza Održavanja', category: 'analitika', icon: '📈' },
+      { id: 'maticna-baza-flote', name: 'Matična Baza Voznog Parka', category: 'baza-podataka', icon: '🏢' },
+      { id: 'tabela-servisa', name: 'Tabela Servisa & Troškova', category: 'baza-podataka', icon: '📋' }
     ],
     permissions: {
       canUploadExcel: true,
@@ -103,15 +144,16 @@ export const DEFAULT_APP_ROLES = {
     roleName: 'Analitičar (Samo pregled)',
     roleIcon: '📊',
     roleBadge: '📊 Analitičar (Samo pregled)',
-    description: 'Pristup portalu Servis motornih vozila u režimu samo za čitanje i analizu (bez mogućnosti unosa i brisanja).',
-    defaultPortal: 'transport',
-    allowedPortals: ['transport'],
+    description: 'Pristup analitici i bazama podataka u režimu samo za čitanje i analizu (bez mogućnosti unosa i brisanja).',
+    defaultPage: 'kpi-pregled',
     navigationPanels: [
-      { id: 'tab1', name: 'Pregled Flote & KPI', portal: 'transport', icon: '📊', tabId: 1 },
-      { id: 'tab2', name: 'Analiza Održavanja', portal: 'transport', icon: '📈', tabId: 2 },
-      { id: 'tab3', name: 'YoY Komparacija', portal: 'transport', icon: '🔄', tabId: 3 },
-      { id: 'tab4', name: 'Tabela Servisa', portal: 'transport', icon: '🔧', tabId: 4 },
-      { id: 'tab5', name: 'Matična baza podataka', portal: 'transport', icon: '🚛', tabId: 5 }
+      { id: 'kpi-pregled', name: 'KPI Pregled Flote', category: 'analitika', icon: '📊' },
+      { id: 'analiza-odrzavanja', name: 'Analiza Održavanja', category: 'analitika', icon: '📈' },
+      { id: 'yoy-komparacija', name: 'YoY Komparacija', category: 'analitika', icon: '⚖️' },
+      { id: 'tco-zamjena', name: 'TCO & Zamjena Vozila', category: 'analitika', icon: '🔄' },
+      { id: 'maticna-baza-flote', name: 'Matična Baza Voznog Parka', category: 'baza-podataka', icon: '🏢' },
+      { id: 'tabela-servisa', name: 'Tabela Servisa & Troškova', category: 'baza-podataka', icon: '📋' },
+      { id: 'skladiste-analitika', name: 'Analitika & Finansije Skladišta', category: 'skladisna-mehanizacija', icon: '📊' }
     ],
     permissions: {
       canUploadExcel: false,
@@ -129,12 +171,11 @@ export const DEFAULT_APP_ROLES = {
     roleName: 'Terenski Serviser (Mobilna Aplikacija)',
     roleIcon: '📱',
     roleBadge: '📱 Terenski Serviser (Mobile App)',
-    description: 'Namjenski pristup isključivo mobilnoj aplikaciji za servisere na terenu: prijem radnih naloga, preventivni pregledi, ček-lista, radni sati (MTH) i fotografije jedinica.',
-    defaultPortal: 'serviser',
-    allowedPortals: ['serviser'],
+    description: 'Namjenski pristup radnim nalozima, preventivnim pregledima, ček-listama, radnim satima (MTH) i fotografisanju jedinica.',
+    defaultPage: 'servisna-radionica',
     navigationPanels: [
-      { id: 'serviserOrders', name: 'Radni Nalozi & Pregledi', portal: 'serviser', icon: '📋', tabId: 1 },
-      { id: 'serviserSearch', name: 'Karton Mehanizacije / Pretraga', portal: 'serviser', icon: '🔍', tabId: 2 }
+      { id: 'servisna-radionica', name: 'Serviserski Portal / Terenski Unos', category: 'serviser', icon: '🛠️' },
+      { id: 'skladiste-nalozi', name: 'Radni Nalozi & Pregledi', category: 'skladisna-mehanizacija', icon: '📋' }
     ],
     permissions: {
       canUploadExcel: false,
@@ -152,12 +193,11 @@ export const DEFAULT_APP_ROLES = {
     roleName: 'Serviser (Radionica & Mehanizacija)',
     roleIcon: '🔧',
     roleBadge: '🔧 Serviser',
-    description: 'Namjenski pristup serviserskom portalu: prijem radnih naloga i karton mehanizacije.',
-    defaultPortal: 'serviser',
-    allowedPortals: ['serviser'],
+    description: 'Pristup servisnoj radionici, prijemu radnih naloga i kartonu mehanizacije.',
+    defaultPage: 'servisna-radionica',
     navigationPanels: [
-      { id: 'serviserOrders', name: 'Radni Nalozi & Pregledi', portal: 'serviser', icon: '📋', tabId: 1 },
-      { id: 'serviserSearch', name: 'Karton Mehanizacije / Pretraga', portal: 'serviser', icon: '🔍', tabId: 2 }
+      { id: 'servisna-radionica', name: 'Serviserski Portal / Terenski Unos', category: 'serviser', icon: '🛠️' },
+      { id: 'skladiste-nalozi', name: 'Radni Nalozi & Pregledi', category: 'skladisna-mehanizacija', icon: '📋' }
     ],
     permissions: {
       canUploadExcel: false,

@@ -1,22 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { ClockWidget } from "./ClockWidget.jsx";
-import {
-  Truck,
-  Shield,
-  Key,
-  ChevronLeft,
-  LogOut
-} from "lucide-react";
+import { Truck, Shield, Key, LogOut } from "lucide-react";
+import { APP_NAV_SECTIONS } from "@/lib/constants.js";
 
 export function Sidebar({
-  portalMode,
-  setPortalMode,
-  activeTab,
-  setActiveTab,
-  activeWhTab,
-  setActiveWhTab,
+  activePage = "kpi-pregled",
+  onNavigatePage,
   activeUser,
   currentRole,
   isDarkMode,
@@ -26,10 +17,48 @@ export function Sidebar({
   onLogout,
   pendingWorkOrdersCount = 0
 }) {
+  // Dozvoljeni paneli za trenutnu ulogu
+  const allowedPanelIds = useMemo(() => {
+    if (!currentRole || currentRole.roleId === "superadmin") {
+      return null; // Superadmin ima pristup svemu
+    }
+    if (Array.isArray(currentRole.navigationPanels)) {
+      return new Set(currentRole.navigationPanels.map((p) => p.id));
+    }
+    return null;
+  }, [currentRole]);
+
+  // Filtrirane sekcije i stranice na osnovu permisija
+  const visibleSections = useMemo(() => {
+    return APP_NAV_SECTIONS.map((sec) => {
+      // Posebna provjera za servisnu radionicu
+      if (sec.id === "serviser") {
+        const canSeeServiser =
+          activeUser?.role === "superadmin" ||
+          activeUser?.role === "serviser" ||
+          activeUser?.role === "mobile_serviser" ||
+          (allowedPanelIds && allowedPanelIds.has("servisna-radionica"));
+        if (!canSeeServiser) return null;
+      }
+
+      const visibleItems = sec.items.filter((item) => {
+        if (!allowedPanelIds) return true;
+        return allowedPanelIds.has(item.id);
+      });
+
+      if (visibleItems.length === 0) return null;
+
+      return {
+        ...sec,
+        items: visibleItems
+      };
+    }).filter(Boolean);
+  }, [allowedPanelIds, activeUser]);
+
   return (
     <aside className="w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col justify-between flex-shrink-0 z-20 shadow-sm transition-colors duration-200 h-full">
-      {/* Gornji dio Sidebara */}
-      <div className="p-4 flex flex-col gap-4">
+      {/* Gornji dio Sidebara: Logo & Live Sat */}
+      <div className="p-4 flex flex-col gap-3 shrink-0">
         {/* Brending & Logo */}
         <div className="flex items-center gap-3" title="Logistika - Servis motornih vozila">
           <div className="bg-gradient-to-tr from-blue-700 to-indigo-600 text-white p-2.5 rounded-xl shadow-md flex items-center justify-center shrink-0">
@@ -49,227 +78,72 @@ export function Sidebar({
         <ClockWidget />
       </div>
 
-      {/* Navigacija */}
-      <nav className="flex-1 overflow-y-auto px-4 space-y-1">
-        {portalMode === "transport" ? (
-          /* Glavni Transport Meni - V1 Originalni Nazivi */
-          <>
-            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-              Nadzorna ploča
+      {/* Navigacija organizovana po kategorijama (Analitika, Baza podataka, Skladišna mehanizacija, Servisna radionica) */}
+      <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-4">
+        {visibleSections.map((sec) => (
+          <div key={sec.id} className="space-y-1">
+            {/* Naslov kategorije */}
+            <div className="flex items-center gap-1.5 px-3 py-1 text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              <span>{sec.icon}</span>
+              <span>{sec.title}</span>
             </div>
 
-            {/* Tab 1: KPI Pregled */}
-            <button
-              onClick={() => setActiveTab(1)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 1
-                  ? "bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-extrabold"
-                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50"
-              }`}
-            >
-              <span className="text-base">📊</span>
-              <span>KPI Pregled</span>
-            </button>
+            {/* Stavke u kategoriji */}
+            <div className="space-y-0.5">
+              {sec.items.map((item) => {
+                const isActive = activePage === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => onNavigatePage && onNavigatePage(item.id)}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs font-bold transition-all cursor-pointer group ${
+                      isActive
+                        ? "bg-blue-600 text-white shadow-sm shadow-blue-600/30 font-extrabold"
+                        : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700/60"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="text-base shrink-0 transition-transform group-hover:scale-110">
+                        {item.icon}
+                      </span>
+                      <span className="truncate">{item.name}</span>
+                    </div>
 
-            {/* Tab 2: Analiza Održavanja */}
-            <button
-              onClick={() => setActiveTab(2)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 2
-                  ? "bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-extrabold"
-                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50"
-              }`}
-            >
-              <span className="text-base">📈</span>
-              <span>Analiza Održavanja</span>
-            </button>
+                    {item.hasBadge && pendingWorkOrdersCount > 0 && (
+                      <span
+                        className={`text-[10px] font-black px-1.5 py-0.5 rounded-full shadow-xs shrink-0 ${
+                          isActive
+                            ? "bg-white text-purple-700"
+                            : "bg-purple-600 text-white animate-pulse"
+                        }`}
+                      >
+                        {pendingWorkOrdersCount}
+                      </span>
+                    )}
 
-            {/* Tab 3: YoY Komparacija & KPI Mjesečni */}
-            <button
-              onClick={() => setActiveTab(3)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 3
-                  ? "bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-extrabold"
-                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50"
-              }`}
-            >
-              <span className="text-base">⚖️</span>
-              <span>YoY Komparacija & KPI Mjesečni</span>
-            </button>
-
-            {/* Tab 4: Tabela Servisa */}
-            <button
-              onClick={() => setActiveTab(4)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 4
-                  ? "bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-extrabold"
-                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50"
-              }`}
-            >
-              <span className="text-base">📋</span>
-              <span>Tabela Servisa</span>
-            </button>
-
-            {/* Tab 5: Matična baza podataka voznog parka */}
-            <button
-              onClick={() => setActiveTab(5)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 5
-                  ? "bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-extrabold"
-                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50"
-              }`}
-            >
-              <span className="text-base">🏢</span>
-              <span>Matična baza podataka voznog parka</span>
-            </button>
-
-            {/* Tab 6: TCO & Kalkulator Isplativosti Zamjene Vozila */}
-            <button
-              onClick={() => setActiveTab(6)}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 6
-                  ? "bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-extrabold"
-                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-base">⚖️</span>
-                <span>TCO & Zamjena Vozila</span>
-              </div>
-              <span className="text-[9px] bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
-                Test
-              </span>
-            </button>
-
-            {/* Skladišna Mehanizacija Prečica */}
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-700/60 mt-3">
-              <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-                Posebni Portali
-              </div>
-              <button
-                onClick={() => setPortalMode("warehouse")}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs font-bold bg-amber-50/80 hover:bg-amber-100 dark:bg-amber-950/30 dark:hover:bg-amber-900/40 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50 transition-all cursor-pointer mb-1.5"
-              >
-                <span>🏗️</span>
-                <span>Skladišna Mehanizacija</span>
-              </button>
-              {(currentRole?.allowedPortals?.includes("serviser") || activeUser?.role === "superadmin") && (
-                <button
-                  onClick={() => setPortalMode("serviser")}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs font-bold bg-indigo-50/80 hover:bg-indigo-100 dark:bg-indigo-950/30 dark:hover:bg-indigo-900/40 text-indigo-900 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900/50 transition-all cursor-pointer"
-                >
-                  <span>🔧</span>
-                  <span>Servisna Radionica</span>
-                </button>
-              )}
+                    {item.id === "tco-zamjena" && !isActive && (
+                      <span className="text-[9px] bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 px-1.5 py-0.2 rounded font-bold uppercase shrink-0">
+                        Test
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
-          </>
-        ) : (
-          /* Skladišna Mehanizacija Meni - V1 Originalni Nazivi */
-          <div className="space-y-1">
-            <div className="text-[10px] font-bold text-amber-500 dark:text-amber-400 uppercase tracking-wider mb-2">
-              Skladišna Mehanizacija
-            </div>
-
-            <button
-              onClick={() => setActiveWhTab(1)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all cursor-pointer ${
-                activeWhTab === 1
-                  ? "bg-amber-50 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-extrabold"
-                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50"
-              }`}
-            >
-              <span className="text-base">📊</span>
-              <span>Analitika & Finansije</span>
-            </button>
-
-            <button
-              onClick={() => setActiveWhTab(2)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all cursor-pointer ${
-                activeWhTab === 2
-                  ? "bg-amber-50 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-extrabold"
-                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50"
-              }`}
-            >
-              <span className="text-base">🚜</span>
-              <span>Šifrarnik Flote (594)</span>
-            </button>
-
-            <button
-              onClick={() => setActiveWhTab(3)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all cursor-pointer ${
-                activeWhTab === 3
-                  ? "bg-amber-50 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-extrabold"
-                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50"
-              }`}
-            >
-              <span className="text-base">🔧</span>
-              <span>Pregled Svih Opravki</span>
-            </button>
-
-            <button
-              onClick={() => setActiveWhTab(4)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all cursor-pointer ${
-                activeWhTab === 4
-                  ? "bg-amber-50 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-extrabold"
-                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50"
-              }`}
-            >
-              <span className="text-base">⚡</span>
-              <span>Segmenti & Dijelovi</span>
-            </button>
-
-            <button
-              onClick={() => setActiveWhTab(5)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all cursor-pointer ${
-                activeWhTab === 5
-                  ? "bg-amber-50 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-extrabold"
-                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50"
-              }`}
-            >
-              <span className="text-base">🏢</span>
-              <span>Serviseri & Dobavljači</span>
-            </button>
-
-            <button
-              onClick={() => setActiveWhTab(6)}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all cursor-pointer ${
-                activeWhTab === 6
-                  ? "bg-amber-50 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-extrabold"
-                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/50"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-base">📋</span>
-                <span>Radni Nalozi & Pregledi</span>
-              </div>
-              {pendingWorkOrdersCount > 0 && (
-                <span className="text-[10px] font-black bg-purple-600 text-white px-2 py-0.5 rounded-full shadow-xs animate-pulse">
-                  {pendingWorkOrdersCount}
-                </span>
-              )}
-            </button>
-
-            <button
-              onClick={() => setPortalMode("transport")}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-xs font-bold transition-all text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 border border-blue-200 dark:border-blue-800 mt-4 cursor-pointer"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" /> Servis motornih vozila
-            </button>
           </div>
-        )}
+        ))}
       </nav>
 
       {/* Administrativne kontrole na dnu sidebara */}
-      <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex flex-col gap-2 bg-slate-50/50 dark:bg-slate-900/30">
-        {/* User Card sa odjavom */}
+      <div className="p-3 border-t border-slate-200 dark:border-slate-700 flex flex-col gap-2 bg-slate-50/50 dark:bg-slate-900/30 shrink-0">
+        {/* User Card sa ulogom */}
         {activeUser && (
-          <div className="mt-1 flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2 bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-200 dark:border-slate-700 shadow-xs">
               <span className="bg-blue-100 dark:bg-blue-900/50 p-1.5 rounded-md text-blue-800 dark:text-blue-300 text-xs">
                 👤
               </span>
-              <div className="overflow-hidden flex-1">
+              <div className="overflow-hidden flex-1 min-w-0">
                 <p className="font-extrabold text-xs text-slate-800 dark:text-slate-200 truncate">
                   {activeUser.fullname || activeUser.username}
                 </p>

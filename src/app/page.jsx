@@ -44,56 +44,44 @@ import { CreateWorkOrderModal } from "@/components/warehouse/CreateWorkOrderModa
 import { FieldWorkOrderForm } from "@/components/serviser/FieldWorkOrderForm.jsx";
 import { useWarehouseWorkOrders } from "@/hooks/useWarehouseWorkOrders.js";
 
-// Mape za čitljive nazive stranica u URL-u
-const TRANSPORT_TAB_SLUGS = {
-  1: "kpi-pregled",
-  2: "analiza-odrzavanja",
-  3: "yoy-komparacija",
-  4: "tabela-servisa",
-  5: "maticna-baza-flote",
-  6: "tco-zamjena"
-};
+// Mape za čitljive nazive stranica u URL-u i kompatibilnost starih linkova
+const PAGE_SLUG_MAPPINGS = {
+  // Analitika
+  "kpi-pregled": "kpi-pregled",
+  "kpi-struktura": "kpi-pregled",
+  "1": "kpi-pregled",
+  "analiza-odrzavanja": "analiza-odrzavanja",
+  "2": "analiza-odrzavanja",
+  "yoy-komparacija": "yoy-komparacija",
+  "3": "yoy-komparacija",
+  "tco-zamjena": "tco-zamjena",
+  "tco-kalkulator": "tco-zamjena",
+  "6": "tco-zamjena",
 
-const TRANSPORT_SLUG_TO_TAB = {
-  "kpi-pregled": 1,
-  "kpi-struktura": 1,
-  "1": 1,
-  "analiza-odrzavanja": 2,
-  "2": 2,
-  "yoy-komparacija": 3,
-  "3": 3,
-  "tabela-servisa": 4,
-  "4": 4,
-  "maticna-baza-flote": 5,
-  "maticna-baza": 5,
-  "5": 5,
-  "tco-zamjena": 6,
-  "tco-kalkulator": 6,
-  "6": 6
-};
+  // Baza podataka
+  "maticna-baza-flote": "maticna-baza-flote",
+  "maticna-baza": "maticna-baza-flote",
+  "5": "maticna-baza-flote",
+  "tabela-servisa": "tabela-servisa",
+  "4": "tabela-servisa",
 
-const WAREHOUSE_TAB_SLUGS = {
-  1: "analitika-finansije",
-  2: "sifrarnik-flote",
-  3: "pregled-svih-opravki",
-  4: "segmenti-dijelovi",
-  5: "serviseri-dobavljaci",
-  6: "radni-nalozi"
-};
+  // Skladišna mehanizacija
+  "skladiste-analitika": "skladiste-analitika",
+  "analitika-finansije": "skladiste-analitika",
+  "skladiste-sifrarnik": "skladiste-sifrarnik",
+  "sifrarnik-flote": "skladiste-sifrarnik",
+  "skladiste-opravke": "skladiste-opravke",
+  "pregled-svih-opravki": "skladiste-opravke",
+  "skladiste-segmenti": "skladiste-segmenti",
+  "segmenti-dijelovi": "skladiste-segmenti",
+  "skladiste-dobavljaci": "skladiste-dobavljaci",
+  "serviseri-dobavljaci": "skladiste-dobavljaci",
+  "skladiste-nalozi": "skladiste-nalozi",
+  "radni-nalozi": "skladiste-nalozi",
 
-const WAREHOUSE_SLUG_TO_TAB = {
-  "analitika-finansije": 1,
-  "1": 1,
-  "sifrarnik-flote": 2,
-  "2": 2,
-  "pregled-svih-opravki": 3,
-  "3": 3,
-  "segmenti-dijelovi": 4,
-  "4": 4,
-  "serviseri-dobavljaci": 5,
-  "5": 5,
-  "radni-nalozi": 6,
-  "6": 6
+  // Servisna radionica
+  "servisna-radionica": "servisna-radionica",
+  "karton-pretraga": "servisna-radionica"
 };
 
 function DashboardContent() {
@@ -200,55 +188,17 @@ function DashboardContent() {
     }
   }, [createWorkOrder]);
 
-  // Stanje portala i tabova sa čitljivim URL slugovima
-  const [portalMode, setPortalModeState] = useState("transport");
-  const [activeTab, setActiveTabState] = useState(1);
-  const [activeWhTab, setActiveWhTabState] = useState(1);
+  // Stanje aktivne stranice (sa čitljivim URL slugom)
+  const [activePage, setActivePageState] = useState("kpi-pregled");
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Funkcije za promjenu tabova sa čitljivim nazivom stranice u linku
-  const setPortalMode = useCallback((mode) => {
-    setPortalModeState(mode);
+  // Funkcija za navigaciju na određenu stranicu uz ažuriranje browser URL-a
+  const navigateToPage = useCallback((pageId) => {
+    setActivePageState(pageId);
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
-      const portalSlug =
-        mode === "warehouse"
-          ? "skladisna-mehanizacija"
-          : mode === "serviser"
-          ? "servisna-radionica"
-          : "transport";
-      url.searchParams.set("portal", portalSlug);
-      const pageSlug =
-        mode === "warehouse"
-          ? WAREHOUSE_TAB_SLUGS[activeWhTab]
-          : mode === "serviser"
-          ? "karton-pretraga"
-          : TRANSPORT_TAB_SLUGS[activeTab];
-      url.searchParams.set("stranica", pageSlug);
-      url.searchParams.delete("tab");
-      url.searchParams.delete("whTab");
-      window.history.pushState({}, "", url.toString());
-    }
-  }, [activeTab, activeWhTab]);
-
-  const setActiveTab = useCallback((tabNum) => {
-    setActiveTabState(tabNum);
-    if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      url.searchParams.set("portal", "transport");
-      url.searchParams.set("stranica", TRANSPORT_TAB_SLUGS[tabNum] || "kpi-pregled");
-      url.searchParams.delete("tab");
-      url.searchParams.delete("whTab");
-      window.history.pushState({}, "", url.toString());
-    }
-  }, []);
-
-  const setActiveWhTab = useCallback((tabNum) => {
-    setActiveWhTabState(tabNum);
-    if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      url.searchParams.set("portal", "skladisna-mehanizacija");
-      url.searchParams.set("stranica", WAREHOUSE_TAB_SLUGS[tabNum] || "analitika-finansije");
+      url.searchParams.set("stranica", pageId);
+      url.searchParams.delete("portal");
       url.searchParams.delete("tab");
       url.searchParams.delete("whTab");
       window.history.pushState({}, "", url.toString());
@@ -264,21 +214,19 @@ function DashboardContent() {
       const portalParam = params.get("portal");
       const pageParam = params.get("stranica") || params.get("tab") || params.get("whTab");
 
-      const isWh = portalParam === "skladisna-mehanizacija" || portalParam === "skladiste" || portalParam === "warehouse";
-      const isServ = portalParam === "servisna-radionica" || portalParam === "serviser";
-      if (isServ) {
-        setPortalModeState("serviser");
-      } else if (isWh) {
-        setPortalModeState("warehouse");
-        if (pageParam && WAREHOUSE_SLUG_TO_TAB[pageParam]) {
-          setActiveWhTabState(WAREHOUSE_SLUG_TO_TAB[pageParam]);
+      let resolvedPage = "kpi-pregled";
+      if (portalParam === "servisna-radionica" || portalParam === "serviser") {
+        resolvedPage = "servisna-radionica";
+      } else if (portalParam === "skladisna-mehanizacija" || portalParam === "warehouse" || portalParam === "skladiste") {
+        if (pageParam && PAGE_SLUG_MAPPINGS[pageParam]) {
+          resolvedPage = PAGE_SLUG_MAPPINGS[pageParam];
+        } else {
+          resolvedPage = "skladiste-analitika";
         }
-      } else {
-        setPortalModeState("transport");
-        if (pageParam && TRANSPORT_SLUG_TO_TAB[pageParam]) {
-          setActiveTabState(TRANSPORT_SLUG_TO_TAB[pageParam]);
-        }
+      } else if (pageParam && PAGE_SLUG_MAPPINGS[pageParam]) {
+        resolvedPage = PAGE_SLUG_MAPPINGS[pageParam];
       }
+      setActivePageState(resolvedPage);
     };
 
     handleUrlChange();
@@ -290,19 +238,19 @@ function DashboardContent() {
   const [selectedServiceYear, setSelectedServiceYear] = useState("all");
   const [selectedWarehouseYear, setSelectedWarehouseYear] = useState("all");
 
-  // Perzistentno stanje posjećenih tabova skladišne mehanizacije za instantnu navigaciju
-  const [visitedWhTabs, setVisitedWhTabs] = useState(() => new Set([1]));
+  // Perzistentno stanje posjećenih stranica skladišne mehanizacije za instantnu navigaciju
+  const [visitedWhPages, setVisitedWhPages] = useState(() => new Set(["skladiste-analitika"]));
 
   useEffect(() => {
-    if (portalMode === "warehouse") {
-      setVisitedWhTabs((prev) => {
-        if (prev.has(activeWhTab)) return prev;
+    if (activePage && activePage.startsWith("skladiste-")) {
+      setVisitedWhPages((prev) => {
+        if (prev.has(activePage)) return prev;
         const next = new Set(prev);
-        next.add(activeWhTab);
+        next.add(activePage);
         return next;
       });
     }
-  }, [portalMode, activeWhTab]);
+  }, [activePage]);
 
   // Stanja modala
   const [vehicleModalReg, setVehicleModalReg] = useState(null);
@@ -346,46 +294,46 @@ function DashboardContent() {
     }
   }, [isDarkMode]);
 
-  // Automatska dodjela početnog portala na osnovu uloge
+  // Automatska dodjela početne stranice na osnovu uloge korisnika (samo ako stranica nije zadana u URL-u)
   useEffect(() => {
-    if (activeUser?.role === "warehouse_specialist") {
-      setPortalModeState("warehouse");
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("stranica") || params.get("portal") || params.get("tab") || params.get("whTab")) {
+        return;
+      }
+    }
+    if (currentRole?.defaultPage) {
+      setActivePageState(currentRole.defaultPage);
+    } else if (activeUser?.role === "warehouse_specialist") {
+      setActivePageState("skladiste-analitika");
     } else if (activeUser?.role === "serviser" || activeUser?.role === "mobile_serviser") {
-      setPortalModeState("serviser");
-    } else if (currentRole?.defaultPortal) {
-      setPortalModeState(
-        currentRole.defaultPortal === "warehouse"
-          ? "warehouse"
-          : currentRole.defaultPortal === "serviser"
-          ? "serviser"
-          : "transport"
-      );
+      setActivePageState("servisna-radionica");
     }
   }, [activeUser, currentRole]);
 
   // Drilldown akcije
   const handleSelectYearDrilldown = useCallback((year) => {
     setSelectedServiceYear(year.toString());
-    setActiveTab(4);
-  }, [setActiveTab]);
+    navigateToPage("tabela-servisa");
+  }, [navigateToPage]);
 
   const handleSelectTypeDrilldown = useCallback((type) => {
-    setActiveTab(4);
-  }, [setActiveTab]);
+    navigateToPage("tabela-servisa");
+  }, [navigateToPage]);
 
   const handleSelectBrandDrilldown = useCallback((brand) => {
-    setActiveTab(4);
-  }, [setActiveTab]);
+    navigateToPage("tabela-servisa");
+  }, [navigateToPage]);
 
   // Stabilni warehouse handler-i
   const handleWhSelectYear = useCallback((year) => {
     setSelectedWarehouseYear(year ? String(year) : "all");
-    setActiveWhTab(3);
-  }, [setActiveWhTab]);
+    navigateToPage("skladiste-opravke");
+  }, [navigateToPage]);
 
   const handleWhOpenFleetTab = useCallback(() => {
-    setActiveWhTab(2);
-  }, [setActiveWhTab]);
+    navigateToPage("skladiste-sifrarnik");
+  }, [navigateToPage]);
 
   const handleWhOpenVehicleModal = useCallback((reg) => {
     setVehicleModalReg(reg);
@@ -468,7 +416,7 @@ function DashboardContent() {
   }
 
   // Serviserski namjenski portal (čista radionica bez teških finansijskih menija)
-  if (portalMode === "serviser") {
+  if (activePage === "servisna-radionica") {
     return (
       <div className="min-h-screen w-full overflow-y-auto bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
         <ServiserDashboard
@@ -488,11 +436,7 @@ function DashboardContent() {
           onViewWorkOrder={(o) => setSelectedWorkOrder(o)}
           onPrintWorkOrder={(o) => setPrintingWorkOrder(o)}
           onLogout={logout}
-          onSwitchPortal={
-            currentRole?.permissions?.canSwitchPortal || activeUser?.role === "superadmin"
-              ? () => setPortalMode("transport")
-              : null
-          }
+          onSwitchPortal={() => navigateToPage("kpi-pregled")}
         />
 
         {/* Terenski Radni Nalog Modal za Servisere */}
@@ -554,16 +498,14 @@ function DashboardContent() {
     );
   }
 
+  const isWarehouseMode = activePage.startsWith("skladiste-");
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       {/* Sidebar sa navigacijom i odjavom */}
       <Sidebar
-        portalMode={portalMode}
-        setPortalMode={setPortalMode}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        activeWhTab={activeWhTab}
-        setActiveWhTab={setActiveWhTab}
+        activePage={activePage}
+        onNavigatePage={navigateToPage}
         activeUser={activeUser}
         currentRole={currentRole}
         isDarkMode={isDarkMode}
@@ -576,10 +518,10 @@ function DashboardContent() {
 
       {/* Glavni Kontejner - 100% širina browsera */}
       <div className="flex-1 flex flex-col min-w-0 w-full h-full overflow-hidden">
-        {/* Header sa brzom pretragom i V1 dugmetom */}
+        {/* Header sa brzom pretragom i kategorijskim breadcrumbom */}
         <Header
-          portalMode={portalMode}
-          setPortalMode={setPortalMode}
+          activePage={activePage}
+          onNavigatePage={navigateToPage}
           currentRole={currentRole}
           masterFleet={masterFleet}
           isDarkMode={isDarkMode}
@@ -596,150 +538,145 @@ function DashboardContent() {
 
         {/* Skrolabilni Body Dashboarda - 100% širina */}
         <main className="flex-1 overflow-y-auto w-full p-3 sm:p-5 lg:p-6 space-y-4">
-          {portalMode === "transport" ? (
-            /* Glavni Transport Tabovi */
-            <>
-              {activeTab === 1 && (
-                <TransportKpis
-                  masterFleet={masterFleet}
-                  costData={costData}
-                  onSelectYear={handleSelectYearDrilldown}
-                  onOpenFleetTab={() => setActiveTab(5)}
-                  onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
-                  onOpenIntExtRecap={(t) => setIntExtModalTarget(t)}
-                  onOpenSupplierDetail={(s) => setSupplierModalTarget(s)}
-                  onOpenSegmentDetail={(seg) => setSegmentModalTarget(seg)}
-                />
-              )}
+          {/* 1. KATEGORIJA: ANALITIKA */}
+          {activePage === "kpi-pregled" && (
+            <TransportKpis
+              masterFleet={masterFleet}
+              costData={costData}
+              onSelectYear={handleSelectYearDrilldown}
+              onOpenFleetTab={() => navigateToPage("maticna-baza-flote")}
+              onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
+              onOpenIntExtRecap={(t) => setIntExtModalTarget(t)}
+              onOpenSupplierDetail={(s) => setSupplierModalTarget(s)}
+              onOpenSegmentDetail={(seg) => setSegmentModalTarget(seg)}
+            />
+          )}
 
-              {activeTab === 2 && (
-                <MaintenanceAnalysis
-                  costData={costData}
-                  masterFleet={masterFleet}
-                  onSelectType={handleSelectTypeDrilldown}
-                  onSelectBrand={handleSelectBrandDrilldown}
-                />
-              )}
+          {activePage === "analiza-odrzavanja" && (
+            <MaintenanceAnalysis
+              costData={costData}
+              masterFleet={masterFleet}
+              onSelectType={handleSelectTypeDrilldown}
+              onSelectBrand={handleSelectBrandDrilldown}
+            />
+          )}
 
-              {activeTab === 3 && (
-                <YoYComparison
-                  costData={costData}
-                />
-              )}
+          {activePage === "yoy-komparacija" && (
+            <YoYComparison
+              costData={costData}
+            />
+          )}
 
-              {activeTab === 4 && (
-                <ServiceTable
-                  costData={costData}
-                  selectedYear={selectedServiceYear}
-                  setSelectedYear={setSelectedServiceYear}
-                  onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
-                  onDeleteCostRecord={deleteCostRecord}
-                  activeUser={activeUser}
-                />
-              )}
+          {activePage === "tco-zamjena" && (
+            <TcoCalculator
+              masterFleet={masterFleet}
+              costData={costData}
+              onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
+            />
+          )}
 
-              {activeTab === 5 && (
-                <MasterFleetTable
-                  masterFleet={masterFleet}
-                  onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
-                  onOpenNewVehicleModal={() => {
-                    setEditingVehicle(null);
-                    setIsNewVehicleOpen(true);
-                  }}
-                  onOpenEditVehicle={(v) => setEditingVehicle(v)}
-                  activeUser={activeUser}
-                  currentRole={currentRole}
-                />
-              )}
+          {/* 2. KATEGORIJA: BAZA PODATAKA */}
+          {activePage === "maticna-baza-flote" && (
+            <MasterFleetTable
+              masterFleet={masterFleet}
+              onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
+              onOpenNewVehicleModal={() => {
+                setEditingVehicle(null);
+                setIsNewVehicleOpen(true);
+              }}
+              onOpenEditVehicle={(v) => setEditingVehicle(v)}
+              activeUser={activeUser}
+              currentRole={currentRole}
+            />
+          )}
 
-              {activeTab === 6 && (
-                <TcoCalculator
-                  masterFleet={masterFleet}
-                  costData={costData}
-                  onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
-                />
-              )}
-            </>
-          ) : (
-            /* Skladišna Mehanizacija Tabovi - Instantna navigacija sa perzistentnim stanjem */
-            <>
-              {(visitedWhTabs.has(1) || activeWhTab === 1) && (
-                <div className={activeWhTab === 1 ? "block" : "hidden"}>
-                  <WarehouseKpis
-                    isActive={activeWhTab === 1}
-                    warehouseMasterFleet={warehouseMasterFleet}
-                    warehouseCostData={warehouseCostData}
-                    onSelectYear={handleWhSelectYear}
-                    onOpenFleetTab={handleWhOpenFleetTab}
-                    onOpenVehicleModal={handleWhOpenVehicleModal}
-                    onOpenIntExtRecap={handleWhOpenIntExtRecap}
-                    onOpenSupplierDetail={handleWhOpenSupplierDetail}
-                    onOpenSegmentDetail={handleWhOpenSegmentDetail}
-                  />
-                </div>
-              )}
+          {activePage === "tabela-servisa" && (
+            <ServiceTable
+              costData={costData}
+              selectedYear={selectedServiceYear}
+              setSelectedYear={setSelectedServiceYear}
+              onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
+              onDeleteCostRecord={deleteCostRecord}
+              activeUser={activeUser}
+            />
+          )}
 
-              {(visitedWhTabs.has(2) || activeWhTab === 2) && (
-                <div className={activeWhTab === 2 ? "block" : "hidden"}>
-                  <WarehouseFleet
-                    warehouseMasterFleet={warehouseMasterFleet}
-                    onOpenVehicleModal={handleWhOpenVehicleModal}
-                    onOpenEditVehicle={handleWhOpenEditVehicle}
-                    currentRole={currentRole}
-                  />
-                </div>
-              )}
+          {/* 3. KATEGORIJA: SKLADIŠNA MEHANIZACIJA (sa perzistentnim stanjem komponenti) */}
+          {(visitedWhPages.has("skladiste-analitika") || activePage === "skladiste-analitika") && (
+            <div className={activePage === "skladiste-analitika" ? "block" : "hidden"}>
+              <WarehouseKpis
+                isActive={activePage === "skladiste-analitika"}
+                warehouseMasterFleet={warehouseMasterFleet}
+                warehouseCostData={warehouseCostData}
+                onSelectYear={handleWhSelectYear}
+                onOpenFleetTab={handleWhOpenFleetTab}
+                onOpenVehicleModal={handleWhOpenVehicleModal}
+                onOpenIntExtRecap={handleWhOpenIntExtRecap}
+                onOpenSupplierDetail={handleWhOpenSupplierDetail}
+                onOpenSegmentDetail={handleWhOpenSegmentDetail}
+              />
+            </div>
+          )}
 
-              {(visitedWhTabs.has(3) || activeWhTab === 3) && (
-                <div className={activeWhTab === 3 ? "block" : "hidden"}>
-                  <WarehouseRepairs
-                    warehouseCostData={warehouseCostData}
-                    selectedYear={selectedWarehouseYear}
-                    setSelectedYear={setSelectedWarehouseYear}
-                    onOpenVehicleModal={handleWhOpenVehicleModal}
-                    onDeleteCostRecord={deleteCostRecord}
-                    activeUser={activeUser}
-                  />
-                </div>
-              )}
+          {(visitedWhPages.has("skladiste-sifrarnik") || activePage === "skladiste-sifrarnik") && (
+            <div className={activePage === "skladiste-sifrarnik" ? "block" : "hidden"}>
+              <WarehouseFleet
+                warehouseMasterFleet={warehouseMasterFleet}
+                onOpenVehicleModal={handleWhOpenVehicleModal}
+                onOpenEditVehicle={handleWhOpenEditVehicle}
+                currentRole={currentRole}
+              />
+            </div>
+          )}
 
-              {(visitedWhTabs.has(4) || activeWhTab === 4) && (
-                <div className={activeWhTab === 4 ? "block" : "hidden"}>
-                  <WarehouseSegments
-                    warehouseCostData={warehouseCostData}
-                    onSelectSegment={handleWhOpenSegmentDetail}
-                  />
-                </div>
-              )}
+          {(visitedWhPages.has("skladiste-opravke") || activePage === "skladiste-opravke") && (
+            <div className={activePage === "skladiste-opravke" ? "block" : "hidden"}>
+              <WarehouseRepairs
+                warehouseCostData={warehouseCostData}
+                selectedYear={selectedWarehouseYear}
+                setSelectedYear={setSelectedWarehouseYear}
+                onOpenVehicleModal={handleWhOpenVehicleModal}
+                onDeleteCostRecord={deleteCostRecord}
+                activeUser={activeUser}
+              />
+            </div>
+          )}
 
-              {(visitedWhTabs.has(5) || activeWhTab === 5) && (
-                <div className={activeWhTab === 5 ? "block" : "hidden"}>
-                  <WarehouseSuppliers
-                    warehouseCostData={warehouseCostData}
-                    onSelectSupplier={handleWhOpenSupplierDetail}
-                  />
-                </div>
-              )}
+          {(visitedWhPages.has("skladiste-segmenti") || activePage === "skladiste-segmenti") && (
+            <div className={activePage === "skladiste-segmenti" ? "block" : "hidden"}>
+              <WarehouseSegments
+                warehouseCostData={warehouseCostData}
+                onSelectSegment={handleWhOpenSegmentDetail}
+              />
+            </div>
+          )}
 
-              {(visitedWhTabs.has(6) || activeWhTab === 6) && (
-                <div className={activeWhTab === 6 ? "block" : "hidden"}>
-                  <WarehouseWorkOrders
-                    workOrders={workOrders}
-                    isLoading={isWorkOrdersLoading}
-                    onCreateOrderClick={() => setIsCreateWorkOrderOpen(true)}
-                    onOpenFieldForm={() => {
-                      setFieldFormInitialOrder(null);
-                      setIsFieldFormOpen(true);
-                    }}
-                    onViewOrder={(o) => setSelectedWorkOrder(o)}
-                    onPrintOrder={(o) => setPrintingWorkOrder(o)}
-                    onApproveOrder={(id) => setOrderStatus(id, "approved", activeUser?.fullname || activeUser?.username)}
-                    onDeleteOrder={deleteWorkOrder}
-                    onSeedDemoOrder={handleSeedDemoWorkOrder}
-                  />
-                </div>
-              )}
-            </>
+          {(visitedWhPages.has("skladiste-dobavljaci") || activePage === "skladiste-dobavljaci") && (
+            <div className={activePage === "skladiste-dobavljaci" ? "block" : "hidden"}>
+              <WarehouseSuppliers
+                warehouseCostData={warehouseCostData}
+                onSelectSupplier={handleWhOpenSupplierDetail}
+              />
+            </div>
+          )}
+
+          {(visitedWhPages.has("skladiste-nalozi") || activePage === "skladiste-nalozi") && (
+            <div className={activePage === "skladiste-nalozi" ? "block" : "hidden"}>
+              <WarehouseWorkOrders
+                workOrders={workOrders}
+                isLoading={isWorkOrdersLoading}
+                onCreateOrderClick={() => setIsCreateWorkOrderOpen(true)}
+                onOpenFieldForm={() => {
+                  setFieldFormInitialOrder(null);
+                  setIsFieldFormOpen(true);
+                }}
+                onViewOrder={(o) => setSelectedWorkOrder(o)}
+                onPrintOrder={(o) => setPrintingWorkOrder(o)}
+                onApproveOrder={(id) => setOrderStatus(id, "approved", activeUser?.fullname || activeUser?.username)}
+                onDeleteOrder={deleteWorkOrder}
+                onSeedDemoOrder={handleSeedDemoWorkOrder}
+              />
+            </div>
           )}
         </main>
       </div>
@@ -765,8 +702,8 @@ function DashboardContent() {
         isOpen={!!intExtModalTarget}
         onClose={() => setIntExtModalTarget(null)}
         targetType={intExtModalTarget || "Interno"}
-        costData={portalMode === "warehouse" ? warehouseCostData : costData}
-        isWarehouseMode={portalMode === "warehouse"}
+        costData={isWarehouseMode ? warehouseCostData : costData}
+        isWarehouseMode={isWarehouseMode}
         onOpenVehicleModal={(reg) => {
           setIntExtModalTarget(null);
           setVehicleModalReg(reg);
@@ -778,8 +715,8 @@ function DashboardContent() {
         isOpen={!!supplierModalTarget}
         onClose={() => setSupplierModalTarget(null)}
         supplierName={supplierModalTarget || ""}
-        costData={portalMode === "warehouse" ? warehouseCostData : costData}
-        isWarehouseMode={portalMode === "warehouse"}
+        costData={isWarehouseMode ? warehouseCostData : costData}
+        isWarehouseMode={isWarehouseMode}
         onOpenVehicleModal={(reg) => {
           setSupplierModalTarget(null);
           setVehicleModalReg(reg);
@@ -791,8 +728,8 @@ function DashboardContent() {
         isOpen={!!segmentModalTarget}
         onClose={() => setSegmentModalTarget(null)}
         segmentName={segmentModalTarget || ""}
-        costData={portalMode === "warehouse" ? warehouseCostData : costData}
-        isWarehouseMode={portalMode === "warehouse"}
+        costData={isWarehouseMode ? warehouseCostData : costData}
+        isWarehouseMode={isWarehouseMode}
         onOpenVehicleModal={(reg) => {
           setSegmentModalTarget(null);
           setVehicleModalReg(reg);

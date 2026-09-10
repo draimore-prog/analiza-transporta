@@ -4,17 +4,26 @@ import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 const ALL_AVAILABLE_PANELS = [
-  { id: "tab1", name: "Pregled Flote & KPI", portal: "transport", icon: "📊", tabId: 1 },
-  { id: "tab2", name: "Analiza Održavanja", portal: "transport", icon: "📈", tabId: 2 },
-  { id: "tab3", name: "YoY Komparacija", portal: "transport", icon: "🔄", tabId: 3 },
-  { id: "tab4", name: "Tabela Servisa", portal: "transport", icon: "🔧", tabId: 4 },
-  { id: "tab5", name: "Matična baza podataka", portal: "transport", icon: "🚛", tabId: 5 },
-  { id: "wh1", name: "Analitika & Finansije", portal: "warehouse", icon: "📊", tabId: 1 },
-  { id: "wh2", name: "Šifrarnik Flote (594)", portal: "warehouse", icon: "🚜", tabId: 2 },
-  { id: "wh3", name: "Pregled Svih Opravki", portal: "warehouse", icon: "🔧", tabId: 3 },
-  { id: "wh4", name: "Segmenti & Dijelovi", portal: "warehouse", icon: "⚡", tabId: 4 },
-  { id: "wh5", name: "Serviseri & Dobavljači", portal: "warehouse", icon: "🏢", tabId: 5 },
-  { id: "serviserSearch", name: "Karton Vozila / Pretraga", portal: "serviser", icon: "🔍", tabId: 1 }
+  // Analitika
+  { id: "kpi-pregled", name: "KPI Pregled Flote", category: "analitika", icon: "📊" },
+  { id: "analiza-odrzavanja", name: "Analiza Održavanja", category: "analitika", icon: "📈" },
+  { id: "yoy-komparacija", name: "YoY Komparacija", category: "analitika", icon: "⚖️" },
+  { id: "tco-zamjena", name: "TCO & Zamjena Vozila", category: "analitika", icon: "🔄" },
+
+  // Baza podataka
+  { id: "maticna-baza-flote", name: "Matična Baza Voznog Parka", category: "baza-podataka", icon: "🏢" },
+  { id: "tabela-servisa", name: "Tabela Servisa & Troškova", category: "baza-podataka", icon: "📋" },
+
+  // Skladišna mehanizacija
+  { id: "skladiste-analitika", name: "Analitika & Finansije Skladišta", category: "skladisna-mehanizacija", icon: "📊" },
+  { id: "skladiste-sifrarnik", name: "Šifrarnik Mehanizacije (594)", category: "skladisna-mehanizacija", icon: "🚜" },
+  { id: "skladiste-opravke", name: "Pregled Svih Opravki", category: "skladisna-mehanizacija", icon: "🔧" },
+  { id: "skladiste-segmenti", name: "Segmenti & Dijelovi", category: "skladisna-mehanizacija", icon: "⚡" },
+  { id: "skladiste-dobavljaci", name: "Serviseri & Dobavljači", category: "skladisna-mehanizacija", icon: "🏢" },
+  { id: "skladiste-nalozi", name: "Radni Nalozi & Pregledi", category: "skladisna-mehanizacija", icon: "📋" },
+
+  // Serviser
+  { id: "servisna-radionica", name: "Serviserski Portal / Terenski Unos", category: "serviser", icon: "🛠️" }
 ];
 
 export function EditRoleModal({
@@ -179,13 +188,13 @@ export function EditRoleModal({
               </span>
             </div>
 
-            {/* Transport tabovi */}
+            {/* Analitika */}
             <div>
-              <p className="text-[10px] font-extrabold text-blue-700 dark:text-blue-400 uppercase mb-1.5">
-                🚛 Glavni Transportni Portal:
+              <p className="text-[10px] font-extrabold text-blue-700 dark:text-blue-400 uppercase mb-1.5 flex items-center gap-1">
+                <span>📊</span> <span>Analitika:</span>
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {ALL_AVAILABLE_PANELS.filter((p) => p.portal === "transport").map((p) => (
+                {ALL_AVAILABLE_PANELS.filter((p) => p.category === "analitika").map((p) => (
                   <label
                     key={p.id}
                     className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer"
@@ -204,13 +213,38 @@ export function EditRoleModal({
               </div>
             </div>
 
-            {/* Skladišni tabovi */}
+            {/* Baza podataka */}
             <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
-              <p className="text-[10px] font-extrabold text-amber-700 dark:text-amber-400 uppercase mb-1.5">
-                🏗️ Skladišna Mehanizacija:
+              <p className="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase mb-1.5 flex items-center gap-1">
+                <span>🗄️</span> <span>Baza Podataka:</span>
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {ALL_AVAILABLE_PANELS.filter((p) => p.portal === "warehouse").map((p) => (
+                {ALL_AVAILABLE_PANELS.filter((p) => p.category === "baza-podataka").map((p) => (
+                  <label
+                    key={p.id}
+                    className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedPanelIds.has(p.id)}
+                      onChange={() => togglePanel(p.id)}
+                      className="rounded text-emerald-600 w-4 h-4"
+                    />
+                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                      {p.icon} {p.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Skladišna mehanizacija */}
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
+              <p className="text-[10px] font-extrabold text-amber-700 dark:text-amber-400 uppercase mb-1.5 flex items-center gap-1">
+                <span>🚜</span> <span>Skladišna Mehanizacija:</span>
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {ALL_AVAILABLE_PANELS.filter((p) => p.category === "skladisna-mehanizacija").map((p) => (
                   <label
                     key={p.id}
                     className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer"
@@ -229,27 +263,29 @@ export function EditRoleModal({
               </div>
             </div>
 
-            {/* Serviser */}
+            {/* Servisna radionica */}
             <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
-              <p className="text-[10px] font-extrabold text-slate-500 uppercase mb-1.5">
-                🔧 Servisna Radionica:
+              <p className="text-[10px] font-extrabold text-indigo-700 dark:text-indigo-400 uppercase mb-1.5 flex items-center gap-1">
+                <span>🔧</span> <span>Servisna Radionica:</span>
               </p>
-              {ALL_AVAILABLE_PANELS.filter((p) => p.portal === "serviser").map((p) => (
-                <label
-                  key={p.id}
-                  className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedPanelIds.has(p.id)}
-                    onChange={() => togglePanel(p.id)}
-                    className="rounded text-indigo-600 w-4 h-4"
-                  />
-                  <span className="font-bold text-slate-800 dark:text-slate-200">
-                    {p.icon} {p.name}
-                  </span>
-                </label>
-              ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {ALL_AVAILABLE_PANELS.filter((p) => p.category === "serviser").map((p) => (
+                  <label
+                    key={p.id}
+                    className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedPanelIds.has(p.id)}
+                      onChange={() => togglePanel(p.id)}
+                      className="rounded text-indigo-600 w-4 h-4"
+                    />
+                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                      {p.icon} {p.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
 

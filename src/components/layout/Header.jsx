@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { PlusCircle, Search, X, ChevronRight, Sun, Moon, Bell, ClipboardList } from "lucide-react";
+import { PlusCircle, Search, X, ChevronRight, Sun, Moon, Bell, ClipboardList, Plus } from "lucide-react";
 import { normalizeVehicleStatus, getVehicleStatusBadge } from "@/lib/calculations.js";
+import { APP_NAV_SECTIONS } from "@/lib/constants.js";
 
 export function Header({
+  activePage = "kpi-pregled",
   portalMode,
   setPortalMode,
   currentRole,
@@ -25,6 +27,27 @@ export function Header({
   const containerRef = useRef(null);
   const notifRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Informacije o trenutnoj kategoriji i stranici za breadcrumb
+  const activePageInfo = useMemo(() => {
+    for (const sec of APP_NAV_SECTIONS) {
+      const item = sec.items.find((i) => i.id === activePage);
+      if (item) {
+        return {
+          categoryTitle: sec.title,
+          categoryIcon: sec.icon,
+          title: item.name,
+          icon: item.icon
+        };
+      }
+    }
+    return {
+      categoryTitle: "Analitika",
+      categoryIcon: "📊",
+      title: "KPI Pregled Flote",
+      icon: "📊"
+    };
+  }, [activePage]);
 
   // Filtriranje vozila za search dropdown
   const matchingVehicles = useMemo(() => {
@@ -121,12 +144,17 @@ export function Header({
 
   return (
     <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 z-30 flex-shrink-0 shadow-xs">
-      <div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-          {portalMode === "transport"
-            ? "KPI Total Struktura (938 aktivnih vozila u 2026.)"
-            : "Skladišna Mehanizacija (594 aktivne jedinice u 2026.)"}
-        </p>
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-base">{activePageInfo.categoryIcon}</span>
+          <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[11px]">
+            {activePageInfo.categoryTitle}
+          </span>
+          <span className="text-slate-300 dark:text-slate-600 font-bold">/</span>
+          <span className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <span>{activePageInfo.title}</span>
+          </span>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
@@ -226,18 +254,15 @@ export function Header({
           )}
         </div>
 
-        {/* Portal Switcher */}
-        {currentRole?.permissions?.canSwitchPortal && (
+        {/* Novo Vozilo Dugme */}
+        {currentRole?.permissions?.canRegisterVehicle && onOpenNewVehicleModal && (
           <button
-            onClick={() => setPortalMode(portalMode === "transport" ? "warehouse" : "transport")}
-            className={`font-extrabold px-3 py-1.5 rounded-lg transition-all text-xs flex items-center gap-1.5 shadow-xs border cursor-pointer ${
-              portalMode === "transport"
-                ? "bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-600"
-                : "bg-blue-600 hover:bg-blue-500 text-white border-blue-700"
-            }`}
+            onClick={onOpenNewVehicleModal}
+            className="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold px-3 py-1.5 rounded-lg transition-colors text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
+            title="Unos novog vozila ili skladišne mehanizacije"
           >
-            <span>{portalMode === "transport" ? "🏗️" : "🚛"}</span>
-            <span>{portalMode === "transport" ? "Skladišna Mehanizacija" : "Glavni Transport"}</span>
+            <Plus className="w-4 h-4" />
+            <span>Novo Vozilo</span>
           </button>
         )}
 
