@@ -8,15 +8,17 @@ import {
   BackHandler,
   SafeAreaView,
   StatusBar,
-  Platform
+  Platform,
+  AppState
 } from "react-native";
 import { WebView } from "react-native-webview";
 import * as Notifications from "expo-notifications";
 import * as ImagePicker from "expo-image-picker";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, onSnapshot, query, where, doc, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
 
-const PORTAL_URL = "https://analiza-transporta-flota.web.app/?portal=servisna-radionica";
+const PORTAL_URL = "https://analiza-transporta-flota.web.app/?portal=terenski-nalozi";
+const EXPO_PROJECT_ID = "aba5c8a2-9d9f-4ec6-8060-442bc8068155";
 
 // Konfiguracija prikaza notifikacija dok je aplikacija aktivna u prvom planu
 Notifications.setNotificationHandler({
@@ -52,11 +54,11 @@ export default function App() {
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // 1. Zatraži dozvole za notifikacije, kameru i galeriju odmah pri pokretanju aplikacije
+  // 1. Inicijalizacija notifikacionog kanala visokog prioriteta i traženje dozvola
   useEffect(() => {
-    async function requestPermissionsOnStartup() {
+    async function setupNotificationsAndPermissions() {
       try {
-        // A) Kreiranje Android Notification kanala visokog prioriteta sa zvukom i vibracijom
+        // A) Kreiranje Android Notification kanala visokog prioriteta sa zvukom, vibracijom i bypass-om
         if (Platform.OS === "android") {
           await Notifications.setNotificationChannelAsync("radni-nalozi-channel", {
             name: "Radni Nalozi Servisa",
@@ -67,43 +69,73 @@ export default function App() {
             lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
             sound: "default",
             enableVibrate: true,
-            enableLights: true
+            enableLights: true,
+            bypassDnd: true,
+            showBadge: true
           });
         }
 
         // B) Dozvola za notifikacije (uključujući Android 13+ POST_NOTIFICATIONS)
         const { status: existingNotifStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingNotifStatus;
         if (existingNotifStatus !== "granted") {
-          await Notifications.requestPermissionsAsync();
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
         }
 
-        // C) Dozvola za kameru (za slikanje viljuškara i oštećenja)
+        // C) Registracija Expo Push Tokena za pouzdano primanje push notifikacija u pozadini
+        if (finalStatus === "granted") {
+          try {
+            const tokenResult = await Notifications.getExpoPushTokenAsync({
+              projectId: EXPO_PROJECT_ID
+            });
+            if (tokenResult?.data) {
+              const token = tokenResult.data;
+              const cleanDocId = token.replace(/[^a-zA-Z0-9_-]/g, "_");
+              await setDoc(
+                doc(db, "serviser_push_tokens", cleanDocId),
+                {
+                  token,
+                  platform: Platform.OS,
+                  updatedAt: new Date().toISOString(),
+                  appVersion: "1.0.0"
+                },
+                { merge: true }
+              );
+              console.log("Push token registrovan u bazi:", token);
+            }
+          } catch (tokenErr) {
+            console.warn("Push token registracija obavijest:", tokenErr);
+          }
+        }
+
+        // D) Dozvola za kameru (za slikanje viljuškara i oštećenja)
         const { status: existingCamStatus } = await ImagePicker.getCameraPermissionsAsync();
         if (existingCamStatus !== "granted") {
           await ImagePicker.requestCameraPermissionsAsync();
         }
 
-        // D) Dozvola za galeriju / medije
+        // E) Dozvola za galeriju / medije
         const { status: existingMediaStatus } = await ImagePicker.getMediaLibraryPermissionsAsync();
         if (existingMediaStatus !== "granted") {
           await ImagePicker.requestMediaLibraryPermissionsAsync();
         }
       } catch (err) {
-        console.warn("Greška pri traženju dozvola na uređaju:", err);
+        console.warn("Greška pri postavljanju dozvola na uređaju:", err);
       }
     }
 
-    requestPermissionsOnStartup();
+    setupNotificationsAndPermissions();
   }, []);
 
-  // 2. Real-time osluškivanje novih radnih naloga direktno iz Firestore baze
+  // 2. Real-time osluškivanje novih radnih naloga iz tačne kolekcije 'warehouse_work_orders'
   useEffect(() => {
     let isFirstLoad = true;
     let unsubscribe = () => {};
 
     try {
       const q = query(
-        collection(db, "work_orders"),
+        collection(db, "warehouse_work_orders"),
         where("status", "in", ["pending", "in_progress"])
       );
 
@@ -112,23 +144,27 @@ export default function App() {
         (snapshot) => {
           if (isFirstLoad) {
             isFirstLoad = false;
-            return; // Preskoči postojeće naloge pri pokretanju da ne šalje notifikacije za stare
+            return; // Preskoči postojeće naloge pri prvom učitavanju
           }
 
           snapshot.docChanges().forEach(async (change) => {
             if (change.type === "added") {
               const order = change.doc.data();
-              const vehId = order.vehicleId || "Mehanizacija";
-              const desc = order.workDescription || "Dodijeljen radni nalog od voditelja";
+              const vehId = order.vehicleId || "Skladišna mehanizacija";
+              const desc = order.workDescription || order.notes || "Novi nalog za pregled ili servis";
               const assigned = order.assignedTo ? ` (Zadužen: ${order.assignedTo})` : "";
 
               await Notifications.scheduleNotificationAsync({
                 content: {
                   title: `🔔 NOVI RADNI NALOG: ${vehId}`,
                   body: `${desc}${assigned}`,
-                  sound: true,
+                  sound: "default",
                   priority: Notifications.AndroidNotificationPriority.MAX,
-                  channelId: "radni-nalozi-channel"
+                  channelId: "radni-nalozi-channel",
+                  data: {
+                    orderId: change.doc.id,
+                    vehicleId: vehId
+                  }
                 },
                 trigger: null
               });
@@ -136,14 +172,56 @@ export default function App() {
           });
         },
         (error) => {
-          console.warn("Firestore notification listener error:", error);
+          console.warn("Firestore warehouse_work_orders listener obavijest:", error);
         }
       );
     } catch (err) {
-      console.warn("Firestore listener setup error:", err);
+      console.warn("Firestore listener setup greška:", err);
     }
 
     return () => unsubscribe();
+  }, []);
+
+  // 3. Upravljanje vraćanjem iz pozadine (AppState) radi pouzdanog očuvanja kanala i sinhronizacije
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState) => {
+      if (nextAppState === "active") {
+        // Kada serviser ponovo otvori aplikaciju iz pozadine
+        if (webViewRef.current) {
+          webViewRef.current.injectJavaScript(`
+            if (typeof window !== 'undefined' && window.location) {
+              console.log('App resumed from background');
+            }
+            true;
+          `);
+        }
+      }
+    };
+
+    const sub = AppState.addEventListener("change", handleAppStateChange);
+    return () => sub.remove();
+  }, []);
+
+  // 4. Rukovanje klikom na notifikaciju (direktno otvaranje radnog naloga)
+  useEffect(() => {
+    const responseListener = Notifications.addNotificationResponseReceivedListener((response) => {
+      try {
+        const notifData = response?.notification?.request?.content?.data;
+        if (notifData?.orderId && webViewRef.current) {
+          const targetUrl = `https://analiza-transporta-flota.web.app/?portal=terenski-nalozi&orderId=${notifData.orderId}`;
+          webViewRef.current.injectJavaScript(`
+            window.location.href = "${targetUrl}";
+            true;
+          `);
+        }
+      } catch (err) {
+        console.warn("Greška pri otvaranju notifikacije:", err);
+      }
+    });
+
+    return () => {
+      Notifications.removeNotificationSubscription(responseListener);
+    };
   }, []);
 
   // 3. Prijem poruka iz WebView-a za slanje nativnih notifikacija

@@ -2,12 +2,12 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDummyKeyForStaticHosting",
-  authDomain: "analiza-transporta-flota.firebaseapp.com",
   projectId: "analiza-transporta-flota",
-  storageBucket: "analiza-transporta-flota.appspot.com",
-  messagingSenderId: "1087413645321",
-  appId: "1:1087413645321:web:analizaTransportaAppId"
+  appId: "1:1097206634987:web:178e18377696faf183e1ae",
+  storageBucket: "analiza-transporta-flota.firebasestorage.app",
+  apiKey: "AIzaSyDyYOLagPwhGirEfMXbqAClooDFODUVb2M",
+  authDomain: "analiza-transporta-flota.firebaseapp.com",
+  messagingSenderId: "1097206634987"
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();

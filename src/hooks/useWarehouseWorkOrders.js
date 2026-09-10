@@ -8,10 +8,49 @@ import {
   doc,
   setDoc,
   deleteDoc,
+  getDocs,
   query,
   orderBy,
   serverTimestamp
 } from "firebase/firestore";
+
+// Slanje native Expo Push Notifikacija na registrovane mobilne uređaje servisera
+async function dispatchPushNotificationToServisers({ title, body, data }) {
+  try {
+    const tokensSnap = await getDocs(collection(db, "serviser_push_tokens"));
+    const tokens = [];
+    tokensSnap.forEach((d) => {
+      const t = d.data()?.token;
+      if (t && typeof t === "string" && t.startsWith("ExponentPushToken[")) {
+        tokens.push(t);
+      }
+    });
+
+    if (tokens.length === 0) return;
+
+    const messages = tokens.map((to) => ({
+      to,
+      sound: "default",
+      title,
+      body,
+      data,
+      channelId: "radni-nalozi-channel",
+      priority: "high"
+    }));
+
+    await fetch("https://exp.host/--/api/v2/push/send", {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Accept-Encoding": "gzip, deflate",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(messages)
+    });
+  } catch (err) {
+    console.warn("Greška pri slanju push notifikacije serviserima:", err);
+  }
+}
 
 export const WORK_ORDER_STATUSES = {
   pending: { id: "pending", label: "Zadano / Čeka rad", color: "bg-amber-100 text-amber-800 border-amber-300" },
@@ -100,6 +139,18 @@ export function useWarehouseWorkOrders() {
       };
 
       await setDoc(doc(db, "warehouse_work_orders", docId), newOrder, { merge: true });
+
+      // Slanje native Expo Push Notifikacija na mobilne telefone servisera
+      dispatchPushNotificationToServisers({
+        title: `🔔 NOVI RADNI NALOG: ${newOrder.vehicleId || "Skladišna mehanizacija"}`,
+        body: `${newOrder.workDescription || newOrder.notes || "Dodijeljen novi nalog za pregled ili servis"}${newOrder.assignedTo ? ` (${newOrder.assignedTo})` : ""}`,
+        data: {
+          orderId: docId,
+          orderNumber: newOrder.orderNumber,
+          vehicleId: newOrder.vehicleId
+        }
+      });
+
       return { success: true, orderNumber, id: docId };
     },
     [generateOrderNumber]

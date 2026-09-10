@@ -46,6 +46,11 @@ service cloud.firestore {
       allow delete: if true;
     }
 
+    // 7. Push tokeni mobilnih uređaja servisera (serviser_push_tokens)
+    match /serviser_push_tokens/{docId} {
+      allow read, write: if true;
+    }
+
     // Zabrani pristup svim ostalim nedefinisanim kolekcijama
     match /{document=**} {
       allow read, write: if false;
