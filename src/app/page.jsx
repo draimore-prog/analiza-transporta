@@ -195,6 +195,7 @@ function DashboardContent() {
 
   // Funkcija za navigaciju na određenu stranicu uz ažuriranje browser URL-a
   const navigateToPage = useCallback((pageId) => {
+    if (!pageId || typeof pageId !== "string") return;
     setActivePageState(pageId);
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
@@ -454,7 +455,7 @@ function DashboardContent() {
           }}
           onViewWorkOrder={(o) => setSelectedWorkOrder(o)}
           onPrintWorkOrder={(o) => setPrintingWorkOrder(o)}
-          onLogout={logout}
+          onLogout={() => logout()}
           onSwitchPortal={() => navigateToPage("kpi-pregled")}
           canEdit={canEditPage(currentRole, "servisna-radionica")}
         />
@@ -532,7 +533,7 @@ function DashboardContent() {
         setIsDarkMode={setIsDarkMode}
         onOpenAdminPanel={() => setIsAdminPanelOpen(true)}
         onOpenPasswordModal={() => setIsPasswordModalOpen(true)}
-        onLogout={logout}
+        onLogout={() => logout()}
         pendingWorkOrdersCount={pendingReviewCount}
       />
 

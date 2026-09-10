@@ -240,7 +240,7 @@ export function ServiserDashboard({
             )}
 
             <button
-              onClick={onLogout}
+              onClick={() => onLogout && onLogout()}
               className="text-xs font-black bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-900/60 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
               title="Odjavi se"
             >

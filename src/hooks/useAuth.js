@@ -29,7 +29,7 @@ export function useAuth() {
       console.warn("Storage error:", e);
     }
     setActiveUser(null);
-    setSessionTimeoutMessage(reason);
+    setSessionTimeoutMessage(typeof reason === "string" ? reason : "");
   }, []);
 
   // Inicijalizacija aktivnog korisnika isključivo iz sačuvane sesije

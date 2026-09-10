@@ -150,7 +150,7 @@ export function Sidebar({
 
             {/* Dugme za Odjavu */}
             <button
-              onClick={onLogout}
+              onClick={() => onLogout && onLogout()}
               className="w-full bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-900/50 font-extrabold px-2.5 py-1.5 rounded-lg transition-colors text-[10px] flex items-center justify-center gap-1.5 border border-red-200 dark:border-red-900/60 cursor-pointer mt-0.5"
             >
               <LogOut className="w-3 h-3" /> Odjava
