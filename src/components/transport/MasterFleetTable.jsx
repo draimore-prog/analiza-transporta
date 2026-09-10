@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   Loader2,
   Edit3,
+  Trash2,
   FilterX
 } from "lucide-react";
 
@@ -23,6 +24,8 @@ export function MasterFleetTable({
   onOpenVehicleModal,
   onOpenNewVehicleModal,
   onOpenEditVehicle,
+  onDeleteVehicle,
+  activeUser,
   currentRole,
   canEdit
 }) {
@@ -237,6 +240,11 @@ export function MasterFleetTable({
 
   const canEditVehicle =
     canEdit !== undefined ? canEdit : canEditPage(currentRole, "maticna-baza-flote");
+
+  const isSuperadmin =
+    activeUser?.role === "superadmin" ||
+    currentRole?.roleId === "superadmin" ||
+    activeUser?.username === "emir.durakovic";
 
   return (
     <div className="space-y-6">
@@ -548,6 +556,19 @@ export function MasterFleetTable({
                               title="Uredi matične podatke ovog vozila"
                             >
                               <Edit3 className="w-3 h-3" /> Uredi
+                            </button>
+                          )}
+                          {isSuperadmin && onDeleteVehicle && (
+                            <button
+                              onClick={() => {
+                                if (confirm(`Da li ste sigurni da želite TRAJNO obrisati vozilo "${v.reg}" iz baze podataka?`)) {
+                                  onDeleteVehicle(v.reg);
+                                }
+                              }}
+                              className="bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-rose-200 dark:border-rose-900/60 cursor-pointer flex items-center gap-1"
+                              title="Trajno obriši vozilo iz baze (samo Superadmin)"
+                            >
+                              <Trash2 className="w-3 h-3" /> Obriši
                             </button>
                           )}
                         </div>

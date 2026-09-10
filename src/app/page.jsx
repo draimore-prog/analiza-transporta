@@ -109,7 +109,8 @@ function DashboardContent() {
     loadProgress,
     addCostRecord,
     deleteCostRecord,
-    saveVehicle
+    saveVehicle,
+    deleteVehicle
   } = useFleetData();
 
   const {
@@ -606,6 +607,7 @@ function DashboardContent() {
                 setIsNewVehicleOpen(true);
               }}
               onOpenEditVehicle={(v) => setEditingVehicle(v)}
+              onDeleteVehicle={deleteVehicle}
               activeUser={activeUser}
               currentRole={currentRole}
               canEdit={canEditPage(currentRole, "maticna-baza-flote")}
@@ -647,6 +649,8 @@ function DashboardContent() {
                 warehouseMasterFleet={warehouseMasterFleet}
                 onOpenVehicleModal={handleWhOpenVehicleModal}
                 onOpenEditVehicle={handleWhOpenEditVehicle}
+                onDeleteVehicle={deleteVehicle}
+                activeUser={activeUser}
                 currentRole={currentRole}
                 canEdit={canEditPage(currentRole, "skladiste-sifrarnik")}
               />
@@ -718,6 +722,7 @@ function DashboardContent() {
           masterFleet={masterFleet}
           costData={costData}
           onOpenEditVehicle={(v) => setEditingVehicle(v)}
+          onDeleteVehicle={deleteVehicle}
           currentRole={currentRole}
           activeUser={activeUser}
         />
@@ -780,6 +785,9 @@ function DashboardContent() {
         }}
         initialVehicle={editingVehicle}
         onSaveVehicle={saveVehicle}
+        onDeleteVehicle={deleteVehicle}
+        activeUser={activeUser}
+        currentRole={currentRole}
       />
 
       {/* Admin Panel Modal */}

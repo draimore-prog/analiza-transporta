@@ -24,6 +24,9 @@ export function EditVehicleModal({
   isOpen,
   onClose,
   onSaveVehicle,
+  onDeleteVehicle,
+  activeUser,
+  currentRole,
   initialVehicle
 }) {
   const [reg, setReg] = useState("");
@@ -90,7 +93,12 @@ export function EditVehicleModal({
 
   if (!isOpen) return null;
 
-  const isEditMode = Boolean(initialVehicle && initialVehicle.reg);
+  const isEditMode = !!initialVehicle;
+
+  const isSuperadmin =
+    activeUser?.role === "superadmin" ||
+    currentRole?.roleId === "superadmin" ||
+    activeUser?.username === "emir.durakovic";
 
   // Upload jedne ili više slika (do 10 ukupno) na Firebase Storage
   const handleFileSelection = async (e) => {
@@ -445,21 +453,40 @@ export function EditVehicleModal({
           </div>
 
           {/* Footer Dugmad */}
-          <div className="pt-4 flex justify-end gap-2.5 border-t border-slate-100 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl transition-all cursor-pointer"
-            >
-              Odustani
-            </button>
-            <button
-              type="submit"
-              disabled={isSaving || isUploading}
-              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
-            >
-              <span>{isSaving ? "Spremanje..." : isEditMode ? "💾 Sačuvaj Izmjene" : "➕ Sačuvaj Novo Vozilo"}</span>
-            </button>
+          <div className="pt-4 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
+            <div>
+              {isEditMode && isSuperadmin && onDeleteVehicle && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (confirm(`Da li ste sigurni da želite TRAJNO obrisati vozilo "${reg}" iz baze podataka?`)) {
+                      await onDeleteVehicle(reg);
+                      onClose();
+                    }
+                  }}
+                  className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 font-extrabold rounded-xl border border-rose-200 dark:border-rose-900/60 transition-all cursor-pointer flex items-center gap-1.5 text-xs"
+                  title="Trajno obriši vozilo iz baze (samo Superadmin)"
+                >
+                  <Trash2 className="w-4 h-4" /> Obriši Vozilo
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl transition-all cursor-pointer"
+              >
+                Odustani
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving || isUploading}
+                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+              >
+                <span>{isSaving ? "Spremanje..." : isEditMode ? "💾 Sačuvaj Izmjene" : "➕ Sačuvaj Novo Vozilo"}</span>
+              </button>
+            </div>
           </div>
         </form>
 

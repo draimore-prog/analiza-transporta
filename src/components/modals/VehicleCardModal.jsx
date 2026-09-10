@@ -20,6 +20,7 @@ import {
   Maximize2,
   Camera,
   Download,
+  Trash2,
   Star
 } from "lucide-react";
 
@@ -30,6 +31,7 @@ export function VehicleCardModal({
   costData,
   masterFleet,
   onOpenEditVehicle,
+  onDeleteVehicle,
   currentRole,
   activeUser
 }) {
@@ -414,6 +416,11 @@ export function VehicleCardModal({
       currentRole?.permissions?.canEditCosts ||
       currentRole?.roleId === "superadmin");
 
+  const isSuperadmin =
+    activeUser?.role === "superadmin" ||
+    currentRole?.roleId === "superadmin" ||
+    activeUser?.username === "emir.durakovic";
+
   const statusBadge = getVehicleStatusBadge(vehicleInfo?.status);
 
   return (
@@ -500,6 +507,20 @@ export function VehicleCardModal({
                 title="Uredi matične podatke vozila"
               >
                 <Edit3 className="w-3.5 h-3.5" /> Uredi Vozilo
+              </button>
+            )}
+            {isSuperadmin && onDeleteVehicle && (
+              <button
+                onClick={async () => {
+                  if (confirm(`Da li ste sigurni da želite TRAJNO obrisati vozilo "${vehicleInfo.reg}" iz baze podataka?`)) {
+                    await onDeleteVehicle(vehicleInfo.reg);
+                    onClose();
+                  }
+                }}
+                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-xl transition-all cursor-pointer flex items-center gap-1 text-xs shadow-xs"
+                title="Trajno obriši vozilo iz baze (samo Superadmin)"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Obriši Vozilo
               </button>
             )}
             <button

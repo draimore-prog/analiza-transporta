@@ -4,12 +4,14 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import { exportMasterFleetToExcel } from "@/lib/exportExcel.js";
 import { normalizeVehicleStatus, getVehicleStatusBadge } from "@/lib/calculations.js";
 import { canEditPage } from "@/lib/constants.js";
-import { Download, RotateCcw, ArrowDown as ScrollDown, CheckCircle2, Loader2, Edit3, FilterX } from "lucide-react";
+import { Download, RotateCcw, ArrowDown as ScrollDown, CheckCircle2, Loader2, Edit3, Trash2, FilterX } from "lucide-react";
 
 export function WarehouseFleet({
   warehouseMasterFleet,
   onOpenVehicleModal,
   onOpenEditVehicle,
+  onDeleteVehicle,
+  activeUser,
   currentRole,
   canEdit
 }) {
@@ -152,6 +154,11 @@ export function WarehouseFleet({
 
   const canEditVehicle =
     canEdit !== undefined ? canEdit : canEditPage(currentRole, "skladiste-sifrarnik");
+
+  const isSuperadmin =
+    activeUser?.role === "superadmin" ||
+    currentRole?.roleId === "superadmin" ||
+    activeUser?.username === "emir.durakovic";
 
   return (
     <div className="space-y-6">
@@ -378,6 +385,19 @@ export function WarehouseFleet({
                               title="Uredi matične podatke ove mašine"
                             >
                               <Edit3 className="w-3 h-3" /> Uredi
+                            </button>
+                          )}
+                          {isSuperadmin && onDeleteVehicle && (
+                            <button
+                              onClick={() => {
+                                if (confirm(`Da li ste sigurni da želite TRAJNO obrisati mašinu "${v.reg}" iz baze mehanizacije?`)) {
+                                  onDeleteVehicle(v.reg);
+                                }
+                              }}
+                              className="bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-rose-200 dark:border-rose-900/60 cursor-pointer flex items-center gap-1"
+                              title="Trajno obriši jedinicu mehanizacije (samo Superadmin)"
+                            >
+                              <Trash2 className="w-3 h-3" /> Obriši
                             </button>
                           )}
                         </div>

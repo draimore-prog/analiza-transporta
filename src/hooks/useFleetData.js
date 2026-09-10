@@ -44,7 +44,9 @@ export function useFleetData() {
         if (customEditsRef.current.size > 0) {
           customEditsRef.current.forEach((cleanV, regUpper) => {
             const idx = cleaned.findIndex((x) => (x.reg || "").toUpperCase() === regUpper);
-            if (idx !== -1) {
+            if (cleanV.isDeleted) {
+              if (idx !== -1) cleaned.splice(idx, 1);
+            } else if (idx !== -1) {
               cleaned[idx] = { ...cleaned[idx], ...cleanV };
             } else {
               cleaned.push(cleanV);
@@ -206,15 +208,19 @@ export function useFleetData() {
             const v = change.doc.data();
             if (v && v.reg) {
               const regUpper = v.reg.toUpperCase();
-              const cleanV = {
-                ...v,
-                status: normalizeVehicleStatus(v.status),
-                tipMehan: cleanVehicleType(v.tipMehan)
-              };
-              if (change.type === "added" || change.type === "modified") {
-                customEditsRef.current.set(regUpper, cleanV);
-              } else if (change.type === "removed") {
-                customEditsRef.current.delete(regUpper);
+              if (v.isDeleted) {
+                customEditsRef.current.set(regUpper, { reg: v.reg, isDeleted: true });
+              } else {
+                const cleanV = {
+                  ...v,
+                  status: normalizeVehicleStatus(v.status),
+                  tipMehan: cleanVehicleType(v.tipMehan)
+                };
+                if (change.type === "added" || change.type === "modified") {
+                  customEditsRef.current.set(regUpper, cleanV);
+                } else if (change.type === "removed") {
+                  customEditsRef.current.delete(regUpper);
+                }
               }
             }
           });
@@ -229,15 +235,17 @@ export function useFleetData() {
             changes.forEach((change) => {
               const v = change.doc.data();
               if (v && v.reg) {
-                const cleanV = {
-                  ...v,
-                  status: normalizeVehicleStatus(v.status),
-                  tipMehan: cleanVehicleType(v.tipMehan)
-                };
                 const regUpper = v.reg.toUpperCase();
                 const idx = updated.findIndex((x) => (x.reg || "").toUpperCase() === regUpper);
 
-                if (change.type === "added" || change.type === "modified") {
+                if (v.isDeleted) {
+                  if (idx !== -1) updated.splice(idx, 1);
+                } else if (change.type === "added" || change.type === "modified") {
+                  const cleanV = {
+                    ...v,
+                    status: normalizeVehicleStatus(v.status),
+                    tipMehan: cleanVehicleType(v.tipMehan)
+                  };
                   if (idx !== -1) updated[idx] = { ...updated[idx], ...cleanV };
                   else updated.push(cleanV);
                 } else if (change.type === "removed") {
@@ -324,6 +332,37 @@ export function useFleetData() {
     await setDoc(doc(db, "fleet_master", docId), cleanV, { merge: true });
   };
 
+  const deleteVehicle = async (regOrVehicle) => {
+    const reg = typeof regOrVehicle === "string" ? regOrVehicle : regOrVehicle?.reg || "";
+    const cleanReg = (reg || "").trim();
+    if (!cleanReg) throw new Error("Registracija vozila je obavezna!");
+    const docId = cleanReg.replace(/[\/\\#\?]/g, "_").trim();
+
+    // 1. Zabilježi u Firestore fleet_master isDeleted: true da se trajno ignoriše čak i ako postoji u bazi/JSON-u
+    await setDoc(
+      doc(db, "fleet_master", docId),
+      {
+        reg: cleanReg,
+        isDeleted: true,
+        deletedAt: new Date().toISOString(),
+        isCustomEdit: true
+      },
+      { merge: true }
+    );
+
+    // 2. Lokalno optimistično ažuriranje
+    const regUpper = cleanReg.toUpperCase();
+    customEditsRef.current.set(regUpper, { reg: cleanReg, isDeleted: true });
+
+    setMasterFleet((prev) => {
+      const updated = prev.filter((x) => (x.reg || "").toUpperCase() !== regUpper);
+      if (updated.length >= 1000) {
+        IDBCache.set(MASTER_CACHE_KEY, updated);
+      }
+      return updated;
+    });
+  };
+
   return {
     masterFleet,
     costData,
@@ -335,6 +374,7 @@ export function useFleetData() {
     addCostRecord,
     updateCostRecord,
     deleteCostRecord,
-    saveVehicle
+    saveVehicle,
+    deleteVehicle
   };
 }
