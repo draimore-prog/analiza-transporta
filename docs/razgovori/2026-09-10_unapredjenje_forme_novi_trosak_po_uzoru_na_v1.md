@@ -49,10 +49,15 @@ U datoteci `src/components/modals/NewCostModal.jsx`:
     - Red 1: Reg. Oznaka | Garažni Broj (MT) | Tip Mehanizacije | Godište
     - Red 2: Marka Vozila | Model Vozila | Dinamičko polje (Kilometraža ili Radni sati preko raspona 2 kolone)
     - Sve visine labela (`h-4 mb-1.5`) i inputa (`h-10 rounded-xl px-3`) ujednačene za besprijekorno horizontalno i vertikalno poravnanje.
+- **Zaštita od slučajnog zatvaranja i gubitka unosa:**
+  - Onemogućeno zatvaranje klikom na prazan prostor van modala (backdrop).
+  - Klik na dugme **X** u zaglavlju ili dugme **Odustani** u podnožju obavezno otvara sistemski prozor za potvrdu: *"Da li ste sigurni da želite odustati od unosa troška? Svi uneseni podaci bit će poništeni."*
+  - Forma se automatski zatvara isključivo nakon uspješnog snimanja naloga (kada su popunjena sva obavezna polja i trošak upisan u Firestore).
 
 ---
 
 ## 3. Verifikacija
 - `npm run build`: uspješno kompajlirano bez grešaka.
 - Testiran mehanizam automatskog zaključavanja polja, kalkulacija cijene i povezivanje točenja goriva.
+
 

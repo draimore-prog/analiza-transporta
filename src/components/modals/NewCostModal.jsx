@@ -325,10 +325,27 @@ export function NewCostModal({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleRequestClose = () => {
+    const confirmCancel = window.confirm(
+      "Da li ste sigurni da želite odustati od unosa troška? Svi uneseni podaci bit će poništeni."
+    );
+    if (confirmCancel) {
+      onClose();
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!reg.trim()) {
       alert("Molimo unesite registraciju ili odaberite vozilo!");
+      return;
+    }
+    if (!datum) {
+      alert("Molimo odaberite datum intervencije!");
+      return;
+    }
+    if (!opis.trim()) {
+      alert("Molimo unesite opis kvara ili servisnih radova!");
       return;
     }
     const totalCostNum = parseFloat(cost);
@@ -414,8 +431,7 @@ export function NewCostModal({
 
   return (
     <div
-      onClick={onClose}
-      className="fixed inset-0 bg-slate-900/80 flex justify-center items-center z-[70] backdrop-blur-xs p-3 sm:p-5 cursor-pointer"
+      className="fixed inset-0 bg-slate-900/80 flex justify-center items-center z-[70] backdrop-blur-xs p-3 sm:p-5"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -437,9 +453,10 @@ export function NewCostModal({
             </div>
           </div>
           <button
-            onClick={onClose}
+            type="button"
+            onClick={handleRequestClose}
             className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all cursor-pointer"
-            title="Zatvori"
+            title="Zatvori (uz potvrdu)"
           >
             <X className="w-5 h-5" />
           </button>
@@ -1032,7 +1049,7 @@ export function NewCostModal({
           <div className="pt-2 flex justify-end gap-3 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleRequestClose}
               className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold rounded-xl transition-all cursor-pointer text-xs"
             >
               Odustani
