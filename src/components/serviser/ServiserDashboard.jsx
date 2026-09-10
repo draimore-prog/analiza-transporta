@@ -21,7 +21,9 @@ import {
   ChevronDown,
   X,
   Bell,
-  Volume2
+  Volume2,
+  Sun,
+  Moon
 } from "lucide-react";
 import { WORK_ORDER_STATUSES } from "@/hooks/useWarehouseWorkOrders.js";
 import { notificationService } from "@/lib/notificationSound.js";
@@ -33,6 +35,8 @@ export function ServiserDashboard({
   warehouseCostData = [],
   workOrders = [],
   activeUser,
+  isDarkMode = false,
+  setIsDarkMode,
   onOpenVehicleModal,
   onOpenFieldForm,
   onViewWorkOrder,
@@ -214,6 +218,16 @@ export function ServiserDashboard({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Dugme za promjenu teme (Dark / Light mode) */}
+            <button
+              onClick={() => setIsDarkMode && setIsDarkMode((prev) => !prev)}
+              className="text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 p-2 rounded-xl border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shadow-xs"
+              title={isDarkMode ? "Prebaci na svijetlu temu" : "Prebaci na tamnu temu"}
+              aria-label="Prebaci temu"
+            >
+              {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600 dark:text-slate-300" />}
+            </button>
+
             {onSwitchPortal && (
               <button
                 onClick={onSwitchPortal}

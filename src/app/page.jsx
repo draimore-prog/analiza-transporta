@@ -470,7 +470,7 @@ function DashboardContent() {
   // Serviserski namjenski portal (čista radionica bez teških finansijskih menija)
   if (portalMode === "serviser") {
     return (
-      <div className="flex h-screen w-full overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+      <div className="min-h-screen w-full overflow-y-auto bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
         <ServiserDashboard
           masterFleet={masterFleet}
           costData={costData}
@@ -478,6 +478,8 @@ function DashboardContent() {
           warehouseCostData={warehouseCostData}
           workOrders={workOrders}
           activeUser={activeUser}
+          isDarkMode={isDarkMode}
+          setIsDarkMode={setIsDarkMode}
           onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
           onOpenFieldForm={(initialOrder = null) => {
             setFieldFormInitialOrder(initialOrder);

@@ -5,14 +5,29 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "android": {
       "package": "ba.bingo.servismehanizacije",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECORD_AUDIO"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#10B981",
         "foregroundImage": "./assets/android-icon-foreground.png"
       }
     },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Aplikacija pristupa fotografijama radi dokumentovanja servisa.",
+          "cameraPermission": "Aplikacija pristupa kameri radi slikanja oštećenja i radnih naloga."
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "aba5c8a2-9d9f-4ec6-8060-442bc8068155"
