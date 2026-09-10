@@ -14,7 +14,13 @@ import {
   Calendar,
   Sparkles,
   Paperclip,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Camera,
+  Download,
+  Star
 } from "lucide-react";
 
 export function VehicleCardModal({
@@ -44,9 +50,10 @@ export function VehicleCardModal({
   const [colFilterOpis, setColFilterOpis] = useState("");
   const [colFilterSupplier, setColFilterSupplier] = useState("");
 
-  // Preview stanja za račun i sliku vozila
+  // Preview stanja za račun i multi-slike vozila
   const [previewInvoice, setPreviewInvoice] = useState(null);
-  const [previewVehicleImg, setPreviewVehicleImg] = useState(false);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   // Pronađi osnovne podatke o vozilu
   const vehicleInfo = useMemo(() => {
@@ -91,6 +98,20 @@ export function VehicleCardModal({
       status: "Aktivno"
     };
   }, [reg, masterFleet, costData]);
+
+  // Normalizovani niz fotografija vozila (do 10 slika)
+  const vehicleImages = useMemo(() => {
+    if (!vehicleInfo) return [];
+    if (Array.isArray(vehicleInfo.images) && vehicleInfo.images.length > 0) {
+      return vehicleInfo.images
+        .map((img) => (typeof img === "string" ? img : img.url))
+        .filter(Boolean);
+    }
+    if (vehicleInfo.imageUrl) {
+      return [vehicleInfo.imageUrl];
+    }
+    return [];
+  }, [vehicleInfo]);
 
   const cleanType = cleanVehicleType(vehicleInfo?.tipMehan);
   const isPrikljucno = cleanType === "Priključna vozila" || cleanType === "Radna mašina";
@@ -201,14 +222,32 @@ export function VehicleCardModal({
     return { labels: monthNames, data };
   }, [history, selectedYearFilter]);
 
-  // Resetovanje filtera pri otvaranju novog vozila
+  // Resetovanje filtera i slika pri otvaranju novog vozila
   useEffect(() => {
     setSelectedYearFilter("all");
     setSelectedMonthFilter("all");
     setColFilterSegment("all");
     setColFilterOpis("");
     setColFilterSupplier("");
+    setSelectedPhotoIndex(0);
+    setIsLightboxOpen(false);
   }, [reg]);
+
+  // Tastaturna navigacija za galeriju preko cijelog ekrana (Lijevo, Desno, Esc)
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setIsLightboxOpen(false);
+      } else if (e.key === "ArrowLeft") {
+        setSelectedPhotoIndex((prev) => (prev > 0 ? prev - 1 : vehicleImages.length - 1));
+      } else if (e.key === "ArrowRight") {
+        setSelectedPhotoIndex((prev) => (prev < vehicleImages.length - 1 ? prev + 1 : 0));
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isLightboxOpen, vehicleImages.length]);
 
   // Inicijalizacija i ažuriranje interaktivnih grafikona
   useEffect(() => {
@@ -411,19 +450,19 @@ export function VehicleCardModal({
         <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white flex justify-between items-start print:bg-slate-100 print:text-slate-900 print:p-4 print:rounded-lg print:border print:border-slate-300">
           <div>
             <div className="flex items-center gap-3">
-              {vehicleInfo.imageUrl ? (
+              {vehicleImages.length > 0 ? (
                 <div
-                  onClick={() => setPreviewVehicleImg(true)}
+                  onClick={() => setIsLightboxOpen(true)}
                   className="relative group cursor-pointer shrink-0 print:hidden"
-                  title="Klikni za prikaz slike vozila"
+                  title="Klikni za prikaz galerije slika"
                 >
                   <img
-                    src={vehicleInfo.imageUrl}
+                    src={vehicleImages[selectedPhotoIndex] || vehicleImages[0]}
                     alt={vehicleInfo.reg}
                     className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover border-2 border-white/40 shadow-md group-hover:scale-105 transition-transform"
                   />
-                  <span className="absolute inset-0 bg-black/30 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] text-white font-bold transition-opacity">
-                    🔍
+                  <span className="absolute -bottom-1 -right-1 bg-indigo-600 text-[10px] font-black text-white px-1.5 py-0.2 rounded-full border border-white dark:border-slate-900 shadow leading-none">
+                    📷 {vehicleImages.length}
                   </span>
                 </div>
               ) : (
@@ -530,6 +569,111 @@ export function VehicleCardModal({
               </span>
             </div>
           </div>
+
+          {/* FOTO GALERIJA VOZILA (DO 10 SLIKA) */}
+          {vehicleImages.length > 0 ? (
+            <div className="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs print:hidden shrink-0">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Camera className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <span className="font-extrabold uppercase text-[11px] text-slate-700 dark:text-slate-200">
+                    Foto Galerija Vozila
+                  </span>
+                  <span className="text-[10px] font-black bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800">
+                    {vehicleImages.length} {vehicleImages.length === 1 ? "fotografija" : "fotografija (do 10)"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsLightboxOpen(true)}
+                    className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Maximize2 className="w-3 h-3" /> Prikaz preko cijelog ekrana
+                  </button>
+                  {canEditVehicle && onOpenEditVehicle && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onOpenEditVehicle(vehicleInfo);
+                      }}
+                      className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer ml-2"
+                    >
+                      <Edit3 className="w-3 h-3" /> Upravljaj slikama
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Prikaz slika: Hero slika + horizontalni strip thumbnaila */}
+              <div className="flex flex-col sm:flex-row gap-3 items-center">
+                {/* Glavna slika preview */}
+                <div
+                  onClick={() => setIsLightboxOpen(true)}
+                  className="relative group rounded-xl overflow-hidden bg-slate-900 border border-slate-200 dark:border-slate-700 w-full sm:w-64 h-36 shrink-0 cursor-pointer shadow-inner"
+                >
+                  <img
+                    src={vehicleImages[selectedPhotoIndex] || vehicleImages[0]}
+                    alt={`Vozilo ${vehicleInfo.reg}`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="bg-white/20 backdrop-blur-xs text-white text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 border border-white/30">
+                      <Maximize2 className="w-3.5 h-3.5" /> Uvećaj
+                    </span>
+                  </div>
+                  <div className="absolute bottom-1.5 left-2 bg-black/80 text-white font-mono text-[10px] px-2 py-0.5 rounded-md font-bold">
+                    {selectedPhotoIndex + 1} / {vehicleImages.length}
+                  </div>
+                  {selectedPhotoIndex === 0 && (
+                    <div className="absolute top-1.5 left-2 bg-amber-500 text-slate-950 font-black text-[9px] px-2 py-0.5 rounded-md shadow-md">
+                      ★ Glavna
+                    </div>
+                  )}
+                </div>
+
+                {/* Thumbnail strip */}
+                <div className="flex-1 w-full flex items-center gap-2 overflow-x-auto py-1 scrollbar-thin">
+                  {vehicleImages.map((url, idx) => (
+                    <div
+                      key={url + idx}
+                      onClick={() => setSelectedPhotoIndex(idx)}
+                      className={`relative rounded-xl overflow-hidden shrink-0 cursor-pointer border-2 transition-all w-20 h-16 sm:w-24 sm:h-20 ${
+                        selectedPhotoIndex === idx
+                          ? "border-indigo-600 ring-2 ring-indigo-500/50 scale-102 shadow-md"
+                          : "border-slate-200 dark:border-slate-700 opacity-70 hover:opacity-100"
+                      }`}
+                    >
+                      <img src={url} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                      <span className="absolute bottom-0.5 right-1 text-[9px] font-mono font-black text-white bg-black/70 px-1 rounded">
+                        #{idx + 1}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : canEditVehicle && onOpenEditVehicle ? (
+            <div className="bg-indigo-50/60 dark:bg-slate-800/60 p-2.5 px-3.5 rounded-xl border border-dashed border-indigo-200 dark:border-indigo-800/80 flex items-center justify-between print:hidden shrink-0">
+              <div className="flex items-center gap-2">
+                <Camera className="w-4 h-4 text-indigo-500" />
+                <span className="text-[11px] text-slate-600 dark:text-slate-300 font-medium">
+                  Za ovo vozilo još nisu dodane fotografije u bazu.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenEditVehicle(vehicleInfo);
+                }}
+                className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer flex items-center gap-1"
+              >
+                + Dodaj slike (do 10)
+              </button>
+            </div>
+          ) : null}
 
           {/* DVA INTERAKTIVNA GRAFIKONA SA KLIKOM ZA CROSS-FILTERING (Sakriveno za servisera) */}
           {!isServiser && (
@@ -812,28 +956,113 @@ export function VehicleCardModal({
         invoice={previewInvoice}
       />
 
-      {/* LIGHTBOX ZA UVEĆANJE SLIKE VOZILA */}
-      {previewVehicleImg && vehicleInfo?.imageUrl && (
+      {/* LIGHTBOX ZA PREGLED I NAVIGACIJU KROZ SVE SLIKE VOZILA */}
+      {isLightboxOpen && vehicleImages.length > 0 && (
         <div
-          onClick={() => setPreviewVehicleImg(false)}
-          className="fixed inset-0 bg-black/90 z-[110] flex flex-col items-center justify-center p-4 cursor-pointer animate-in fade-in duration-150"
+          onClick={() => setIsLightboxOpen(false)}
+          className="fixed inset-0 bg-black/95 z-[120] flex flex-col items-center justify-between p-4 cursor-pointer animate-in fade-in duration-200 select-none"
         >
-          <div className="relative max-w-4xl max-h-[85vh] flex flex-col items-center">
-            <button
-              onClick={() => setPreviewVehicleImg(false)}
-              className="absolute -top-10 right-0 text-white hover:text-slate-300 font-bold p-1 text-lg cursor-pointer"
-            >
-              <X className="w-6 h-6" />
-            </button>
-            <img
-              src={vehicleInfo.imageUrl}
-              alt={vehicleInfo.reg}
-              className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-white/20"
-            />
-            <p className="text-white font-bold text-sm mt-3 tracking-wide bg-slate-900/80 px-4 py-1 rounded-full border border-slate-700">
-              {vehicleInfo.reg} • {vehicleInfo.markaVoz} {vehicleInfo.modelVoz}
-            </p>
+          {/* Lightbox Top Bar */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-5xl flex items-center justify-between text-white p-2 shrink-0 cursor-default"
+          >
+            <div>
+              <h4 className="font-black text-sm tracking-wide flex items-center gap-2">
+                <span>{vehicleInfo?.reg}</span>
+                <span className="text-xs text-slate-400 font-normal">
+                  • {vehicleInfo?.markaVoz} {vehicleInfo?.modelVoz}
+                </span>
+              </h4>
+              <p className="text-[11px] text-indigo-400 font-mono">
+                Slika {selectedPhotoIndex + 1} od {vehicleImages.length}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <a
+                href={vehicleImages[selectedPhotoIndex]}
+                target="_blank"
+                rel="noreferrer"
+                download
+                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all cursor-pointer flex items-center gap-1 text-xs font-bold"
+                title="Preuzmi sliku"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Preuzmi</span>
+              </a>
+              <button
+                onClick={() => setIsLightboxOpen(false)}
+                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all cursor-pointer"
+                title="Zatvori (Esc)"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
+
+          {/* Lightbox Main Image Display sa Strelicama */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative flex-1 w-full max-w-5xl flex items-center justify-center p-2 min-h-0 cursor-default"
+          >
+            {vehicleImages.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedPhotoIndex((prev) => (prev > 0 ? prev - 1 : vehicleImages.length - 1));
+                }}
+                className="absolute left-2 sm:left-4 z-10 p-3 bg-black/60 hover:bg-black/90 text-white rounded-full border border-white/20 shadow-xl transition-transform hover:scale-110 cursor-pointer"
+                title="Prethodna slika (Lijeva strelica)"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+            )}
+
+            <img
+              src={vehicleImages[selectedPhotoIndex]}
+              alt={`Vozilo slika ${selectedPhotoIndex + 1}`}
+              className="max-w-full max-h-[72vh] object-contain rounded-2xl shadow-2xl border border-white/15"
+            />
+
+            {vehicleImages.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedPhotoIndex((prev) => (prev < vehicleImages.length - 1 ? prev + 1 : 0));
+                }}
+                className="absolute right-2 sm:right-4 z-10 p-3 bg-black/60 hover:bg-black/90 text-white rounded-full border border-white/20 shadow-xl transition-transform hover:scale-110 cursor-pointer"
+                title="Sljedeća slika (Desna strelica)"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            )}
+          </div>
+
+          {/* Lightbox Bottom Thumbnail Carousel */}
+          {vehicleImages.length > 1 && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-2xl flex items-center justify-center gap-2 overflow-x-auto py-2 shrink-0 cursor-default"
+            >
+              {vehicleImages.map((url, idx) => (
+                <button
+                  key={url + idx}
+                  type="button"
+                  onClick={() => setSelectedPhotoIndex(idx)}
+                  className={`relative rounded-xl overflow-hidden w-14 h-12 shrink-0 border-2 transition-all cursor-pointer ${
+                    selectedPhotoIndex === idx
+                      ? "border-amber-400 scale-110 ring-2 ring-amber-400/50 shadow-lg"
+                      : "border-white/20 opacity-50 hover:opacity-90"
+                  }`}
+                >
+                  <img src={url} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
       </div>

@@ -1,8 +1,23 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { X, Edit3, PlusCircle, Camera, Upload, Trash2, Loader2, Image as ImageIcon } from "lucide-react";
-import { uploadMediaFile } from "@/lib/fileUpload.js";
+import {
+  X,
+  Edit3,
+  PlusCircle,
+  Camera,
+  Upload,
+  Trash2,
+  Loader2,
+  Image as ImageIcon,
+  Star,
+  Maximize2,
+  CheckCircle2,
+  AlertTriangle
+} from "lucide-react";
+import { uploadVehicleImages } from "@/lib/fileUpload.js";
+
+const MAX_IMAGES = 10;
 
 export function EditVehicleModal({
   isOpen,
@@ -18,8 +33,12 @@ export function EditVehicleModal({
   const [godProizvodnje, setGodProizvodnje] = useState("");
   const [brojSasije, setBrojSasije] = useState("");
   const [status, setStatus] = useState("Aktivno");
-  const [imageUrl, setImageUrl] = useState("");
-  const [isUploadingImg, setIsUploadingImg] = useState(false);
+
+  // Galerija slika (do 10 slika)
+  const [images, setImages] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
+  const [previewLightboxImg, setPreviewLightboxImg] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const fileInputRef = useRef(null);
@@ -34,7 +53,27 @@ export function EditVehicleModal({
       setGodProizvodnje(initialVehicle.godProizvodnje && initialVehicle.godProizvodnje !== "-" ? initialVehicle.godProizvodnje : "");
       setBrojSasije(initialVehicle.brojSasije && initialVehicle.brojSasije !== "-" ? initialVehicle.brojSasije : "");
       setStatus(initialVehicle.status || "Aktivno");
-      setImageUrl(initialVehicle.imageUrl || "");
+
+      // Inicijalizacija niza slika
+      if (Array.isArray(initialVehicle.images) && initialVehicle.images.length > 0) {
+        setImages(
+          initialVehicle.images.map((img, idx) => ({
+            url: typeof img === "string" ? img : img.url,
+            name: (typeof img === "object" && img.name) ? img.name : `Slika ${idx + 1}`,
+            storageType: (typeof img === "object" && img.storageType) ? img.storageType : "firebase"
+          })).filter((img) => Boolean(img.url))
+        );
+      } else if (initialVehicle.imageUrl) {
+        setImages([
+          {
+            url: initialVehicle.imageUrl,
+            name: "Glavna fotografija",
+            storageType: "firebase"
+          }
+        ]);
+      } else {
+        setImages([]);
+      }
     } else {
       setReg("");
       setGarazniBroj("");
@@ -44,7 +83,7 @@ export function EditVehicleModal({
       setGodProizvodnje("");
       setBrojSasije("");
       setStatus("Aktivno");
-      setImageUrl("");
+      setImages([]);
     }
   }, [initialVehicle, isOpen]);
 
@@ -52,26 +91,61 @@ export function EditVehicleModal({
 
   const isEditMode = Boolean(initialVehicle && initialVehicle.reg);
 
-  const handleImageFileChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Upload jedne ili više slika (do 10 ukupno) na Firebase Storage
+  const handleFileSelection = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    setIsUploadingImg(true);
+    const currentCount = images.length;
+    const remainingSlots = MAX_IMAGES - currentCount;
+
+    if (remainingSlots <= 0) {
+      alert(`Dostigli ste maksimalan limit od ${MAX_IMAGES} slika za ovo vozilo.`);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    let filesToUpload = files;
+    if (files.length > remainingSlots) {
+      alert(`Odabrali ste ${files.length} slika. Zbog limita od ${MAX_IMAGES} slika, biće učitano prvih ${remainingSlots}.`);
+      filesToUpload = files.slice(0, remainingSlots);
+    }
+
+    setIsUploading(true);
+    setUploadProgress(`Priprema i kompresija ${filesToUpload.length} slika...`);
+
     try {
-      const res = await uploadMediaFile(file, "vehicles");
-      if (res && res.url) {
-        setImageUrl(res.url);
+      const currentReg = reg.trim().toUpperCase() || initialVehicle?.reg || "novo_vozilo";
+      const uploaded = await uploadVehicleImages(filesToUpload, currentReg, (prog) => {
+        setUploadProgress(`Učitavanje slike ${prog.current} od ${prog.total} na Firebase Storage...`);
+      });
+
+      if (uploaded.length > 0) {
+        setImages((prev) => [...prev, ...uploaded].slice(0, MAX_IMAGES));
       }
     } catch (err) {
-      alert("Greška pri učitavanju slike: " + err.message);
+      alert("Greška pri učitavanju slika na Firebase Storage: " + (err.message || err));
     } finally {
-      setIsUploadingImg(false);
+      setIsUploading(false);
+      setUploadProgress("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  const handleRemoveImage = () => {
-    setImageUrl("");
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  // Uklanjanje pojedinačne slike
+  const handleRemoveImage = (indexToRemove) => {
+    setImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  // Postavljanje odabrane slike kao glavne (premješta je na prvu poziciju)
+  const handleSetPrimary = (index) => {
+    if (index === 0) return;
+    setImages((prev) => {
+      const copy = [...prev];
+      const [item] = copy.splice(index, 1);
+      copy.unshift(item);
+      return copy;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -92,12 +166,14 @@ export function EditVehicleModal({
         godProizvodnje: godProizvodnje.trim() || "-",
         brojSasije: brojSasije.trim() || "-",
         status: status,
-        imageUrl: imageUrl.trim() || "",
+        // Čuvanje niza slika i primarne slike
+        images: images,
+        imageUrl: images[0]?.url || "",
         updatedAt: new Date().toISOString()
       };
 
       await onSaveVehicle(vObj);
-      alert(`Vozilo ${vObj.reg} je uspješno ${isEditMode ? "ažurirano" : "sačuvano"} u bazi!`);
+      alert(`Vozilo ${vObj.reg} sa ${images.length} slika je uspješno ${isEditMode ? "ažurirano" : "sačuvano"} u bazi!`);
       onClose();
     } catch (err) {
       alert("Greška pri spremanju vozila: " + err.message);
@@ -107,8 +183,14 @@ export function EditVehicleModal({
   };
 
   return (
-    <div onClick={onClose} className="fixed inset-0 bg-slate-900/80 flex justify-center items-center z-[90] backdrop-blur-xs p-4 animate-in fade-in duration-200 cursor-pointer">
-      <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-100 dark:border-slate-800 cursor-default">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 bg-slate-900/80 flex justify-center items-center z-[90] backdrop-blur-xs p-4 animate-in fade-in duration-200 cursor-pointer"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-100 dark:border-slate-800 cursor-default"
+      >
         {/* Header */}
         <div className="p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white flex justify-between items-center shrink-0">
           <h3 className="text-base sm:text-lg font-black flex items-center gap-2">
@@ -120,13 +202,13 @@ export function EditVehicleModal({
             ) : (
               <>
                 <PlusCircle className="w-5 h-5 text-emerald-400" />
-                <span>Unos Novog Vozila / Nabavka</span>
+                <span>Unos Novog Vozila u Matičnu Bazu</span>
               </>
             )}
           </h3>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white text-xl font-bold cursor-pointer p-1 transition-colors"
+            className="p-1.5 rounded-full hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -134,69 +216,129 @@ export function EditVehicleModal({
 
         {/* Scrollable Form Body */}
         <form onSubmit={handleSubmit} className="p-5 sm:p-6 overflow-y-auto space-y-4 text-xs">
-          {/* UPLOAD SLIKE VOZILA */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700">
-            <label className="block font-black uppercase text-slate-700 dark:text-slate-200 mb-2 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
+          {/* UPLOAD I GALERIJA SLIKA (DO 10 SLIKA) */}
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between mb-2">
+              <label className="font-black uppercase text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                 <Camera className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                <span>Slika Vozila</span>
+                <span>Fotografije Vozila (Maksimalno {MAX_IMAGES} slika)</span>
+              </label>
+              <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full ${
+                images.length >= MAX_IMAGES
+                  ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                  : "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+              }`}>
+                {images.length} / {MAX_IMAGES} slika
               </span>
-              {imageUrl && (
-                <button
-                  type="button"
-                  onClick={handleRemoveImage}
-                  className="text-[11px] text-red-600 dark:text-red-400 hover:underline flex items-center gap-1 font-bold cursor-pointer"
-                >
-                  <Trash2 className="w-3 h-3" /> Ukloni sliku
-                </button>
-              )}
-            </label>
-
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              {/* Preview Slike */}
-              <div className="w-28 h-24 sm:w-32 sm:h-28 rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-700 border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center relative shrink-0 shadow-inner">
-                {isUploadingImg ? (
-                  <div className="flex flex-col items-center gap-1 text-indigo-600 dark:text-indigo-400">
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                    <span className="text-[10px] font-bold">Učitavanje...</span>
-                  </div>
-                ) : imageUrl ? (
-                  <img
-                    src={imageUrl}
-                    alt={reg || "Vozilo"}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="flex flex-col items-center text-slate-400 dark:text-slate-500 gap-1 p-2 text-center">
-                    <ImageIcon className="w-6 h-6 opacity-60" />
-                    <span className="text-[9px] font-semibold">Nema slike</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Upload Kontrole */}
-              <div className="flex-1 w-full space-y-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageFileChange}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploadingImg}
-                  className="w-full bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-200 font-bold py-2 px-3 rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                >
-                  <Upload className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  <span>{imageUrl ? "Promijeni sliku vozila" : "Izaberi sliku iz galerije / kamere"}</span>
-                </button>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-                  Podržani formati: JPG, PNG, WebP. Slika se automatski optimizuje i trajno pohranjuje uz karton vozila.
-                </p>
-              </div>
             </div>
+
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
+              Fotografije se automatski optimizuju i trajno pohranjuju u <strong>Firebase Storage</strong>. Prva slika sa oznakom zvjezdice služi kao naslovna.
+            </p>
+
+            {/* Dugme za odabir slika */}
+            <div className="mb-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileSelection}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading || images.length >= MAX_IMAGES}
+                className="w-full bg-white dark:bg-slate-850 hover:bg-indigo-50 dark:hover:bg-slate-800 border-2 border-dashed border-indigo-300 dark:border-indigo-700 text-slate-800 dark:text-slate-200 font-bold py-3 px-4 rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isUploading ? (
+                  <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-xs">{uploadProgress || "Učitavanje slika na Firebase Storage..."}</span>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <span>
+                      {images.length === 0
+                        ? "Odaberi slike vozila (podržano više odjednom do 10)"
+                        : images.length < MAX_IMAGES
+                        ? `+ Dodaj još slika (preostalo ${MAX_IMAGES - images.length} mjesta)`
+                        : "Popunjen limit od 10 slika"}
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Grid pregled slika (Galerija) */}
+            {images.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1">
+                {images.map((img, idx) => {
+                  const isPrimary = idx === 0;
+                  return (
+                    <div
+                      key={img.url + idx}
+                      className={`relative group rounded-xl overflow-hidden border-2 bg-slate-900 aspect-4/3 flex items-center justify-center shadow-xs transition-all ${
+                        isPrimary
+                          ? "border-amber-400 ring-2 ring-amber-400/40"
+                          : "border-slate-200 dark:border-slate-700"
+                      }`}
+                    >
+                      <img
+                        src={img.url}
+                        alt={img.name || `Slika ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+
+                      {/* Bedž za naslovnu sliku */}
+                      {isPrimary && (
+                        <div className="absolute top-1 left-1 bg-amber-500 text-slate-950 font-black text-[9px] px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shadow-md">
+                          <Star className="w-2.5 h-2.5 fill-current" />
+                          <span>Glavna</span>
+                        </div>
+                      )}
+
+                      {/* Redni broj */}
+                      <div className="absolute bottom-1 left-1 bg-black/70 text-white font-mono text-[9px] px-1.5 py-0.2 rounded">
+                        #{idx + 1}
+                      </div>
+
+                      {/* Akcije na slici */}
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1">
+                        {!isPrimary && (
+                          <button
+                            type="button"
+                            onClick={() => handleSetPrimary(idx)}
+                            className="p-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg shadow cursor-pointer transition-transform hover:scale-110"
+                            title="Postavi kao naslovnu / glavnu sliku"
+                          >
+                            <Star className="w-3.5 h-3.5 fill-current" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setPreviewLightboxImg(img.url)}
+                          className="p-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow cursor-pointer transition-transform hover:scale-110"
+                          title="Uvećaj sliku"
+                        >
+                          <Maximize2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(idx)}
+                          className="p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow cursor-pointer transition-transform hover:scale-110"
+                          title="Ukloni sliku"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Glavna Polja Forme */}
@@ -208,10 +350,11 @@ export function EditVehicleModal({
               <input
                 type="text"
                 required
+                disabled={isEditMode}
                 value={reg}
-                onChange={(e) => setReg(e.target.value)}
-                placeholder="Npr. A12-K-345"
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-xl p-2.5 font-bold uppercase outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                onChange={(e) => setReg(e.target.value.toUpperCase())}
+                placeholder="Npr. M23-E-123"
+                className="w-full border border-slate-300 dark:border-slate-600 rounded-xl p-2.5 font-bold uppercase outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white disabled:opacity-60"
               />
             </div>
 
@@ -221,8 +364,8 @@ export function EditVehicleModal({
                 type="text"
                 value={garazniBroj}
                 onChange={(e) => setGarazniBroj(e.target.value)}
-                placeholder="Npr. 40567"
-                className="w-full border border-slate-300 dark:border-slate-600 rounded-xl p-2.5 font-semibold outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                placeholder="Npr. 104"
+                className="w-full border border-slate-300 dark:border-slate-600 rounded-xl p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
               />
             </div>
 
@@ -233,17 +376,17 @@ export function EditVehicleModal({
                 onChange={(e) => setTipMehan(e.target.value)}
                 className="w-full border border-slate-300 dark:border-slate-600 rounded-xl p-2.5 font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white cursor-pointer"
               >
-                <option value="Teretna vozila">Teretna vozila</option>
-                <option value="Skladišna mehanizacija">Skladišna mehanizacija</option>
-                <option value="Putnička vozila">Putnička vozila</option>
-                <option value="Priključna vozila">Priključna vozila</option>
-                <option value="Radna mašina">Radna mašina</option>
-                <option value="Servis motornih vozila">Servis motornih vozila</option>
+                <option value="Teretna vozila">🚚 Teretna vozila</option>
+                <option value="Dostavna vozila">🚐 Dostavna vozila</option>
+                <option value="Priključna vozila">🚛 Priključna vozila</option>
+                <option value="Putnička vozila">🚗 Putnička vozila</option>
+                <option value="Skladišna mehanizacija">🚜 Skladišna mehanizacija</option>
+                <option value="Radna mašina">🏗️ Radna mašina</option>
               </select>
             </div>
 
             <div>
-              <label className="block font-bold uppercase text-slate-600 dark:text-slate-400 mb-1">Status Vozila</label>
+              <label className="block font-bold uppercase text-slate-600 dark:text-slate-400 mb-1">Status</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
@@ -311,13 +454,35 @@ export function EditVehicleModal({
             </button>
             <button
               type="submit"
-              disabled={isSaving || isUploadingImg}
+              disabled={isSaving || isUploading}
               className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
             >
               <span>{isSaving ? "Spremanje..." : isEditMode ? "💾 Sačuvaj Izmjene" : "➕ Sačuvaj Novo Vozilo"}</span>
             </button>
           </div>
         </form>
+
+        {/* Lightbox za uvećani pregled slike */}
+        {previewLightboxImg && (
+          <div
+            onClick={() => setPreviewLightboxImg(null)}
+            className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-4 cursor-pointer animate-in fade-in duration-150"
+          >
+            <div className="relative max-w-4xl max-h-[85vh] flex flex-col items-center">
+              <button
+                onClick={() => setPreviewLightboxImg(null)}
+                className="absolute -top-10 right-0 text-white hover:text-slate-300 font-bold p-1 text-lg cursor-pointer"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <img
+                src={previewLightboxImg}
+                alt="Uvećana slika"
+                className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-white/20"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

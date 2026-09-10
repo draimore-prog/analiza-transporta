@@ -508,11 +508,18 @@ export function MasterFleetTable({
                       >
                         <div className="flex items-center gap-2">
                           {v.imageUrl && (
-                            <img
-                              src={v.imageUrl}
-                              alt={v.reg}
-                              className="w-7 h-7 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs"
-                            />
+                            <div className="relative group shrink-0">
+                              <img
+                                src={v.imageUrl}
+                                alt={v.reg}
+                                className="w-7 h-7 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs group-hover:scale-105 transition-transform"
+                              />
+                              {(v.images?.length || 0) > 1 && (
+                                <span className="absolute -bottom-1 -right-1 bg-indigo-600 text-[9px] font-black text-white px-1 rounded-full border border-white dark:border-slate-900 leading-none">
+                                  {v.images.length}
+                                </span>
+                              )}
+                            </div>
                           )}
                           <span>{v.reg}</span>
                         </div>
