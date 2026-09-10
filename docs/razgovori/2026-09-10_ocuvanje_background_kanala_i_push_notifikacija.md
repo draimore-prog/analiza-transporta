@@ -53,7 +53,11 @@ U kuki `useWarehouseWorkOrders`:
 
 ---
 
-## 3. Verifikacija
-- `expo export --output-dir dist_check`: Uspješno kompajliran Android Hermes bytecode paket (`index-*.hbc`) bez grešaka.
-- `npm run build`: Web aplikacija kompajlirana i validirana bez grešaka.
-- `firebase deploy --only hosting`: Najnovija verzija web aplikacije uspješno objavljena na Firebase hostingu (`https://analiza-transporta-flota.web.app`).
+## 3. Verifikacija i raspoređivanje
+* **Kompajliranje bundle-a**: `npx expo export` uspješno generisao Android Hermes bytecode paket (`index-*.hbc`) bez grešaka.
+* **Hosting**: Nova verzija web aplikacije sa push trigerima deployovana na Firebase Hosting (`https://analiza-transporta-flota.web.app`).
+* **Git**: Izmjene su komitovane (`9561a37`) i pushovane na `origin/master`.
+* **EAS Update (OTA Live)**:
+  * **Production Branch**: `Update Group ID: 9c40a541-08ad-4056-810b-e6685a76b3d8` (Android ID: `01a08bcd-a246-7fc6-abc7-aca5e04d5aed`, iOS ID: `01a08bcd-a246-7fc6-b604-5239bef576af`)
+  * **Preview Branch**: `Update Group ID: 7458209c-0d1d-4d12-921b-f8f0bde6d27a` (Android ID: `01a08bce-6812-7ed9-9ae9-f6d6e855de97`, iOS ID: `01a08bce-6812-7aec-9402-7658119aacf8`)
+  * Svi instalirani APK uređaji automatski preuzimaju i primjenjuju novu verziju preko zraka (OTA).
