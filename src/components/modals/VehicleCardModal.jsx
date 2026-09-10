@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useMemo, useState } from "react";
 import { formatKM, formatDate, cleanVehicleType, formatMileage, formatOperatingHours } from "@/lib/calculations.js";
-import { Chart, registerables } from "chart.js";
-import ChartDataLabels from "chartjs-plugin-datalabels";
+import Chart from "@/lib/chartSetup.js";
 import { InvoicePreviewModal } from "./InvoicePreviewModal.jsx";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary.jsx";
 import {
   X,
   Printer,
@@ -16,8 +16,6 @@ import {
   Paperclip,
   Image as ImageIcon
 } from "lucide-react";
-
-Chart.register(...registerables, ChartDataLabels);
 
 export function VehicleCardModal({
   isOpen,
@@ -52,18 +50,22 @@ export function VehicleCardModal({
     const cleanReg = reg.trim().toUpperCase();
 
     // 1. Potraži u matičnoj bazi voznog parka
-    const inMaster = masterFleet.find(
+    const inMaster = (masterFleet || []).find(
       (v) =>
         (v.reg || "").trim().toUpperCase() === cleanReg ||
-        (v.garazniBroj && v.garazniBroj.toString().trim() === cleanReg)
+        (v.garazniBroj && v.garazniBroj.toString().trim().toUpperCase() === cleanReg)
     );
     if (inMaster) return inMaster;
 
     // 2. Ako nema u bazi, potraži u troškovima
-    const inCosts = costData.find((c) => (c.reg || "").trim().toUpperCase() === cleanReg);
+    const inCosts = (costData || []).find(
+      (c) =>
+        (c.reg || "").trim().toUpperCase() === cleanReg ||
+        (c.garazniBroj && c.garazniBroj.toString().trim().toUpperCase() === cleanReg)
+    );
     if (inCosts) {
       return {
-        reg: inCosts.reg,
+        reg: inCosts.reg || reg,
         garazniBroj: inCosts.garazniBroj || "-",
         markaVoz: inCosts.markaVoz || "Nepoznato",
         modelVoz: inCosts.modelVoz || "-",
@@ -94,16 +96,27 @@ export function VehicleCardModal({
 
   // Hronološka historija servisa za ovo vozilo
   const history = useMemo(() => {
-    if (!reg) return [];
+    if (!reg || !costData) return [];
     const cleanReg = reg.trim().toUpperCase();
 
+    const getSafeTime = (item) => {
+      if (!item) return 0;
+      const d = item.datumObj || item.datum;
+      if (!d) return 0;
+      if (d instanceof Date && !isNaN(d.getTime())) return d.getTime();
+      if (typeof d?.toDate === 'function') return d.toDate().getTime() || 0;
+      if (d.seconds !== undefined) return d.seconds * 1000;
+      const parsed = new Date(d).getTime();
+      return isNaN(parsed) ? 0 : parsed;
+    };
+
     return costData
-      .filter((c) => (c.reg || "").trim().toUpperCase() === cleanReg)
-      .sort((a, b) => {
-        const timeB = a.datumObj ? a.datumObj.getTime() : 0;
-        const timeA = b.datumObj ? b.datumObj.getTime() : 0;
-        return timeA - timeB;
-      });
+      .filter((c) => {
+        const cReg = (c.reg || "").trim().toUpperCase();
+        const cGb = c.garazniBroj ? c.garazniBroj.toString().trim().toUpperCase() : "";
+        return cReg === cleanReg || (cGb && cGb === cleanReg);
+      })
+      .sort((a, b) => getSafeTime(b) - getSafeTime(a));
   }, [reg, costData]);
 
   // Unikatni segmenti za ovo vozilo
@@ -237,8 +250,10 @@ export function VehicleCardModal({
           onClick: (event, elements) => {
             if (elements && elements.length > 0) {
               const index = elements[0].index;
-              const clickedYear = yearlyData.years[index].toString();
-              setSelectedYearFilter((prev) => (prev === clickedYear ? "all" : clickedYear));
+              const clickedYear = yearlyData.years[index]?.toString();
+              if (clickedYear) {
+                setSelectedYearFilter((prev) => (prev === clickedYear ? "all" : clickedYear));
+              }
             }
           },
           plugins: {
@@ -252,7 +267,7 @@ export function VehicleCardModal({
               anchor: "end",
               align: "top",
               color: (context) => {
-                const y = yearlyData.years[context.dataIndex].toString();
+                const y = yearlyData.years[context.dataIndex]?.toString();
                 return selectedYearFilter === y ? "#b45309" : "#4f46e5";
               },
               font: { weight: "bold", size: 9 },
@@ -357,7 +372,8 @@ export function VehicleCardModal({
       currentRole?.roleId === "superadmin");
 
   return (
-    <div
+    <ErrorBoundary title="Greška pri prikazu servisnog kartona" onClose={onClose}>
+      <div
       onClick={onClose}
       className="fixed inset-0 bg-slate-900/80 flex justify-center items-center z-[70] backdrop-blur-xs p-3 sm:p-5 cursor-pointer print:p-0 print:bg-white"
     >
@@ -816,6 +832,7 @@ export function VehicleCardModal({
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }

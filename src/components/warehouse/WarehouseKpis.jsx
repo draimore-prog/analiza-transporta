@@ -240,6 +240,8 @@ export function WarehouseKpis({
 
   // Crtanje i ažuriranje 5 grafikona
   useEffect(() => {
+    if (!isActive) return;
+
     // ----------------------------------------------------
     // 1. Mjesečni / Godišnji Trend Dinamike Troškova
     // ----------------------------------------------------
@@ -293,8 +295,9 @@ export function WarehouseKpis({
                 callbacks: {
                   label: (ctx) => {
                     const yTot = datasets[ctx.datasetIndex]?.data.reduce((a, b) => a + b, 0) || 1;
-                    const p = ((ctx.raw / yTot) * 100).toFixed(1);
-                    return ` ${ctx.dataset.label}: ${formatKM(ctx.raw)} (${p}% godišnjeg troška)`;
+                    const rawVal = Number(ctx.raw) || 0;
+                    const p = ((rawVal / yTot) * 100).toFixed(1);
+                    return ` ${ctx.dataset.label}: ${formatKM(rawVal)} (${p}% godišnjeg troška)`;
                   }
                 }
               }
@@ -721,7 +724,8 @@ export function WarehouseKpis({
     selectedMonthFilter,
     supplierMode,
     kpiStats,
-    fleetRegMap
+    fleetRegMap,
+    isActive
   ]);
 
   return (

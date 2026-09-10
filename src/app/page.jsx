@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth.js";
 import { useFleetData } from "@/hooks/useFleetData.js";
 import { Sidebar } from "@/components/layout/Sidebar.jsx";
 import { Header } from "@/components/layout/Header.jsx";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary.jsx";
 
 // Transport Tabovi
 import { TransportKpis } from "@/components/transport/TransportKpis.jsx";
@@ -396,16 +397,18 @@ function DashboardContent() {
         />
 
         {/* Karton Vozila Modal */}
-        <VehicleCardModal
-          isOpen={!!vehicleModalReg}
-          onClose={() => setVehicleModalReg(null)}
-          reg={vehicleModalReg || ""}
-          masterFleet={masterFleet}
-          costData={costData}
-          onOpenEditVehicle={(v) => setEditingVehicle(v)}
-          currentRole={currentRole}
-          activeUser={activeUser}
-        />
+        <ErrorBoundary title="Greška pri prikazu kartona vozila" onClose={() => setVehicleModalReg(null)}>
+          <VehicleCardModal
+            isOpen={!!vehicleModalReg}
+            onClose={() => setVehicleModalReg(null)}
+            reg={vehicleModalReg || ""}
+            masterFleet={masterFleet}
+            costData={costData}
+            onOpenEditVehicle={(v) => setEditingVehicle(v)}
+            currentRole={currentRole}
+            activeUser={activeUser}
+          />
+        </ErrorBoundary>
 
         {/* Izmjena Lozinke Modal */}
         <ChangePasswordModal
@@ -589,16 +592,18 @@ function DashboardContent() {
       {/* ================= MODALI ================= */}
 
       {/* Karton Vozila Modal */}
-      <VehicleCardModal
-        isOpen={!!vehicleModalReg}
-        onClose={() => setVehicleModalReg(null)}
-        reg={vehicleModalReg || ""}
-        masterFleet={masterFleet}
-        costData={costData}
-        onOpenEditVehicle={(v) => setEditingVehicle(v)}
-        currentRole={currentRole}
-        activeUser={activeUser}
-      />
+      <ErrorBoundary title="Greška pri prikazu kartona vozila" onClose={() => setVehicleModalReg(null)}>
+        <VehicleCardModal
+          isOpen={!!vehicleModalReg}
+          onClose={() => setVehicleModalReg(null)}
+          reg={vehicleModalReg || ""}
+          masterFleet={masterFleet}
+          costData={costData}
+          onOpenEditVehicle={(v) => setEditingVehicle(v)}
+          currentRole={currentRole}
+          activeUser={activeUser}
+        />
+      </ErrorBoundary>
 
       {/* Rekapitulacija Internih / Eksternih Servisa Modal */}
       <IntExtRecapModal
@@ -707,7 +712,9 @@ function DashboardContent() {
 export default function DashboardPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-slate-900" />}>
-      <DashboardContent />
+      <ErrorBoundary title="Došlo je do neočekivane greške na portalu">
+        <DashboardContent />
+      </ErrorBoundary>
     </Suspense>
   );
 }

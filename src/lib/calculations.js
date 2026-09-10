@@ -82,13 +82,35 @@ export function calculateDynamic2026(masterFleet) {
 }
 
 export function formatKM(val) {
-  return (val || 0).toLocaleString('bs-BA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' KM';
+  const num = Number(val);
+  if (val === null || val === undefined || isNaN(num)) return '0,00 KM';
+  return num.toLocaleString('bs-BA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' KM';
 }
 
 export function formatDate(d) {
   if (!d) return '-';
-  const dateObj = typeof d === 'string' ? new Date(d) : d;
-  if (isNaN(dateObj.getTime())) return '-';
+  let dateObj = d;
+  try {
+    if (typeof d === 'object' && d !== null) {
+      if (typeof d.toDate === 'function') {
+        dateObj = d.toDate();
+      } else if (typeof d.getTime === 'function') {
+        dateObj = d;
+      } else if (d.seconds !== undefined) {
+        dateObj = new Date(d.seconds * 1000);
+      } else {
+        dateObj = new Date(d);
+      }
+    } else if (typeof d === 'string' || typeof d === 'number') {
+      dateObj = new Date(d);
+    }
+  } catch (e) {
+    return '-';
+  }
+
+  if (!dateObj || typeof dateObj.getTime !== 'function' || isNaN(dateObj.getTime())) {
+    return '-';
+  }
   const day = ('0' + dateObj.getDate()).slice(-2);
   const month = ('0' + (dateObj.getMonth() + 1)).slice(-2);
   const year = dateObj.getFullYear();
@@ -96,13 +118,15 @@ export function formatDate(d) {
 }
 
 export function formatMileage(val) {
-  if (val === null || val === undefined || isNaN(val)) return '-';
-  return Math.round(Number(val)).toLocaleString('bs-BA') + ' km';
+  const num = Number(val);
+  if (val === null || val === undefined || isNaN(num)) return '-';
+  return Math.round(num).toLocaleString('bs-BA') + ' km';
 }
 
 export function formatOperatingHours(val) {
-  if (val === null || val === undefined || isNaN(val)) return '0 h';
-  return Math.round(Number(val)).toLocaleString('bs-BA') + ' h';
+  const num = Number(val);
+  if (val === null || val === undefined || isNaN(num)) return '0 h';
+  return Math.round(num).toLocaleString('bs-BA') + ' h';
 }
 
 export function formatServiceUsage(item) {
