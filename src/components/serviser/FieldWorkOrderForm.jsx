@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   X,
   Search,
@@ -17,7 +17,9 @@ import {
   Sparkles,
   Trash2,
   ArrowLeft,
-  Smartphone
+  Smartphone,
+  Lock,
+  MapPin
 } from "lucide-react";
 import { CHECKLIST_ITEMS } from "@/hooks/useWarehouseWorkOrders.js";
 import { compressImage } from "@/lib/imageCompression.js";
@@ -49,42 +51,33 @@ export function FieldWorkOrderForm({
   activeUser,
   initialOrder = null
 }) {
-  // Stanje forme
-  const [selectedVehicle, setSelectedVehicle] = useState(
-    initialOrder?.vehicleDetails
-      ? {
-          reg: initialOrder.vehicleId,
-          tipMehan: initialOrder.vehicleDetails.tip,
-          markaVoz: initialOrder.vehicleDetails.proizvodjac,
-          modelVoz: initialOrder.vehicleDetails.model,
-          brojSasije: initialOrder.vehicleDetails.serijskiBroj,
-          poslovnaJedinica: initialOrder.vehicleDetails.lokacija
-        }
-      : null
-  );
+  // Da li je ovo postojeći zadatak koji je dodijelio voditelj?
+  const isAssignedOrder = !!(initialOrder && (initialOrder.vehicleId || initialOrder.id));
 
-  const [orderType, setOrderType] = useState(initialOrder?.type || "preventive");
-  const [workHours, setWorkHours] = useState(initialOrder?.workHours || "");
-  const [workDescription, setWorkDescription] = useState(initialOrder?.workDescription || "");
-  const [usedMaterials, setUsedMaterials] = useState(initialOrder?.usedMaterials || "");
+  // Stanje forme
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [orderType, setOrderType] = useState("preventive");
+  const [workHours, setWorkHours] = useState("");
+  const [workDescription, setWorkDescription] = useState("");
+  const [usedMaterials, setUsedMaterials] = useState("");
 
   // Ček-lista: inicijalno sve postavljeno na 'ok'
   const [checklist, setChecklist] = useState(() => {
     const init = {};
     CHECKLIST_ITEMS.forEach((item) => {
-      init[item.key] = initialOrder?.checklist?.[item.key] || { status: "ok", note: "" };
+      init[item.key] = { status: "ok", note: "" };
     });
     return init;
   });
 
   // Fotografije i statistike kompresije
-  const [photos, setPhotos] = useState(initialOrder?.photos || {});
+  const [photos, setPhotos] = useState({});
   const [compressingSlot, setCompressingSlot] = useState(null);
   const [photoStats, setPhotoStats] = useState({});
 
   // Pretraga vozila
   const [searchVehicleTerm, setSearchVehicleTerm] = useState("");
-  const [isSearchingVehicle, setIsSearchingVehicle] = useState(!selectedVehicle);
+  const [isSearchingVehicle, setIsSearchingVehicle] = useState(!isAssignedOrder);
 
   // Greške i status slanja
   const [errorMessage, setErrorMessage] = useState("");
@@ -92,6 +85,57 @@ export function FieldWorkOrderForm({
   const [submittedOrderNumber, setSubmittedOrderNumber] = useState(null);
 
   const fileInputRefs = useRef({});
+
+  // Sinhronizacija stanja kada se otvori modal ili promijeni dodijeljeni nalog
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (initialOrder) {
+      const vDetails = initialOrder.vehicleDetails || {};
+      setSelectedVehicle({
+        reg: initialOrder.vehicleId || "",
+        tipMehan: vDetails.tip || "Viljuškar",
+        markaVoz: vDetails.proizvodjac || "",
+        modelVoz: vDetails.model || "",
+        brojSasije: vDetails.serijskiBroj || "",
+        poslovnaJedinica: vDetails.lokacija || ""
+      });
+      setIsSearchingVehicle(false);
+      setOrderType(initialOrder.type || "preventive");
+      setWorkHours(initialOrder.workHours ? String(initialOrder.workHours) : "");
+      setWorkDescription(initialOrder.workDescription || "");
+      setUsedMaterials(initialOrder.usedMaterials || "");
+
+      if (initialOrder.checklist && Object.keys(initialOrder.checklist).length > 0) {
+        setChecklist(initialOrder.checklist);
+      } else {
+        const init = {};
+        CHECKLIST_ITEMS.forEach((item) => {
+          init[item.key] = { status: "ok", note: "" };
+        });
+        setChecklist(init);
+      }
+
+      setPhotos(initialOrder.photos || {});
+      setSubmittedOrderNumber(null);
+      setErrorMessage("");
+    } else {
+      setSelectedVehicle(null);
+      setIsSearchingVehicle(true);
+      setOrderType("preventive");
+      setWorkHours("");
+      setWorkDescription("");
+      setUsedMaterials("");
+      const init = {};
+      CHECKLIST_ITEMS.forEach((item) => {
+        init[item.key] = { status: "ok", note: "" };
+      });
+      setChecklist(init);
+      setPhotos({});
+      setSubmittedOrderNumber(null);
+      setErrorMessage("");
+    }
+  }, [initialOrder, isOpen]);
 
   // Filtriranje vozila za pretragu
   const filteredVehicles = useMemo(() => {
@@ -324,25 +368,59 @@ export function FieldWorkOrderForm({
             </div>
           )}
 
-          {/* KORAK 1: Odabir Jedinice Skladišne Mehanizacije */}
-          <div className="bg-slate-50 dark:bg-slate-850 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3">
+          {/* KORAK 1: Jedinica Skladišne Mehanizacije */}
+          <div className="bg-slate-50 dark:bg-slate-850 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3">
             <div className="flex justify-between items-center">
-              <label className="text-xs font-black uppercase text-slate-700 dark:text-slate-300 tracking-wider flex items-center gap-1.5">
+              <label className="text-sm font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
                 <span>1. Jedinica Skladišne Mehanizacije</span>
                 <span className="text-rose-500 font-black">*</span>
               </label>
-              {selectedVehicle && (
+              {!isAssignedOrder && selectedVehicle && (
                 <button
                   type="button"
                   onClick={() => setIsSearchingVehicle(true)}
-                  className="text-[11px] text-blue-600 dark:text-blue-400 font-bold hover:underline cursor-pointer"
+                  className="text-xs text-blue-600 dark:text-blue-400 font-black underline cursor-pointer p-1"
                 >
-                  Promijeni
+                  Promijeni jedinicu
                 </button>
               )}
             </div>
 
-            {isSearchingVehicle || !selectedVehicle ? (
+            {isAssignedOrder ? (
+              /* ZAKLJUČANA JEDINICA: Voditelj je odredio ovaj viljuškar - serviser je ne može mijenjati */
+              <div className="p-4 sm:p-5 bg-amber-50 dark:bg-amber-950/60 border-2 border-amber-400 dark:border-amber-600 rounded-2xl shadow-sm">
+                <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 text-xs font-black uppercase tracking-wider mb-2">
+                  <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <span>Zadatak od Voditelja (Fiksirano)</span>
+                </div>
+                <div className="text-2xl sm:text-3xl font-black font-mono text-slate-900 dark:text-white tracking-tight">
+                  {selectedVehicle?.reg || initialOrder.vehicleId}
+                </div>
+                <div className="text-base font-extrabold text-slate-800 dark:text-slate-200 mt-1">
+                  {selectedVehicle?.tipMehan || "Viljuškar"} • {selectedVehicle?.markaVoz} {selectedVehicle?.modelVoz}
+                </div>
+                <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="flex items-center gap-1 font-bold text-slate-800 dark:text-slate-300">
+                    <MapPin className="w-4 h-4 text-amber-600 shrink-0" />
+                    Lokacija: {selectedVehicle?.poslovnaJedinica || initialOrder.vehicleDetails?.lokacija || "PJ Centralno Skladište"}
+                  </span>
+                  {selectedVehicle?.brojSasije && (
+                    <span className="text-slate-500">• Broj šasije: {selectedVehicle.brojSasije}</span>
+                  )}
+                </div>
+
+                {initialOrder?.workDescription && (
+                  <div className="mt-3 p-3 bg-white/90 dark:bg-slate-900/90 rounded-xl border border-amber-200 dark:border-amber-800">
+                    <span className="text-xs font-black uppercase text-amber-900 dark:text-amber-300 block mb-0.5">
+                      Nalog / Uputstvo voditelja:
+                    </span>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
+                      {initialOrder.workDescription}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : isSearchingVehicle || !selectedVehicle ? (
               <div className="space-y-2">
                 <div className="relative">
                   <input
@@ -350,12 +428,12 @@ export function FieldWorkOrderForm({
                     value={searchVehicleTerm}
                     onChange={(e) => setSearchVehicleTerm(e.target.value)}
                     placeholder="Ukucajte broj viljuškara (npr. SM-042), model ili PJ..."
-                    className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs font-bold outline-none text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    className="w-full bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-xl pl-10 pr-3 py-3 text-sm font-bold outline-none text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                   />
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  <Search className="w-5 h-5 text-slate-400 absolute left-3 top-3.5" />
                 </div>
 
-                <div className="max-h-36 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800">
+                <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800">
                   {filteredVehicles.map((v) => (
                     <div
                       key={v.reg}
@@ -364,16 +442,16 @@ export function FieldWorkOrderForm({
                         setIsSearchingVehicle(false);
                         setErrorMessage("");
                       }}
-                      className="p-2.5 hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer flex justify-between items-center text-xs transition-colors"
+                      className="p-3 hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer flex justify-between items-center text-xs transition-colors"
                     >
                       <div>
-                        <span className="font-mono font-black text-blue-700 dark:text-blue-400 mr-2">{v.reg}</span>
+                        <span className="font-mono font-black text-sm text-blue-700 dark:text-blue-400 mr-2">{v.reg}</span>
                         <span className="font-bold text-slate-800 dark:text-slate-200">
                           {v.tipMehan} • {v.markaVoz} {v.modelVoz}
                         </span>
-                        <span className="text-[10px] text-slate-400 block">{v.poslovnaJedinica}</span>
+                        <span className="text-[11px] text-slate-400 block">{v.poslovnaJedinica}</span>
                       </div>
-                      <span className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded">
+                      <span className="text-xs font-black text-blue-600 bg-blue-50 dark:bg-blue-950 px-3 py-1.5 rounded-lg">
                         Odaberi
                       </span>
                     </div>
@@ -381,19 +459,19 @@ export function FieldWorkOrderForm({
                 </div>
               </div>
             ) : (
-              <div className="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 rounded-xl flex items-center justify-between text-xs">
+              <div className="p-4 bg-blue-50 dark:bg-blue-950/40 border-2 border-blue-200 dark:border-blue-900/60 rounded-xl flex items-center justify-between">
                 <div>
-                  <span className="font-mono text-sm font-black text-blue-700 dark:text-blue-400 block">
+                  <span className="font-mono text-lg font-black text-blue-700 dark:text-blue-400 block">
                     {selectedVehicle.reg}
                   </span>
-                  <span className="font-bold text-slate-800 dark:text-slate-200 block">
+                  <span className="font-extrabold text-slate-800 dark:text-slate-200 text-sm block">
                     {selectedVehicle.tipMehan} • {selectedVehicle.markaVoz} {selectedVehicle.modelVoz}
                   </span>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                    Lokacija: {selectedVehicle.poslovnaJedinica || "Skladište"} • SN: {selectedVehicle.brojSasije || "-"}
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    {selectedVehicle.poslovnaJedinica || "Skladište"} • SN: {selectedVehicle.brojSasije || "-"}
                   </span>
                 </div>
-                <span className="text-xs font-black text-emerald-600 flex items-center gap-1">
+                <span className="text-xs font-black text-emerald-600 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/80 px-2.5 py-1 rounded-lg">
                   <CheckCircle2 className="w-4 h-4" /> Odabrano
                 </span>
               </div>
@@ -401,20 +479,20 @@ export function FieldWorkOrderForm({
           </div>
 
           {/* KORAK 2: Vrsta Naloga & OBAVEZAN unos radnih sati */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Vrsta rada */}
             <div>
-              <label className="block text-xs font-black uppercase text-slate-700 dark:text-slate-300 mb-1.5">
+              <label className="block text-sm font-black uppercase text-slate-800 dark:text-slate-200 mb-2">
                 2. Vrsta Pregleda
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setOrderType("preventive")}
-                  className={`py-2.5 px-2 rounded-xl text-xs font-black border transition-all cursor-pointer text-center ${
+                  className={`py-3 px-2 rounded-xl text-sm font-black border-2 transition-all cursor-pointer text-center ${
                     orderType === "preventive"
-                      ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                      : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700"
+                      ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700"
                   }`}
                 >
                   🛡️ Redovni Pregled
@@ -422,10 +500,10 @@ export function FieldWorkOrderForm({
                 <button
                   type="button"
                   onClick={() => setOrderType("corrective")}
-                  className={`py-2.5 px-2 rounded-xl text-xs font-black border transition-all cursor-pointer text-center ${
+                  className={`py-3 px-2 rounded-xl text-sm font-black border-2 transition-all cursor-pointer text-center ${
                     orderType === "corrective"
-                      ? "bg-rose-600 text-white border-rose-600 shadow-xs"
-                      : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700"
+                      ? "bg-rose-600 text-white border-rose-600 shadow-sm"
+                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700"
                   }`}
                 >
                   ⚠️ Kvar / Popravka
@@ -433,24 +511,28 @@ export function FieldWorkOrderForm({
               </div>
             </div>
 
-            {/* Radni Sati (MTH) - OBAVEZNO POLJE */}
+            {/* Radni Sati (MTH) - OBAVEZNO POLJE ZA STARIJE SERVISERE */}
             <div>
-              <label className="block text-xs font-black uppercase text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between">
+              <label className="block text-sm font-black uppercase text-slate-800 dark:text-slate-200 mb-2 flex items-center justify-between">
                 <span>3. Radni Sati sa Table (MTH)</span>
-                <span className="text-rose-600 font-extrabold text-[10px] uppercase bg-rose-100 dark:bg-rose-950 px-1.5 py-0.2 rounded">
+                <span className="text-rose-600 font-black text-xs uppercase bg-rose-100 dark:bg-rose-950 px-2 py-0.5 rounded-md">
                   Obavezno
                 </span>
               </label>
               <div className="relative">
                 <input
                   type="number"
+                  inputMode="numeric"
                   value={workHours}
                   onChange={(e) => setWorkHours(e.target.value)}
                   required
-                  placeholder="Unesite radne sate (npr. 4820)..."
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-amber-400 dark:border-amber-600 rounded-xl pl-9 pr-3 py-2 text-xs font-black outline-none text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500 shadow-xs"
+                  placeholder="Npr. 4850..."
+                  className="w-full bg-white dark:bg-slate-900 border-2 border-amber-400 dark:border-amber-500 rounded-2xl pl-11 pr-14 py-3.5 text-xl font-mono font-black text-slate-900 dark:text-white outline-none focus:ring-4 focus:ring-amber-500/20 shadow-inner"
                 />
-                <Clock className="w-4 h-4 text-amber-500 absolute left-3 top-2.5" />
+                <Clock className="w-6 h-6 text-amber-500 absolute left-3.5 top-4 pointer-events-none" />
+                <span className="absolute right-3.5 top-4 font-black text-xs text-slate-400 uppercase tracking-wider pointer-events-none">
+                  Sati
+                </span>
               </div>
             </div>
           </div>
@@ -458,20 +540,23 @@ export function FieldWorkOrderForm({
           {/* KORAK 3: Kontrolna Ček-Lista (8 Sklopova) */}
           <div className="space-y-3">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-              <h3 className="text-xs font-black uppercase text-slate-700 dark:text-slate-300 tracking-wider flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <h3 className="text-sm font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
+                <ShieldCheck className="w-5 h-5 text-emerald-600" />
                 4. Kontrolna Ček-Lista (8 Sklopova)
               </h3>
-              <button
-                type="button"
-                onClick={handleMarkAllOk}
-                className="px-3 py-1 bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 rounded-lg text-[11px] font-black flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
-              >
-                <Check className="w-3.5 h-3.5" /> Označi Sve Ispravnim
-              </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {/* Veliko dugme za brzu potvrdu svih ispravnih dijelova */}
+            <button
+              type="button"
+              onClick={handleMarkAllOk}
+              className="w-full py-3 sm:py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-xl text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all"
+            >
+              <Check className="w-5 h-5 stroke-[3]" />
+              <span>KLIKNI OVDJE: OZNAČI SVE KAO ISPRAVNO</span>
+            </button>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {CHECKLIST_ITEMS.map((item) => {
                 const checkData = checklist[item.key] || { status: "ok", note: "" };
                 const isOk = checkData.status === "ok";
@@ -479,21 +564,23 @@ export function FieldWorkOrderForm({
                 return (
                   <div
                     key={item.key}
-                    className={`p-3 rounded-2xl border transition-all space-y-2 ${
+                    className={`p-3.5 rounded-2xl border-2 transition-all space-y-2.5 ${
                       isOk
-                        ? "bg-slate-50 dark:bg-slate-850 border-slate-200 dark:border-slate-700/80"
-                        : "bg-rose-50/70 dark:bg-rose-950/40 border-rose-300 dark:border-rose-900 shadow-xs"
+                        ? "bg-slate-50 dark:bg-slate-850 border-slate-200 dark:border-slate-700"
+                        : "bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 shadow-xs"
                     }`}
                   >
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-black text-slate-900 dark:text-white">{item.label}</span>
-                      <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
+                        {item.label}
+                      </span>
+                      <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
                         <button
                           type="button"
                           onClick={() => handleChecklistToggle(item.key, "ok")}
-                          className={`px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer ${
+                          className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
                             isOk
-                              ? "bg-emerald-600 text-white shadow-2xs"
+                              ? "bg-emerald-600 text-white shadow-xs"
                               : "text-slate-500 hover:text-slate-800"
                           }`}
                         >
@@ -502,9 +589,9 @@ export function FieldWorkOrderForm({
                         <button
                           type="button"
                           onClick={() => handleChecklistToggle(item.key, "issue")}
-                          className={`px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer ${
+                          className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
                             !isOk
-                              ? "bg-rose-600 text-white shadow-2xs"
+                              ? "bg-rose-600 text-white shadow-xs"
                               : "text-slate-500 hover:text-rose-600"
                           }`}
                         >
@@ -519,7 +606,7 @@ export function FieldWorkOrderForm({
                         value={checkData.note || ""}
                         onChange={(e) => handleChecklistNote(item.key, e.target.value)}
                         placeholder="Opišite uočeni kvar ili oštećenje..."
-                        className="w-full bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-800 rounded-xl px-2.5 py-1.5 text-xs text-rose-900 dark:text-rose-200 font-medium outline-none focus:ring-2 focus:ring-rose-500 animate-in fade-in"
+                        className="w-full bg-white dark:bg-slate-900 border-2 border-rose-300 dark:border-rose-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-rose-900 dark:text-rose-200 font-bold outline-none focus:ring-2 focus:ring-rose-500 animate-in fade-in"
                       />
                     )}
                   </div>
@@ -529,20 +616,20 @@ export function FieldWorkOrderForm({
           </div>
 
           {/* KORAK 4: Opis Radova & Brzi Predlošci */}
-          <div className="space-y-2">
-            <label className="block text-xs font-black uppercase text-slate-700 dark:text-slate-300 tracking-wider flex items-center gap-1.5">
-              <Wrench className="w-3.5 h-3.5 text-blue-600" />
+          <div className="space-y-2.5">
+            <label className="block text-sm font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
+              <Wrench className="w-4 h-4 text-blue-600" />
               5. Opis Izvršenih Radova
             </label>
 
             {/* Brzi tagovi / predlošci */}
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {COMMON_REPAIR_TEMPLATES.map((tmpl) => (
                 <button
                   key={tmpl}
                   type="button"
                   onClick={() => handleAddTemplate(tmpl)}
-                  className="text-[10px] font-bold bg-slate-100 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-blue-950 text-slate-700 dark:text-slate-300 hover:text-blue-700 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                  className="text-xs font-bold bg-white hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-blue-950 text-slate-800 dark:text-slate-200 hover:text-blue-700 border border-slate-300 dark:border-slate-700 px-3 py-1.5 rounded-xl transition-colors cursor-pointer shadow-2xs"
                 >
                   + {tmpl}
                 </button>
@@ -553,35 +640,35 @@ export function FieldWorkOrderForm({
               value={workDescription}
               onChange={(e) => setWorkDescription(e.target.value)}
               rows={3}
-              placeholder="Detaljan opis radova na viljuškaru..."
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs font-medium outline-none text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              placeholder="Napišite detaljan opis šta je urađeno na viljuškaru..."
+              className="w-full bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-2xl p-3.5 text-sm font-medium outline-none text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 shadow-inner"
             />
           </div>
 
           {/* KORAK 5: Utrošeni Materijal i Dijelovi */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-black uppercase text-slate-700 dark:text-slate-300 tracking-wider flex items-center gap-1.5">
-              <Package className="w-3.5 h-3.5 text-amber-600" />
+          <div className="space-y-2">
+            <label className="block text-sm font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
+              <Package className="w-4 h-4 text-amber-600" />
               6. Utrošeni Materijal i Rezervni Dijelovi
             </label>
             <textarea
               value={usedMaterials}
               onChange={(e) => setUsedMaterials(e.target.value)}
               rows={2}
-              placeholder="Upišite utrošeni materijal (npr. 2x točkić krana 85mm, 5L ulje HD46, 1x sprej)..."
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs font-medium outline-none text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500"
+              placeholder="Npr. 2x točkić krana 85mm, 5L hidraulično ulje HD46, 1x sprej za lance..."
+              className="w-full bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-2xl p-3.5 text-sm font-medium outline-none text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500 shadow-inner"
             />
           </div>
 
-          {/* KORAK 6: Foto-dokumentacija (5 obaveznih pozicija sa automatskom predkompresijom) */}
+          {/* KORAK 6: Foto-dokumentacija (5 pozicija) */}
           <div className="space-y-3">
             <div>
-              <h3 className="text-xs font-black uppercase text-slate-700 dark:text-slate-300 tracking-wider flex items-center gap-1.5">
-                <Camera className="w-4 h-4 text-indigo-600" />
+              <h3 className="text-sm font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
+                <Camera className="w-5 h-5 text-indigo-600" />
                 7. Foto Dokumentacija (5 Standardnih Pozicija)
               </h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                Slike sa kamere se automatski komprimuju na klijentu radi brzog prenosa.
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Slike sa kamere telefona se automatski komprimuju radi brzog slanja preko mobilne mreže.
               </p>
             </div>
 
@@ -594,33 +681,33 @@ export function FieldWorkOrderForm({
                 return (
                   <div
                     key={slot.key}
-                    className="p-3 bg-slate-50 dark:bg-slate-850 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between"
+                    className="p-3.5 bg-slate-50 dark:bg-slate-850 rounded-2xl border-2 border-slate-200 dark:border-slate-700 flex flex-col justify-between"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <span className="font-black text-xs text-slate-900 dark:text-white block">{slot.label}</span>
-                        <span className="text-[10px] text-slate-400 leading-tight">{slot.hint}</span>
+                        <span className="font-black text-xs sm:text-sm text-slate-900 dark:text-white block">{slot.label}</span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">{slot.hint}</span>
                       </div>
                       {imgData && (
-                        <span className="text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950 px-1.5 py-0.5 rounded text-[10px] font-black flex items-center gap-0.5">
-                          <Check className="w-3 h-3" /> OK
+                        <span className="text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-lg text-xs font-black flex items-center gap-0.5 shrink-0">
+                          <Check className="w-3.5 h-3.5" /> OK
                         </span>
                       )}
                     </div>
 
                     {imgData ? (
                       <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 mb-2 group">
-                        <img src={imgData} alt={slot.label} className="w-full h-32 object-cover" />
+                        <img src={imgData} alt={slot.label} className="w-full h-36 object-cover" />
                         <button
                           type="button"
                           onClick={() => handleRemovePhoto(slot.key)}
-                          className="absolute top-2 right-2 p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg opacity-90 hover:opacity-100 transition-opacity cursor-pointer"
+                          className="absolute top-2 right-2 p-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow-md cursor-pointer"
                           title="Ukloni fotografiju"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                         {stats && (
-                          <div className="absolute bottom-1 left-1 right-1 bg-black/75 text-[9px] font-bold text-emerald-300 py-0.5 px-1.5 rounded text-center truncate">
+                          <div className="absolute bottom-1 left-1 right-1 bg-black/80 text-[10px] font-bold text-emerald-300 py-0.5 px-2 rounded-lg text-center truncate">
                             {stats}
                           </div>
                         )}
@@ -628,18 +715,18 @@ export function FieldWorkOrderForm({
                     ) : (
                       <div
                         onClick={() => fileInputRefs.current[slot.key]?.click()}
-                        className="h-28 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 rounded-xl flex flex-col items-center justify-center p-3 text-center cursor-pointer transition-colors mb-2 bg-white dark:bg-slate-800"
+                        className="h-32 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-blue-500 rounded-xl flex flex-col items-center justify-center p-3 text-center cursor-pointer transition-colors mb-2 bg-white dark:bg-slate-800 active:scale-98"
                       >
                         {isCompressing ? (
-                          <div className="flex flex-col items-center gap-1.5 text-blue-600">
-                            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                            <span className="text-[10px] font-bold">Kompresija...</span>
+                          <div className="flex flex-col items-center gap-2 text-blue-600">
+                            <div className="w-6 h-6 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                            <span className="text-xs font-bold">Kompresija...</span>
                           </div>
                         ) : (
                           <>
-                            <Camera className="w-6 h-6 text-slate-400 mb-1" />
-                            <span className="text-[11px] font-black text-blue-600 dark:text-blue-400">
-                              Uslikaj ili Odaberi
+                            <Camera className="w-8 h-8 text-indigo-500 mb-1" />
+                            <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase">
+                              Dodirni za Kameru / Sliku
                             </span>
                           </>
                         )}
@@ -661,26 +748,26 @@ export function FieldWorkOrderForm({
             </div>
           </div>
 
-          {/* Dugmad na dnu za slanje */}
-          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3 sticky bottom-0 bg-white dark:bg-slate-900 py-2">
+          {/* Dugmad na dnu za slanje (Uočljiva i velika) */}
+          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 sticky bottom-0 bg-white dark:bg-slate-900 py-3 z-10">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-center"
             >
               Odustani
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full sm:flex-1 py-4 px-8 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white text-base font-black rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                <Send className="w-4 h-4" />
+                <Send className="w-5 h-5" />
               )}
-              <span>Završi & Pošalji Nalog</span>
+              <span>{isSubmitting ? "SLANJE..." : "POŠALJI RADNI NALOG VODITELJU"}</span>
             </button>
           </div>
         </form>
