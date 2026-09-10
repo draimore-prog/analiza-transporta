@@ -7,6 +7,7 @@ export function EditUserModal({
   isOpen,
   onClose,
   user,
+  users = [],
   onSaveUser
 }) {
   const [username, setUsername] = useState("");
@@ -30,23 +31,35 @@ export function EditUserModal({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!username.trim() || !fullname.trim()) {
+    const cleanUsername = username.trim().toLowerCase();
+    const cleanFullname = fullname.trim();
+    if (!cleanUsername || !cleanFullname) {
       alert("Korisničko ime i puno ime su obavezna polja!");
+      return;
+    }
+
+    const origUsername = (user.username || user._docId || "").trim().toLowerCase();
+    if (
+      cleanUsername !== origUsername &&
+      users.some((u) => (u.username || "").trim().toLowerCase() === cleanUsername)
+    ) {
+      alert(`Korisničko ime "${cleanUsername}" već koristi drugi korisnički nalog!`);
       return;
     }
 
     setIsSaving(true);
     try {
       const updated = {
-        username: username.trim(),
-        fullname: fullname.trim(),
+        ...user,
+        username: cleanUsername,
+        fullname: cleanFullname,
         email: email.trim() || "",
         password: password.trim() || user.password || "",
         role: role,
         createdAt: user.createdAt || new Date().toISOString()
       };
 
-      await onSaveUser(updated);
+      await onSaveUser(updated, origUsername);
       alert(`Korisnički nalog "${updated.username}" je uspješno ažuriran sa ulogom "${updated.role}"!`);
       onClose();
     } catch (err) {

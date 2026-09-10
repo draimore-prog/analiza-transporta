@@ -138,7 +138,11 @@ export function useAuth() {
             snapshot.forEach((d) => {
               const u = d.data();
               if (u && u.username) {
-                loadedUsers.push(u);
+                loadedUsers.push({
+                  ...u,
+                  username: (u.username || d.id).trim().toLowerCase(),
+                  _docId: d.id
+                });
               }
             });
           }
@@ -232,16 +236,55 @@ export function useAuth() {
     }
   }, []);
 
-  const saveUserToFirestore = async (user) => {
-    const docId = user.username.toLowerCase();
+  const saveUserToFirestore = async (user, oldUsername = null) => {
+    const newDocId = (user.username || "").trim().toLowerCase();
+    if (!newDocId) throw new Error("Korisničko ime je obavezno!");
+
     const cleanUser = Object.fromEntries(
-      Object.entries(user).filter(([_, v]) => v !== undefined)
+      Object.entries(user).filter(([k, v]) => v !== undefined && k !== "_docId")
     );
-    await setDoc(doc(db, "app_users", docId), cleanUser, { merge: true });
+    cleanUser.username = newDocId;
+
+    const originalId = (oldUsername || user._docId || "").trim().toLowerCase();
+    // Ako je korisničko ime promijenjeno, brišemo stari dokument da se ne stvori duplikat
+    if (originalId && originalId !== newDocId) {
+      try {
+        await deleteDoc(doc(db, "app_users", originalId));
+      } catch (err) {
+        console.warn("Greška pri brisanju starog korisničkog dokumenta:", err);
+      }
+    }
+
+    await setDoc(doc(db, "app_users", newDocId), cleanUser, { merge: true });
+
+    // Ako je izmijenjen trenutno prijavljeni korisnik, sinhronizuj sesiju
+    if (
+      activeUser &&
+      ((originalId && activeUser.username.toLowerCase() === originalId) ||
+        activeUser.username.toLowerCase() === newDocId)
+    ) {
+      const updatedActiveUser = { ...activeUser, ...cleanUser };
+      setActiveUser(updatedActiveUser);
+      try {
+        sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(updatedActiveUser));
+        if (localStorage.getItem(SESSION_ACTIVE_USER_KEY)) {
+          localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(updatedActiveUser));
+        }
+      } catch (e) {
+        console.warn("Greška pri ažuriranju aktivne sesije:", e);
+      }
+    }
   };
 
-  const deleteUserFromFirestore = async (username) => {
-    await deleteDoc(doc(db, "app_users", username.toLowerCase()));
+  const deleteUserFromFirestore = async (userOrUsername) => {
+    const docId = (
+      typeof userOrUsername === "string"
+        ? userOrUsername
+        : userOrUsername?._docId || userOrUsername?.username || ""
+    ).trim().toLowerCase();
+    if (docId) {
+      await deleteDoc(doc(db, "app_users", docId));
+    }
   };
 
   const saveRoleToFirestore = async (role) => {

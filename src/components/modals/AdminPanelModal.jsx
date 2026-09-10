@@ -30,8 +30,17 @@ export function AdminPanelModal({
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
-    if (!newUsername.trim() || !newFullname.trim() || !newPassword.trim()) {
+    const cleanUsername = newUsername.trim().toLowerCase();
+    const cleanFullname = newFullname.trim();
+    const cleanPassword = newPassword.trim();
+
+    if (!cleanUsername || !cleanFullname || !cleanPassword) {
       alert("Molimo popunite sva obavezna polja!");
+      return;
+    }
+
+    if (users.some((u) => (u.username || "").trim().toLowerCase() === cleanUsername)) {
+      alert(`Korisnički nalog sa korisničkim imenom "${cleanUsername}" već postoji!`);
       return;
     }
 
@@ -301,7 +310,7 @@ export function AdminPanelModal({
                                 <button
                                   onClick={() => {
                                     if (confirm(`Da li ste sigurni da želite obrisati nalog "${u.username}"?`)) {
-                                      onDeleteUser(u.username);
+                                      onDeleteUser(u);
                                     }
                                   }}
                                   className="text-red-600 dark:text-red-400 hover:underline font-bold cursor-pointer"

@@ -813,6 +813,7 @@ function DashboardContent() {
         isOpen={!!editingUser}
         onClose={() => setEditingUser(null)}
         user={editingUser}
+        users={users}
         onSaveUser={saveUserToFirestore}
       />
 
