@@ -138,10 +138,15 @@ export default function App() {
   );
 }
 
+const STATUSBAR_MARGIN = Platform.OS === "android" ? (StatusBar.currentHeight || 28) : 0;
+const NAVBAR_MARGIN = Platform.OS === "android" ? 16 : 0;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0f172a"
+    backgroundColor: "#0f172a",
+    paddingTop: STATUSBAR_MARGIN,
+    paddingBottom: NAVBAR_MARGIN
   },
   webviewWrapper: {
     flex: 1,

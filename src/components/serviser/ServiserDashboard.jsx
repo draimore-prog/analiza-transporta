@@ -579,8 +579,8 @@ export function ServiserDashboard({
         </div>
       </main>
 
-      {/* Jednostavan footer */}
-      <footer className="py-3 text-center text-slate-400 dark:text-slate-500 text-xs font-bold border-t border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70">
+      {/* Jednostavan footer sa sigurnom marginom za mobilne navigacijske trake */}
+      <footer className="py-4 pb-8 text-center text-slate-400 dark:text-slate-500 text-xs font-bold border-t border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70">
         Bingo Servis Mehanizacije • Mobilni Portal
       </footer>
     </div>

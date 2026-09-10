@@ -260,6 +260,12 @@ export function FieldWorkOrderForm({
       return;
     }
 
+    const uploadedPhotosCount = Object.values(photos).filter(Boolean).length;
+    if (uploadedPhotosCount === 0) {
+      setErrorMessage("Fotodokumentacija je OBAVEZNA! Molimo priložite barem jednu fotografiju stanja viljuškara / popravke (preporučeno: tabla sa radnim satima i izgled jedinice).");
+      return;
+    }
+
     setErrorMessage("");
     setIsSubmitting(true);
 
@@ -662,14 +668,26 @@ export function FieldWorkOrderForm({
 
           {/* KORAK 6: Foto-dokumentacija (5 pozicija) */}
           <div className="space-y-3">
-            <div>
-              <h3 className="text-sm font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
-                <Camera className="w-5 h-5 text-indigo-600" />
-                7. Foto Dokumentacija (5 Standardnih Pozicija)
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Slike sa kamere telefona se automatski komprimuju radi brzog slanja preko mobilne mreže.
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <div>
+                <h3 className="text-sm font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
+                  <Camera className="w-5 h-5 text-indigo-600" />
+                  7. Foto Dokumentacija (5 Standardnih Pozicija)
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Slike sa kamere telefona se automatski komprimuju radi brzog slanja preko mobilne mreže.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-black uppercase px-2.5 py-1 rounded-lg bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
+                  * Unos slika obavezan
+                </span>
+                {Object.values(photos).filter(Boolean).length > 0 && (
+                  <span className="text-[11px] font-black px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                    {Object.values(photos).filter(Boolean).length}/5 slika
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
