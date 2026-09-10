@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { IDBCache } from "@/lib/idbCache.js";
 import { MASTER_CACHE_KEY, DATASET_CACHE_KEY } from "@/lib/constants.js";
 import { cleanVehicleType } from "@/lib/calculations.js";
@@ -13,26 +13,44 @@ export function useFleetData() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadProgress, setLoadProgress] = useState("Učitavanje baze podataka...");
 
-  // Učitavanje matične baze voznog parka (1.236 vozila / 938 aktivnih)
+  // Pohrana real-time izmjena iz Firestore-a dok se učitava puna baza
+  const customEditsRef = useRef(new Map());
+
+  // Učitavanje matične baze voznog parka (1.252 vozila / 938 aktivnih)
   const loadMasterFleet = useCallback(async () => {
     try {
+      let list = [];
       const cached = await IDBCache.get(MASTER_CACHE_KEY);
-      if (cached && Array.isArray(cached) && cached.length > 0) {
-        const cleaned = cached.map((v) => ({
-          ...v,
-          tipMehan: cleanVehicleType(v.tipMehan)
-        }));
-        setMasterFleet(cleaned);
+      if (cached && Array.isArray(cached) && cached.length >= 1000) {
+        list = cached;
       } else {
         const res = await fetch("/fleet_master.json");
         if (res.ok) {
           const raw = await res.json();
-          const list = Array.isArray(raw) ? raw : (raw.records || []);
-          const cleaned = list.map((v) => ({
-            ...v,
-            tipMehan: cleanVehicleType(v.tipMehan)
-          }));
-          setMasterFleet(cleaned);
+          list = Array.isArray(raw) ? raw : (raw.records || []);
+        }
+      }
+
+      if (list && list.length > 0) {
+        let cleaned = list.map((v) => ({
+          ...v,
+          tipMehan: cleanVehicleType(v.tipMehan)
+        }));
+
+        // Primijeni sve pristigle custom izmjene iz Firestore-a
+        if (customEditsRef.current.size > 0) {
+          customEditsRef.current.forEach((cleanV, regUpper) => {
+            const idx = cleaned.findIndex((x) => (x.reg || "").toUpperCase() === regUpper);
+            if (idx !== -1) {
+              cleaned[idx] = { ...cleaned[idx], ...cleanV };
+            } else {
+              cleaned.push(cleanV);
+            }
+          });
+        }
+
+        setMasterFleet(cleaned);
+        if (cleaned.length >= 1000) {
           IDBCache.set(MASTER_CACHE_KEY, cleaned);
         }
       }
@@ -45,7 +63,7 @@ export function useFleetData() {
   const loadCostData = useCallback(async () => {
     try {
       const cached = await IDBCache.get(DATASET_CACHE_KEY);
-      if (cached && Array.isArray(cached) && cached.length > 0) {
+      if (cached && Array.isArray(cached) && cached.length >= 25000) {
         // Obnovi Date objekte iz keša
         const revived = cached.map((c) => {
           const cleanT = cleanVehicleType(c.tipMehan);
@@ -85,7 +103,9 @@ export function useFleetData() {
             };
           });
           setCostData(parsed);
-          IDBCache.set(DATASET_CACHE_KEY, parsed);
+          if (parsed.length >= 25000) {
+            IDBCache.set(DATASET_CACHE_KEY, parsed);
+          }
         }
       }
     } catch (e) {
@@ -145,7 +165,9 @@ export function useFleetData() {
                 updated = updated.filter((c) => c.id !== item.id);
               }
             });
-            IDBCache.set(DATASET_CACHE_KEY, updated);
+            if (updated.length >= 25000) {
+              IDBCache.set(DATASET_CACHE_KEY, updated);
+            }
             return updated;
           });
         },
@@ -171,7 +193,29 @@ export function useFleetData() {
           const changes = snapshot.docChanges();
           if (!changes || changes.length === 0) return;
 
+          // Uvijek ažuriraj customEditsRef mapu
+          changes.forEach((change) => {
+            const v = change.doc.data();
+            if (v && v.reg) {
+              const regUpper = v.reg.toUpperCase();
+              const cleanV = {
+                ...v,
+                tipMehan: cleanVehicleType(v.tipMehan)
+              };
+              if (change.type === "added" || change.type === "modified") {
+                customEditsRef.current.set(regUpper, cleanV);
+              } else if (change.type === "removed") {
+                customEditsRef.current.delete(regUpper);
+              }
+            }
+          });
+
+          // Ažuriraj stanje samo ako je puna baza već učitana u state
           setMasterFleet((prev) => {
+            if (!prev || prev.length < 1000) {
+              return prev; // Sačekaj dok loadMasterFleet završi
+            }
+
             let updated = [...prev];
             changes.forEach((change) => {
               const v = change.doc.data();
@@ -181,7 +225,7 @@ export function useFleetData() {
                   tipMehan: cleanVehicleType(v.tipMehan)
                 };
                 const regUpper = v.reg.toUpperCase();
-                const idx = updated.findIndex((x) => x.reg.toUpperCase() === regUpper);
+                const idx = updated.findIndex((x) => (x.reg || "").toUpperCase() === regUpper);
 
                 if (change.type === "added" || change.type === "modified") {
                   if (idx !== -1) updated[idx] = { ...updated[idx], ...cleanV };
@@ -191,7 +235,10 @@ export function useFleetData() {
                 }
               }
             });
-            IDBCache.set(MASTER_CACHE_KEY, updated);
+
+            if (updated.length >= 1000) {
+              IDBCache.set(MASTER_CACHE_KEY, updated);
+            }
             return updated;
           });
         },
