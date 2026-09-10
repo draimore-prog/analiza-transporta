@@ -27,7 +27,11 @@ export function VehicleCardModal({
   currentRole,
   activeUser
 }) {
-  const isServiser = activeUser?.role === "serviser" || currentRole?.roleId === "serviser";
+  const isServiser =
+    activeUser?.role === "serviser" ||
+    activeUser?.role === "mobile_serviser" ||
+    currentRole?.roleId === "serviser" ||
+    currentRole?.roleId === "mobile_serviser";
   const chartYearRef = useRef(null);
   const chartMonthRef = useRef(null);
   const chartYearInstance = useRef(null);

@@ -220,10 +220,11 @@ export function AdminPanelModal({
                       onChange={(e) => setNewRole(e.target.value)}
                       className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2 font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                     >
+                      <option value="mobile_serviser">📱 Terenski Serviser (Samo Mobilna Aplikacija)</option>
                       <option value="editor">✍️ Admin - Unos faktura</option>
                       <option value="viewer">📊 Analitičar (Samo pregled)</option>
                       <option value="warehouse_specialist">🏗️ Specijalist skladišne mehanizacije</option>
-                      <option value="serviser">🔧 Serviser (Samo pregled kartona)</option>
+                      <option value="serviser">🔧 Serviser (Karton Mehanizacije & Nalozi)</option>
                       <option value="superadmin">👑 Super Administrator</option>
                     </select>
                   </div>
@@ -273,6 +274,10 @@ export function AdminPanelModal({
                               ) : u.role === "viewer" ? (
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                                   📊 Analitičar (Pregled)
+                                </span>
+                              ) : u.role === "mobile_serviser" ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                                  📱 Terenski Serviser (Mobile App)
                                 </span>
                               ) : u.role === "serviser" ? (
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700">

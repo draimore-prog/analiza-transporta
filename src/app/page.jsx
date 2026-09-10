@@ -350,7 +350,7 @@ function DashboardContent() {
   useEffect(() => {
     if (activeUser?.role === "warehouse_specialist") {
       setPortalModeState("warehouse");
-    } else if (activeUser?.role === "serviser") {
+    } else if (activeUser?.role === "serviser" || activeUser?.role === "mobile_serviser") {
       setPortalModeState("serviser");
     } else if (currentRole?.defaultPortal) {
       setPortalModeState(

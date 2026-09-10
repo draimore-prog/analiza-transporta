@@ -123,10 +123,11 @@ export function EditUserModal({
               onChange={(e) => setRole(e.target.value)}
               className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 font-bold bg-slate-50 dark:bg-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
             >
+              <option value="mobile_serviser">📱 Terenski Serviser (Samo Mobilna Aplikacija)</option>
               <option value="editor">✍️ Admin - Unos faktura</option>
               <option value="viewer">📊 Analitičar (Samo pregled)</option>
               <option value="warehouse_specialist">🏗️ Specijalist skladišne mehanizacije</option>
-              <option value="serviser">🔧 Serviser (Samo pregled kartona)</option>
+              <option value="serviser">🔧 Serviser (Karton Mehanizacije & Nalozi)</option>
               <option value="superadmin">👑 Super Administrator</option>
             </select>
           </div>

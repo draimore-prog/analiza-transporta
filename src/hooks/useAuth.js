@@ -253,6 +253,10 @@ export function useAuth() {
       ? roles[activeUser.role]
       : activeUser?.role === "warehouse_specialist"
       ? DEFAULT_APP_ROLES.warehouse_specialist
+      : activeUser?.role === "mobile_serviser"
+      ? DEFAULT_APP_ROLES.mobile_serviser
+      : activeUser?.role === "serviser"
+      ? DEFAULT_APP_ROLES.serviser
       : DEFAULT_APP_ROLES.superadmin;
 
   return {

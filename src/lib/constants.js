@@ -124,16 +124,40 @@ export const DEFAULT_APP_ROLES = {
       canDeleteCost: false
     }
   },
-  serviser: {
-    roleId: 'serviser',
-    roleName: 'Serviser (Karton vozila)',
-    roleIcon: '🔧',
-    roleBadge: '🔧 Serviser',
-    description: 'Namjenski pristup isključivo pretrazi kartona i servisne historije pojedinačnih motornih vozila.',
+  mobile_serviser: {
+    roleId: 'mobile_serviser',
+    roleName: 'Terenski Serviser (Mobilna Aplikacija)',
+    roleIcon: '📱',
+    roleBadge: '📱 Terenski Serviser (Mobile App)',
+    description: 'Namjenski pristup isključivo mobilnoj aplikaciji za servisere na terenu: prijem radnih naloga, preventivni pregledi, ček-lista, radni sati (MTH) i fotografije jedinica.',
     defaultPortal: 'serviser',
     allowedPortals: ['serviser'],
     navigationPanels: [
-      { id: 'serviserSearch', name: 'Karton Vozila / Pretraga', portal: 'serviser', icon: '🔍', tabId: 1 }
+      { id: 'serviserOrders', name: 'Radni Nalozi & Pregledi', portal: 'serviser', icon: '📋', tabId: 1 },
+      { id: 'serviserSearch', name: 'Karton Mehanizacije / Pretraga', portal: 'serviser', icon: '🔍', tabId: 2 }
+    ],
+    permissions: {
+      canUploadExcel: false,
+      canInputCost: false,
+      canRegisterVehicle: false,
+      canAccessAdminPanel: false,
+      canSwitchPortal: false,
+      canExportExcel: false,
+      canEditCost: false,
+      canDeleteCost: false
+    }
+  },
+  serviser: {
+    roleId: 'serviser',
+    roleName: 'Serviser (Radionica & Mehanizacija)',
+    roleIcon: '🔧',
+    roleBadge: '🔧 Serviser',
+    description: 'Namjenski pristup serviserskom portalu: prijem radnih naloga i karton mehanizacije.',
+    defaultPortal: 'serviser',
+    allowedPortals: ['serviser'],
+    navigationPanels: [
+      { id: 'serviserOrders', name: 'Radni Nalozi & Pregledi', portal: 'serviser', icon: '📋', tabId: 1 },
+      { id: 'serviserSearch', name: 'Karton Mehanizacije / Pretraga', portal: 'serviser', icon: '🔍', tabId: 2 }
     ],
     permissions: {
       canUploadExcel: false,
