@@ -39,7 +39,7 @@ export function useWarehouseWorkOrders() {
     let unsubscribe = () => {};
 
     try {
-      const q = query(collection(db, "warehouse_work_orders"), orderBy("createdAt", "desc"));
+      const q = collection(db, "warehouse_work_orders");
       unsubscribe = onSnapshot(
         q,
         (snapshot) => {
@@ -47,6 +47,7 @@ export function useWarehouseWorkOrders() {
           snapshot.forEach((d) => {
             orders.push({ id: d.id, ...d.data() });
           });
+          orders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
           setWorkOrders(orders);
           setIsLoading(false);
         },

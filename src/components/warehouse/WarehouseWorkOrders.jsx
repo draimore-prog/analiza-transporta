@@ -33,6 +33,7 @@ export function WarehouseWorkOrders({
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [isSeeding, setIsSeeding] = useState(false);
 
   // KPI metrike
   const kpis = useMemo(() => {
@@ -93,16 +94,26 @@ export function WarehouseWorkOrders({
         </div>
 
         <div className="flex items-center gap-2.5 w-full sm:w-auto">
-          {workOrders.length === 0 && (
-            <button
-              onClick={onSeedDemoOrder}
-              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-              title="Kreiraj ogledni primjer naloga sa 5 fotografija i ček-listom"
-            >
+          <button
+            onClick={async () => {
+              setIsSeeding(true);
+              try {
+                if (onSeedDemoOrder) await onSeedDemoOrder();
+              } finally {
+                setIsSeeding(false);
+              }
+            }}
+            disabled={isSeeding}
+            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+            title="Kreiraj ogledni primjer naloga sa 5 fotografija i ček-listom"
+          >
+            {isSeeding ? (
+              <div className="w-3.5 h-3.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+            ) : (
               <Sparkles className="w-4 h-4 text-amber-500" />
-              <span>Generiši Primjer Naloga</span>
-            </button>
-          )}
+            )}
+            <span>{isSeeding ? "Generisanje..." : "Generiši Primjer Naloga"}</span>
+          </button>
 
           <button
             onClick={onCreateOrderClick}

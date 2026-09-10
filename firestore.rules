@@ -39,6 +39,13 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // 6. Radni nalozi i preventivni pregledi skladišne mehanizacije (warehouse_work_orders)
+    match /warehouse_work_orders/{docId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.orderNumber is string;
+      allow delete: if true;
+    }
+
     // Zabrani pristup svim ostalim nedefinisanim kolekcijama
     match /{document=**} {
       allow read, write: if false;
