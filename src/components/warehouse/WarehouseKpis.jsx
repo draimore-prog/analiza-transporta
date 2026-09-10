@@ -28,6 +28,15 @@ function checkIsInternalSupplier(dobavljac) {
   return d.includes("bingo") || d.includes("vlastit") || d.includes("intern");
 }
 
+const WAREHOUSE_FLEET_BY_YEAR = {
+  2021: 312,
+  2022: 291,
+  2023: 352,
+  2024: 419,
+  2025: 595,
+  2026: 594
+};
+
 export function WarehouseKpis({
   isActive = true,
   warehouseMasterFleet = [],
@@ -202,32 +211,31 @@ export function WarehouseKpis({
     };
   }, [filteredCostData, activeCount, selectedMonthFilter]);
 
-  // Top mašine po trošku u selekciji
-  const topVehicles = useMemo(() => {
-    const costMap = new Map();
-    filteredCostData.forEach((c) => {
-      const reg = (c.reg || "").trim().toUpperCase();
-      if (reg && reg !== "-") {
-        costMap.set(reg, (costMap.get(reg) || 0) + (c.cost || 0));
+  // Aktivne mašine u 2026.
+  const activeCount2026 = useMemo(() => {
+    const active = warehouseMasterFleet.filter((v) => {
+      const s = (v.status || "Aktivno").toLowerCase();
+      return !s.includes("prodat") && !s.includes("rashod");
+    });
+    return active.length > 0 ? active.length : 594;
+  }, [warehouseMasterFleet]);
+
+  // Višegodišnja statistika troškova i intervencija za skladišnu mehanizaciju (2021 - 2026)
+  const yearlyStats = useMemo(() => {
+    const years = [2026, 2025, 2024, 2023, 2022, 2021];
+    const stats = {};
+    years.forEach((y) => (stats[y] = { cost: 0, count: 0 }));
+
+    warehouseCostData.forEach((c) => {
+      const y = c.year;
+      if (stats[y]) {
+        stats[y].cost += c.cost || 0;
+        stats[y].count += 1;
       }
     });
 
-    const sorted = Array.from(costMap.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6);
-
-    return sorted.map(([reg, cost]) => {
-      const vInfo = fleetRegMap.get(reg);
-      return {
-        reg,
-        cost,
-        marka: vInfo?.markaVoz || "Viljuškar",
-        model: vInfo?.modelVoz || "",
-        gb: vInfo?.garazniBroj || "-",
-        radniSati: vInfo?.radniSati ?? 0
-      };
-    });
-  }, [filteredCostData, fleetRegMap]);
+    return stats;
+  }, [warehouseCostData]);
 
   // Reset filtera
   const resetFilters = () => {
@@ -1064,64 +1072,75 @@ export function WarehouseKpis({
       </div>
 
       {/* ========================================================================= */}
-      {/* KARTICE TOP VILJUŠKARA SA NAJVEĆIM TROŠKOVIMA NA DNU */}
+      {/* VIŠEGODIŠNJI PREGLED TROŠKOVA & BROJA VOZILA (2021 - 2026) */}
       {/* ========================================================================= */}
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs">
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="flex justify-between items-center mb-4">
           <div>
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <span>🚜 Vodeća Skladišna Mehanizacija po Troškovima Intervencija</span>
+              <span>📅 Višegodišnji Pregled Troškova & Broja Mehanizacije (2021 - 2026)</span>
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Klik na bilo koju mašinu otvara detaljan karton, historiju popravki, radne sate i zamijenjene dijelove
+              Klik na red filtrira tabelu popravki za odabranu godinu
             </p>
           </div>
           <button
             onClick={onOpenFleetTab}
             className="text-xs font-bold text-amber-600 hover:text-amber-700 dark:text-amber-400 flex items-center gap-1 cursor-pointer"
           >
-            Sve mašine u floti ({warehouseMasterFleet.length}) <ArrowRight className="w-3.5 h-3.5" />
+            Šifrarnik flote ({activeCount2026} aktivnih) <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-          {topVehicles.map((v, idx) => (
-            <div
-              key={v.reg}
-              onClick={() => onOpenVehicleModal(v.reg)}
-              className="p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between cursor-pointer hover:border-amber-500 hover:shadow-md transition-all group"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-black text-[11px] flex items-center justify-center">
-                  #{idx + 1}
-                </span>
-                <span className="text-[10px] font-mono font-bold text-slate-500 bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">
-                  GB: {v.gb}
-                </span>
-              </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-xs text-left">
+            <thead className="bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th className="p-3">Godina</th>
+                <th className="p-3 text-center">Broj Mašina u Floti</th>
+                <th className="p-3 text-right">Ukupan Trošak Održavanja</th>
+                <th className="p-3 text-right">Prosjek po Jedinici</th>
+                <th className="p-3 text-center">Broj Servisnih Intervencija</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+              {[2026, 2025, 2024, 2023, 2022, 2021].map((y) => {
+                const fCount = y === 2026 ? activeCount2026 : (WAREHOUSE_FLEET_BY_YEAR[y] || 0);
+                const cost = yearlyStats[y]?.cost || 0;
+                const count = yearlyStats[y]?.count || 0;
+                const avg = fCount > 0 ? cost / fCount : 0;
 
-              <div>
-                <p className="font-black text-xs text-slate-900 dark:text-white group-hover:text-amber-600 transition-colors truncate">
-                  {v.reg}
-                </p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                  {v.marka} {v.model}
-                </p>
-              </div>
-
-              <div className="mt-3 pt-2.5 border-t border-slate-200 dark:border-slate-800 flex justify-between items-end">
-                <div>
-                  <span className="text-[9px] text-slate-400 block uppercase font-bold">Utrošak</span>
-                  <span className="font-black text-xs text-amber-600 dark:text-amber-400">
-                    {formatKM(v.cost)}
-                  </span>
-                </div>
-                <span className="text-[9px] font-bold text-slate-400 group-hover:text-amber-500 flex items-center gap-0.5">
-                  Karton →
-                </span>
-              </div>
-            </div>
-          ))}
+                return (
+                  <tr
+                    key={y}
+                    onClick={() => onSelectYear(y)}
+                    className="hover:bg-amber-50/60 dark:hover:bg-slate-700/50 cursor-pointer transition-colors group"
+                  >
+                    <td className="p-3 font-extrabold text-amber-700 dark:text-amber-400 group-hover:underline">
+                      {y}. godina{" "}
+                      {y === 2026 && (
+                        <span className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 px-2 py-0.5 rounded-full ml-1 font-bold">
+                          Tekuća
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3 text-center font-bold text-slate-800 dark:text-slate-200">
+                      {fCount.toLocaleString("bs-BA")}
+                    </td>
+                    <td className="p-3 text-right font-black text-slate-900 dark:text-white">
+                      {formatKM(cost)}
+                    </td>
+                    <td className="p-3 text-right font-bold text-slate-700 dark:text-slate-300">
+                      {formatKM(avg)}
+                    </td>
+                    <td className="p-3 text-center font-semibold text-slate-600 dark:text-slate-400">
+                      {count.toLocaleString("bs-BA")}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
