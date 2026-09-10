@@ -1,0 +1,8 @@
+{
+  "appId": "ba.bingo.servismehanizacije",
+  "appName": "Bingo Servis Mehanizacije",
+  "webDir": "out",
+  "server": {
+    "androidScheme": "https"
+  }
+}

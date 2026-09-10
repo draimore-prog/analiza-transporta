@@ -19,9 +19,12 @@ import {
   ArrowRight,
   Clock,
   ChevronDown,
-  X
+  X,
+  Bell,
+  Volume2
 } from "lucide-react";
 import { WORK_ORDER_STATUSES } from "@/hooks/useWarehouseWorkOrders.js";
+import { notificationService } from "@/lib/notificationSound.js";
 
 export function ServiserDashboard({
   masterFleet = [],
@@ -58,6 +61,48 @@ export function ServiserDashboard({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Notifikacija i zvučni alarm za novi dodijeljeni radni nalog
+  const [newOrderAlert, setNewOrderAlert] = useState(null);
+  const initialOrdersLoadedRef = useRef(false);
+  const prevOrdersMapRef = useRef(new Map());
+
+  useEffect(() => {
+    if (!workOrders || workOrders.length === 0) return;
+
+    const userName = (activeUser?.fullname || activeUser?.username || "").toLowerCase();
+
+    // Pri prvom učitavanju samo zabilježi postojeće naloge da ne svira za stare naloge
+    if (!initialOrdersLoadedRef.current) {
+      workOrders.forEach((o) => {
+        if (o.id) prevOrdersMapRef.current.set(o.id, o);
+      });
+      initialOrdersLoadedRef.current = true;
+      return;
+    }
+
+    // Provjeri ima li novi nalog
+    for (const o of workOrders) {
+      if (o.id && !prevOrdersMapRef.current.has(o.id)) {
+        prevOrdersMapRef.current.set(o.id, o);
+
+        const isPending = o.status === "pending" || o.status === "in_progress";
+        if (isPending) {
+          const assigned = (o.assignedTo || "").toLowerCase();
+          const isForMe = !userName || assigned.includes(userName) || assigned.includes("svi") || assigned === "";
+
+          if (isForMe) {
+            setNewOrderAlert(o);
+            notificationService.showSystemNotification(
+              `🔔 NOVI RADNI NALOG: ${o.vehicleId || "Skladišna mehanizacija"}`,
+              `Zadatak: ${o.workDescription || "Pregled i servis jedinice"}`
+            );
+            break;
+          }
+        }
+      }
+    }
+  }, [workOrders, activeUser]);
 
   // Kombinovana flota za pretragu
   const combinedFleet = useMemo(() => {
@@ -193,6 +238,50 @@ export function ServiserDashboard({
 
       {/* Glavni sadržaj za servisera */}
       <main className="flex-1 px-4 py-4 max-w-xl mx-auto w-full space-y-4">
+        {/* Iskačući zvučni alarm / obavijest o novom nalogu */}
+        {newOrderAlert && (
+          <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white p-4 sm:p-5 rounded-3xl shadow-2xl border-4 border-amber-300 animate-pulse">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Bell className="w-6 h-6 text-white animate-bounce" />
+                <span className="font-black text-base sm:text-lg uppercase tracking-wide">
+                  STIGAO NOVI RADNI NALOG!
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setNewOrderAlert(null)}
+                className="p-1 rounded-full bg-white/20 hover:bg-white/30 text-white cursor-pointer"
+                title="Zatvori obavijest"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="mt-3 p-3 bg-white/15 backdrop-blur-md rounded-2xl border border-white/20">
+              <div className="text-2xl font-black font-mono">
+                {newOrderAlert.vehicleId}
+              </div>
+              <p className="text-sm font-bold mt-1 leading-snug">
+                {newOrderAlert.workDescription || "Dodijeljen radni nalog od strane voditelja."}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const target = newOrderAlert;
+                setNewOrderAlert(null);
+                if (onOpenFieldForm) onOpenFieldForm(target);
+              }}
+              className="mt-3 w-full bg-white text-amber-950 hover:bg-amber-50 active:scale-98 font-black py-3.5 px-4 rounded-2xl text-base shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+              <span>⚡ OTVORI I POPUNI ODMAH</span>
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
         {/* 1. GLAVNO DUGME: POKRENI NOVI NALOG (Veliko, uočljivo za starije ljude) */}
         {onOpenFieldForm && (
           <button
@@ -204,6 +293,21 @@ export function ServiserDashboard({
             <span className="tracking-wide">POKRENI NOVI NALOG</span>
           </button>
         )}
+
+        {/* Test zvuka alarma i notifikacija */}
+        <div className="flex items-center justify-between px-1">
+          <button
+            type="button"
+            onClick={() => {
+              notificationService.requestNotificationPermission();
+              notificationService.playOrderAlert();
+            }}
+            className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1.5 transition-colors cursor-pointer py-1"
+          >
+            <Volume2 className="w-4 h-4 text-indigo-500" />
+            <span>Isprobaj zvuk alarma za novi nalog</span>
+          </button>
+        </div>
 
         {/* 2. BRZA PRETRAGA KARTONA MEHANIZACIJE (Kao sklopivi panel da ne smeta) */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
