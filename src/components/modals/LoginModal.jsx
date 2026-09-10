@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Lock, User, Key, CheckCircle, AlertCircle, LogIn } from "lucide-react";
 
-export function LoginModal({ isOpen, onLogin, onGoogleLogin }) {
+export function LoginModal({ isOpen, onLogin, onGoogleLogin, sessionTimeoutMessage }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
@@ -43,6 +43,13 @@ export function LoginModal({ isOpen, onLogin, onGoogleLogin }) {
             Logistika - Servis motornih vozila
           </p>
         </div>
+
+        {sessionTimeoutMessage && !errorMessage && (
+          <div className="mb-4 p-3.5 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/80 text-amber-800 dark:text-amber-200 text-xs rounded-xl font-bold flex items-center gap-2.5 shadow-sm animate-in fade-in duration-300">
+            <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span className="leading-snug">{sessionTimeoutMessage}</span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

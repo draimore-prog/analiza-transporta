@@ -18,6 +18,19 @@ export function useAuth() {
   const [users, setUsers] = useState([DEFAULT_SUPERADMIN]);
   const [roles, setRoles] = useState(DEFAULT_APP_ROLES);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const [sessionTimeoutMessage, setSessionTimeoutMessage] = useState("");
+
+  const logout = useCallback((reason = "") => {
+    try {
+      sessionStorage.removeItem(SESSION_ACTIVE_USER_KEY);
+      localStorage.removeItem(SESSION_ACTIVE_USER_KEY);
+      localStorage.removeItem("last_portal_activity_ts");
+    } catch (e) {
+      console.warn("Storage error:", e);
+    }
+    setActiveUser(null);
+    setSessionTimeoutMessage(reason);
+  }, []);
 
   // Inicijalizacija aktivnog korisnika isključivo iz sačuvane sesije
   useEffect(() => {
@@ -36,6 +49,60 @@ export function useAuth() {
     }
     setIsAuthReady(true);
   }, []);
+
+  // Automatska odjava nakon 5 minuta neaktivnosti na portalu (5 * 60 * 1000 ms)
+  useEffect(() => {
+    if (!activeUser) return;
+
+    const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
+    const ACTIVITY_STORAGE_KEY = "last_portal_activity_ts";
+
+    const updateActivity = () => {
+      const now = Date.now();
+      try {
+        localStorage.setItem(ACTIVITY_STORAGE_KEY, now.toString());
+      } catch {}
+    };
+
+    // Inicijalno zabilježi aktivnost
+    updateActivity();
+
+    let lastThrottled = 0;
+    const throttledHandler = () => {
+      const now = Date.now();
+      if (now - lastThrottled > 2000) {
+        lastThrottled = now;
+        updateActivity();
+      }
+    };
+
+    const events = ["mousedown", "mousemove", "keydown", "scroll", "touchstart", "click"];
+    events.forEach((evt) => {
+      window.addEventListener(evt, throttledHandler, { passive: true });
+    });
+
+    const intervalId = setInterval(() => {
+      let lastActivityTime = Date.now();
+      try {
+        const storedTs = localStorage.getItem(ACTIVITY_STORAGE_KEY);
+        if (storedTs) {
+          lastActivityTime = parseInt(storedTs, 10) || lastActivityTime;
+        }
+      } catch {}
+
+      const elapsed = Date.now() - lastActivityTime;
+      if (elapsed >= INACTIVITY_TIMEOUT_MS) {
+        logout("Automatski ste odjavljeni sa sistema zbog neaktivnosti duže od 5 minuta.");
+      }
+    }, 5000);
+
+    return () => {
+      events.forEach((evt) => {
+        window.removeEventListener(evt, throttledHandler);
+      });
+      clearInterval(intervalId);
+    };
+  }, [activeUser, logout]);
 
   // Real-time osluškivanje Firestore app_roles
   useEffect(() => {
@@ -132,6 +199,7 @@ export function useAuth() {
       }
 
       if (foundUser && foundUser.password === passClean) {
+        setSessionTimeoutMessage("");
         setActiveUser(foundUser);
         try {
           sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(foundUser));
@@ -152,6 +220,7 @@ export function useAuth() {
   );
 
   const loginAs = useCallback((user, rememberMe = true) => {
+    setSessionTimeoutMessage("");
     setActiveUser(user);
     try {
       sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(user));
@@ -161,16 +230,6 @@ export function useAuth() {
     } catch (e) {
       console.warn("Storage error:", e);
     }
-  }, []);
-
-  const logout = useCallback(() => {
-    try {
-      sessionStorage.removeItem(SESSION_ACTIVE_USER_KEY);
-      localStorage.removeItem(SESSION_ACTIVE_USER_KEY);
-    } catch (e) {
-      console.warn("Storage error:", e);
-    }
-    setActiveUser(null);
   }, []);
 
   const saveUserToFirestore = async (user) => {
@@ -202,6 +261,8 @@ export function useAuth() {
     roles,
     currentRole,
     isAuthReady,
+    sessionTimeoutMessage,
+    setSessionTimeoutMessage,
     login,
     loginAs,
     logout,

@@ -94,6 +94,7 @@ function DashboardContent() {
     roles,
     currentRole,
     isAuthReady,
+    sessionTimeoutMessage,
     login,
     logout,
     saveUserToFirestore,
@@ -363,6 +364,7 @@ function DashboardContent() {
         <LoginModal
           isOpen={true}
           onLogin={login}
+          sessionTimeoutMessage={sessionTimeoutMessage}
         />
       </div>
     );
