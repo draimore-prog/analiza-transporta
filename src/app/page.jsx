@@ -23,8 +23,9 @@ import { WarehouseSegments } from "@/components/warehouse/WarehouseSegments.jsx"
 import { WarehouseSuppliers } from "@/components/warehouse/WarehouseSuppliers.jsx";
 import { WarehouseWorkOrders } from "@/components/warehouse/WarehouseWorkOrders.jsx";
 
-// Serviser Portal
+// Serviser Portal & Terenski Nalozi
 import { ServiserDashboard } from "@/components/serviser/ServiserDashboard.jsx";
+import { FieldOrdersDashboard } from "@/components/serviser/FieldOrdersDashboard.jsx";
 
 // Modali
 import { LoginModal } from "@/components/modals/LoginModal.jsx";
@@ -82,7 +83,9 @@ const PAGE_SLUG_MAPPINGS = {
 
   // Servisna radionica
   "servisna-radionica": "servisna-radionica",
-  "karton-pretraga": "servisna-radionica"
+  "karton-pretraga": "servisna-radionica",
+  "terenski-nalozi": "terenski-nalozi",
+  "terenski-unos": "terenski-nalozi"
 };
 
 function DashboardContent() {
@@ -220,6 +223,8 @@ function DashboardContent() {
       let resolvedPage = "kpi-pregled";
       if (portalParam === "servisna-radionica" || portalParam === "serviser") {
         resolvedPage = "servisna-radionica";
+      } else if (portalParam === "terenski-nalozi" || portalParam === "terenski-unos") {
+        resolvedPage = "terenski-nalozi";
       } else if (portalParam === "skladisna-mehanizacija" || portalParam === "warehouse" || portalParam === "skladiste") {
         if (pageParam && PAGE_SLUG_MAPPINGS[pageParam]) {
           resolvedPage = PAGE_SLUG_MAPPINGS[pageParam];
@@ -436,7 +441,7 @@ function DashboardContent() {
     );
   }
 
-  // Serviserski namjenski portal (čista radionica bez teških finansijskih menija)
+  // 1. Serviserski namjenski portal (samo pretraga kartona vozila - čista radionica)
   if (activePage === "servisna-radionica") {
     return (
       <div className="min-h-screen w-full overflow-y-auto bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
@@ -445,11 +450,50 @@ function DashboardContent() {
           costData={costData}
           warehouseMasterFleet={warehouseMasterFleet}
           warehouseCostData={warehouseCostData}
-          workOrders={workOrders}
           activeUser={activeUser}
           isDarkMode={isDarkMode}
           setIsDarkMode={setIsDarkMode}
           onOpenVehicleModal={(reg) => setVehicleModalReg(reg)}
+          onLogout={() => logout()}
+          onSwitchPortal={() => navigateToPage("kpi-pregled")}
+          onNavigateToField={() => navigateToPage("terenski-nalozi")}
+        />
+
+        {/* Karton Vozila Modal */}
+        <ErrorBoundary title="Greška pri prikazu kartona vozila" onClose={() => setVehicleModalReg(null)}>
+          <VehicleCardModal
+            isOpen={!!vehicleModalReg}
+            onClose={() => setVehicleModalReg(null)}
+            reg={vehicleModalReg || ""}
+            masterFleet={masterFleet}
+            costData={costData}
+            onOpenEditVehicle={(v) => setEditingVehicle(v)}
+            currentRole={currentRole}
+            activeUser={activeUser}
+          />
+        </ErrorBoundary>
+
+        {/* Izmjena Lozinke Modal */}
+        <ChangePasswordModal
+          isOpen={isPasswordModalOpen}
+          onClose={() => setIsPasswordModalOpen(false)}
+          user={activeUser}
+          onSaveUser={saveUserToFirestore}
+        />
+      </div>
+    );
+  }
+
+  // 2. Terenski Radni Nalozi (mobilni nalozi, pregledi, MTH i foto evidencija)
+  if (activePage === "terenski-nalozi") {
+    return (
+      <div className="min-h-screen w-full overflow-y-auto bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+        <FieldOrdersDashboard
+          workOrders={workOrders}
+          warehouseMasterFleet={warehouseMasterFleet}
+          activeUser={activeUser}
+          isDarkMode={isDarkMode}
+          setIsDarkMode={setIsDarkMode}
           onOpenFieldForm={(initialOrder = null) => {
             setFieldFormInitialOrder(initialOrder);
             setIsFieldFormOpen(true);
@@ -458,7 +502,8 @@ function DashboardContent() {
           onPrintWorkOrder={(o) => setPrintingWorkOrder(o)}
           onLogout={() => logout()}
           onSwitchPortal={() => navigateToPage("kpi-pregled")}
-          canEdit={canEditPage(currentRole, "servisna-radionica")}
+          onNavigateToPortal={() => navigateToPage("servisna-radionica")}
+          canEdit={canEditPage(currentRole, "terenski-nalozi")}
         />
 
         {/* Terenski Radni Nalog Modal za Servisere */}
@@ -494,20 +539,6 @@ function DashboardContent() {
           onClose={() => setPrintingWorkOrder(null)}
           workOrder={printingWorkOrder}
         />
-
-        {/* Karton Vozila Modal */}
-        <ErrorBoundary title="Greška pri prikazu kartona vozila" onClose={() => setVehicleModalReg(null)}>
-          <VehicleCardModal
-            isOpen={!!vehicleModalReg}
-            onClose={() => setVehicleModalReg(null)}
-            reg={vehicleModalReg || ""}
-            masterFleet={masterFleet}
-            costData={costData}
-            onOpenEditVehicle={(v) => setEditingVehicle(v)}
-            currentRole={currentRole}
-            activeUser={activeUser}
-          />
-        </ErrorBoundary>
 
         {/* Izmjena Lozinke Modal */}
         <ChangePasswordModal

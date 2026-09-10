@@ -24,7 +24,8 @@ const ALL_PAGES = [
   { id: "skladiste-nalozi", name: "Radni Nalozi & Pregledi", category: "skladisna-mehanizacija", icon: "📋" },
 
   // Serviser
-  { id: "servisna-radionica", name: "Serviserski Portal / Terenski Unos", category: "serviser", icon: "🛠️" }
+  { id: "servisna-radionica", name: "Serviserski Portal", category: "serviser", icon: "🔍" },
+  { id: "terenski-nalozi", name: "Terenski Radni Nalozi", category: "serviser", icon: "📱" }
 ];
 
 const CATEGORY_HEADERS = [

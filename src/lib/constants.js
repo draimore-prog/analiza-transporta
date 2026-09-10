@@ -50,7 +50,8 @@ export const APP_NAV_SECTIONS = [
     title: "Servisna Radionica",
     icon: "🔧",
     items: [
-      { id: "servisna-radionica", name: "Serviserski Portal / Terenski Unos", icon: "🛠️", category: "serviser" }
+      { id: "servisna-radionica", name: "Serviserski Portal", icon: "🔍", category: "serviser" },
+      { id: "terenski-nalozi", name: "Terenski Radni Nalozi", icon: "📱", category: "serviser", hasBadge: true }
     ]
   }
 ];
@@ -61,7 +62,8 @@ export const EDITABLE_PAGE_IDS = [
   "skladiste-sifrarnik",
   "skladiste-opravke",
   "skladiste-nalozi",
-  "servisna-radionica"
+  "servisna-radionica",
+  "terenski-nalozi"
 ];
 
 export const isEditablePage = (pageId) => EDITABLE_PAGE_IDS.includes(pageId);
@@ -104,7 +106,7 @@ export function getRolePagePermission(role, pageId) {
     if (pageId === "skladiste-nalozi") {
       return (role.permissions?.canInputCost || role.roleId === "warehouse_specialist" || role.roleId === "serviser") ? "edit" : "view";
     }
-    if (pageId === "servisna-radionica") {
+    if (pageId === "servisna-radionica" || pageId === "terenski-nalozi") {
       return "edit";
     }
     return "view";
@@ -144,7 +146,8 @@ export const DEFAULT_APP_ROLES = {
       "skladiste-segmenti": true,
       "skladiste-dobavljaci": true,
       "skladiste-nalozi": "edit",
-      "servisna-radionica": "edit"
+      "servisna-radionica": "edit",
+      "terenski-nalozi": "edit"
     },
     navigationPanels: [
       { id: "kpi-pregled", name: "KPI Pregled Flote", category: "analitika", icon: "📊" },
@@ -159,7 +162,8 @@ export const DEFAULT_APP_ROLES = {
       { id: "skladiste-segmenti", name: "Segmenti & Dijelovi", category: "skladisna-mehanizacija", icon: "⚡" },
       { id: "skladiste-dobavljaci", name: "Serviseri & Dobavljači", category: "skladisna-mehanizacija", icon: "🏢" },
       { id: "skladiste-nalozi", name: "Radni Nalozi & Pregledi", category: "skladisna-mehanizacija", icon: "📋" },
-      { id: "servisna-radionica", name: "Serviserski Portal / Terenski Unos", category: "serviser", icon: "🛠️" }
+      { id: "servisna-radionica", name: "Serviserski Portal", category: "serviser", icon: "🔍" },
+      { id: "terenski-nalozi", name: "Terenski Radni Nalozi", category: "serviser", icon: "📱" }
     ],
     permissions: {
       canUploadExcel: true,
@@ -191,7 +195,8 @@ export const DEFAULT_APP_ROLES = {
       "skladiste-segmenti": true,
       "skladiste-dobavljaci": true,
       "skladiste-nalozi": "edit",
-      "servisna-radionica": "none"
+      "servisna-radionica": "none",
+      "terenski-nalozi": "edit"
     },
     navigationPanels: [
       { id: "skladiste-analitika", name: "Analitika & Finansije Skladišta", category: "skladisna-mehanizacija", icon: "📊" },
@@ -199,7 +204,8 @@ export const DEFAULT_APP_ROLES = {
       { id: "skladiste-opravke", name: "Pregled Svih Opravki", category: "skladisna-mehanizacija", icon: "🔧" },
       { id: "skladiste-segmenti", name: "Segmenti & Dijelovi", category: "skladisna-mehanizacija", icon: "⚡" },
       { id: "skladiste-dobavljaci", name: "Serviseri & Dobavljači", category: "skladisna-mehanizacija", icon: "🏢" },
-      { id: "skladiste-nalozi", name: "Radni Nalozi & Pregledi", category: "skladisna-mehanizacija", icon: "📋" }
+      { id: "skladiste-nalozi", name: "Radni Nalozi & Pregledi", category: "skladisna-mehanizacija", icon: "📋" },
+      { id: "terenski-nalozi", name: "Terenski Radni Nalozi", category: "serviser", icon: "📱" }
     ],
     permissions: {
       canUploadExcel: false,
@@ -231,7 +237,8 @@ export const DEFAULT_APP_ROLES = {
       "skladiste-segmenti": false,
       "skladiste-dobavljaci": false,
       "skladiste-nalozi": "none",
-      "servisna-radionica": "none"
+      "servisna-radionica": "none",
+      "terenski-nalozi": "none"
     },
     navigationPanels: [
       { id: "kpi-pregled", name: "KPI Pregled Flote", category: "analitika", icon: "📊" },
@@ -269,7 +276,8 @@ export const DEFAULT_APP_ROLES = {
       "skladiste-segmenti": true,
       "skladiste-dobavljaci": true,
       "skladiste-nalozi": "view",
-      "servisna-radionica": "none"
+      "servisna-radionica": "none",
+      "terenski-nalozi": "none"
     },
     navigationPanels: [
       { id: "kpi-pregled", name: "KPI Pregled Flote", category: "analitika", icon: "📊" },
@@ -301,7 +309,7 @@ export const DEFAULT_APP_ROLES = {
     roleIcon: "📱",
     roleBadge: "📱 Terenski Serviser (Mobile App)",
     description: "Namjenski pristup radnim nalozima, preventivnim pregledima, ček-listama, radnim satima (MTH) i fotografisanju jedinica.",
-    defaultPage: "servisna-radionica",
+    defaultPage: "terenski-nalozi",
     pagePermissions: {
       "kpi-pregled": false,
       "analiza-odrzavanja": false,
@@ -315,10 +323,12 @@ export const DEFAULT_APP_ROLES = {
       "skladiste-segmenti": false,
       "skladiste-dobavljaci": false,
       "skladiste-nalozi": "view",
-      "servisna-radionica": "edit"
+      "servisna-radionica": "view",
+      "terenski-nalozi": "edit"
     },
     navigationPanels: [
-      { id: "servisna-radionica", name: "Serviserski Portal / Terenski Unos", category: "serviser", icon: "🛠️" },
+      { id: "terenski-nalozi", name: "Terenski Radni Nalozi", category: "serviser", icon: "📱" },
+      { id: "servisna-radionica", name: "Serviserski Portal", category: "serviser", icon: "🔍" },
       { id: "skladiste-sifrarnik", name: "Šifrarnik Mehanizacije (594)", category: "skladisna-mehanizacija", icon: "🚜" },
       { id: "skladiste-nalozi", name: "Radni Nalozi & Pregledi", category: "skladisna-mehanizacija", icon: "📋" }
     ],
@@ -352,10 +362,12 @@ export const DEFAULT_APP_ROLES = {
       "skladiste-segmenti": false,
       "skladiste-dobavljaci": false,
       "skladiste-nalozi": "edit",
-      "servisna-radionica": "edit"
+      "servisna-radionica": "edit",
+      "terenski-nalozi": "edit"
     },
     navigationPanels: [
-      { id: "servisna-radionica", name: "Serviserski Portal / Terenski Unos", category: "serviser", icon: "🛠️" },
+      { id: "servisna-radionica", name: "Serviserski Portal", category: "serviser", icon: "🔍" },
+      { id: "terenski-nalozi", name: "Terenski Radni Nalozi", category: "serviser", icon: "📱" },
       { id: "skladiste-sifrarnik", name: "Šifrarnik Mehanizacije (594)", category: "skladisna-mehanizacija", icon: "🚜" },
       { id: "skladiste-nalozi", name: "Radni Nalozi & Pregledi", category: "skladisna-mehanizacija", icon: "📋" }
     ],
