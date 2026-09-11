@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { PlusCircle, Search, X, ChevronRight, Sun, Moon, Bell, ClipboardList, Plus } from "lucide-react";
+import { PlusCircle, Search, X, ChevronRight, Sun, Moon, Bell, ClipboardList, Plus, Menu } from "lucide-react";
 import { normalizeVehicleStatus, getVehicleStatusBadge } from "@/lib/calculations.js";
 import { APP_NAV_SECTIONS, canEditPage } from "@/lib/constants.js";
 
@@ -17,7 +17,8 @@ export function Header({
   onOpenNewCostModal,
   onOpenNewVehicleModal,
   pendingWorkOrders = [],
-  onOpenWorkOrder
+  onOpenWorkOrder,
+  onToggleMobileSidebar
 }) {
   const [searchReg, setSearchReg] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -143,8 +144,18 @@ export function Header({
   };
 
   return (
-    <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 z-30 flex-shrink-0 shadow-xs">
-      <div className="flex items-center gap-2">
+    <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 sm:px-6 py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 z-30 flex-shrink-0 shadow-xs">
+      <div className="flex items-center gap-2.5">
+        {onToggleMobileSidebar && (
+          <button
+            type="button"
+            onClick={onToggleMobileSidebar}
+            className="p-1.5 -ml-1 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl md:hidden cursor-pointer shrink-0"
+            title="Otvori / Sakrij meni"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
         <div className="flex items-center gap-2 text-xs">
           <span className="text-base">{activePageInfo.categoryIcon}</span>
           <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[11px]">

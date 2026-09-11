@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import { ClockWidget } from "./ClockWidget.jsx";
-import { Truck, Shield, Key, LogOut } from "lucide-react";
+import { Truck, Shield, Key, LogOut, X } from "lucide-react";
 import { APP_NAV_SECTIONS, hasPageAccess } from "@/lib/constants.js";
 
 export function Sidebar({
@@ -15,7 +15,8 @@ export function Sidebar({
   onOpenAdminPanel,
   onOpenPasswordModal,
   onLogout,
-  pendingWorkOrdersCount = 0
+  pendingWorkOrdersCount = 0,
+  onClose
 }) {
   // Filtrirane sekcije i stranice na osnovu granularnih permisija uloge
   const visibleSections = useMemo(() => {
@@ -34,22 +35,34 @@ export function Sidebar({
   }, [currentRole]);
 
   return (
-    <aside className="w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col justify-between flex-shrink-0 z-20 shadow-sm transition-colors duration-200 h-full">
+    <aside className="w-full md:w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col justify-between flex-shrink-0 z-20 shadow-sm transition-colors duration-200 h-full">
       {/* Gornji dio Sidebara: Logo & Live Sat */}
       <div className="p-4 flex flex-col gap-3 shrink-0">
         {/* Brending & Logo */}
-        <div className="flex items-center gap-3" title="Logistika - Servis motornih vozila">
-          <div className="bg-gradient-to-tr from-blue-700 to-indigo-600 text-white p-2.5 rounded-xl shadow-md flex items-center justify-center shrink-0">
-            <Truck className="w-6 h-6" />
+        <div className="flex items-center justify-between" title="Logistika - Servis motornih vozila">
+          <div className="flex items-center gap-3">
+            <div className="bg-gradient-to-tr from-blue-700 to-indigo-600 text-white p-2.5 rounded-xl shadow-md flex items-center justify-center shrink-0">
+              <Truck className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-xs font-black text-slate-900 dark:text-white leading-tight tracking-tight uppercase">
+                Logistika - Servis
+              </h1>
+              <p className="text-[10px] text-blue-600 dark:text-blue-400 font-extrabold uppercase tracking-wider leading-none mt-0.5">
+                Motornih vozila
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xs font-black text-slate-900 dark:text-white leading-tight tracking-tight uppercase">
-              Logistika - Servis
-            </h1>
-            <p className="text-[10px] text-blue-600 dark:text-blue-400 font-extrabold uppercase tracking-wider leading-none mt-0.5">
-              Motornih vozila
-            </p>
-          </div>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 md:hidden cursor-pointer"
+              title="Sakrij navigaciju"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         {/* Live sat & kalendar widget */}
@@ -73,7 +86,10 @@ export function Sidebar({
                 return (
                   <button
                     key={item.id}
-                    onClick={() => onNavigatePage && onNavigatePage(item.id)}
+                    onClick={() => {
+                      if (onNavigatePage) onNavigatePage(item.id);
+                      if (onClose) onClose();
+                    }}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs font-bold transition-all cursor-pointer group ${
                       isActive
                         ? "bg-blue-600 text-white shadow-sm shadow-blue-600/30 font-extrabold"

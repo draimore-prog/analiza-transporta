@@ -68,10 +68,26 @@
 - **Zahtjev korisnika:** Prilikom kreiranja update-a preko EAS-a primjenjivati inkrementalno označavanje verzija: `V1.1` -> `V1.11` -> `V1.12`...
 - **Usklađivanje sa Expo Runtime Version:**
   - Da bi već instalirani APK (`runtimeVersion: "1.1.0"`) mogao bez reinstalacije preuzeti sve buduće inkrementalne OTA pakete, u `servis-mobilna-app/app.json` je fiksiran `"runtimeVersion": "1.1.0"`, dok se `"version"` inkrementira na `1.11`, `1.12`, itd.
-  - U `FieldOrdersDashboard.jsx` se prikazuje trenutna verzija (npr. `V1.11 (Build 2026.09.11)`).
-- **Objavljeno za V1.11:**
+  - U `FieldOrdersDashboard.jsx` se prikazuje trenutna verzija (npr. `V1.12 (Build 2026.09.11)`).
+- **Objavljeno za V1.11 i V1.12:**
   - Web deployan na Firebase Hosting (`https://analiza-transporta-flota.web.app`).
-  - EAS Update objavljen na grani `preview` (Update ID: `01a09030-95a7-777f-902e-3578f9d1c737`).
-  - Serviser u mobilnoj aplikaciji može kliknuti na **"🔄 PROVJERI OTA AŽURIRANJE"** u meniju i automatski povući V1.11.
+  - EAS Update V1.12 objavljen na grani `preview` (Update ID: `01a09038-3850-7bd0-b992-e537231e1f17`).
+
+---
+
+## 6. Uklanjanje spama notifikacija, sakrivanje sidebara na mobitelu i favicon/ikona
+1. **Zabrana notifikacija na prvo otvaranje i trajna deduplikacija:**
+   - Uklonjeno oglašavanje alarma na prvo učitavanje i u `FieldOrdersDashboard.jsx` i u nativnom `App.js`.
+   - Notifikacije se pokreću isključivo za prijavljenog korisnika i isključivo za NOVE naloge koji pristižu u realnom vremenu (`change.type === "added"`).
+   - Svaki viđeni nalog se trajno pamti u `localStorage` (`seen_order_<id>`), čime je onemogućeno ponovno slanje ili oglašavanje.
+2. **Sakrivanje i prikaz Sidebara na mobitelu:**
+   - Dodana podrška za responsive sakrivanje bočne trake na manjim ekranima.
+   - U `Header.jsx` ugrađeno hamburger dugme (`Menu`) koje otvara klizajući meni sa tamnom pozadinom.
+   - U `Sidebar.jsx` ugrađeno dugme `X` za zatvaranje, a meni se automatski zatvara i na klik bilo koje navigacijske stavke ili klik izvan menija.
+3. **Favicon, ikonica aplikacije i metapodaci:**
+   - Kreiran moderan vektorski `icon.svg` koji kombinuje Bingo brending, kran i viljuške skladišnog viljuškara i servisni ključ sa zupčanikom.
+   - Postavljen kao automatski favicon za browser (`/icon.svg` i `/public/icon.svg`) i manifest ikonica.
+   - U `src/app/layout.jsx` popunjeni puni metapodaci (naslov, opis, ključne riječi, OpenGraph, theme-color `#0f172a`).
+
 
 

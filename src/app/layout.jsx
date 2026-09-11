@@ -1,13 +1,41 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Logistika - Servis motornih vozila",
-  description: "Interaktivna analitika održavanja voznog parka, skladišne mehanizacije i KPI komparacija",
-  manifest: "/manifest.json"
+  title: "Bingo Mehanizacija & Transport | Flota i Servisna Radionica",
+  description:
+    "Centralni informacioni sistem za upravljanje voznim parkom, skladišnom mehanizacijom, terenskim radnim nalozima i servisnom radionicom Bingo d.o.o. Tuzla.",
+  applicationName: "Bingo Mehanizacija",
+  authors: [{ name: "Bingo d.o.o. - Sektor transporta i mehanizacije" }],
+  keywords: [
+    "Bingo d.o.o.",
+    "Servis mehanizacije",
+    "Skladišna mehanizacija",
+    "Viljuškari",
+    "Terenski radni nalozi",
+    "Vozni park",
+    "Transport",
+    "Preventivni pregledi",
+    "Servisna radionica"
+  ],
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" }
+    ],
+    apple: [
+      { url: "/icon.svg", type: "image/svg+xml" }
+    ]
+  },
+  manifest: "/manifest.json",
+  openGraph: {
+    title: "Bingo Mehanizacija & Transport",
+    description: "Sistem za upravljanje voznim parkom, skladišnom mehanizacijom i radnim nalozima",
+    type: "website",
+    locale: "bs_BA"
+  }
 };
 
 export const viewport = {
-  themeColor: "#4f46e5",
+  themeColor: "#0f172a",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,

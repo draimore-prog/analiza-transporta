@@ -1,17 +1,18 @@
 {
-  "name": "Bingo Servisna Radionica & Mehanizacija",
-  "short_name": "Servis Mehanizacije",
-  "description": "Radni nalozi, terenski preventivni pregledi i radni sati skladišne mehanizacije",
+  "name": "Bingo Mehanizacija & Transport",
+  "short_name": "Mehanizacija",
+  "description": "Radni nalozi, terenski pregledi, skladišna mehanizacija i upravljanje flotom Bingo d.o.o.",
   "start_url": "/?portal=servisna-radionica",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0f172a",
-  "theme_color": "#4f46e5",
+  "theme_color": "#0f172a",
   "icons": [
     {
-      "src": "/favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ]
 }

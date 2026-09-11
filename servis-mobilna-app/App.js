@@ -230,47 +230,24 @@ export default function App() {
       unsubscribe = onSnapshot(
         q,
         (snapshot) => {
+          // Na prvo otvaranje samo evidentiraj postojeće naloge bez oglašavanja i spama
           if (isFirstLoad) {
             isFirstLoad = false;
-            // Provjeri ima li svježih naloga kreiranih u zadnjih 60 min koji nisu zabilježeni
-            const now = Date.now();
-            snapshot.forEach(async (docSnap) => {
-              const order = docSnap.data();
-              if (order.status === "pending" || order.status === "in_progress") {
-                const createdAtTime = new Date(order.createdAt || 0).getTime();
-                if (now - createdAtTime < 60 * 60 * 1000) {
-                  const orderId = docSnap.id;
-                  if (!alertedOrdersRef.current.has(orderId)) {
-                    alertedOrdersRef.current.add(orderId);
-                    const vehId = order.vehicleId || "Skladišna mehanizacija";
-                    const desc = order.workDescription || order.notes || "Novi radni nalog za mehanizaciju";
-                    await Notifications.scheduleNotificationAsync({
-                      content: {
-                        title: `🔔 NOVI RADNI NALOG: ${vehId}`,
-                        body: desc,
-                        sound: "default",
-                        priority: Notifications.AndroidNotificationPriority.MAX,
-                        channelId: "radni-nalozi-channel",
-                        data: { orderId, vehicleId: vehId }
-                      },
-                      trigger: null
-                    });
-                  }
-                }
-              }
+            snapshot.forEach((docSnap) => {
+              alertedOrdersRef.current.add(docSnap.id);
             });
             return;
           }
 
+          // Samo za NOVE naloge pristigle dok aplikacija radi (ne za 'modified')
           snapshot.docChanges().forEach(async (change) => {
-            if (change.type === "added" || change.type === "modified") {
+            if (change.type === "added") {
               const order = change.doc.data();
               if (order.status !== "pending" && order.status !== "in_progress") return;
 
               const orderId = change.doc.id;
               if (alertedOrdersRef.current.has(orderId)) return;
               alertedOrdersRef.current.add(orderId);
-              setTimeout(() => alertedOrdersRef.current?.delete(orderId), 60000);
 
               const vehId = order.vehicleId || "Skladišna mehanizacija";
               const desc = order.workDescription || order.notes || "Novi nalog za pregled ili servis";

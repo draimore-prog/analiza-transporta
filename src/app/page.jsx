@@ -132,6 +132,7 @@ function DashboardContent() {
   const [isCreateWorkOrderOpen, setIsCreateWorkOrderOpen] = useState(false);
   const [isFieldFormOpen, setIsFieldFormOpen] = useState(false);
   const [fieldFormInitialOrder, setFieldFormInitialOrder] = useState(null);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const handleFieldFormSubmit = useCallback(
     async (orderPayload) => {
@@ -613,19 +614,58 @@ function DashboardContent() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      {/* Sidebar sa navigacijom i odjavom */}
-      <Sidebar
-        activePage={activePage}
-        onNavigatePage={navigateToPage}
-        activeUser={activeUser}
-        currentRole={currentRole}
-        isDarkMode={isDarkMode}
-        setIsDarkMode={setIsDarkMode}
-        onOpenAdminPanel={() => setIsAdminPanelOpen(true)}
-        onOpenPasswordModal={() => setIsPasswordModalOpen(true)}
-        onLogout={() => logout()}
-        pendingWorkOrdersCount={pendingReviewCount}
-      />
+      {/* Desktop Sidebar (uvijek vidljiv na ekranima >= md) */}
+      <div className="hidden md:flex h-full shrink-0">
+        <Sidebar
+          activePage={activePage}
+          onNavigatePage={navigateToPage}
+          activeUser={activeUser}
+          currentRole={currentRole}
+          isDarkMode={isDarkMode}
+          setIsDarkMode={setIsDarkMode}
+          onOpenAdminPanel={() => setIsAdminPanelOpen(true)}
+          onOpenPasswordModal={() => setIsPasswordModalOpen(true)}
+          onLogout={() => logout()}
+          pendingWorkOrdersCount={pendingReviewCount}
+        />
+      </div>
+
+      {/* Mobile Drawer Sidebar (klizajući meni sa pozadinskim zatamnjivanjem na mobitelu) */}
+      {isMobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex animate-in fade-in duration-200">
+          <div
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+          <div className="relative z-10 w-72 max-w-[85vw] h-full shadow-2xl animate-in slide-in-from-left duration-200">
+            <Sidebar
+              activePage={activePage}
+              onNavigatePage={(page) => {
+                navigateToPage(page);
+                setIsMobileSidebarOpen(false);
+              }}
+              activeUser={activeUser}
+              currentRole={currentRole}
+              isDarkMode={isDarkMode}
+              setIsDarkMode={setIsDarkMode}
+              onOpenAdminPanel={() => {
+                setIsAdminPanelOpen(true);
+                setIsMobileSidebarOpen(false);
+              }}
+              onOpenPasswordModal={() => {
+                setIsPasswordModalOpen(true);
+                setIsMobileSidebarOpen(false);
+              }}
+              onLogout={() => {
+                logout();
+                setIsMobileSidebarOpen(false);
+              }}
+              pendingWorkOrdersCount={pendingReviewCount}
+              onClose={() => setIsMobileSidebarOpen(false)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Glavni Kontejner - 100% širina browsera */}
       <div className="flex-1 flex flex-col min-w-0 w-full h-full overflow-hidden">
@@ -645,6 +685,7 @@ function DashboardContent() {
           }}
           pendingWorkOrders={pendingWorkOrders}
           onOpenWorkOrder={(order) => setSelectedWorkOrder(order)}
+          onToggleMobileSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
         />
 
         {/* Skrolabilni Body Dashboarda - 100% širina */}

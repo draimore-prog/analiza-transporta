@@ -34,7 +34,7 @@ import {
 import { WORK_ORDER_STATUSES } from "@/hooks/useWarehouseWorkOrders.js";
 import { notificationService } from "@/lib/notificationSound.js";
 
-const APP_VERSION = "V1.11 (Build 2026.09.11)";
+const APP_VERSION = "V1.12 (Build 2026.09.11)";
 
 export function FieldOrdersDashboard({
   workOrders = [],
@@ -104,7 +104,18 @@ export function FieldOrdersDashboard({
   };
 
   useEffect(() => {
+    // 1. Ako korisnik nije prijavljen, uopšte ne pokreći notifikacije
+    if (!activeUser || (!activeUser.username && !activeUser.fullname)) return;
     if (!workOrders || workOrders.length === 0) return;
+
+    // 2. Pri prvom učitavanju zabilježi SVE postojeće naloge bez oglašavanja (nema spama na prvo otvaranje!)
+    if (!initialOrdersLoadedRef.current) {
+      workOrders.forEach((o) => {
+        if (o.id) prevOrdersMapRef.current.set(o.id, o);
+      });
+      initialOrdersLoadedRef.current = true;
+      return;
+    }
 
     const rawUserName = (activeUser?.fullname || activeUser?.username || "").toLowerCase();
     const role = (activeUser?.role || "").toLowerCase();
@@ -131,47 +142,19 @@ export function FieldOrdersDashboard({
 
     const normUser = normalizeStr(rawUserName);
 
-    // Pri prvom učitavanju zabilježi postojeće naloge, ali provjeri ima li svježih nepročitanih
-    if (!initialOrdersLoadedRef.current) {
-      workOrders.forEach((o) => {
-        if (o.id) prevOrdersMapRef.current.set(o.id, o);
-      });
-      initialOrdersLoadedRef.current = true;
-
-      // Ako postoji nalog kreiran u zadnjih 60 minuta koji još nije potvrđen, odmah oglasi alarm
-      const now = Date.now();
-      for (const o of workOrders) {
-        if ((o.status === "pending" || o.status === "in_progress") && o.createdAt) {
-          const orderAge = now - new Date(o.createdAt).getTime();
-          const ackKey = `ack_order_${o.id}`;
-          let isAck = false;
-          try { isAck = !!localStorage.getItem(ackKey); } catch (e) {}
-
-          const normAssigned = normalizeStr(o.assignedTo || "");
-          const isAssignedToMe =
-            isAdminOrTester ||
-            !normAssigned ||
-            normAssigned === "svi" ||
-            normAssigned.includes("svi") ||
-            (normUser && normAssigned.includes(normUser)) ||
-            (normUser && normUser.includes(normAssigned)) ||
-            role === "mobile_serviser" ||
-            role === "serviser";
-
-          if (orderAge < 60 * 60 * 1000 && !isAck && isAssignedToMe) {
-            try { localStorage.setItem(ackKey, "1"); } catch (e) {}
-            triggerOrderNotification(o);
-            break;
-          }
-        }
-      }
-      return;
-    }
-
-    // Provjeri ima li novi nalog pristigao u realnom vremenu
+    // 3. Samo za NOVE naloge pristigle u realnom vremenu dok je korisnik prijavljen
     for (const o of workOrders) {
       if (o.id && !prevOrdersMapRef.current.has(o.id)) {
         prevOrdersMapRef.current.set(o.id, o);
+
+        // Ako je korisnik već vidio ovaj nalog, ne šalji ga opet!
+        const seenKey = `seen_order_${o.id}`;
+        let isAlreadySeen = false;
+        try {
+          isAlreadySeen = !!localStorage.getItem(seenKey);
+        } catch (e) {}
+
+        if (isAlreadySeen) continue;
 
         const normAssigned = normalizeStr(o.assignedTo || "");
         const isAssignedToMe =
@@ -185,8 +168,9 @@ export function FieldOrdersDashboard({
           role === "serviser";
 
         if (isAssignedToMe && (o.status === "pending" || o.status === "in_progress")) {
-          const ackKey = `ack_order_${o.id}`;
-          try { localStorage.setItem(ackKey, "1"); } catch (e) {}
+          try {
+            localStorage.setItem(seenKey, "1");
+          } catch (e) {}
           triggerOrderNotification(o);
           break;
         }
@@ -580,7 +564,12 @@ export function FieldOrdersDashboard({
               </div>
               <button
                 type="button"
-                onClick={() => setNewOrderAlert(null)}
+                onClick={() => {
+                  if (newOrderAlert?.id) {
+                    try { localStorage.setItem(`seen_order_${newOrderAlert.id}`, "1"); } catch (e) {}
+                  }
+                  setNewOrderAlert(null);
+                }}
                 className="p-1 rounded-full bg-white/20 hover:bg-white/30 text-white cursor-pointer"
                 title="Zatvori obavijest"
               >
@@ -601,6 +590,9 @@ export function FieldOrdersDashboard({
               type="button"
               onClick={() => {
                 const target = newOrderAlert;
+                if (target?.id) {
+                  try { localStorage.setItem(`seen_order_${target.id}`, "1"); } catch (e) {}
+                }
                 setNewOrderAlert(null);
                 if (onOpenFieldForm) onOpenFieldForm(target);
               }}
