@@ -54,6 +54,7 @@ const INJECTED_VIEWPORT_LOCK = `
 
 export default function App() {
   const webViewRef = useRef(null);
+  const alertedOrdersRef = useRef(new Set());
   const [canGoBack, setCanGoBack] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -164,8 +165,15 @@ export default function App() {
           }
 
           snapshot.docChanges().forEach(async (change) => {
-            if (change.type === "added") {
+            if (change.type === "added" || change.type === "modified") {
               const order = change.doc.data();
+              if (order.status !== "pending" && order.status !== "in_progress") return;
+
+              const orderId = change.doc.id;
+              if (alertedOrdersRef.current.has(orderId)) return;
+              alertedOrdersRef.current.add(orderId);
+              setTimeout(() => alertedOrdersRef.current?.delete(orderId), 60000);
+
               const vehId = order.vehicleId || "Skladišna mehanizacija";
               const desc = order.workDescription || order.notes || "Novi nalog za pregled ili servis";
               const assigned = order.assignedTo ? ` (Zadužen: ${order.assignedTo})` : "";

@@ -69,7 +69,30 @@ export function FieldOrdersDashboard({
   useEffect(() => {
     if (!workOrders || workOrders.length === 0) return;
 
-    const userName = (activeUser?.fullname || activeUser?.username || "").toLowerCase();
+    const rawUserName = (activeUser?.fullname || activeUser?.username || "").toLowerCase();
+    const role = (activeUser?.role || "").toLowerCase();
+    const isAdminOrTester =
+      role === "admin" ||
+      role === "superadmin" ||
+      role === "uprava" ||
+      role === "dispecer" ||
+      role === "warehouse_manager" ||
+      rawUserName.includes("admin") ||
+      rawUserName.includes("emir");
+
+    const normalizeStr = (s) =>
+      (s || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "dj")
+        .replace(/ž/g, "z")
+        .replace(/č/g, "c")
+        .replace(/ć/g, "c")
+        .replace(/š/g, "s")
+        .trim();
+
+    const normUser = normalizeStr(rawUserName);
 
     // Pri prvom učitavanju samo zabilježi postojeće naloge da ne svira za stare naloge
     if (!initialOrdersLoadedRef.current) {
@@ -85,12 +108,16 @@ export function FieldOrdersDashboard({
       if (o.id && !prevOrdersMapRef.current.has(o.id)) {
         prevOrdersMapRef.current.set(o.id, o);
 
-        const assigned = (o.assignedTo || "").toLowerCase();
+        const normAssigned = normalizeStr(o.assignedTo || "");
         const isAssignedToMe =
-          !assigned ||
-          assigned === "svi" ||
-          (userName && assigned.includes(userName)) ||
-          (userName && userName.includes(assigned));
+          isAdminOrTester ||
+          !normAssigned ||
+          normAssigned === "svi" ||
+          normAssigned.includes("svi") ||
+          (normUser && normAssigned.includes(normUser)) ||
+          (normUser && normUser.includes(normAssigned)) ||
+          role === "mobile_serviser" ||
+          role === "serviser";
 
         if (isAssignedToMe && (o.status === "pending" || o.status === "in_progress")) {
           setNewOrderAlert(o);

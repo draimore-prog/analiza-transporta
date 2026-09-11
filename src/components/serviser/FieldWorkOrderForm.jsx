@@ -45,6 +45,40 @@ const COMMON_REPAIR_TEMPLATES = [
   "Otklanjanje vlaženja hidrauličnog crijeva"
 ];
 
+function normalizeChecklist(existingChecklist) {
+  const normalized = {};
+  CHECKLIST_ITEMS.forEach((item) => {
+    const val = existingChecklist && typeof existingChecklist === "object" ? existingChecklist[item.key] : null;
+    if (val && typeof val === "object" && val.status) {
+      normalized[item.key] = {
+        status: val.status === "issue" ? "issue" : "ok",
+        note: typeof val.note === "string" ? val.note : ""
+      };
+    } else if (typeof val === "string") {
+      normalized[item.key] = {
+        status: val === "issue" ? "issue" : "ok",
+        note: ""
+      };
+    } else {
+      normalized[item.key] = { status: "ok", note: "" };
+    }
+  });
+  return normalized;
+}
+
+function extractVehicleFromOrder(order) {
+  if (!order) return null;
+  const vDetails = order.vehicleDetails || {};
+  return {
+    reg: order.vehicleId || "",
+    tipMehan: vDetails.tip || "Viljuškar",
+    markaVoz: vDetails.proizvodjac || "",
+    modelVoz: vDetails.model || "",
+    brojSasije: vDetails.serijskiBroj || "",
+    poslovnaJedinica: vDetails.lokacija || ""
+  };
+}
+
 export function FieldWorkOrderForm({
   isOpen,
   onClose,
@@ -59,24 +93,18 @@ export function FieldWorkOrderForm({
   // Trenutni korak čarobnjaka (1: Jedinica, 2: Ček-lista, 3: Radovi, 4: Sati & slike)
   const [currentStep, setCurrentStep] = useState(1);
 
-  // Stanje forme
-  const [selectedVehicle, setSelectedVehicle] = useState(null);
-  const [orderType, setOrderType] = useState("preventive");
-  const [workHours, setWorkHours] = useState("");
-  const [workDescription, setWorkDescription] = useState("");
-  const [usedMaterials, setUsedMaterials] = useState("");
+  // Stanje forme - bezbjedno inicijalizovano direktno iz initialOrder
+  const [selectedVehicle, setSelectedVehicle] = useState(() => extractVehicleFromOrder(initialOrder));
+  const [orderType, setOrderType] = useState(() => initialOrder?.type || "preventive");
+  const [workHours, setWorkHours] = useState(() => (initialOrder?.workHours ? String(initialOrder.workHours) : ""));
+  const [workDescription, setWorkDescription] = useState(() => initialOrder?.workDescription || "");
+  const [usedMaterials, setUsedMaterials] = useState(() => initialOrder?.usedMaterials || "");
 
-  // Ček-lista: inicijalno sve postavljeno na 'ok'
-  const [checklist, setChecklist] = useState(() => {
-    const init = {};
-    CHECKLIST_ITEMS.forEach((item) => {
-      init[item.key] = { status: "ok", note: "" };
-    });
-    return init;
-  });
+  // Ček-lista: garantovano normalizovano svih 8 stavki
+  const [checklist, setChecklist] = useState(() => normalizeChecklist(initialOrder?.checklist));
 
   // Fotografije i statistike kompresije
-  const [photos, setPhotos] = useState({});
+  const [photos, setPhotos] = useState(() => (initialOrder?.photos && typeof initialOrder.photos === "object" ? initialOrder.photos : {}));
   const [compressingSlot, setCompressingSlot] = useState(null);
   const [photoStats, setPhotoStats] = useState({});
 
@@ -98,32 +126,14 @@ export function FieldWorkOrderForm({
     setCurrentStep(1); // Uvijek počni od koraka 1 pri otvaranju
 
     if (initialOrder) {
-      const vDetails = initialOrder.vehicleDetails || {};
-      setSelectedVehicle({
-        reg: initialOrder.vehicleId || "",
-        tipMehan: vDetails.tip || "Viljuškar",
-        markaVoz: vDetails.proizvodjac || "",
-        modelVoz: vDetails.model || "",
-        brojSasije: vDetails.serijskiBroj || "",
-        poslovnaJedinica: vDetails.lokacija || ""
-      });
+      setSelectedVehicle(extractVehicleFromOrder(initialOrder));
       setIsSearchingVehicle(false);
       setOrderType(initialOrder.type || "preventive");
       setWorkHours(initialOrder.workHours ? String(initialOrder.workHours) : "");
       setWorkDescription(initialOrder.workDescription || "");
       setUsedMaterials(initialOrder.usedMaterials || "");
-
-      if (initialOrder.checklist && Object.keys(initialOrder.checklist).length > 0) {
-        setChecklist(initialOrder.checklist);
-      } else {
-        const init = {};
-        CHECKLIST_ITEMS.forEach((item) => {
-          init[item.key] = { status: "ok", note: "" };
-        });
-        setChecklist(init);
-      }
-
-      setPhotos(initialOrder.photos || {});
+      setChecklist(normalizeChecklist(initialOrder.checklist));
+      setPhotos(initialOrder.photos && typeof initialOrder.photos === "object" ? initialOrder.photos : {});
       setSubmittedOrderNumber(null);
       setErrorMessage("");
     } else {
@@ -133,11 +143,7 @@ export function FieldWorkOrderForm({
       setWorkHours("");
       setWorkDescription("");
       setUsedMaterials("");
-      const init = {};
-      CHECKLIST_ITEMS.forEach((item) => {
-        init[item.key] = { status: "ok", note: "" };
-      });
-      setChecklist(init);
+      setChecklist(normalizeChecklist(null));
       setPhotos({});
       setSubmittedOrderNumber(null);
       setErrorMessage("");
@@ -146,7 +152,7 @@ export function FieldWorkOrderForm({
 
   // Filtriraj SAMO aktivna vozila (isključi rashodovana, prodata i neaktivna)
   const activeWarehouseFleet = useMemo(() => {
-    return warehouseMasterFleet.filter(
+    return (warehouseMasterFleet || []).filter(
       (v) => normalizeVehicleStatus(v.status) === "Aktivno"
     );
   }, [warehouseMasterFleet]);
@@ -176,8 +182,6 @@ export function FieldWorkOrderForm({
       })
       .slice(0, 10);
   }, [activeWarehouseFleet, searchVehicleTerm]);
-
-  if (!isOpen) return null;
 
   // Brzo označavanje svih sklopova ispravnim
   const handleMarkAllOk = () => {
@@ -350,15 +354,16 @@ export function FieldWorkOrderForm({
     }
   };
 
-  // Brojač defekata u ček listi
-  const defectCount = useMemo(() => {
-    return Object.values(checklist).filter((c) => c.status === "issue").length;
-  }, [checklist]);
+  // Brojač defekata u ček listi - bezbjedna kalkulacija bez hook restrikcija
+  const defectCount = Object.values(checklist || {}).filter(
+    (c) => c && typeof c === "object" && c.status === "issue"
+  ).length;
 
   // Brojač slika
-  const photoCount = useMemo(() => {
-    return Object.values(photos).filter(Boolean).length;
-  }, [photos]);
+  const photoCount = Object.values(photos || {}).filter(Boolean).length;
+
+  // Ako modal nije otvoren, bezbjedno vrati null NAKON što su svi hookovi bezuslovno izvršeni
+  if (!isOpen) return null;
 
   // Ako je nalog uspješno poslan, prikaži ekran potvrde
   if (submittedOrderNumber) {
