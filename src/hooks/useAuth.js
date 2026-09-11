@@ -36,10 +36,21 @@ export function useAuth() {
   useEffect(() => {
     try {
       const stored =
-        sessionStorage.getItem(SESSION_ACTIVE_USER_KEY) ||
-        localStorage.getItem(SESSION_ACTIVE_USER_KEY);
+        localStorage.getItem(SESSION_ACTIVE_USER_KEY) ||
+        sessionStorage.getItem(SESSION_ACTIVE_USER_KEY);
       if (stored) {
-        setActiveUser(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        setActiveUser(parsed);
+        // Ako je mobilni serviser ili na telefonu, osiguraj trajnu pohranu u localStorage
+        if (
+          parsed?.role === "mobile_serviser" ||
+          parsed?.role === "serviser" ||
+          (typeof window !== "undefined" && window.__IS_NATIVE_APP)
+        ) {
+          try {
+            localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(parsed));
+          } catch {}
+        }
       } else {
         // Ako nema aktivne sesije, korisnik je ODJAVLJEN (null)
         setActiveUser(null);
@@ -51,8 +62,21 @@ export function useAuth() {
   }, []);
 
   // Automatska odjava nakon 5 minuta neaktivnosti na portalu (5 * 60 * 1000 ms)
+  // IZUZETAK: Mobilni serviseri na telefonu ostaju TRAJNO prijavljeni (bez 5-minutnog timeouta)
   useEffect(() => {
     if (!activeUser) return;
+
+    const isMobileOrServiser =
+      activeUser.role === "mobile_serviser" ||
+      activeUser.role === "serviser" ||
+      (typeof window !== "undefined" && (
+        window.__IS_NATIVE_APP ||
+        window.location.search.includes("portal=terenski-nalozi") ||
+        /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+      ));
+
+    // Ako je mobilni serviser ili se koristi mobilna aplikacija na telefonu, NEMA automatske odjave
+    if (isMobileOrServiser) return;
 
     const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
     const ACTIVITY_STORAGE_KEY = "last_portal_activity_ts";
@@ -205,9 +229,19 @@ export function useAuth() {
       if (foundUser && foundUser.password === passClean) {
         setSessionTimeoutMessage("");
         setActiveUser(foundUser);
+        const shouldRemember =
+          rememberMe ||
+          foundUser.role === "mobile_serviser" ||
+          foundUser.role === "serviser" ||
+          (typeof window !== "undefined" && (
+            window.__IS_NATIVE_APP ||
+            window.location.search.includes("portal=terenski-nalozi") ||
+            /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+          ));
+
         try {
           sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(foundUser));
-          if (rememberMe) {
+          if (shouldRemember) {
             localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(foundUser));
           } else {
             localStorage.removeItem(SESSION_ACTIVE_USER_KEY);
@@ -226,9 +260,19 @@ export function useAuth() {
   const loginAs = useCallback((user, rememberMe = true) => {
     setSessionTimeoutMessage("");
     setActiveUser(user);
+    const shouldRemember =
+      rememberMe ||
+      user?.role === "mobile_serviser" ||
+      user?.role === "serviser" ||
+      (typeof window !== "undefined" && (
+        window.__IS_NATIVE_APP ||
+        window.location.search.includes("portal=terenski-nalozi") ||
+        /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+      ));
+
     try {
       sessionStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(user));
-      if (rememberMe) {
+      if (shouldRemember) {
         localStorage.setItem(SESSION_ACTIVE_USER_KEY, JSON.stringify(user));
       }
     } catch (e) {
