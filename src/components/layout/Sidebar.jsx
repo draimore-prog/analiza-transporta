@@ -41,13 +41,11 @@ export function Sidebar({
         {/* Brending & Logo */}
         <div className="flex items-center justify-between" title="Logistika - Servis motornih vozila">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700/60 p-1 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center shrink-0">
-              <img
-                src="/icon.png"
-                alt="Logistika - Servis motornih vozila"
-                className="w-full h-full object-contain drop-shadow-xs"
-              />
-            </div>
+            <img
+              src="/icon.png"
+              alt="Logistika - Servis motornih vozila"
+              className="w-11 h-11 object-contain drop-shadow-md shrink-0 select-none"
+            />
             <div>
               <h1 className="text-xs font-black text-slate-900 dark:text-white leading-tight tracking-tight uppercase">
                 Logistika - Servis

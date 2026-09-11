@@ -33,11 +33,11 @@ export function LoginModal({ isOpen, onLogin, onGoogleLogin, sessionTimeoutMessa
     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex justify-center items-center z-[9999] p-4 animate-in fade-in duration-200">
       <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 dark:border-slate-800 p-8">
         <div className="text-center mb-6">
-          <div className="inline-flex bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl mb-3 shadow-inner border border-slate-200 dark:border-slate-700">
+          <div className="flex justify-center mb-3">
             <img
               src="/icon.png"
               alt="Logistika - Servis motornih vozila"
-              className="w-14 h-14 object-contain drop-shadow-sm"
+              className="w-24 h-24 sm:w-28 sm:h-28 object-contain drop-shadow-xl select-none"
             />
           </div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
