@@ -89,6 +89,60 @@ export default function App() {
     }
   };
 
+  // Otvaranje OEM ekrana za automatsko pokretanje (Auto-start / Background activity)
+  const openAutoStartSettings = async () => {
+    if (Platform.OS !== "android") return;
+    const pkg = "ba.bingo.servismehanizacije";
+
+    // Pokušaj otvoriti specifične OEM ekrane za automatsko pokretanje (Xiaomi, Huawei, Oppo, Vivo, Samsung)
+    const oemIntents = [
+      { action: "miui.intent.action.OP_AUTO_START" },
+      { packageName: "com.miui.securitycenter", className: "com.miui.permcenter.autostart.AutoStartManagementActivity" },
+      { packageName: "com.huawei.systemmanager", className: "com.huawei.systemmanager.optimize.process.ProtectActivity" },
+      { packageName: "com.huawei.systemmanager", className: "com.huawei.systemmanager.appcontrol.activity.StartupAppControlActivity" },
+      { packageName: "com.coloros.safecenter", className: "com.coloros.safecenter.permission.startup.StartupAppListActivity" },
+      { packageName: "com.iqoo.secure", className: "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity" },
+      { action: IntentLauncher.ActivityAction.APPLICATION_DETAILS_SETTINGS, data: `package:${pkg}` }
+    ];
+
+    for (const intent of oemIntents) {
+      try {
+        if (intent.packageName && intent.className) {
+          await IntentLauncher.startActivityAsync(IntentLauncher.ActivityAction.MAIN, {
+            packageName: intent.packageName,
+            className: intent.className
+          });
+          return;
+        } else if (intent.action) {
+          await IntentLauncher.startActivityAsync(intent.action, intent.data ? { data: intent.data } : undefined);
+          return;
+        }
+      } catch (e) {
+        // Probaj sljedeći intent
+      }
+    }
+
+    try {
+      await IntentLauncher.startActivityAsync(IntentLauncher.ActivityAction.APPLICATION_DETAILS_SETTINGS, {
+        data: `package:${pkg}`
+      });
+    } catch (err) {
+      console.warn("Otvaranje postavki aplikacije nije uspjelo:", err);
+    }
+  };
+
+  // Otvaranje detaljnih sistemskih postavki aplikacije
+  const openAppSettings = async () => {
+    if (Platform.OS !== "android") return;
+    try {
+      await IntentLauncher.startActivityAsync(IntentLauncher.ActivityAction.APPLICATION_DETAILS_SETTINGS, {
+        data: `package:ba.bingo.servismehanizacije`
+      });
+    } catch (err) {
+      console.warn("Greška pri otvaranju postavki aplikacije:", err);
+    }
+  };
+
   // Sinhronizacija sistemske teme telefona u WebView
   useEffect(() => {
     if (webViewRef.current) {
@@ -386,7 +440,19 @@ export default function App() {
         return;
       }
 
-      // D) Lokalna notifikacija (direktan bridge poziv)
+      // D) Otvaranje Auto-start postavki (Xiaomi, Samsung, Huawei, Oppo, Vivo)
+      if (data.type === "OPEN_AUTO_START_SETTINGS") {
+        await openAutoStartSettings();
+        return;
+      }
+
+      // E) Otvaranje detaljnih postavki aplikacije (dozvole, obavijesti, baterija)
+      if (data.type === "OPEN_APP_SETTINGS") {
+        await openAppSettings();
+        return;
+      }
+
+      // F) Lokalna notifikacija (direktan bridge poziv)
       if (data.type === "NOTIFICATION" || data.type === "NEW_WORK_ORDER") {
         await Notifications.scheduleNotificationAsync({
           content: {

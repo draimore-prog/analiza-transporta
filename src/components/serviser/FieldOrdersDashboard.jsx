@@ -30,7 +30,10 @@ import {
   Smartphone,
   Info,
   Zap,
-  ShieldCheck
+  ShieldCheck,
+  Check,
+  Settings,
+  Power
 } from "lucide-react";
 import { useConfirm } from "@/context/ConfirmContext.jsx";
 import { WORK_ORDER_STATUSES } from "@/hooks/useWarehouseWorkOrders.js";
@@ -304,6 +307,32 @@ export function FieldOrdersDashboard({
     }
   };
 
+  // Otvaranje sistemskih postavki za automatsko pokretanje (Auto-start na Xiaomi, Samsung, Huawei itd.)
+  const handleOpenAutoStartSettings = () => {
+    if (typeof window !== "undefined" && window.ReactNativeWebView) {
+      try {
+        window.ReactNativeWebView.postMessage(
+          JSON.stringify({ type: "OPEN_AUTO_START_SETTINGS" })
+        );
+      } catch (e) {}
+    } else {
+      alert("Ova opcija otvara postavke automatskog pokretanja (Auto-start) na Android uređaju.");
+    }
+  };
+
+  // Otvaranje detaljnih sistemskih postavki aplikacije (dozvole, obavijesti, baterija)
+  const handleOpenAppSettings = () => {
+    if (typeof window !== "undefined" && window.ReactNativeWebView) {
+      try {
+        window.ReactNativeWebView.postMessage(
+          JSON.stringify({ type: "OPEN_APP_SETTINGS" })
+        );
+      } catch (e) {}
+    } else {
+      alert("Ova opcija otvara postavke aplikacije u Android sistemu.");
+    }
+  };
+
   return (
     <div className="min-h-screen w-full bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between">
       
@@ -526,6 +555,24 @@ export function FieldOrdersDashboard({
                     >
                       <ShieldCheck className="w-4 h-4 text-emerald-200" />
                       <span>POZADINSKI SERVIS (PROVJERI 24/7 RAD)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleOpenAutoStartSettings}
+                      className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 dark:bg-slate-750 dark:hover:bg-slate-700 active:scale-98 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer border border-slate-700"
+                    >
+                      <Power className="w-4 h-4 text-emerald-400" />
+                      <span>AUTO-START (XIAOMI / SAMSUNG / HUAWEI)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleOpenAppSettings}
+                      className="w-full py-2.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 active:scale-98 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer border border-slate-300 dark:border-slate-700"
+                    >
+                      <Settings className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                      <span>POSTAVKE APLIKACIJE & DOZVOLE</span>
                     </button>
                   </div>
                 )}

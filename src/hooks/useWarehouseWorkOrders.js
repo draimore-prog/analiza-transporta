@@ -15,7 +15,7 @@ import {
 } from "firebase/firestore";
 
 // Slanje native Expo Push Notifikacija na registrovane mobilne uređaje servisera
-async function dispatchPushNotificationToServisers({ title, body, data }) {
+async function dispatchPushNotificationToServisers({ title, body, data = {} }) {
   try {
     const tokensSnap = await getDocs(collection(db, "serviser_push_tokens"));
     const tokens = [];
@@ -33,17 +33,23 @@ async function dispatchPushNotificationToServisers({ title, body, data }) {
 
     const messages = tokens.map((to) => ({
       to,
+      title: title || "🔔 NOVI RADNI NALOG",
+      body: body || "Dodijeljen je novi radni nalog za mehanizaciju.",
       sound: "default",
-      title,
-      body,
+      priority: "high",
+      channelId: "radni-nalozi-channel",
+      badge: 1,
+      ttl: 2419200,
+      android: {
+        channelId: "radni-nalozi-channel",
+        priority: "high",
+        sound: "default",
+        vibrate: [0, 250, 250, 250, 400]
+      },
       data: {
         ...data,
         _displayInForeground: true
-      },
-      channelId: "radni-nalozi-channel",
-      priority: "high",
-      badge: 1,
-      ttl: 2419200
+      }
     }));
 
     const res = await fetch("https://exp.host/--/api/v2/push/send", {
