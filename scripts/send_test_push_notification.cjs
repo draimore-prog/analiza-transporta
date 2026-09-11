@@ -84,10 +84,13 @@ async function main() {
     return;
   }
 
+  const customBody = process.argv[2] || "Sistem notifikacija radi 100% ispravno! Visoki prioritet, zvuk i buđenje ekrana su aktivni.";
+  const customTitle = process.argv[3] || "🔔 BINGO MOTORFIX";
+
   const messages = tokens.map((to) => ({
     to,
-    title: "🔔 TEST PUSH NOTIFIKACIJA: Bingo MotorFix",
-    body: "Sistem notifikacija radi 100% ispravno! Visoki prioritet, zvuk i buđenje ekrana su aktivni.",
+    title: customTitle,
+    body: customBody,
     sound: "default",
     priority: "high",
     channelId: "radni-nalozi-channel",
@@ -101,6 +104,7 @@ async function main() {
     },
     data: {
       type: "TEST_NOTIFICATION",
+      messageText: customBody,
       timestamp: new Date().toISOString()
     }
   }));
