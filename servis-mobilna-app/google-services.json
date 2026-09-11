@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1097206634987",
+    "project_id": "analiza-transporta-flota",
+    "storage_bucket": "analiza-transporta-flota.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1097206634987:android:e92f6df24935049083e1ae",
+        "android_client_info": {
+          "package_name": "ba.bingo.servismehanizacije"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1097206634987-e02r08fd1sm0ru4envaurmp7pj9kkqql.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCC9-2hFXapcXdtKUDy3LBfcmst6KtGKKg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1097206634987-e02r08fd1sm0ru4envaurmp7pj9kkqql.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -21,12 +21,15 @@ async function dispatchPushNotificationToServisers({ title, body, data }) {
     const tokens = [];
     tokensSnap.forEach((d) => {
       const t = d.data()?.token;
-      if (t && typeof t === "string" && t.startsWith("ExponentPushToken[")) {
+      if (t && typeof t === "string" && (t.startsWith("ExponentPushToken[") || t.startsWith("ExpoPushToken[") || t.length > 20)) {
         tokens.push(t);
       }
     });
 
-    if (tokens.length === 0) return;
+    if (tokens.length === 0) {
+      console.log("dispatchPushNotificationToServisers: Nema registrovanih push tokena u bazi.");
+      return;
+    }
 
     const messages = tokens.map((to) => ({
       to,
@@ -38,7 +41,7 @@ async function dispatchPushNotificationToServisers({ title, body, data }) {
       priority: "high"
     }));
 
-    await fetch("https://exp.host/--/api/v2/push/send", {
+    const res = await fetch("https://exp.host/--/api/v2/push/send", {
       method: "POST",
       headers: {
         "Accept": "application/json",
@@ -47,6 +50,8 @@ async function dispatchPushNotificationToServisers({ title, body, data }) {
       },
       body: JSON.stringify(messages)
     });
+    const resJson = await res.json().catch(() => ({}));
+    console.log("Push notifikacije poslane na", tokens.length, "uređaja:", resJson);
   } catch (err) {
     console.warn("Greška pri slanju push notifikacije serviserima:", err);
   }

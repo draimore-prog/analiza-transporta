@@ -111,6 +111,12 @@ class SoundNotificationService {
       console.warn("System notification error:", e);
     }
   }
+
+  // Kompatibilnost i alias za browser i native notifikacije
+  showBrowserNotification(title, options = {}) {
+    const body = typeof options === "string" ? options : options?.body || "";
+    this.showSystemNotification(title, body);
+  }
 }
 
 export const notificationService = new SoundNotificationService();

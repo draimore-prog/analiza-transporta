@@ -275,22 +275,80 @@ function DashboardContent() {
   const [supplierModalTarget, setSupplierModalTarget] = useState(null);
   const [segmentModalTarget, setSegmentModalTarget] = useState(null);
 
-  // Inicijalizacija i sinhronizacija Dark Mode teme
+  // Inicijalizacija i dinamička sinhronizacija teme sa telefonom/sistemom
   useEffect(() => {
-    try {
-      const savedTheme = localStorage.getItem("theme");
-      if (savedTheme === "dark") {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+
+    const updateThemeBasedOnSystemOrStorage = (e) => {
+      try {
+        const isSystemDark = e ? e.matches : (mediaQuery ? mediaQuery.matches : false);
+        const isMobilePortal = activePage === "terenski-nalozi" || (typeof window !== "undefined" && window.__IS_NATIVE_APP);
+        
+        // Ako je na mobilnoj aplikaciji terenskih naloga, uvijek prati mod telefona
+        if (isMobilePortal) {
+          setIsDarkMode(isSystemDark);
+          if (isSystemDark) {
+            document.documentElement.classList.add("dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+          }
+          return;
+        }
+
+        // Za desktop portal provjeri sačuvani izbor ili sistemsku temu
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme === "dark") {
+          setIsDarkMode(true);
+          document.documentElement.classList.add("dark");
+        } else if (savedTheme === "light") {
+          setIsDarkMode(false);
+          document.documentElement.classList.remove("dark");
+        } else {
+          setIsDarkMode(isSystemDark);
+          if (isSystemDark) {
+            document.documentElement.classList.add("dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+          }
+        }
+      } catch (err) {}
+    };
+
+    updateThemeBasedOnSystemOrStorage();
+
+    if (mediaQuery) {
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener("change", updateThemeBasedOnSystemOrStorage);
+      } else if (mediaQuery.addListener) {
+        mediaQuery.addListener(updateThemeBasedOnSystemOrStorage);
+      }
+    }
+
+    const handleNativeSchemeChange = (evt) => {
+      const mode = evt?.detail;
+      if (mode === "dark") {
         setIsDarkMode(true);
         document.documentElement.classList.add("dark");
-      } else if (savedTheme === "light") {
+      } else if (mode === "light") {
         setIsDarkMode(false);
         document.documentElement.classList.remove("dark");
-      } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        setIsDarkMode(true);
-        document.documentElement.classList.add("dark");
       }
-    } catch (e) {}
-  }, []);
+    };
+    window.addEventListener("systemcolorschemechange", handleNativeSchemeChange);
+
+    return () => {
+      if (mediaQuery) {
+        if (mediaQuery.removeEventListener) {
+          mediaQuery.removeEventListener("change", updateThemeBasedOnSystemOrStorage);
+        } else if (mediaQuery.removeListener) {
+          mediaQuery.removeListener(updateThemeBasedOnSystemOrStorage);
+        }
+      }
+      window.removeEventListener("systemcolorschemechange", handleNativeSchemeChange);
+    };
+  }, [activePage]);
 
   useEffect(() => {
     if (isDarkMode) {

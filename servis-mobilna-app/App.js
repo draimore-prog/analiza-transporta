@@ -10,7 +10,8 @@ import {
   StatusBar,
   Platform,
   AppState,
-  Alert
+  Alert,
+  useColorScheme
 } from "react-native";
 import { WebView } from "react-native-webview";
 import * as Notifications from "expo-notifications";
@@ -55,11 +56,33 @@ const INJECTED_VIEWPORT_LOCK = `
 export default function App() {
   const webViewRef = useRef(null);
   const alertedOrdersRef = useRef(new Set());
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
   const [canGoBack, setCanGoBack] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [registeredPushToken, setRegisteredPushToken] = useState(null);
+
+  // Sinhronizacija sistemske teme telefona u WebView
+  useEffect(() => {
+    if (webViewRef.current) {
+      webViewRef.current.injectJavaScript(`
+        if (typeof window !== 'undefined') {
+          window.__SYSTEM_COLOR_SCHEME = "${colorScheme}";
+          if (document.documentElement) {
+            if ("${colorScheme}" === "dark") {
+              document.documentElement.classList.add("dark");
+            } else {
+              document.documentElement.classList.remove("dark");
+            }
+          }
+          window.dispatchEvent(new CustomEvent("systemcolorschemechange", { detail: "${colorScheme}" }));
+        }
+        true;
+      `);
+    }
+  }, [colorScheme]);
 
   // 1. Inicijalizacija notifikacionog kanala visokog prioriteta i traženje dozvola
   useEffect(() => {
@@ -161,7 +184,34 @@ export default function App() {
         (snapshot) => {
           if (isFirstLoad) {
             isFirstLoad = false;
-            return; // Preskoči postojeće naloge pri prvom učitavanju
+            // Provjeri ima li svježih naloga kreiranih u zadnjih 60 min koji nisu zabilježeni
+            const now = Date.now();
+            snapshot.forEach(async (docSnap) => {
+              const order = docSnap.data();
+              if (order.status === "pending" || order.status === "in_progress") {
+                const createdAtTime = new Date(order.createdAt || 0).getTime();
+                if (now - createdAtTime < 60 * 60 * 1000) {
+                  const orderId = docSnap.id;
+                  if (!alertedOrdersRef.current.has(orderId)) {
+                    alertedOrdersRef.current.add(orderId);
+                    const vehId = order.vehicleId || "Skladišna mehanizacija";
+                    const desc = order.workDescription || order.notes || "Novi radni nalog za mehanizaciju";
+                    await Notifications.scheduleNotificationAsync({
+                      content: {
+                        title: `🔔 NOVI RADNI NALOG: ${vehId}`,
+                        body: desc,
+                        sound: "default",
+                        priority: Notifications.AndroidNotificationPriority.MAX,
+                        channelId: "radni-nalozi-channel",
+                        data: { orderId, vehicleId: vehId }
+                      },
+                      trigger: null
+                    });
+                  }
+                }
+              }
+            });
+            return;
           }
 
           snapshot.docChanges().forEach(async (change) => {
@@ -351,8 +401,11 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? "#020617" : "#f8fafc" }]}>
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? "#020617" : "#f8fafc"}
+      />
 
       {/* Offline / Greška Ekran */}
       {hasError ? (
@@ -396,9 +449,18 @@ export default function App() {
             onLoadStart={() => setIsLoading(true)}
             onLoadEnd={() => {
               setIsLoading(false);
-              if (registeredPushToken && webViewRef.current) {
+              if (webViewRef.current) {
                 webViewRef.current.injectJavaScript(`
-                  window.__EXPO_PUSH_TOKEN = "${registeredPushToken}";
+                  window.__SYSTEM_COLOR_SCHEME = "${colorScheme}";
+                  if (document.documentElement) {
+                    if ("${colorScheme}" === "dark") {
+                      document.documentElement.classList.add("dark");
+                    } else {
+                      document.documentElement.classList.remove("dark");
+                    }
+                  }
+                  window.dispatchEvent(new CustomEvent("systemcolorschemechange", { detail: "${colorScheme}" }));
+                  ${registeredPushToken ? `window.__EXPO_PUSH_TOKEN = "${registeredPushToken}";` : ""}
                   true;
                 `);
               }

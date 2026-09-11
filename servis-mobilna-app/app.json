@@ -27,7 +27,8 @@
       "adaptiveIcon": {
         "backgroundColor": "#10B981",
         "foregroundImage": "./assets/android-icon-foreground.png"
-      }
+      },
+      "googleServicesFile": "./google-services.json"
     },
     "plugins": [
       [
