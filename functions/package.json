@@ -1,0 +1,23 @@
+{
+  "name": "functions",
+  "description": "Firebase Cloud Functions for Bingo MotorFix & Analiza Transporta",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^13.2.0",
+    "firebase-functions": "^6.3.2"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.4.0"
+  },
+  "private": true
+}

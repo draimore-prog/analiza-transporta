@@ -156,17 +156,7 @@ export function useWarehouseWorkOrders() {
 
       await setDoc(doc(db, "warehouse_work_orders", docId), newOrder, { merge: true });
 
-      // Slanje native Expo Push Notifikacija na mobilne telefone servisera
-      dispatchPushNotificationToServisers({
-        title: `🔔 NOVI RADNI NALOG: ${newOrder.vehicleId || "Skladišna mehanizacija"}`,
-        body: `${newOrder.workDescription || newOrder.notes || "Dodijeljen novi nalog za pregled ili servis"}${newOrder.assignedTo ? ` (${newOrder.assignedTo})` : ""}`,
-        data: {
-          orderId: docId,
-          orderNumber: newOrder.orderNumber,
-          vehicleId: newOrder.vehicleId
-        }
-      });
-
+      // Notifikacija se sada automatski i pouzdano šalje preko Firebase Cloud Funkcije (onWorkOrderCreated)
       return { success: true, orderNumber, id: docId };
     },
     [generateOrderNumber]

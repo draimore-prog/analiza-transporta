@@ -13,3 +13,6 @@ Thumbs.db
 .env.*
 
 *.xlsx
+*firebase-adminsdk*.json
+*serviceaccount*.json
+*service-account*.json
