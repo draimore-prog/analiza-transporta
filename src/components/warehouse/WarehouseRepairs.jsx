@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 export function WarehouseRepairs({
-  warehouseCostData,
+  warehouseCostData = [],
   selectedYear: propSelectedYear,
   setSelectedYear: propSetSelectedYear,
   onOpenVehicleModal,
@@ -26,12 +26,16 @@ export function WarehouseRepairs({
 
   const selectedYear = propSelectedYear !== undefined ? propSelectedYear : localSelectedYear;
   const setSelectedYear = propSetSelectedYear !== undefined ? propSetSelectedYear : setLocalSelectedYear;
+
+  // Kolonski filteri
   const [colFilterReg, setColFilterReg] = useState("");
   const [colFilterGb, setColFilterGb] = useState("");
   const [colFilterBrand, setColFilterBrand] = useState("all");
   const [colFilterSegment, setColFilterSegment] = useState("all");
   const [colFilterOpis, setColFilterOpis] = useState("");
   const [colFilterSupplier, setColFilterSupplier] = useState("");
+  const [colFilterInvoice, setColFilterInvoice] = useState("");
+  const [colFilterInternalExternal, setColFilterInternalExternal] = useState("all");
 
   const [sortMode, setSortMode] = useState("new-first");
   const [visibleCount, setVisibleCount] = useState(60);
@@ -67,6 +71,7 @@ export function WarehouseRepairs({
     const gbTerm = colFilterGb.trim().toLowerCase();
     const opisTerm = colFilterOpis.trim().toLowerCase();
     const supTerm = colFilterSupplier.trim().toLowerCase();
+    const invoiceTerm = colFilterInvoice.trim().toLowerCase();
 
     const filtered = warehouseCostData.filter((item) => {
       const matchYear = selectedYear === "all" || item.year === parseInt(selectedYear);
@@ -91,7 +96,29 @@ export function WarehouseRepairs({
         (item.dobavljacOrig && item.dobavljacOrig.toLowerCase().includes(supTerm)) ||
         (item.dobavljac && item.dobavljac.toLowerCase().includes(supTerm));
 
-      return matchYear && matchReg && matchGb && matchBrand && matchSegment && matchOpis && matchSup;
+      const matchInvoice =
+        !invoiceTerm ||
+        (item.brojRacuna && item.brojRacuna.toLowerCase().includes(invoiceTerm));
+
+      const isItemInternal =
+        item.type === "Interno" ||
+        (item.fakturaTip && item.fakturaTip.toLowerCase().includes("intern"));
+      const matchInternalExternal =
+        colFilterInternalExternal === "all" ||
+        (colFilterInternalExternal === "Interno" && isItemInternal) ||
+        (colFilterInternalExternal === "Eksterno" && !isItemInternal);
+
+      return (
+        matchYear &&
+        matchReg &&
+        matchGb &&
+        matchBrand &&
+        matchSegment &&
+        matchOpis &&
+        matchSup &&
+        matchInvoice &&
+        matchInternalExternal
+      );
     });
 
     if (sortMode === "new-first") {
@@ -122,6 +149,8 @@ export function WarehouseRepairs({
     colFilterSegment,
     colFilterOpis,
     colFilterSupplier,
+    colFilterInvoice,
+    colFilterInternalExternal,
     sortMode
   ]);
 
@@ -136,6 +165,8 @@ export function WarehouseRepairs({
     colFilterSegment,
     colFilterOpis,
     colFilterSupplier,
+    colFilterInvoice,
+    colFilterInternalExternal,
     sortMode
   ]);
 
@@ -155,7 +186,7 @@ export function WarehouseRepairs({
     }, 150);
   }, [hasMore, isLoadingMore, filteredData.length]);
 
-  // IntersectionObserver za automatsko učitavanje pri skrolu do dna tabele
+  // IntersectionObserver za glatko automatsko učitavanje na dnu
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
@@ -168,7 +199,7 @@ export function WarehouseRepairs({
       },
       {
         root: containerRef.current,
-        rootMargin: "300px",
+        rootMargin: "250px",
         threshold: 0.1
       }
     );
@@ -177,25 +208,25 @@ export function WarehouseRepairs({
     return () => observer.disconnect();
   }, [hasMore, isLoadingMore, loadMore]);
 
-  // Skrol listener za kontejner
-  const handleScroll = useCallback(() => {
-    const el = containerRef.current;
-    if (!el || !hasMore || isLoadingMore) return;
-
-    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 400;
-    if (nearBottom) {
+  // Fallback scroll listener
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop - clientHeight < 300 && hasMore && !isLoadingMore) {
       loadMore();
     }
-  }, [hasMore, isLoadingMore, loadMore]);
+  };
 
   const isAnyFilterActive =
     selectedYear !== "all" ||
-    colFilterReg !== "" ||
-    colFilterGb !== "" ||
+    colFilterReg.trim() !== "" ||
+    colFilterGb.trim() !== "" ||
     colFilterBrand !== "all" ||
     colFilterSegment !== "all" ||
-    colFilterOpis !== "" ||
-    colFilterSupplier !== "";
+    colFilterOpis.trim() !== "" ||
+    colFilterSupplier.trim() !== "" ||
+    colFilterInvoice.trim() !== "" ||
+    colFilterInternalExternal !== "all" ||
+    sortMode !== "new-first";
 
   const resetAllFilters = () => {
     setSelectedYear("all");
@@ -205,6 +236,8 @@ export function WarehouseRepairs({
     setColFilterSegment("all");
     setColFilterOpis("");
     setColFilterSupplier("");
+    setColFilterInvoice("");
+    setColFilterInternalExternal("all");
     setVisibleCount(BATCH_SIZE);
   };
 
@@ -273,29 +306,31 @@ export function WarehouseRepairs({
           onScroll={handleScroll}
           className="overflow-x-auto overflow-y-auto min-h-[380px] max-h-[calc(100vh-310px)] scroll-smooth"
         >
-            <table className="min-w-full text-xs text-left">
+            <table className="min-w-full text-xs text-center">
               <thead className="bg-slate-100 dark:bg-slate-900 sticky top-0 font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 z-20 shadow-xs">
                 {/* 1. RED: Nazivi kolona */}
                 <tr>
-                  <th className="py-2.5 px-3 w-28">Datum</th>
-                  <th className="py-2.5 px-3 w-32">Interna oznaka / reg.</th>
-                  <th className="py-2.5 px-3 w-24">Garažni br.</th>
-                  <th className="py-2.5 px-3 w-28">Marka</th>
-                  <th className="py-2.5 px-3 w-28 text-right font-mono">Radni sati</th>
-                  <th className="py-2.5 px-3 w-36">Segment</th>
-                  <th className="py-2.5 px-3 w-64">Opis popravke</th>
-                  <th className="py-2.5 px-3 w-40">Serviser / dobavljač</th>
-                  <th className="py-2.5 px-3 text-right w-28">Trošak (KM)</th>
+                  <th className="py-2.5 px-3 text-center w-28">Datum</th>
+                  <th className="py-2.5 px-3 text-center w-32">Interna oznaka / reg.</th>
+                  <th className="py-2.5 px-3 text-center w-24">Garažni br.</th>
+                  <th className="py-2.5 px-3 text-center w-28">Marka</th>
+                  <th className="py-2.5 px-3 text-center w-28 font-mono">Radni sati</th>
+                  <th className="py-2.5 px-3 text-center w-36">Segment</th>
+                  <th className="py-2.5 px-3 text-center w-64">Opis popravke</th>
+                  <th className="py-2.5 px-3 text-center w-40">Serviser / dobavljač</th>
+                  <th className="py-2.5 px-3 text-center w-32">Broj fakture</th>
+                  <th className="py-2.5 px-3 text-center w-28">Interno / eksterno</th>
+                  <th className="py-2.5 px-3 text-center w-28">Trošak (KM)</th>
                 </tr>
 
                 {/* 2. RED: In-Table Kolonski Filteri */}
                 <tr className="bg-slate-200/90 dark:bg-slate-950 border-t border-slate-300 dark:border-slate-800 font-normal">
                   {/* Datum / Godina */}
-                  <th className="p-1.5">
+                  <th className="p-1.5 text-center">
                     <select
                       value={selectedYear}
                       onChange={(e) => setSelectedYear(e.target.value)}
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white cursor-pointer"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white cursor-pointer text-center"
                     >
                       <option value="all">Sve god.</option>
                       {availableYears.map((y) => (
@@ -307,33 +342,33 @@ export function WarehouseRepairs({
                   </th>
 
                   {/* Registracija / Oznaka */}
-                  <th className="p-1.5">
+                  <th className="p-1.5 text-center">
                     <input
                       type="text"
                       value={colFilterReg}
                       onChange={(e) => setColFilterReg(e.target.value)}
                       placeholder="🔍 Oznaka..."
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-bold uppercase outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-bold uppercase outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white text-center"
                     />
                   </th>
 
                   {/* Garažni broj */}
-                  <th className="p-1.5">
+                  <th className="p-1.5 text-center">
                     <input
                       type="text"
                       value={colFilterGb}
                       onChange={(e) => setColFilterGb(e.target.value)}
                       placeholder="🔍 GB..."
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white text-center"
                     />
                   </th>
 
                   {/* Marka */}
-                  <th className="p-1.5">
+                  <th className="p-1.5 text-center">
                     <select
                       value={colFilterBrand}
                       onChange={(e) => setColFilterBrand(e.target.value)}
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white cursor-pointer"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white cursor-pointer text-center"
                     >
                       <option value="all">Sve marke</option>
                       {distinctBrands.map((b) => (
@@ -348,11 +383,11 @@ export function WarehouseRepairs({
                   <th className="p-1.5 text-center text-[10px] text-slate-400 font-mono">-</th>
 
                   {/* Segment */}
-                  <th className="p-1.5">
+                  <th className="p-1.5 text-center">
                     <select
                       value={colFilterSegment}
                       onChange={(e) => setColFilterSegment(e.target.value)}
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white cursor-pointer"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white cursor-pointer text-center"
                     >
                       <option value="all">Svi segmenti</option>
                       {distinctSegments.map((s) => (
@@ -364,25 +399,49 @@ export function WarehouseRepairs({
                   </th>
 
                   {/* Opis */}
-                  <th className="p-1.5">
+                  <th className="p-1.5 text-center">
                     <input
                       type="text"
                       value={colFilterOpis}
                       onChange={(e) => setColFilterOpis(e.target.value)}
                       placeholder="🔍 Opis..."
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white text-center"
                     />
                   </th>
 
                   {/* Serviser */}
-                  <th className="p-1.5">
+                  <th className="p-1.5 text-center">
                     <input
                       type="text"
                       value={colFilterSupplier}
                       onChange={(e) => setColFilterSupplier(e.target.value)}
                       placeholder="🔍 Serviser..."
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white text-center"
                     />
+                  </th>
+
+                  {/* Broj fakture filter */}
+                  <th className="p-1.5 text-center">
+                    <input
+                      type="text"
+                      value={colFilterInvoice}
+                      onChange={(e) => setColFilterInvoice(e.target.value)}
+                      placeholder="🔍 Faktura..."
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white text-center"
+                    />
+                  </th>
+
+                  {/* Interno / Eksterno filter */}
+                  <th className="p-1.5 text-center">
+                    <select
+                      value={colFilterInternalExternal}
+                      onChange={(e) => setColFilterInternalExternal(e.target.value)}
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-amber-500 text-slate-800 dark:text-white cursor-pointer text-center"
+                    >
+                      <option value="all">Sve</option>
+                      <option value="Interno">Interno</option>
+                      <option value="Eksterno">Eksterno</option>
+                    </select>
                   </th>
 
                   {/* Reset */}
@@ -407,7 +466,7 @@ export function WarehouseRepairs({
                         item.isNewCustom ? "bg-emerald-50/40 dark:bg-emerald-950/20 font-medium" : ""
                       }`}
                     >
-                      <td className="py-2 px-3 whitespace-nowrap text-slate-700 dark:text-slate-300 font-medium">
+                      <td className="py-2 px-3 text-center whitespace-nowrap text-slate-700 dark:text-slate-300 font-medium">
                         {formatDate(item.datumObj || item.datum)}
                         {item.isNewCustom && (
                           <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300 text-[10px] px-1.5 py-0.5 rounded font-extrabold ml-1">
@@ -417,35 +476,55 @@ export function WarehouseRepairs({
                       </td>
                       <td
                         onClick={() => onOpenVehicleModal(item.reg)}
-                        className="py-2 px-3 font-bold text-amber-700 dark:text-amber-400 cursor-pointer hover:underline"
+                        className="py-2 px-3 text-center font-bold text-amber-700 dark:text-amber-400 cursor-pointer hover:underline"
                       >
                         {item.reg}
                       </td>
-                      <td className="py-2 px-3 font-mono font-semibold text-slate-600 dark:text-slate-400">
+                      <td className="py-2 px-3 text-center font-mono font-semibold text-slate-600 dark:text-slate-400">
                         {item.garazniBroj || "-"}
                       </td>
-                      <td className="py-2 px-3 text-slate-600 dark:text-slate-400">
+                      <td className="py-2 px-3 text-center text-slate-600 dark:text-slate-400">
                         {item.markaVoz || "-"}
                       </td>
-                      <td className="py-2 px-3 text-right font-mono font-semibold text-amber-700 dark:text-amber-400 whitespace-nowrap">
+                      <td className="py-2 px-3 text-center font-mono font-semibold text-amber-700 dark:text-amber-400 whitespace-nowrap">
                         <span className="bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded text-[11px] font-bold">
                           {formatOperatingHours(item.radniSati ?? 0)}
                         </span>
                       </td>
-                      <td className="py-2 px-3 font-semibold text-slate-700 dark:text-slate-300">
+                      <td className="py-2 px-3 text-center font-semibold text-slate-700 dark:text-slate-300">
                         {item.segment || "-"}
                       </td>
-                      <td className="py-2 px-3 text-slate-900 dark:text-white font-semibold break-words max-w-[220px]">
+                      <td className="py-2 px-3 text-center text-slate-900 dark:text-white font-semibold break-words max-w-[220px]">
                         {item.opisPopravke || item.opisRadova || item.opis || "-"}
                       </td>
                       <td
-                        className="py-2 px-3 text-slate-600 dark:text-slate-400 text-xs truncate max-w-[150px]"
+                        className="py-2 px-3 text-center text-slate-600 dark:text-slate-400 text-xs truncate max-w-[150px]"
                         title={item.dobavljacOrig || item.dobavljac}
                       >
                         {item.dobavljacOrig || item.dobavljac || "-"}
                       </td>
-                      <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-slate-200">
-                        <div className="flex items-center justify-end gap-1.5">
+                      <td className="py-2 px-3 text-center text-xs whitespace-nowrap">
+                        {item.brojRacuna && item.brojRacuna !== "-" ? (
+                          <span className="font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-[11px] inline-block">
+                            {item.brojRacuna}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 dark:text-slate-600">-</span>
+                        )}
+                      </td>
+                      <td className="py-2 px-3 text-center text-xs whitespace-nowrap">
+                        {item.type === "Interno" || (item.fakturaTip && item.fakturaTip.toLowerCase().includes("intern")) ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                            Interno
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                            Eksterno
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2 px-3 text-center font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1.5">
                           <span>{formatKM(item.cost || 0)}</span>
                           {item.invoiceUrl && (
                             <button
@@ -479,7 +558,7 @@ export function WarehouseRepairs({
                 ) : (
                   <tr>
                     <td
-                      colSpan={9}
+                      colSpan={11}
                       className="py-8 text-center text-slate-400 font-medium italic"
                     >
                       Nema zapisa koji odgovaraju odabranim kolonskim filterima.
