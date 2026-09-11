@@ -103,7 +103,16 @@
   - `public/icon.png` (Web ikonica aplikacije)
   - `src/app/icon.png` (Next.js App router ikonica)
   - `servis-mobilna-app/assets/icon.png` (Glavna ikonica mobilne aplikacije)
-  - `servis-mobilna-app/assets/android-icon-foreground.png` (Android adaptivna ikonica - prednji plan)
-  - `servis-mobilna-app/assets/splash-icon.png` (Splash screen ikonica)
-  - `servis-mobilna-app/assets/favicon.png` (Expo web favicon)
-- Aplikacija je ponovo kompajlirana i objavljena na Firebase Hosting (`https://analiza-transporta-flota.web.app`) i putem EAS Update-a za mobilne korisnike.
+
+## 9. Izrada novog APK instalacionog paketa (V1.15) sa novom ikonom
+- **Razlog izrade APK:** Nativna ikonica aplikacije na Android ekranu (Launcher ikona) je ugrađena u sam binarni paket i zahtijeva novu instalaciju APK fajla.
+- **Verzija mobilne aplikacije:** `1.15` (Build `5`)
+- **Promjene u ikoni:**
+  - Zeleni kamion u Bingo boji.
+  - Skladišni žuti viljuškar.
+  - Minimalistička fasada servisa bez rešetkastih greda.
+  - Transparentna pozadina bez suvišnih okvira i sjenki.
+- **Direktan link za preuzimanje novog APK-a:**
+  - `https://expo.dev/artifacts/eas/WSqM8FNV3wJToCFH1asw43jzHrdUQqP9uAOuWF_AEWA.apk`
+- **EAS Build Stranica:**
+  - `https://expo.dev/accounts/bingodoo/projects/bingo-servis-mehanizacije/builds/cb40d3f6-dee4-47fc-bd38-5f64aea541e2`
