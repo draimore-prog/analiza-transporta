@@ -95,11 +95,15 @@
 
 ---
 
-## 7. Objava inkrementalne verzije V1.13
-- **Mobilna verzija:** `V1.13 (Build 2026.09.11)`
-- **EAS Update ID:** `01a09044-ae6c-75fe-a5d4-7b4561343c8c`
-- **Web produkcija:** Ažurirana na Firebase Hosting (`https://analiza-transporta-flota.web.app`).
 
-
-
-
+## 8. Postavljanje novog zvaničnog logotipa / ikonice i favicoma
+- Korisnik je priložio novi logo (plavi tegljač i žuti viljuškar sa ukrštenim mehaničkim ključevima).
+- Novi logo je uspješno konvertovan i postavljen na sve relevantne lokacije:
+  - `public/favicon.png` (Web favicon)
+  - `public/icon.png` (Web ikonica aplikacije)
+  - `src/app/icon.png` (Next.js App router ikonica)
+  - `servis-mobilna-app/assets/icon.png` (Glavna ikonica mobilne aplikacije)
+  - `servis-mobilna-app/assets/android-icon-foreground.png` (Android adaptivna ikonica - prednji plan)
+  - `servis-mobilna-app/assets/splash-icon.png` (Splash screen ikonica)
+  - `servis-mobilna-app/assets/favicon.png` (Expo web favicon)
+- Aplikacija je ponovo kompajlirana i objavljena na Firebase Hosting (`https://analiza-transporta-flota.web.app`) i putem EAS Update-a za mobilne korisnike.
