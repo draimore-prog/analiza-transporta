@@ -803,21 +803,21 @@ export function VehicleCardModal({
             </div>
 
             <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 print:max-h-none print:overflow-visible">
-              <table className="min-w-full text-xs text-left">
+              <table className="min-w-full text-xs text-center">
                 <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700 sticky top-0 print:bg-slate-100 print:text-slate-900 z-10 shadow-xs">
                   {/* 1. RED */}
                   <tr>
-                    <th className="p-2.5 w-24">Datum</th>
+                    <th className="p-2.5 text-center w-24">Datum</th>
                     {!isPrikljucno && (
-                      <th className="p-2.5 w-28 text-right font-mono">{usageColTitle}</th>
+                      <th className="p-2.5 text-center w-28 font-mono">{usageColTitle}</th>
                     )}
-                    <th className="p-2.5 w-32">Segment</th>
-                    <th className="p-2.5">Opis Radova / Dijelovi</th>
-                    <th className="p-2.5 w-40">Serviser</th>
-                    <th className="p-2.5 w-32">Broj Fakture</th>
-                    <th className="p-2.5 w-24 text-center">Interno / Eksterno</th>
+                    <th className="p-2.5 text-center w-32">Segment</th>
+                    <th className="p-2.5 text-center">Opis Radova / Dijelovi</th>
+                    <th className="p-2.5 text-center w-40">Serviser</th>
+                    <th className="p-2.5 text-center w-32">Broj Fakture</th>
+                    <th className="p-2.5 text-center w-24">Interno / Eksterno</th>
                     {!isServiser ? (
-                      <th className="p-2.5 text-right w-28">Iznos (KM)</th>
+                      <th className="p-2.5 text-center w-28">Iznos (KM)</th>
                     ) : (
                       <th className="p-2.5 text-center w-20">Prilog</th>
                     )}
@@ -826,11 +826,11 @@ export function VehicleCardModal({
                   {/* 2. RED: In-table Filteri (sakriveni u printu) */}
                   <tr className="bg-slate-200/90 dark:bg-slate-950 border-t border-slate-300 dark:border-slate-800 font-normal print:hidden">
                     {/* Datum / Godina filter */}
-                    <th className="p-1">
+                    <th className="p-1 text-center">
                       <select
                         value={selectedYearFilter}
                         onChange={(e) => setSelectedYearFilter(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-0.5 text-[11px] font-bold outline-none cursor-pointer"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-0.5 text-[11px] font-bold outline-none cursor-pointer text-center"
                       >
                         <option value="all">Sve god.</option>
                         {yearlyData.years.map((y) => (
@@ -847,11 +847,11 @@ export function VehicleCardModal({
                     )}
 
                     {/* Segment filter */}
-                    <th className="p-1">
+                    <th className="p-1 text-center">
                       <select
                         value={colFilterSegment}
                         onChange={(e) => setColFilterSegment(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-0.5 text-[11px] font-bold outline-none cursor-pointer"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-0.5 text-[11px] font-bold outline-none cursor-pointer text-center"
                       >
                         <option value="all">Svi segmenti</option>
                         {distinctSegments.map((s) => (
@@ -863,44 +863,44 @@ export function VehicleCardModal({
                     </th>
 
                     {/* Opis filter */}
-                    <th className="p-1">
+                    <th className="p-1 text-center">
                       <input
                         type="text"
                         value={colFilterOpis}
                         onChange={(e) => setColFilterOpis(e.target.value)}
                         placeholder="🔍 Opis radova..."
-                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-0.5 text-[11px] font-medium outline-none"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-0.5 text-[11px] font-medium outline-none text-center"
                       />
                     </th>
 
                     {/* Serviser filter */}
-                    <th className="p-1">
+                    <th className="p-1 text-center">
                       <input
                         type="text"
                         value={colFilterSupplier}
                         onChange={(e) => setColFilterSupplier(e.target.value)}
                         placeholder="🔍 Serviser..."
-                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-0.5 text-[11px] font-medium outline-none"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-0.5 text-[11px] font-medium outline-none text-center"
                       />
                     </th>
 
                     {/* Broj Fakture filter */}
-                    <th className="p-1">
+                    <th className="p-1 text-center">
                       <input
                         type="text"
                         value={colFilterInvoice}
                         onChange={(e) => setColFilterInvoice(e.target.value)}
                         placeholder="🔍 Faktura..."
-                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-0.5 text-[11px] font-medium outline-none"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-0.5 text-[11px] font-medium outline-none text-center"
                       />
                     </th>
 
                     {/* Interno / Eksterno filter */}
-                    <th className="p-1">
+                    <th className="p-1 text-center">
                       <select
                         value={colFilterInternalExternal}
                         onChange={(e) => setColFilterInternalExternal(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1 py-0.5 text-[11px] font-bold outline-none cursor-pointer"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-1 py-0.5 text-[11px] font-bold outline-none cursor-pointer text-center"
                       >
                         <option value="all">Sve</option>
                         <option value="Interno">Interno</option>
@@ -927,11 +927,11 @@ export function VehicleCardModal({
                         key={c.id || idx}
                         className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors print:hover:bg-transparent"
                       >
-                        <td className="p-2.5 font-medium whitespace-nowrap text-slate-700 dark:text-slate-300 print:text-slate-900">
+                        <td className="p-2.5 text-center font-medium whitespace-nowrap text-slate-700 dark:text-slate-300 print:text-slate-900">
                           {formatDate(c.datumObj || c.datum)}
                         </td>
                         {!isPrikljucno && (
-                          <td className="p-2.5 text-right font-mono font-bold whitespace-nowrap">
+                          <td className="p-2.5 text-center font-mono font-bold whitespace-nowrap">
                             {cleanType === "Skladišna mehanizacija" ? (
                               <span className="text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded text-[11px]">
                                 {formatOperatingHours(c.radniSati ?? 0)}
@@ -945,19 +945,19 @@ export function VehicleCardModal({
                             )}
                           </td>
                         )}
-                        <td className="p-2.5 font-bold text-slate-800 dark:text-slate-200 print:text-slate-900">
+                        <td className="p-2.5 text-center font-bold text-slate-800 dark:text-slate-200 print:text-slate-900">
                           {c.segment || "-"}
                         </td>
-                        <td className="p-2.5 text-slate-900 dark:text-white font-medium break-words print:text-slate-900">
+                        <td className="p-2.5 text-center text-slate-900 dark:text-white font-medium break-words print:text-slate-900">
                           {c.opisPopravke || c.opisRadova || c.opis || "-"}
                         </td>
                         <td
-                          className="p-2.5 text-slate-600 dark:text-slate-400 print:text-slate-800 truncate max-w-[140px]"
+                          className="p-2.5 text-center text-slate-600 dark:text-slate-400 print:text-slate-800 truncate max-w-[140px]"
                           title={c.dobavljacOrig || c.dobavljac}
                         >
                           {c.dobavljacOrig || c.dobavljac || "-"}
                         </td>
-                        <td className="p-2.5 whitespace-nowrap text-xs">
+                        <td className="p-2.5 text-center whitespace-nowrap text-xs">
                           {c.brojRacuna && c.brojRacuna !== "-" ? (
                             <span className="font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-[11px] inline-block">
                               {c.brojRacuna}
@@ -966,7 +966,7 @@ export function VehicleCardModal({
                             <span className="text-slate-400 dark:text-slate-600">-</span>
                           )}
                         </td>
-                        <td className="p-2.5 whitespace-nowrap text-xs text-center">
+                        <td className="p-2.5 text-center whitespace-nowrap text-xs">
                           {c.type === "Interno" || (c.fakturaTip && c.fakturaTip.toLowerCase().includes("intern")) ? (
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                               Interno
@@ -978,8 +978,8 @@ export function VehicleCardModal({
                           )}
                         </td>
                         {!isServiser ? (
-                          <td className="p-2.5 text-right font-bold text-slate-900 dark:text-white whitespace-nowrap print:text-slate-900">
-                            <div className="flex items-center justify-end gap-1.5">
+                          <td className="p-2.5 text-center font-bold text-slate-900 dark:text-white whitespace-nowrap print:text-slate-900">
+                            <div className="flex items-center justify-center gap-1.5">
                               <span>{formatKM(c.cost || 0)}</span>
                               {c.invoiceUrl && (
                                 <button
@@ -1039,10 +1039,10 @@ export function VehicleCardModal({
                 {filteredHistory.length > 0 && (
                   <tfoot className="bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700">
                     <tr>
-                      <td colSpan={isPrikljucno ? 6 : 7} className="p-2.5 text-right font-black uppercase text-xs">
+                      <td colSpan={isPrikljucno ? 6 : 7} className="p-2.5 text-center font-black uppercase text-xs">
                         Zbir prikazanih stavki:
                       </td>
-                      <td className="p-2.5 text-right font-black text-xs whitespace-nowrap">
+                      <td className="p-2.5 text-center font-black text-xs whitespace-nowrap">
                         {formatKM(filteredTotalCost)}
                       </td>
                     </tr>

@@ -337,34 +337,34 @@ export function ServiceTable({
           onScroll={handleScroll}
           className="overflow-x-auto overflow-y-auto min-h-[380px] max-h-[calc(100vh-310px)] scroll-smooth"
         >
-            <table className="min-w-full text-xs text-left">
+            <table className="min-w-full text-xs text-center">
               <thead className="bg-slate-100 dark:bg-slate-900 sticky top-0 font-bold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 z-20 shadow-xs">
                 {/* 1. RED: Nazivi kolona */}
                 <tr>
-                  <th className="py-2.5 px-3 w-28">Datum</th>
-                  <th className="py-2.5 px-3 w-32">Registracija</th>
-                  <th className="py-2.5 px-3 w-24">Garažni Br.</th>
-                  <th className="py-2.5 px-3 w-36">Tip Mehanizacije</th>
-                  <th className="py-2.5 px-3 w-28">Marka</th>
+                  <th className="py-2.5 px-3 text-center w-28">Datum</th>
+                  <th className="py-2.5 px-3 text-center w-32">Registracija</th>
+                  <th className="py-2.5 px-3 text-center w-24">Garažni Br.</th>
+                  <th className="py-2.5 px-3 text-center w-36">Tip Mehanizacije</th>
+                  <th className="py-2.5 px-3 text-center w-28">Marka</th>
                   {!isPrikljucnaFilter && (
-                    <th className="py-2.5 px-3 w-28 text-right font-mono">{colUsageHeader}</th>
+                    <th className="py-2.5 px-3 text-center w-28 font-mono">{colUsageHeader}</th>
                   )}
-                  <th className="py-2.5 px-3 w-36">Segment</th>
-                  <th className="py-2.5 px-3 w-64">Opis Popravke</th>
-                  <th className="py-2.5 px-3 w-40">Serviser / Dobavljač</th>
-                  <th className="py-2.5 px-3 w-32">Broj Fakture</th>
-                  <th className="py-2.5 px-3 w-28 text-center">Interno / Eksterno</th>
-                  <th className="py-2.5 px-3 text-right w-28">Trošak (KM)</th>
+                  <th className="py-2.5 px-3 text-center w-36">Segment</th>
+                  <th className="py-2.5 px-3 text-center w-64">Opis Popravke</th>
+                  <th className="py-2.5 px-3 text-center w-40">Serviser / Dobavljač</th>
+                  <th className="py-2.5 px-3 text-center w-32">Broj Fakture</th>
+                  <th className="py-2.5 px-3 text-center w-28">Interno / Eksterno</th>
+                  <th className="py-2.5 px-3 text-center w-28">Trošak (KM)</th>
                 </tr>
 
                 {/* 2. RED: In-Table Kolonski Filteri */}
                 <tr className="bg-slate-200/90 dark:bg-slate-950 border-t border-slate-300 dark:border-slate-800 font-normal">
                   {/* Datum / Godina filter */}
-                  <th className="p-1.5">
+                  <th className="p-1.5 text-center">
                     <select
                       value={selectedYear}
                       onChange={(e) => setSelectedYear(e.target.value)}
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white cursor-pointer"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white cursor-pointer text-center"
                     >
                       <option value="all">Sve god.</option>
                       {availableYears.map((y) => (
@@ -376,33 +376,33 @@ export function ServiceTable({
                   </th>
 
                   {/* Registracija filter */}
-                  <th className="p-1.5">
+                  <th className="p-1.5 text-center">
                     <input
                       type="text"
                       value={colFilterReg}
                       onChange={(e) => setColFilterReg(e.target.value)}
                       placeholder="🔍 Reg..."
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-bold uppercase outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-bold uppercase outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white text-center"
                     />
                   </th>
 
                   {/* Garažni broj filter */}
-                  <th className="p-1.5">
+                  <th className="p-1.5 text-center">
                     <input
                       type="text"
                       value={colFilterGb}
                       onChange={(e) => setColFilterGb(e.target.value)}
                       placeholder="🔍 GB..."
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white text-center"
                     />
                   </th>
 
                   {/* Tip mehanizacije filter */}
-                  <th className="p-1.5">
+                  <th className="p-1.5 text-center">
                     <select
                       value={colFilterType}
                       onChange={(e) => setColFilterType(e.target.value)}
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white cursor-pointer"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white cursor-pointer text-center"
                     >
                       <option value="all">Svi tipovi</option>
                       {distinctTypes.map((t) => (
@@ -414,11 +414,11 @@ export function ServiceTable({
                   </th>
 
                   {/* Marka filter */}
-                  <th className="p-1.5">
+                  <th className="p-1.5 text-center">
                     <select
                       value={colFilterBrand}
                       onChange={(e) => setColFilterBrand(e.target.value)}
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white cursor-pointer"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white cursor-pointer text-center"
                     >
                       <option value="all">Sve marke</option>
                       {distinctBrands.map((b) => (
@@ -435,11 +435,11 @@ export function ServiceTable({
                   )}
 
                   {/* Segment filter */}
-                  <th className="p-1.5">
+                  <th className="p-1.5 text-center">
                     <select
                       value={colFilterSegment}
                       onChange={(e) => setColFilterSegment(e.target.value)}
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white cursor-pointer"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white cursor-pointer text-center"
                     >
                       <option value="all">Svi segmenti</option>
                       {distinctSegments.map((s) => (
@@ -451,44 +451,44 @@ export function ServiceTable({
                   </th>
 
                   {/* Opis popravke filter */}
-                  <th className="p-1.5">
+                  <th className="p-1.5 text-center">
                     <input
                       type="text"
                       value={colFilterOpis}
                       onChange={(e) => setColFilterOpis(e.target.value)}
                       placeholder="🔍 Opis / dio..."
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white text-center"
                     />
                   </th>
 
                   {/* Serviser / Dobavljač filter */}
-                  <th className="p-1.5">
+                  <th className="p-1.5 text-center">
                     <input
                       type="text"
                       value={colFilterSupplier}
                       onChange={(e) => setColFilterSupplier(e.target.value)}
                       placeholder="🔍 Serviser..."
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white text-center"
                     />
                   </th>
 
                   {/* Broj Fakture filter */}
-                  <th className="p-1.5">
+                  <th className="p-1.5 text-center">
                     <input
                       type="text"
                       value={colFilterInvoice}
                       onChange={(e) => setColFilterInvoice(e.target.value)}
                       placeholder="🔍 Faktura..."
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white text-center"
                     />
                   </th>
 
                   {/* Interno / Eksterno filter */}
-                  <th className="p-1.5">
+                  <th className="p-1.5 text-center">
                     <select
                       value={colFilterInternalExternal}
                       onChange={(e) => setColFilterInternalExternal(e.target.value)}
-                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white cursor-pointer"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white cursor-pointer text-center"
                     >
                       <option value="all">Sve</option>
                       <option value="Interno">Interno</option>
@@ -520,7 +520,7 @@ export function ServiceTable({
                           item.isNewCustom ? "bg-emerald-50/40 dark:bg-emerald-950/20 font-medium" : ""
                         }`}
                       >
-                        <td className="py-2 px-3 whitespace-nowrap text-slate-700 dark:text-slate-300 font-medium">
+                        <td className="py-2 px-3 text-center whitespace-nowrap text-slate-700 dark:text-slate-300 font-medium">
                           {formatDate(item.datumObj || item.datum)}
                           {item.isNewCustom && (
                             <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300 text-[10px] px-1.5 py-0.5 rounded font-extrabold ml-1">
@@ -530,21 +530,21 @@ export function ServiceTable({
                         </td>
                         <td
                           onClick={() => onOpenVehicleModal(item.reg)}
-                          className="py-2 px-3 font-bold text-blue-700 dark:text-blue-400 cursor-pointer hover:underline"
+                          className="py-2 px-3 text-center font-bold text-blue-700 dark:text-blue-400 cursor-pointer hover:underline"
                         >
                           {item.reg}
                         </td>
-                        <td className="py-2 px-3 font-mono font-semibold text-slate-600 dark:text-slate-400">
+                        <td className="py-2 px-3 text-center font-mono font-semibold text-slate-600 dark:text-slate-400">
                           {item.garazniBroj || "-"}
                         </td>
-                        <td className="py-2 px-3 text-slate-600 dark:text-slate-400">
+                        <td className="py-2 px-3 text-center text-slate-600 dark:text-slate-400">
                           {displayType || "-"}
                         </td>
-                        <td className="py-2 px-3 text-slate-600 dark:text-slate-400">
+                        <td className="py-2 px-3 text-center text-slate-600 dark:text-slate-400">
                           {item.markaVoz || "-"}
                         </td>
                         {!isPrikljucnaFilter && (
-                          <td className="py-2 px-3 text-right font-mono font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                          <td className="py-2 px-3 text-center font-mono font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
                             {displayType === "Priključna vozila" || displayType === "Radna mašina" ? (
                               <span className="text-slate-300 dark:text-slate-600">-</span>
                             ) : displayType === "Skladišna mehanizacija" ? (
@@ -560,19 +560,19 @@ export function ServiceTable({
                             )}
                           </td>
                         )}
-                        <td className="py-2 px-3 font-semibold text-slate-700 dark:text-slate-300">
+                        <td className="py-2 px-3 text-center font-semibold text-slate-700 dark:text-slate-300">
                           {item.segment || "-"}
                         </td>
-                        <td className="py-2 px-3 text-slate-900 dark:text-white font-semibold break-words max-w-[220px]">
+                        <td className="py-2 px-3 text-center text-slate-900 dark:text-white font-semibold break-words max-w-[220px]">
                           {item.opisPopravke || item.opisRadova || item.opis || "-"}
                         </td>
                         <td
-                          className="py-2 px-3 text-slate-600 dark:text-slate-400 text-xs truncate max-w-[150px]"
+                          className="py-2 px-3 text-center text-slate-600 dark:text-slate-400 text-xs truncate max-w-[150px]"
                           title={item.dobavljacOrig || item.dobavljac}
                         >
                           {item.dobavljacOrig || item.dobavljac || "-"}
                         </td>
-                        <td className="py-2 px-3 text-xs whitespace-nowrap">
+                        <td className="py-2 px-3 text-center text-xs whitespace-nowrap">
                           {item.brojRacuna && item.brojRacuna !== "-" ? (
                             <span className="font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-[11px] inline-block">
                               {item.brojRacuna}
@@ -581,7 +581,7 @@ export function ServiceTable({
                             <span className="text-slate-400 dark:text-slate-600">-</span>
                           )}
                         </td>
-                        <td className="py-2 px-3 text-xs text-center whitespace-nowrap">
+                        <td className="py-2 px-3 text-center text-xs whitespace-nowrap">
                           {item.type === "Interno" || (item.fakturaTip && item.fakturaTip.toLowerCase().includes("intern")) ? (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                               Interno
@@ -592,8 +592,8 @@ export function ServiceTable({
                             </span>
                           )}
                         </td>
-                        <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-slate-200">
-                          <div className="flex items-center justify-end gap-1.5">
+                        <td className="py-2 px-3 text-center font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-1.5">
                             <span>{formatKM(item.cost || 0)}</span>
                             {item.invoiceUrl && (
                               <button
