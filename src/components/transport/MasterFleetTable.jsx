@@ -330,7 +330,7 @@ export function MasterFleetTable({
                 onClick={onOpenNewVehicleModal}
                 className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-4 py-2 rounded-xl shadow-xs transition-all text-xs flex items-center gap-2 cursor-pointer"
               >
-                <Plus className="w-4 h-4" /> Dodaj Novo Vozilo
+                <Plus className="w-4 h-4" /> Dodaj novo vozilo
               </button>
             )}
             {isAnyFilterActive && (
@@ -345,7 +345,7 @@ export function MasterFleetTable({
               onClick={() => exportMasterFleetToExcel(filteredData)}
               className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl shadow-xs transition-all text-xs flex items-center gap-2 cursor-pointer"
             >
-              <Download className="w-4 h-4" /> Izvezi Šifrarnik ({filteredData.length.toLocaleString("bs-BA")})
+              <Download className="w-4 h-4" /> Izvezi šifrarnik ({filteredData.length.toLocaleString("bs-BA")})
             </button>
           </div>
         </div>
@@ -368,7 +368,7 @@ export function MasterFleetTable({
                   className="p-2.5 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors w-28"
                 >
                   <div className="flex items-center gap-1">
-                    <span>Garažni Br.</span>
+                    <span>Garažni br.</span>
                     {sortCol === "garazniBroj" ? (
                       sortDir === "asc" ? (
                         <ArrowUp className="w-3 h-3 text-indigo-600" />
@@ -385,7 +385,7 @@ export function MasterFleetTable({
                   className="p-2.5 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors w-32"
                 >
                   <div className="flex items-center gap-1">
-                    <span>Reg. Oznaka</span>
+                    <span>Reg. oznaka</span>
                     {sortCol === "reg" ? (
                       sortDir === "asc" ? (
                         <ArrowUp className="w-3 h-3 text-indigo-600" />
@@ -397,7 +397,7 @@ export function MasterFleetTable({
                     )}
                   </div>
                 </th>
-                <th className="p-2.5 w-44">Tip Mehanizacije</th>
+                <th className="p-2.5 w-44">Tip mehanizacije</th>
                 <th
                   onClick={() => handleSort("markaVoz")}
                   className="p-2.5 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors w-36"
@@ -417,7 +417,7 @@ export function MasterFleetTable({
                 </th>
                 <th className="p-2.5 w-36">Model</th>
                 <th className="p-2.5 w-24">Godište</th>
-                <th className="p-2.5 w-44">Broj Šasije (VIN)</th>
+                <th className="p-2.5 w-44">Broj šasije (VIN)</th>
                 <th className="p-2.5 text-center w-32">Status</th>
                 <th className="p-2.5 text-center w-36">Akcije</th>
               </tr>

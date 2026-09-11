@@ -418,11 +418,11 @@ export function MaintenanceAnalysis({
 
   return (
     <div className="w-full space-y-6">
-      {/* 1. Prosječan Trošak PO JEDINICI (Vozilu) - Kontrolna Traka & 6 KPI Kartica */}
+      {/* 1. Prosječan trošak po jedinici (vozilu) - Kontrolna traka & 6 KPI kartica */}
       <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-5 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h3 className="text-lg font-black flex items-center gap-2">
-            <span>Prosječan Trošak PO JEDINICI (Vozilu)</span>
+            <span>Prosječan trošak po jedinici (vozilu)</span>
           </h3>
           <p className="text-xs text-blue-200 mt-0.5">
             Egzaktna struktura flote iz "KPI Total" (938 aktivnih vozila u 2026.)
@@ -450,7 +450,7 @@ export function MaintenanceAnalysis({
                   : "text-blue-100 hover:text-white"
               }`}
             >
-              Samo Servisirana Vozila
+              Samo servisirana vozila
             </button>
           </div>
 
@@ -517,7 +517,7 @@ export function MaintenanceAnalysis({
         <div className="pb-3 border-b border-slate-100 dark:border-slate-700">
           <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
             <TrendingUp className="w-6 h-6 text-indigo-600" />
-            <span>Dugoročni KPI (Pregled trendova kroz godine 2021 - 2026)</span>
+            <span>Dugoročni KPI (pregled trendova kroz godine 2021 - 2026)</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Strateški pregled promjena od 2021. do 2026. godine na osnovu cjelokupne baze (fiksne vrijednosti do 2025., dinamičke za 2026.).

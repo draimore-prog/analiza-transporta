@@ -446,7 +446,7 @@ export function NewCostModal({
             </div>
             <div>
               <h3 className="text-base font-extrabold tracking-tight flex items-center gap-2">
-                <span>Unos Novog Troška / Servisnog Naloga</span>
+                <span>Unos novog troška / servisnog naloga</span>
               </h3>
               <p className="text-[11px] text-emerald-200">
                 Evidentirajte servis ili trošak direktno u bazu uz automatska pravila šifrarnika
@@ -485,7 +485,7 @@ export function NewCostModal({
                 </div>
                 <div>
                   <h4 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider">
-                    1. Osnovni Podaci o Vozilu / Mehanizaciji
+                    1. Osnovni podaci o vozilu / mehanizaciji
                   </h4>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
                     Izborom registracije ili garažnog broja automatski se popunjavaju i zaključavaju podaci iz šifrarnika
@@ -524,7 +524,7 @@ export function NewCostModal({
               {/* Red 1 - Kolona 1: Reg oznaka */}
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
-                  Reg. Oznaka <span className="text-red-500">*</span>
+                  Reg. oznaka <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -555,7 +555,7 @@ export function NewCostModal({
               <div>
                 <div className="flex items-center justify-between mb-1.5 h-4">
                   <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-400">
-                    Garažni Broj (MT)
+                    Garažni broj (MT)
                   </label>
                   <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">🔒 Šifrarnik</span>
                 </div>
@@ -577,7 +577,7 @@ export function NewCostModal({
               <div>
                 <div className="flex items-center justify-between mb-1.5 h-4">
                   <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-400">
-                    Tip Mehanizacije
+                    Tip mehanizacije
                   </label>
                   <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">🔒 Šifrarnik</span>
                 </div>
@@ -626,7 +626,7 @@ export function NewCostModal({
               <div>
                 <div className="flex items-center justify-between mb-1.5 h-4">
                   <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-400">
-                    Marka Vozila
+                    Marka vozila
                   </label>
                   <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">🔒 Šifrarnik</span>
                 </div>
@@ -648,7 +648,7 @@ export function NewCostModal({
               <div>
                 <div className="flex items-center justify-between mb-1.5 h-4">
                   <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-400">
-                    Model Vozila
+                    Model vozila
                   </label>
                   <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">🔒 Šifrarnik</span>
                 </div>
@@ -724,7 +724,7 @@ export function NewCostModal({
                   <div>
                     <div className="flex items-center justify-between mb-1.5 h-4">
                       <label className="block text-xs font-bold uppercase text-amber-900 dark:text-amber-300">
-                        ⏱️ Radni Sati na datum servisa (h)
+                        ⏱️ Radni sati na datum servisa (h)
                       </label>
                       <span className="text-[10px] text-amber-700 dark:text-amber-400 font-extrabold bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded">
                         🚜 Skladišna mehanizacija
@@ -764,7 +764,7 @@ export function NewCostModal({
               </div>
               <div>
                 <h4 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider">
-                  2. Detalji Servisa i Fakture
+                  2. Detalji servisa i fakture
                 </h4>
               </div>
             </div>
@@ -772,7 +772,7 @@ export function NewCostModal({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
-                  Datum Intervencije <span className="text-red-500">*</span>
+                  Datum intervencije <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
@@ -790,7 +790,7 @@ export function NewCostModal({
 
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
-                  Broj Računa / RN
+                  Broj računa / RN
                 </label>
                 <input
                   type="text"
@@ -803,7 +803,7 @@ export function NewCostModal({
 
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
-                  Serviser / Izvođač
+                  Serviser / izvođač
                 </label>
                 <input
                   type="text"
@@ -823,7 +823,7 @@ export function NewCostModal({
 
             <div>
               <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
-                Opis Kvara / Servisnih Radova <span className="text-red-500">*</span>
+                Opis kvara / servisnih radova <span className="text-red-500">*</span>
               </label>
               <textarea
                 rows={2}
@@ -840,7 +840,7 @@ export function NewCostModal({
               <label className="block font-extrabold uppercase text-emerald-900 dark:text-emerald-300 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <Paperclip className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  <span>Slika / Skenirana Faktura ili Račun (Firebase Storage)</span>
+                  <span>Slika / skenirana faktura ili račun (Firebase Storage)</span>
                 </span>
                 {invoiceUrl ? (
                   <button
@@ -851,7 +851,7 @@ export function NewCostModal({
                     <Trash2 className="w-3.5 h-3.5" /> Ukloni račun
                   </button>
                 ) : (
-                  <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-normal">☁️ Cloud Prilog</span>
+                  <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-normal">☁️ Cloud prilog</span>
                 )}
               </label>
 
@@ -922,7 +922,7 @@ export function NewCostModal({
               </div>
               <div>
                 <h4 className="text-xs font-black uppercase text-slate-900 dark:text-white tracking-wider">
-                  3. Kategorizacija i Vrsta Troška
+                  3. Kategorizacija i vrsta troška
                 </h4>
               </div>
             </div>
@@ -930,7 +930,7 @@ export function NewCostModal({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
-                  Segment Troška <span className="text-red-500">*</span>
+                  Segment troška <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={segment}
@@ -950,7 +950,7 @@ export function NewCostModal({
 
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
-                  Vrsta Troška
+                  Vrsta troška
                 </label>
                 <select
                   value={vrstaTroska}
@@ -966,7 +966,7 @@ export function NewCostModal({
 
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
-                  Vrsta Fakture
+                  Vrsta fakture
                 </label>
                 <select
                   value={vrstaFakture}
@@ -992,7 +992,7 @@ export function NewCostModal({
               </div>
               <div>
                 <h4 className="text-xs font-black uppercase text-emerald-950 dark:text-emerald-200 tracking-wider">
-                  4. Finansijski Obračun (Automatski Total)
+                  4. Finansijski obračun (automatski total)
                 </h4>
               </div>
             </div>
@@ -1000,7 +1000,7 @@ export function NewCostModal({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
-                  Cijena Rezervnog Dijela (KM)
+                  Cijena rezervnog dijela (KM)
                 </label>
                 <input
                   type="number"
@@ -1015,7 +1015,7 @@ export function NewCostModal({
 
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-1.5">
-                  Cijena Usluge / Rada (KM)
+                  Cijena usluge / rada (KM)
                 </label>
                 <input
                   type="number"
@@ -1030,7 +1030,7 @@ export function NewCostModal({
 
               <div>
                 <label className="block text-xs font-black uppercase text-emerald-950 dark:text-emerald-200 mb-1.5">
-                  Total Trošak (KM sa PDV) <span className="text-red-500">*</span>
+                  Total trošak (KM sa PDV) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
@@ -1067,7 +1067,7 @@ export function NewCostModal({
                 </>
               ) : (
                 <>
-                  <span>💾 Sačuvaj Trošak u Bazu</span>
+                  <span>💾 Sačuvaj trošak u bazu</span>
                 </>
               )}
             </button>

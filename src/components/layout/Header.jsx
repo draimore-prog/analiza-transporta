@@ -262,18 +262,18 @@ export function Header({
             title="Unos novog vozila ili skladišne mehanizacije"
           >
             <Plus className="w-4 h-4" />
-            <span>Novo Vozilo</span>
+            <span>Novo vozilo</span>
           </button>
         )}
 
-        {/* Unos Troška Dugme */}
+        {/* Unos troška Dugme */}
         {canEditPage(currentRole, "tabela-servisa") && (
           <button
             onClick={onOpenNewCostModal}
             className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3 py-1.5 rounded-lg transition-colors text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
           >
             <PlusCircle className="w-4 h-4" />
-            <span>Unos Troška</span>
+            <span>Unos troška</span>
           </button>
         )}
 
@@ -298,7 +298,7 @@ export function Header({
               <div className="p-3 bg-gradient-to-r from-slate-900 to-indigo-950 text-white flex justify-between items-center border-b border-slate-800">
                 <div className="flex items-center gap-2">
                   <ClipboardList className="w-4 h-4 text-amber-400" />
-                  <span className="text-xs font-black uppercase tracking-wider">Radni Nalozi Sa Terena</span>
+                  <span className="text-xs font-black uppercase tracking-wider">Radni nalozi sa terena</span>
                 </div>
                 <span className="text-[10px] font-black bg-purple-600 text-white px-2 py-0.5 rounded-full">
                   {pendingWorkOrders.length} čekaju pregled

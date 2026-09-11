@@ -31,7 +31,7 @@ export function WarehouseSuppliers({
       <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="flex justify-between items-center mb-1">
           <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-blue-600" /> Partneri i Serviseri Skladišne Mehanizacije
+            <Building2 className="w-5 h-5 text-blue-600" /> Partneri i serviseri skladišne mehanizacije
           </h3>
           <span className="text-[10px] font-bold text-blue-700 bg-blue-100 dark:bg-blue-900/50 px-2.5 py-0.5 rounded-full">
             Klik za analizu servisa
@@ -67,13 +67,13 @@ export function WarehouseSuppliers({
 
                 <div className="flex justify-between items-end mt-4">
                   <div>
-                    <span className="text-[10px] text-slate-400 block uppercase font-bold">Ukupan Iznos</span>
+                    <span className="text-[10px] text-slate-400 block uppercase font-bold">Ukupan iznos</span>
                     <span className="text-lg font-black text-slate-900 dark:text-white">
                       {formatKM(stats.cost)}
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] text-slate-400 block uppercase font-bold">Računa / Naloga</span>
+                    <span className="text-[10px] text-slate-400 block uppercase font-bold">Računa / naloga</span>
                     <span className="text-sm font-extrabold text-slate-700 dark:text-slate-300">
                       {stats.count.toLocaleString("bs-BA")}
                     </span>

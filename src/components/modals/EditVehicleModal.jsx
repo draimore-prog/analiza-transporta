@@ -206,12 +206,12 @@ export function EditVehicleModal({
             {isEditMode ? (
               <>
                 <Edit3 className="w-5 h-5 text-indigo-400" />
-                <span>Uređivanje Vozila: {initialVehicle.reg}</span>
+                <span>Uređivanje vozila: {initialVehicle.reg}</span>
               </>
             ) : (
               <>
                 <PlusCircle className="w-5 h-5 text-emerald-400" />
-                <span>Unos Novog Vozila u Matičnu Bazu</span>
+                <span>Unos novog vozila u matičnu bazu</span>
               </>
             )}
           </h3>
@@ -230,7 +230,7 @@ export function EditVehicleModal({
             <div className="flex items-center justify-between mb-2">
               <label className="font-black uppercase text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                 <Camera className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                <span>Fotografije Vozila (Maksimalno {MAX_IMAGES} slika)</span>
+                <span>Fotografije vozila (maksimalno {MAX_IMAGES} slika)</span>
               </label>
               <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full ${
                 images.length >= MAX_IMAGES
@@ -354,7 +354,7 @@ export function EditVehicleModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-bold uppercase text-slate-600 dark:text-slate-400 mb-1">
-                Registarska Oznaka <span className="text-red-500">*</span>
+                Registarska oznaka <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -368,7 +368,7 @@ export function EditVehicleModal({
             </div>
 
             <div>
-              <label className="block font-bold uppercase text-slate-600 dark:text-slate-400 mb-1">Garažni Broj</label>
+              <label className="block font-bold uppercase text-slate-600 dark:text-slate-400 mb-1">Garažni broj</label>
               <input
                 type="text"
                 value={garazniBroj}
@@ -379,7 +379,7 @@ export function EditVehicleModal({
             </div>
 
             <div>
-              <label className="block font-bold uppercase text-slate-600 dark:text-slate-400 mb-1">Tip Mehanizacije</label>
+              <label className="block font-bold uppercase text-slate-600 dark:text-slate-400 mb-1">Tip mehanizacije</label>
               <select
                 value={tipMehan}
                 onChange={(e) => setTipMehan(e.target.value)}
@@ -408,7 +408,7 @@ export function EditVehicleModal({
             </div>
 
             <div>
-              <label className="block font-bold uppercase text-slate-600 dark:text-slate-400 mb-1">Marka / Proizvođač</label>
+              <label className="block font-bold uppercase text-slate-600 dark:text-slate-400 mb-1">Marka / proizvođač</label>
               <input
                 type="text"
                 value={markaVoz}
@@ -441,7 +441,7 @@ export function EditVehicleModal({
             </div>
 
             <div>
-              <label className="block font-bold uppercase text-slate-600 dark:text-slate-400 mb-1">Broj Šasije (VIN)</label>
+              <label className="block font-bold uppercase text-slate-600 dark:text-slate-400 mb-1">Broj šasije (VIN)</label>
               <input
                 type="text"
                 value={brojSasije}
@@ -467,7 +467,7 @@ export function EditVehicleModal({
                   className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 font-extrabold rounded-xl border border-rose-200 dark:border-rose-900/60 transition-all cursor-pointer flex items-center gap-1.5 text-xs"
                   title="Trajno obriši vozilo iz baze (samo Superadmin)"
                 >
-                  <Trash2 className="w-4 h-4" /> Obriši Vozilo
+                  <Trash2 className="w-4 h-4" /> Obriši vozilo
                 </button>
               )}
             </div>
@@ -484,7 +484,7 @@ export function EditVehicleModal({
                 disabled={isSaving || isUploading}
                 className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
               >
-                <span>{isSaving ? "Spremanje..." : isEditMode ? "💾 Sačuvaj Izmjene" : "➕ Sačuvaj Novo Vozilo"}</span>
+                <span>{isSaving ? "Spremanje..." : isEditMode ? "💾 Sačuvaj izmjene" : "➕ Sačuvaj novo vozilo"}</span>
               </button>
             </div>
           </div>

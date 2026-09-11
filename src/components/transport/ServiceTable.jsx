@@ -283,7 +283,7 @@ export function ServiceTable({
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
           <div>
             <h2 className="text-xl font-black tracking-tight flex items-center gap-2">
-              <span>📋 Tabela Servisa & Radnih Naloga</span>
+              <span>📋 Tabela servisa i radnih naloga</span>
               <span className="text-xs bg-indigo-500/30 text-indigo-200 border border-indigo-400 px-3 py-0.5 rounded-full font-mono font-bold">
                 {visibleItems.length.toLocaleString("bs-BA")} / {filteredData.length.toLocaleString("bs-BA")} naloga
               </span>
@@ -303,10 +303,10 @@ export function ServiceTable({
                 className="text-xs bg-transparent text-white font-bold outline-none cursor-pointer"
               >
                 <option value="new-first" className="bg-slate-900 text-white">🆕 Najnoviji unosi</option>
-                <option value="date-desc" className="bg-slate-900 text-white">📅 Datum (Najnovije prvo)</option>
-                <option value="date-asc" className="bg-slate-900 text-white">📅 Datum (Najstarije prvo)</option>
-                <option value="cost-desc" className="bg-slate-900 text-white">💰 Trošak (Najveći prvo)</option>
-                <option value="cost-asc" className="bg-slate-900 text-white">💰 Trošak (Najmanji prvo)</option>
+                <option value="date-desc" className="bg-slate-900 text-white">📅 Datum (najnovije prvo)</option>
+                <option value="date-asc" className="bg-slate-900 text-white">📅 Datum (najstarije prvo)</option>
+                <option value="cost-desc" className="bg-slate-900 text-white">💰 Trošak (najveći prvo)</option>
+                <option value="cost-asc" className="bg-slate-900 text-white">💰 Trošak (najmanji prvo)</option>
               </select>
             </div>
 
@@ -324,7 +324,7 @@ export function ServiceTable({
               onClick={() => exportTransactionsToExcel(filteredData)}
               className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3.5 py-1.5 rounded-xl text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5" /> Izvezi Sve ({filteredData.length.toLocaleString("bs-BA")})
+              <Download className="w-3.5 h-3.5" /> Izvezi sve ({filteredData.length.toLocaleString("bs-BA")})
             </button>
           </div>
         </div>
@@ -343,17 +343,17 @@ export function ServiceTable({
                 <tr>
                   <th className="py-2.5 px-3 text-center w-28">Datum</th>
                   <th className="py-2.5 px-3 text-center w-32">Registracija</th>
-                  <th className="py-2.5 px-3 text-center w-24">Garažni Br.</th>
-                  <th className="py-2.5 px-3 text-center w-36">Tip Mehanizacije</th>
+                  <th className="py-2.5 px-3 text-center w-24">Garažni br.</th>
+                  <th className="py-2.5 px-3 text-center w-36">Tip mehanizacije</th>
                   <th className="py-2.5 px-3 text-center w-28">Marka</th>
                   {!isPrikljucnaFilter && (
                     <th className="py-2.5 px-3 text-center w-28 font-mono">{colUsageHeader}</th>
                   )}
                   <th className="py-2.5 px-3 text-center w-36">Segment</th>
-                  <th className="py-2.5 px-3 text-center w-64">Opis Popravke</th>
-                  <th className="py-2.5 px-3 text-center w-40">Serviser / Dobavljač</th>
-                  <th className="py-2.5 px-3 text-center w-32">Broj Fakture</th>
-                  <th className="py-2.5 px-3 text-center w-28">Interno / Eksterno</th>
+                  <th className="py-2.5 px-3 text-center w-64">Opis popravke</th>
+                  <th className="py-2.5 px-3 text-center w-40">Serviser / dobavljač</th>
+                  <th className="py-2.5 px-3 text-center w-32">Broj fakture</th>
+                  <th className="py-2.5 px-3 text-center w-28">Interno / eksterno</th>
                   <th className="py-2.5 px-3 text-center w-28">Trošak (KM)</th>
                 </tr>
 

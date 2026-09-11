@@ -197,7 +197,7 @@ export function ServiserDashboard({
               Servisna Radionica
             </h1>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
-              Karton Vozila & Servisna Historija Održavanja
+              Karton vozila i servisna historija održavanja
             </p>
           </div>
         </div>
@@ -211,7 +211,7 @@ export function ServiserDashboard({
               title="Terenski radni nalozi i popunjavanje"
             >
               <ClipboardList className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Terenski Nalozi</span>
+              <span>Terenski nalozi</span>
             </button>
           )}
 
@@ -222,7 +222,7 @@ export function ServiserDashboard({
               className="text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 cursor-pointer"
             >
               <Truck className="w-3.5 h-3.5 text-blue-600" />
-              <span className="hidden sm:inline">Glavna Aplikacija</span>
+              <span className="hidden sm:inline">Glavna aplikacija</span>
             </button>
           )}
 
@@ -275,7 +275,7 @@ export function ServiserDashboard({
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-2 relative z-10">
-            Servisna Radionica & Kartoteka
+            Servisna radionica i kartoteka
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-8 max-w-lg mx-auto font-medium relative z-10">
             Unesite registraciju, garažni broj ili broj šasije za trenutni uvid u historiju popravki, zamijenjene dijelove i karton vozila
@@ -405,7 +405,7 @@ export function ServiserDashboard({
               <Truck className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[10px] uppercase font-bold text-slate-400">Ukupno Jedinica</p>
+              <p className="text-[10px] uppercase font-bold text-slate-400">Ukupno jedinica</p>
               <p className="text-base font-black text-slate-800 dark:text-white">{totalUnits} jedinica</p>
             </div>
           </div>
@@ -415,8 +415,8 @@ export function ServiserDashboard({
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[10px] uppercase font-bold text-slate-400">Režim Radionice</p>
-              <p className="text-base font-black text-emerald-600 dark:text-emerald-400">Tehnički Pregled</p>
+              <p className="text-[10px] uppercase font-bold text-slate-400">Režim radionice</p>
+              <p className="text-base font-black text-emerald-600 dark:text-emerald-400">Tehnički pregled</p>
             </div>
           </div>
 
@@ -425,7 +425,7 @@ export function ServiserDashboard({
               <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[10px] uppercase font-bold text-slate-400">Evidentirani Servisi</p>
+              <p className="text-[10px] uppercase font-bold text-slate-400">Evidentirani servisi</p>
               <p className="text-base font-black text-slate-800 dark:text-white">{totalCostRecords.toLocaleString("bs-BA")} naloga</p>
             </div>
           </div>

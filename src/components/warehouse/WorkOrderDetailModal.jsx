@@ -140,11 +140,11 @@ export function WorkOrderDetailModal({
           {/* Generalije Mehanizacije */}
           <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             <div>
-              <span className="text-[10px] text-slate-400 uppercase font-bold block">Tip Mehanizacije</span>
+              <span className="text-[10px] text-slate-400 uppercase font-bold block">Tip mehanizacije</span>
               <span className="font-extrabold text-slate-900 dark:text-white">{v.tip || "Viljuškar"}</span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 uppercase font-bold block">Serijski Broj</span>
+              <span className="text-[10px] text-slate-400 uppercase font-bold block">Serijski broj</span>
               <span className="font-mono font-bold text-slate-700 dark:text-slate-300">{v.serijskiBroj || "-"}</span>
             </div>
             <div>
@@ -152,7 +152,7 @@ export function WorkOrderDetailModal({
               <span className="font-extrabold text-slate-900 dark:text-white">{v.lokacija || "Centralno skladište"}</span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 uppercase font-bold block">Kreirao / Nalogodavac</span>
+              <span className="text-[10px] text-slate-400 uppercase font-bold block">Kreirao / nalogodavac</span>
               <span className="font-bold text-slate-700 dark:text-slate-300">{workOrder.createdBy || "Dispečer"}</span>
             </div>
           </div>
@@ -161,7 +161,7 @@ export function WorkOrderDetailModal({
           <div className="space-y-3">
             <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              Kontrolna Lista Preventivnog Pregleda (8 Sklopova)
+              Kontrolna lista preventivnog pregleda (8 sklopova)
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {CHECKLIST_ITEMS.map((item) => {
@@ -217,7 +217,7 @@ export function WorkOrderDetailModal({
               <div className="flex justify-between items-center mb-2">
                 <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                   <Wrench className="w-3.5 h-3.5 text-blue-600" />
-                  Opis Izvršenih Radova
+                  Opis izvršenih radova
                 </h4>
                 {!isEditing && (
                   <button
@@ -247,7 +247,7 @@ export function WorkOrderDetailModal({
               <div className="flex justify-between items-center mb-2">
                 <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                   <Package className="w-3.5 h-3.5 text-amber-600" />
-                  Utrošeni Materijal i Dijelovi
+                  Utrošeni materijal i dijelovi
                 </h4>
               </div>
               {isEditing ? (
@@ -290,7 +290,7 @@ export function WorkOrderDetailModal({
                   onClick={saveEdit}
                   className="px-4 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
-                  <Save className="w-3.5 h-3.5" /> Sačuvaj Izmjene
+                  <Save className="w-3.5 h-3.5" /> Sačuvaj izmjene
                 </button>
               </div>
             </div>
@@ -300,7 +300,7 @@ export function WorkOrderDetailModal({
           <div className="space-y-3">
             <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
               <Camera className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              Foto Dokumentacija Sa Terena (5 Pozicija)
+              Fotodokumentacija sa terena (5 pozicija)
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
               {PHOTO_SLOTS.map((slot) => {

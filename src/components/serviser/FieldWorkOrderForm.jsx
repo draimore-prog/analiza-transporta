@@ -319,7 +319,7 @@ export function FieldWorkOrderForm({
           </div>
 
           <h2 className="text-xl font-black text-slate-900 dark:text-white">
-            Radni Nalog Uspješno Poslan!
+            Radni nalog uspješno poslan!
           </h2>
 
           <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 font-mono text-xs font-bold text-blue-700 dark:text-blue-400">
@@ -356,7 +356,7 @@ export function FieldWorkOrderForm({
             </div>
             <div>
               <h2 className="text-base font-black tracking-tight leading-tight">
-                {initialOrder ? `Završi Nalog ${initialOrder.orderNumber}` : "Novi Terenski Radni Nalog"}
+                {initialOrder ? `Završi nalog ${initialOrder.orderNumber}` : "Novi terenski radni nalog"}
               </h2>
               <p className="text-[11px] text-blue-100 font-medium leading-none mt-0.5">
                 Serviser: <strong>{activeUser?.fullname || activeUser?.username || "Serviser"}</strong>
@@ -386,7 +386,7 @@ export function FieldWorkOrderForm({
           <div className="bg-slate-50 dark:bg-slate-850 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3">
             <div className="flex justify-between items-center">
               <label className="text-sm font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
-                <span>1. Jedinica Skladišne Mehanizacije</span>
+                <span>1. Jedinica skladišne mehanizacije</span>
                 <span className="text-rose-500 font-black">*</span>
               </label>
               {!isAssignedOrder && selectedVehicle && (
@@ -405,7 +405,7 @@ export function FieldWorkOrderForm({
               <div className="p-4 sm:p-5 bg-amber-50 dark:bg-amber-950/60 border-2 border-amber-400 dark:border-amber-600 rounded-2xl shadow-sm">
                 <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 text-xs font-black uppercase tracking-wider mb-2">
                   <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                  <span>Zadatak od Voditelja (Fiksirano)</span>
+                  <span>Zadatak od voditelja (fiksirano)</span>
                 </div>
                 <div className="text-2xl sm:text-3xl font-black font-mono text-slate-900 dark:text-white tracking-tight">
                   {selectedVehicle?.reg || initialOrder.vehicleId}
@@ -497,7 +497,7 @@ export function FieldWorkOrderForm({
             {/* Vrsta rada */}
             <div>
               <label className="block text-sm font-black uppercase text-slate-800 dark:text-slate-200 mb-2">
-                2. Vrsta Pregleda
+                2. Vrsta pregleda
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -509,7 +509,7 @@ export function FieldWorkOrderForm({
                       : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700"
                   }`}
                 >
-                  🛡️ Redovni Pregled
+                  🛡️ Redovni pregled
                 </button>
                 <button
                   type="button"
@@ -520,7 +520,7 @@ export function FieldWorkOrderForm({
                       : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700"
                   }`}
                 >
-                  ⚠️ Kvar / Popravka
+                  ⚠️ Kvar / popravka
                 </button>
               </div>
             </div>
@@ -528,7 +528,7 @@ export function FieldWorkOrderForm({
             {/* Radni Sati (MTH) - OBAVEZNO POLJE ZA STARIJE SERVISERE */}
             <div>
               <label className="block text-sm font-black uppercase text-slate-800 dark:text-slate-200 mb-2 flex items-center justify-between">
-                <span>3. Radni Sati sa Table (MTH)</span>
+                <span>3. Radni sati sa table (MTH)</span>
                 <span className="text-rose-600 font-black text-xs uppercase bg-rose-100 dark:bg-rose-950 px-2 py-0.5 rounded-md">
                   Obavezno
                 </span>
@@ -556,7 +556,7 @@ export function FieldWorkOrderForm({
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
               <h3 className="text-sm font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
                 <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                4. Kontrolna Ček-Lista (8 Sklopova)
+                4. Kontrolna ček-lista (8 sklopova)
               </h3>
             </div>
 
@@ -633,7 +633,7 @@ export function FieldWorkOrderForm({
           <div className="space-y-2.5">
             <label className="block text-sm font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
               <Wrench className="w-4 h-4 text-blue-600" />
-              5. Opis Izvršenih Radova
+              5. Opis izvršenih radova
             </label>
 
             {/* Brzi tagovi / predlošci */}
@@ -663,7 +663,7 @@ export function FieldWorkOrderForm({
           <div className="space-y-2">
             <label className="block text-sm font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
               <Package className="w-4 h-4 text-amber-600" />
-              6. Utrošeni Materijal i Rezervni Dijelovi
+              6. Utrošeni materijal i rezervni dijelovi
             </label>
             <textarea
               value={usedMaterials}
@@ -680,7 +680,7 @@ export function FieldWorkOrderForm({
               <div>
                 <h3 className="text-sm font-black uppercase text-slate-800 dark:text-slate-200 tracking-wider flex items-center gap-1.5">
                   <Camera className="w-5 h-5 text-indigo-600" />
-                  7. Foto Dokumentacija (5 Standardnih Pozicija)
+                  7. Fotodokumentacija (5 standardnih pozicija)
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Slike sa kamere telefona se automatski komprimuju radi brzog slanja preko mobilne mreže.
@@ -752,7 +752,7 @@ export function FieldWorkOrderForm({
                           <>
                             <Camera className="w-8 h-8 text-indigo-500 mb-1" />
                             <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase">
-                              Dodirni za Kameru / Sliku
+                              Dodirni za kameru / sliku
                             </span>
                           </>
                         )}

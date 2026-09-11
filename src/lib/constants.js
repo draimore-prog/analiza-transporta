@@ -17,41 +17,41 @@ export const APP_NAV_SECTIONS = [
     title: "Analitika",
     icon: "📊",
     items: [
-      { id: "kpi-pregled", name: "KPI Pregled Flote", icon: "📊", category: "analitika" },
-      { id: "analiza-odrzavanja", name: "Analiza Održavanja", icon: "📈", category: "analitika" },
-      { id: "yoy-komparacija", name: "YoY Komparacija", icon: "⚖️", category: "analitika" },
-      { id: "tco-zamjena", name: "TCO & Zamjena Vozila", icon: "🔄", category: "analitika" }
+      { id: "kpi-pregled", name: "KPI pregled flote", icon: "📊", category: "analitika" },
+      { id: "analiza-odrzavanja", name: "Analiza održavanja", icon: "📈", category: "analitika" },
+      { id: "yoy-komparacija", name: "YoY komparacija", icon: "⚖️", category: "analitika" },
+      { id: "tco-zamjena", name: "TCO i zamjena vozila", icon: "🔄", category: "analitika" }
     ]
   },
   {
     id: "baza-podataka",
-    title: "Baza Podataka",
+    title: "Baza podataka",
     icon: "🗄️",
     items: [
-      { id: "maticna-baza-flote", name: "Matična Baza Voznog Parka", icon: "🏢", category: "baza-podataka" },
-      { id: "tabela-servisa", name: "Tabela Servisa & Troškova", icon: "📋", category: "baza-podataka" }
+      { id: "maticna-baza-flote", name: "Matična baza voznog parka", icon: "🏢", category: "baza-podataka" },
+      { id: "tabela-servisa", name: "Tabela servisa i troškova", icon: "📋", category: "baza-podataka" }
     ]
   },
   {
     id: "skladisna-mehanizacija",
-    title: "Skladišna Mehanizacija",
+    title: "Skladišna mehanizacija",
     icon: "🚜",
     items: [
-      { id: "skladiste-analitika", name: "Analitika & Finansije Skladišta", icon: "📊", category: "skladisna-mehanizacija" },
-      { id: "skladiste-sifrarnik", name: "Šifrarnik Mehanizacije (594)", icon: "🚜", category: "skladisna-mehanizacija" },
-      { id: "skladiste-opravke", name: "Pregled Svih Opravki", icon: "🔧", category: "skladisna-mehanizacija" },
-      { id: "skladiste-segmenti", name: "Segmenti & Dijelovi", icon: "⚡", category: "skladisna-mehanizacija" },
-      { id: "skladiste-dobavljaci", name: "Serviseri & Dobavljači", icon: "🏢", category: "skladisna-mehanizacija" },
-      { id: "skladiste-nalozi", name: "Radni Nalozi & Pregledi", icon: "📋", category: "skladisna-mehanizacija", hasBadge: true }
+      { id: "skladiste-analitika", name: "Analitika i finansije skladišta", icon: "📊", category: "skladisna-mehanizacija" },
+      { id: "skladiste-sifrarnik", name: "Šifrarnik mehanizacije (594)", icon: "🚜", category: "skladisna-mehanizacija" },
+      { id: "skladiste-opravke", name: "Pregled svih opravki", icon: "🔧", category: "skladisna-mehanizacija" },
+      { id: "skladiste-segmenti", name: "Segmenti i dijelovi", icon: "⚡", category: "skladisna-mehanizacija" },
+      { id: "skladiste-dobavljaci", name: "Serviseri i dobavljači", icon: "🏢", category: "skladisna-mehanizacija" },
+      { id: "skladiste-nalozi", name: "Radni nalozi i pregledi", icon: "📋", category: "skladisna-mehanizacija", hasBadge: true }
     ]
   },
   {
     id: "serviser",
-    title: "Servisna Radionica",
+    title: "Servisna radionica",
     icon: "🔧",
     items: [
-      { id: "servisna-radionica", name: "Serviserski Portal", icon: "🔍", category: "serviser" },
-      { id: "terenski-nalozi", name: "Terenski Radni Nalozi", icon: "📱", category: "serviser", hasBadge: true }
+      { id: "servisna-radionica", name: "Serviserski portal", icon: "🔍", category: "serviser" },
+      { id: "terenski-nalozi", name: "Terenski radni nalozi", icon: "📱", category: "serviser", hasBadge: true }
     ]
   }
 ];

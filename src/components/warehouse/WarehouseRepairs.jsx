@@ -219,7 +219,7 @@ export function WarehouseRepairs({
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
           <div>
             <h2 className="text-xl font-black tracking-tight flex items-center gap-2">
-              <span>📋 Pregled Opravki Skladišne Mehanizacije</span>
+              <span>📋 Pregled opravki skladišne mehanizacije</span>
               <span className="text-xs bg-amber-500/30 text-amber-200 border border-amber-400 px-3 py-0.5 rounded-full font-mono font-bold">
                 {visibleItems.length.toLocaleString("bs-BA")} / {filteredData.length.toLocaleString("bs-BA")} opravki
               </span>
@@ -239,10 +239,10 @@ export function WarehouseRepairs({
                 className="text-xs bg-transparent text-white font-bold outline-none cursor-pointer"
               >
                 <option value="new-first" className="bg-slate-900 text-white">🆕 Najnoviji unosi</option>
-                <option value="date-desc" className="bg-slate-900 text-white">📅 Datum (Najnovije prvo)</option>
-                <option value="date-asc" className="bg-slate-900 text-white">📅 Datum (Najstarije prvo)</option>
-                <option value="cost-desc" className="bg-slate-900 text-white">💰 Trošak (Najveći prvo)</option>
-                <option value="cost-asc" className="bg-slate-900 text-white">💰 Trošak (Najmanji prvo)</option>
+                <option value="date-desc" className="bg-slate-900 text-white">📅 Datum (najnovije prvo)</option>
+                <option value="date-asc" className="bg-slate-900 text-white">📅 Datum (najstarije prvo)</option>
+                <option value="cost-desc" className="bg-slate-900 text-white">💰 Trošak (najveći prvo)</option>
+                <option value="cost-asc" className="bg-slate-900 text-white">💰 Trošak (najmanji prvo)</option>
               </select>
             </div>
 
@@ -260,7 +260,7 @@ export function WarehouseRepairs({
               onClick={() => exportTransactionsToExcel(filteredData, "Skladisna_Mehanizacija_Opravke.xlsx")}
               className="bg-amber-600 hover:bg-amber-500 text-slate-950 font-extrabold px-3.5 py-1.5 rounded-xl text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5" /> Izvezi Sve ({filteredData.length.toLocaleString("bs-BA")})
+              <Download className="w-3.5 h-3.5" /> Izvezi sve ({filteredData.length.toLocaleString("bs-BA")})
             </button>
           </div>
         </div>
@@ -278,13 +278,13 @@ export function WarehouseRepairs({
                 {/* 1. RED: Nazivi kolona */}
                 <tr>
                   <th className="py-2.5 px-3 w-28">Datum</th>
-                  <th className="py-2.5 px-3 w-32">Interna Oznaka / Reg</th>
-                  <th className="py-2.5 px-3 w-24">Garažni Br.</th>
+                  <th className="py-2.5 px-3 w-32">Interna oznaka / reg.</th>
+                  <th className="py-2.5 px-3 w-24">Garažni br.</th>
                   <th className="py-2.5 px-3 w-28">Marka</th>
                   <th className="py-2.5 px-3 w-28 text-right font-mono">Radni sati</th>
                   <th className="py-2.5 px-3 w-36">Segment</th>
-                  <th className="py-2.5 px-3 w-64">Opis Popravke</th>
-                  <th className="py-2.5 px-3 w-40">Serviser / Dobavljač</th>
+                  <th className="py-2.5 px-3 w-64">Opis popravke</th>
+                  <th className="py-2.5 px-3 w-40">Serviser / dobavljač</th>
                   <th className="py-2.5 px-3 text-right w-28">Trošak (KM)</th>
                 </tr>
 

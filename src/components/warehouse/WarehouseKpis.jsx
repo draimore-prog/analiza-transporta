@@ -840,7 +840,7 @@ export function WarehouseKpis({
         <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border-l-4 border-amber-500 border border-slate-200 dark:border-slate-700 shadow-xs">
           <div className="flex justify-between items-center mb-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Ukupan Utrošak
+              Ukupan utrošak
             </span>
             <span className="p-1.5 bg-amber-50 dark:bg-amber-950/50 text-amber-600 rounded-lg">
               <DollarSign className="w-4 h-4" />
@@ -861,7 +861,7 @@ export function WarehouseKpis({
         >
           <div className="flex justify-between items-center mb-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Aktivne Mašine
+              Aktivne mašine
             </span>
             <span className="p-1.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 rounded-lg group-hover:scale-110 transition-transform">
               <Boxes className="w-4 h-4" />
@@ -882,7 +882,7 @@ export function WarehouseKpis({
         >
           <div className="flex justify-between items-center mb-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Broj Opravki
+              Broj opravki
             </span>
             <span className="p-1.5 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 rounded-lg group-hover:scale-110 transition-transform">
               <Wrench className="w-4 h-4" />
@@ -903,7 +903,7 @@ export function WarehouseKpis({
         >
           <div className="flex justify-between items-center mb-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Vlastita Radionica
+              Vlastita radionica
             </span>
             <span className="text-[10px] font-mono font-black text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-950 px-1.5 py-0.5 rounded">
               {kpiStats.internalPerc}%
@@ -924,7 +924,7 @@ export function WarehouseKpis({
         >
           <div className="flex justify-between items-center mb-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Vanjski Servisi
+              Vanjski servisi
             </span>
             <span className="text-[10px] font-mono font-black text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-950 px-1.5 py-0.5 rounded">
               {kpiStats.externalPerc}%
@@ -942,7 +942,7 @@ export function WarehouseKpis({
         <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border-l-4 border-purple-500 border border-slate-200 dark:border-slate-700 shadow-xs">
           <div className="flex justify-between items-center mb-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Prosjek po Opravci
+              Prosjek po opravci
             </span>
             <span className="p-1.5 bg-purple-50 dark:bg-purple-950/50 text-purple-600 rounded-lg">
               <Sparkles className="w-4 h-4" />
@@ -968,7 +968,7 @@ export function WarehouseKpis({
           <div className="flex justify-between items-center mb-3">
             <div>
               <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <TrendingUp className="w-4 h-4 text-amber-500" /> Mjesečna Dinamika Troškova
+                <TrendingUp className="w-4 h-4 text-amber-500" /> Mjesečna dinamika troškova
               </h4>
               <p className="text-[11px] text-slate-400 mt-0.5">
                 {selectedYearFilter === "all" && selectedMonthFilter === "all"
@@ -992,7 +992,7 @@ export function WarehouseKpis({
           <div className="flex justify-between items-center mb-3">
             <div>
               <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-blue-600" /> Vlastita Radionica vs Eksterni
+                <ShieldCheck className="w-4 h-4 text-blue-600" /> Vlastita radionica vs eksterni
               </h4>
               <p className="text-[11px] text-slate-400 mt-0.5">
                 Udio troškova internog i vanjskog servisa
@@ -1015,7 +1015,7 @@ export function WarehouseKpis({
           <div className="flex justify-between items-center mb-3">
             <div>
               <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <Boxes className="w-4 h-4 text-amber-500" /> Top 10 Mašina po Trošku
+                <Boxes className="w-4 h-4 text-amber-500" /> Top 10 mašina po trošku
               </h4>
               <p className="text-[11px] text-slate-400 mt-0.5">
                 Klik na viljuškar otvara karton vozila
@@ -1035,7 +1035,7 @@ export function WarehouseKpis({
           <div className="flex justify-between items-center mb-3">
             <div>
               <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <Layers className="w-4 h-4 text-emerald-500" /> Raspodjela po Segmentima
+                <Layers className="w-4 h-4 text-emerald-500" /> Raspodjela po segmentima
               </h4>
               <p className="text-[11px] text-slate-400 mt-0.5">
                 Baterije, Točkovi, Hidraulika, Mehanika...
@@ -1055,7 +1055,7 @@ export function WarehouseKpis({
           <div className="flex justify-between items-center mb-3">
             <div>
               <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <Building2 className="w-4 h-4 text-indigo-500" /> Vodeći Partneri i Serviseri
+                <Building2 className="w-4 h-4 text-indigo-500" /> Vodeći partneri i serviseri
               </h4>
               <p className="text-[11px] text-slate-400 mt-0.5">
                 Linde, Jungheinrich, Still, Vlastita radionica...
@@ -1078,7 +1078,7 @@ export function WarehouseKpis({
         <div className="flex justify-between items-center mb-4">
           <div>
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <span>📅 Višegodišnji Pregled Troškova & Broja Mehanizacije (2021 - 2026)</span>
+              <span>📅 Višegodišnji pregled troškova i broja mehanizacije (2021 - 2026)</span>
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Klik na red filtrira tabelu popravki za odabranu godinu
@@ -1097,10 +1097,10 @@ export function WarehouseKpis({
             <thead className="bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
               <tr>
                 <th className="p-3">Godina</th>
-                <th className="p-3 text-center">Broj Mašina u Floti</th>
-                <th className="p-3 text-right">Ukupan Trošak Održavanja</th>
-                <th className="p-3 text-right">Prosjek po Jedinici</th>
-                <th className="p-3 text-center">Broj Servisnih Intervencija</th>
+                <th className="p-3 text-center">Broj mašina u floti</th>
+                <th className="p-3 text-right">Ukupan trošak održavanja</th>
+                <th className="p-3 text-right">Prosjek po jedinici</th>
+                <th className="p-3 text-center">Broj servisnih intervencija</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">

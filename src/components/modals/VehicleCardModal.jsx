@@ -542,7 +542,7 @@ export function VehicleCardModal({
                 className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl transition-all cursor-pointer flex items-center gap-1 text-xs shadow-xs"
                 title="Uredi matične podatke vozila"
               >
-                <Edit3 className="w-3.5 h-3.5" /> Uredi Vozilo
+                <Edit3 className="w-3.5 h-3.5" /> Uredi vozilo
               </button>
             )}
             {isSuperadmin && onDeleteVehicle && (
@@ -556,7 +556,7 @@ export function VehicleCardModal({
                 className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-xl transition-all cursor-pointer flex items-center gap-1 text-xs shadow-xs"
                 title="Trajno obriši vozilo iz baze (samo Superadmin)"
               >
-                <Trash2 className="w-3.5 h-3.5" /> Obriši Vozilo
+                <Trash2 className="w-3.5 h-3.5" /> Obriši vozilo
               </button>
             )}
             <button
@@ -582,7 +582,7 @@ export function VehicleCardModal({
             {isServiser ? (
               <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs print:border-slate-300">
                 <span className="text-[10px] uppercase font-bold text-slate-400 print:text-slate-600 block">
-                  Tip / Kategorija Mehanizacije
+                  Tip / kategorija mehanizacije
                 </span>
                 <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 mt-1 block truncate">
                   {vehicleInfo.tipMehan || "Vozilo"}
@@ -594,7 +594,7 @@ export function VehicleCardModal({
             ) : (
               <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs print:border-slate-300">
                 <span className="text-[10px] uppercase font-bold text-slate-400 print:text-slate-600 block">
-                  Ukupno Uloženo u Održavanje
+                  Ukupno uloženo u održavanje
                 </span>
                 <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 mt-0.5 block print:text-slate-900">
                   {formatKM(totalCost)}
@@ -608,7 +608,7 @@ export function VehicleCardModal({
             )}
             <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs print:border-slate-300">
               <span className="text-[10px] uppercase font-bold text-slate-400 print:text-slate-600 block">
-                Broj Evidentiranih Servisa
+                Broj evidentiranih servisa
               </span>
               <span className="text-lg font-black text-blue-600 dark:text-blue-400 mt-0.5 block print:text-slate-900">
                 {history.length.toLocaleString("bs-BA")} naloga
@@ -621,7 +621,7 @@ export function VehicleCardModal({
             </div>
             <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs print:border-slate-300">
               <span className="text-[10px] uppercase font-bold text-slate-400 print:text-slate-600 block">
-                Broj Šasije (VIN)
+                Broj šasije (VIN)
               </span>
               <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200 mt-1 block truncate print:text-slate-900">
                 {vehicleInfo.brojSasije || "-"}
@@ -636,7 +636,7 @@ export function VehicleCardModal({
                 <div className="flex items-center gap-2">
                   <Camera className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                   <span className="font-extrabold uppercase text-[11px] text-slate-700 dark:text-slate-200">
-                    Foto Galerija Vozila
+                    Foto galerija vozila
                   </span>
                   <span className="text-[10px] font-black bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800">
                     {vehicleImages.length} {vehicleImages.length === 1 ? "fotografija" : "fotografija (do 10)"}
@@ -740,7 +740,7 @@ export function VehicleCardModal({
               <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-[11px] font-extrabold uppercase text-slate-500 flex items-center gap-1.5">
-                    <BarChart2 className="w-3.5 h-3.5 text-indigo-600" /> Utrošak po Godinama (Klik za filter)
+                    <BarChart2 className="w-3.5 h-3.5 text-indigo-600" /> Utrošak po godinama (klik za filter)
                   </span>
                   {selectedYearFilter !== "all" && (
                     <button
@@ -759,7 +759,7 @@ export function VehicleCardModal({
               <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-[11px] font-extrabold uppercase text-slate-500 flex items-center gap-1.5">
-                    <BarChart2 className="w-3.5 h-3.5 text-sky-500" /> Utrošak po Mjesecima (Klik za filter)
+                    <BarChart2 className="w-3.5 h-3.5 text-sky-500" /> Utrošak po mjesecima (klik za filter)
                   </span>
                   {selectedMonthFilter !== "all" && (
                     <button
@@ -783,7 +783,7 @@ export function VehicleCardModal({
             <div className="p-3 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex flex-wrap justify-between items-center gap-2 print:bg-slate-100 shrink-0">
               <div className="flex items-center gap-2">
                 <h4 className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5 print:text-slate-900">
-                  <Wrench className="w-4 h-4 text-blue-600 print:hidden" /> Hronološki Pregled Svih Servisa & Računa ({filteredHistory.length} / {history.length})
+                  <Wrench className="w-4 h-4 text-blue-600 print:hidden" /> Hronološki pregled svih servisa i računa ({filteredHistory.length} / {history.length})
                 </h4>
                 {isAnyFilterActive && (
                   <span className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -812,10 +812,10 @@ export function VehicleCardModal({
                       <th className="p-2.5 text-center w-28 font-mono">{usageColTitle}</th>
                     )}
                     <th className="p-2.5 text-center w-32">Segment</th>
-                    <th className="p-2.5 text-center">Opis Radova / Dijelovi</th>
+                    <th className="p-2.5 text-center">Opis radova / dijelovi</th>
                     <th className="p-2.5 text-center w-40">Serviser</th>
-                    <th className="p-2.5 text-center w-32">Broj Fakture</th>
-                    <th className="p-2.5 text-center w-24">Interno / Eksterno</th>
+                    <th className="p-2.5 text-center w-32">Broj fakture</th>
+                    <th className="p-2.5 text-center w-24">Interno / eksterno</th>
                     {!isServiser ? (
                       <th className="p-2.5 text-center w-28">Iznos (KM)</th>
                     ) : (

@@ -167,7 +167,7 @@ export function WarehouseFleet({
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <span>🚜</span> Šifrarnik Skladišne Mehanizacije
+              <span>🚜</span> Šifrarnik skladišne mehanizacije
               <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 font-bold px-2.5 py-0.5 rounded-full">
                 {visibleItems.length} / {filteredData.length} jedinica
               </span>
@@ -190,7 +190,7 @@ export function WarehouseFleet({
               onClick={() => exportMasterFleetToExcel(filteredData, "Skladisna_Mehanizacija_Sifrarnik.xlsx")}
               className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-slate-950 text-xs font-extrabold rounded-lg transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5" /> Izvoz Šifrarnika (Excel)
+              <Download className="w-3.5 h-3.5" /> Izvoz šifrarnika (Excel)
             </button>
           </div>
         </div>
@@ -208,12 +208,12 @@ export function WarehouseFleet({
               {/* 1. RED: Nazivi kolona */}
               <tr>
                 <th className="p-2.5 text-center w-12">R.b.</th>
-                <th className="p-2.5 w-28">Garažni Br.</th>
-                <th className="p-2.5 w-32">Interna Oznaka / Reg</th>
+                <th className="p-2.5 w-28">Garažni br.</th>
+                <th className="p-2.5 w-32">Interna oznaka / reg.</th>
                 <th className="p-2.5 w-36">Marka</th>
-                <th className="p-2.5 w-36">Model / Tip</th>
+                <th className="p-2.5 w-36">Model / tip</th>
                 <th className="p-2.5 w-24">Godište</th>
-                <th className="p-2.5 w-44">Broj Šasije</th>
+                <th className="p-2.5 w-44">Broj šasije</th>
                 <th className="p-2.5 text-center w-32">Status</th>
                 <th className="p-2.5 text-center w-36">Akcije</th>
               </tr>

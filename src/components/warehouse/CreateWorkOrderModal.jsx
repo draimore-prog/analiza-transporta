@@ -137,7 +137,7 @@ export function CreateWorkOrderModal({
               <PlusCircle className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-lg font-black tracking-tight">Kreiraj & Dodijeli Radni Nalog</h2>
+              <h2 className="text-lg font-black tracking-tight">Kreiraj i dodijeli radni nalog</h2>
               <p className="text-xs text-slate-400">Dispečing zadatka serviseru skladišne mehanizacije</p>
             </div>
           </div>
@@ -161,7 +161,7 @@ export function CreateWorkOrderModal({
           {/* Odabir Mašine */}
           <div>
             <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-300 mb-1">
-              1. Odaberi Mehanizaciju (Pretraga po ID, Tipu ili Lokaciji)
+              1. Odaberi mehanizaciju (pretraga po ID, tipu ili lokaciji)
             </label>
             <div className="relative mb-2">
               <input
@@ -230,7 +230,7 @@ export function CreateWorkOrderModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-300 mb-1">
-                2. Vrsta Radnog Naloga
+                2. Vrsta radnog naloga
               </label>
               <select
                 value={orderType}
@@ -244,7 +244,7 @@ export function CreateWorkOrderModal({
 
             <div>
               <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-300 mb-1">
-                3. Prioritet Naloga
+                3. Prioritet naloga
               </label>
               <select
                 value={priority}
@@ -262,7 +262,7 @@ export function CreateWorkOrderModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-300 mb-1 flex items-center justify-between">
-                <span>4. Zaduženi Mobilni Serviser</span>
+                <span>4. Zaduženi mobilni serviser</span>
                 {mobileServisers.length > 0 && (
                   <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold lowercase">
                     ({mobileServisers.length} dostupno)
@@ -308,7 +308,7 @@ export function CreateWorkOrderModal({
 
             <div>
               <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-300 mb-1">
-                Zadnje Poznati Radni Sati (Opcionalno)
+                Zadnje poznati radni sati (opcionalno)
               </label>
               <input
                 type="number"
@@ -323,7 +323,7 @@ export function CreateWorkOrderModal({
           {/* Opis Zadatka / Kvara */}
           <div>
             <label className="block text-xs font-bold uppercase text-slate-600 dark:text-slate-300 mb-1">
-              5. Opis Zadatka / Uputstvo Za Servisera
+              5. Opis zadatka / uputstvo za servisera
             </label>
             <textarea
               value={instructions}
@@ -353,7 +353,7 @@ export function CreateWorkOrderModal({
               ) : (
                 <PlusCircle className="w-4 h-4" />
               )}
-              <span>Kreiraj & Pošalji Nalog</span>
+              <span>Kreiraj i pošalji nalog</span>
             </button>
           </div>
         </form>

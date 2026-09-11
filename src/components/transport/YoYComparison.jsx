@@ -236,7 +236,7 @@ export function YoYComparison({ costData }) {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h2 className="text-2xl font-black tracking-tight flex items-center gap-2">
-              <span>📊 YoY Komparativna Analiza & KPI Mjesečni</span>
+              <span>📊 YoY komparativna analiza i mjesečni KPI</span>
               <span className="text-xs bg-indigo-500/30 text-indigo-200 border border-indigo-400 px-3 py-0.5 rounded-full font-mono font-bold">
                 {periodLabel}
               </span>
@@ -252,7 +252,7 @@ export function YoYComparison({ costData }) {
       <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-xs border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <label className="text-xs font-bold text-slate-500 uppercase">Glavna Godina (A):</label>
+            <label className="text-xs font-bold text-slate-500 uppercase">Glavna godina (A):</label>
             <select
               value={yearA}
               onChange={(e) => setYearA(parseInt(e.target.value))}
@@ -269,7 +269,7 @@ export function YoYComparison({ costData }) {
           <span className="text-xs font-bold text-slate-400">vs</span>
 
           <div className="flex items-center gap-2">
-            <label className="text-xs font-bold text-slate-500 uppercase">Usporedna Godina (B):</label>
+            <label className="text-xs font-bold text-slate-500 uppercase">Usporedna godina (B):</label>
             <select
               value={yearB}
               onChange={(e) => setYearB(parseInt(e.target.value))}
@@ -284,13 +284,13 @@ export function YoYComparison({ costData }) {
           </div>
 
           <div className="flex items-center gap-2 ml-2">
-            <label className="text-xs font-bold text-slate-500 uppercase">Mjesec / Period:</label>
+            <label className="text-xs font-bold text-slate-500 uppercase">Mjesec / period:</label>
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
               className="text-xs font-bold border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 cursor-pointer outline-none"
             >
-              <option value="all">Svi tekući mjeseci (YTD Kumulativno)</option>
+              <option value="all">Svi tekući mjeseci (YTD kumulativno)</option>
               {MONTH_NAMES.map((mName, idx) => (
                 <option key={idx + 1} value={(idx + 1).toString()}>
                   {mName}
@@ -324,7 +324,7 @@ export function YoYComparison({ costData }) {
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
           <h3 className="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2 mb-3 pb-2 border-b border-slate-100 dark:border-slate-700">
             <Truck className="w-4 h-4 text-blue-600" />
-            <span>1. Komparacija po Tipu Mehanizacije</span>
+            <span>1. Komparacija po tipu mehanizacije</span>
           </h3>
           <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
             {renderComparisonTable(dataPeriodOlder, dataPeriodNewer, "tipMehan", `${olderYear}.`, `${newerYear}.`, "YoY %")}
@@ -335,7 +335,7 @@ export function YoYComparison({ costData }) {
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
           <h3 className="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2 mb-3 pb-2 border-b border-slate-100 dark:border-slate-700">
             <Layers className="w-4 h-4 text-emerald-600" />
-            <span>2. Komparacija po Segmentima Troškova</span>
+            <span>2. Komparacija po segmentima troškova</span>
           </h3>
           <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
             {renderComparisonTable(dataPeriodOlder, dataPeriodNewer, "segment", `${olderYear}.`, `${newerYear}.`, "YoY %")}
@@ -349,7 +349,7 @@ export function YoYComparison({ costData }) {
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
           <h3 className="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2 mb-3 pb-2 border-b border-slate-100 dark:border-slate-700">
             <Calendar className="w-4 h-4 text-indigo-600" />
-            <span>3. Mjesec na Isti Mjesec Prošle Godine ({MONTH_NAMES[currentMonthNum - 1]})</span>
+            <span>3. Mjesec na isti mjesec prošle godine ({MONTH_NAMES[currentMonthNum - 1]})</span>
           </h3>
           <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
             {renderComparisonTable(
@@ -367,7 +367,7 @@ export function YoYComparison({ costData }) {
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
           <h3 className="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2 mb-3 pb-2 border-b border-slate-100 dark:border-slate-700">
             <TrendingUp className="w-4 h-4 text-teal-600" />
-            <span>4. Mjesec na Prethodni Mjesec (MoM)</span>
+            <span>4. Mjesec na prethodni mjesec (MoM)</span>
           </h3>
           <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
             {renderComparisonTable(
@@ -386,7 +386,7 @@ export function YoYComparison({ costData }) {
       <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-            <span>📊 Višegodišnja Mjesečna Matrica Troškova (Nominalni Iznosi u KM)</span>
+            <span>📊 Višegodišnja mjesečna matrica troškova (nominalni iznosi u KM)</span>
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Poređenje ukupnih troškova održavanja po mjesecima i godinama (2021 - 2026)
@@ -452,7 +452,7 @@ export function YoYComparison({ costData }) {
       <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-            <span>📈 Višegodišnja Matrica Postotnih Razlika (YoY % Rast / Pad)</span>
+            <span>📈 Višegodišnja matrica postotnih razlika (YoY % rast / pad)</span>
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Postotne izmjene u odnosu na prethodnu godinu (

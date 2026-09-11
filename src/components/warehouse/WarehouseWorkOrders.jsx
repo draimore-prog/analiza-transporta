@@ -84,7 +84,7 @@ export function WarehouseWorkOrders({
               <ClipboardList className="w-5 h-5" />
             </span>
             <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-              Radni Nalozi & Preventivni Pregledi Mehanizacije
+              Radni nalozi i preventivni pregledi mehanizacije
             </h2>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -99,7 +99,7 @@ export function WarehouseWorkOrders({
               className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>Novi Radni Nalog</span>
+              <span>Novi radni nalog</span>
             </button>
           </div>
         )}
@@ -109,7 +109,7 @@ export function WarehouseWorkOrders({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Ukupno Naloga */}
         <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-          <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Ukupno Naloga</span>
+          <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Ukupno naloga</span>
           <div className="flex items-baseline justify-between">
             <span className="text-2xl font-black text-slate-900 dark:text-white">{kpis.total}</span>
             <span className="text-xs text-slate-400 font-bold">Arhiva</span>
@@ -127,7 +127,7 @@ export function WarehouseWorkOrders({
         >
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] uppercase font-bold text-purple-700 dark:text-purple-300">
-              Čeka Pregled Voditelja
+              Čeka pregled voditelja
             </span>
             {kpis.pendingReview > 0 && (
               <span className="w-2.5 h-2.5 rounded-full bg-purple-600 animate-ping" />
@@ -145,7 +145,7 @@ export function WarehouseWorkOrders({
           className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:border-amber-400 transition-all"
         >
           <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 block mb-1">
-            Zadano / U Toku
+            Zadano / u toku
           </span>
           <div className="flex items-baseline justify-between">
             <span className="text-2xl font-black text-amber-600 dark:text-amber-400">{kpis.activeAssigned}</span>
@@ -159,7 +159,7 @@ export function WarehouseWorkOrders({
           className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:border-emerald-400 transition-all"
         >
           <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 block mb-1">
-            Pregledano & Odobreno
+            Pregledano i odobreno
           </span>
           <div className="flex items-baseline justify-between">
             <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{kpis.approved}</span>
@@ -242,12 +242,12 @@ export function WarehouseWorkOrders({
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-extrabold uppercase text-[10px] tracking-wider">
-                  <th className="p-3.5 pl-5">Broj Naloga & Datum</th>
-                  <th className="p-3.5">Mehanizacija (ID / Model)</th>
+                  <th className="p-3.5 pl-5">Broj naloga i datum</th>
+                  <th className="p-3.5">Mehanizacija (ID / model)</th>
                   <th className="p-3.5">Lokacija (PJ)</th>
-                  <th className="p-3.5">Serviser / Izvršilac</th>
-                  <th className="p-3.5 text-center">Radni Sati</th>
-                  <th className="p-3.5 text-center">Ček-Lista</th>
+                  <th className="p-3.5">Serviser / izvršilac</th>
+                  <th className="p-3.5 text-center">Radni sati</th>
+                  <th className="p-3.5 text-center">Ček-lista</th>
                   <th className="p-3.5 text-center">Slike</th>
                   <th className="p-3.5 text-center">Status</th>
                   <th className="p-3.5 pr-5 text-right">Akcije</th>

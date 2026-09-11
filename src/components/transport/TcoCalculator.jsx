@@ -458,10 +458,10 @@ export function TcoCalculator({
           <div>
             <div className="flex items-center gap-2.5">
               <h2 className="text-xl font-black tracking-tight text-white">
-                TCO & Kalkulator Isplativosti Zamjene Vozila
+                TCO i kalkulator isplativosti zamjene vozila
               </h2>
               <span className="text-[11px] bg-amber-500/20 text-amber-300 border border-amber-500/30 font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                🧪 Testni Pregled / Algoritam
+                🧪 Testni pregled / algoritam
               </span>
             </div>
             <p className="text-xs text-slate-300 mt-1 max-w-2xl">
@@ -487,7 +487,7 @@ export function TcoCalculator({
         <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border-l-4 border-rose-500 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-              Prešli Prag Rentabilnosti
+              Prešli prag rentabilnosti
             </span>
             <span className="w-7 h-7 rounded-lg bg-rose-100 dark:bg-rose-950/60 text-rose-600 flex items-center justify-center">
               <AlertTriangle className="w-4 h-4" />
@@ -507,7 +507,7 @@ export function TcoCalculator({
         <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border-l-4 border-amber-500 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-              Godišnje Održavanje Rizičnih
+              Godišnje održavanje rizičnih
             </span>
             <span className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
@@ -527,7 +527,7 @@ export function TcoCalculator({
         <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border-l-4 border-blue-500 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-              Prosječna Starost Kritičnih
+              Prosječna starost kritičnih
             </span>
             <span className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center">
               <Calendar className="w-4 h-4" />
@@ -547,7 +547,7 @@ export function TcoCalculator({
         <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border-l-4 border-emerald-500 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-              Potencijal Godišnje Uštede
+              Potencijal godišnje uštede
             </span>
             <span className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center">
               <TrendingUp className="w-4 h-4" />
@@ -570,7 +570,7 @@ export function TcoCalculator({
           <div>
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
               <Sliders className="w-5 h-5 text-indigo-600" />
-              <span>Interaktivni Kalkulator Isplativosti Zamjene ("What-if" Scenario)</span>
+              <span>Interaktivni kalkulator isplativosti zamjene ("what-if" scenario)</span>
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Izaberite vozilo i prilagodite uslove nabavke kako biste vidjeli tačan datum povrata
@@ -837,7 +837,7 @@ export function TcoCalculator({
                   <div className="flex justify-between items-center mb-2">
                     <h5 className="text-xs font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                       <TrendingUp className="w-4 h-4 text-indigo-600" />
-                      <span>5-godišnja projekcija kumulativnih troškova (Staro vs Novo)</span>
+                      <span>5-godišnja projekcija kumulativnih troškova (staro vs novo)</span>
                     </h5>
                     <span className="text-[10px] font-mono text-slate-400">KM kumulativno</span>
                   </div>
@@ -857,7 +857,7 @@ export function TcoCalculator({
           <div>
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
               <Truck className="w-5 h-5 text-blue-600" />
-              <span>Rang Lista Rentabilnosti Flote (Kandidati za Zamjenu)</span>
+              <span>Rang lista rentabilnosti flote (kandidati za zamjenu)</span>
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Klikom na dugme &quot;Kalkulator&quot; pored bilo kojeg vozila učitavate njegove podatke u gornji model.
@@ -932,15 +932,15 @@ export function TcoCalculator({
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-slate-100 dark:bg-slate-900/90 text-slate-600 dark:text-slate-300 uppercase tracking-wider font-extrabold border-b border-slate-200 dark:border-slate-700">
-                <th className="p-3.5">Vozilo / Registracija</th>
-                <th className="p-3.5">Garažni Br.</th>
-                <th className="p-3.5">Marka & Model</th>
+                <th className="p-3.5">Vozilo / registracija</th>
+                <th className="p-3.5">Garažni br.</th>
+                <th className="p-3.5">Marka i model</th>
                 <th className="p-3.5">Tip</th>
-                <th className="p-3.5">Godište / Starost</th>
+                <th className="p-3.5">Godište / starost</th>
                 <th className="p-3.5 text-right">Uloženo (2021-2026)</th>
                 <th className="p-3.5 text-right">Godišnje (2025/26)</th>
-                <th className="p-3.5 text-center">TCO Indeks Rizika</th>
-                <th className="p-3.5">Status Preporuke</th>
+                <th className="p-3.5 text-center">TCO indeks rizika</th>
+                <th className="p-3.5">Status preporuke</th>
                 <th className="p-3.5 text-center">Akcija</th>
               </tr>
             </thead>

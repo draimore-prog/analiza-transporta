@@ -869,10 +869,10 @@ export function TransportKpis({
 
       {/* 6 ORIGINALNIH V1 SUMMARY KARTICA */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-        {/* Kartica 1: Ukupan Trošak */}
+        {/* Kartica 1: Ukupan trošak */}
         <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border-l-4 border-blue-500 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
           <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-            Ukupan Trošak
+            Ukupan trošak
           </p>
           <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2">
             {formatKM(summaryKpis.totalCost)}
@@ -882,10 +882,10 @@ export function TransportKpis({
           </p>
         </div>
 
-        {/* Kartica 2: Trošak po Vozilu / Dan */}
+        {/* Kartica 2: Trošak po vozilu / dan */}
         <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border-l-4 border-amber-500 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
           <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-            Trošak po Vozilu / Dan
+            Trošak po vozilu / dan
           </p>
           <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2">
             {summaryKpis.dailyAvgPerVehicle.toLocaleString("bs-BA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KM/dan
@@ -895,10 +895,10 @@ export function TransportKpis({
           </p>
         </div>
 
-        {/* Kartica 3: Udio Internog Servisa */}
+        {/* Kartica 3: Udio internog servisa */}
         <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border-l-4 border-yellow-500 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
           <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-            Udio Internog Servisa
+            Udio internog servisa
           </p>
           <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2">
             {summaryKpis.internalPerc}%
@@ -908,10 +908,10 @@ export function TransportKpis({
           </p>
         </div>
 
-        {/* Kartica 4: Top Segment */}
+        {/* Kartica 4: Top segment */}
         <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border-l-4 border-red-500 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
           <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-            Top Segment
+            Top segment
           </p>
           <h3 className="text-xl font-black text-slate-900 dark:text-white mt-2 truncate" title={summaryKpis.topSegmentName}>
             {summaryKpis.topSegmentName}
@@ -921,10 +921,10 @@ export function TransportKpis({
           </p>
         </div>
 
-        {/* Kartica 5: Broj Intervencija */}
+        {/* Kartica 5: Broj intervencija */}
         <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border-l-4 border-purple-500 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
           <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-            Broj Intervencija
+            Broj intervencija
           </p>
           <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2">
             {summaryKpis.totalCount.toLocaleString("bs-BA")}
@@ -934,10 +934,10 @@ export function TransportKpis({
           </p>
         </div>
 
-        {/* Kartica 6: Prosjek / Intervenciji */}
+        {/* Kartica 6: Prosjek po intervenciji */}
         <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border-l-4 border-emerald-500 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
           <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-            Prosjek / Intervenciji
+            Prosjek po intervenciji
           </p>
           <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2">
             {formatKM(summaryKpis.avgCostPerIntervention)}
@@ -953,7 +953,7 @@ export function TransportKpis({
         <div className="flex items-center gap-2">
           <BarChart2 className="w-5 h-5 text-blue-600" />
           <span className="font-extrabold text-sm text-slate-900 dark:text-white">
-            Interaktivni Analitički Grafikoni
+            Interaktivni analitički grafikoni
           </span>
           <span className="text-[10px] bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-300 font-bold px-2 py-0.5 rounded">
             Klikom na grafikone otvarate detaljne preglede
@@ -1019,7 +1019,7 @@ export function TransportKpis({
         {/* Trend grafik (2 kolone) */}
         <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
           <h4 className="text-sm font-extrabold text-slate-900 dark:text-white mb-3 flex items-center justify-between">
-            <span>📈 Mjesečna Dinamika Troškova</span>
+            <span>📈 Mjesečna dinamika troškova</span>
             <span className="text-[10px] text-slate-400 font-mono">Chart.js</span>
           </h4>
           <div className="h-[280px] w-full relative">
@@ -1031,7 +1031,7 @@ export function TransportKpis({
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
           <div className="flex justify-between items-center mb-3">
             <h4 className="text-sm font-extrabold text-slate-900 dark:text-white">
-              ⚖️ Interno vs Eksterno Održavanje
+              ⚖️ Interno vs eksterno održavanje
             </h4>
             <span className="text-[10px] text-blue-600 font-bold bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded">
               Klik za detalje →
@@ -1049,7 +1049,7 @@ export function TransportKpis({
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
           <div className="flex justify-between items-center mb-3">
             <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
-              🚗 Top 10 Vozila po Trošku
+              🚗 Top 10 vozila po trošku
             </h4>
             <span className="text-[10px] text-indigo-500 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded font-bold">
               Klik za karton →
@@ -1064,7 +1064,7 @@ export function TransportKpis({
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col">
           <div className="flex justify-between items-center mb-3">
             <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
-              ⚙️ Trošak po Segmentima
+              ⚙️ Trošak po segmentima
             </h4>
             <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded">
               Klik za spisak →
@@ -1082,12 +1082,12 @@ export function TransportKpis({
               {supplierMode === "internal" ? (
                 <>
                   <Calendar className="w-4 h-4 text-blue-500" />
-                  <span>Interni Troškovi po Godinama</span>
+                  <span>Interni troškovi po godinama</span>
                 </>
               ) : (
                 <>
                   <Building2 className="w-4 h-4 text-indigo-500" />
-                  <span>Top Dobavljači & Serviseri</span>
+                  <span>Top dobavljači i serviseri</span>
                 </>
               )}
             </h4>
@@ -1137,7 +1137,7 @@ export function TransportKpis({
         <div className="flex justify-between items-center mb-4">
           <div>
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-              📅 Višegodišnji Pregled Troškova & Broja Vozila (2021 - 2026)
+              📅 Višegodišnji pregled troškova i broja vozila (2021 - 2026)
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Klik na red filtrira tabelu servisa za odabranu godinu
@@ -1150,10 +1150,10 @@ export function TransportKpis({
             <thead className="bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
               <tr>
                 <th className="p-3">Godina</th>
-                <th className="p-3 text-center">Broj Vozila u Floti</th>
-                <th className="p-3 text-right">Ukupan Trošak Održavanja</th>
-                <th className="p-3 text-right">Prosjek po Jedinici</th>
-                <th className="p-3 text-center">Broj Servisnih Naloga</th>
+                <th className="p-3 text-center">Broj vozila u floti</th>
+                <th className="p-3 text-right">Ukupan trošak održavanja</th>
+                <th className="p-3 text-right">Prosjek po jedinici</th>
+                <th className="p-3 text-center">Broj servisnih naloga</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
