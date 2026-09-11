@@ -34,7 +34,7 @@ import {
 import { WORK_ORDER_STATUSES } from "@/hooks/useWarehouseWorkOrders.js";
 import { notificationService } from "@/lib/notificationSound.js";
 
-const APP_VERSION = "1.1.0 (Build 2026.09.11)";
+const APP_VERSION = "V1.11 (Build 2026.09.11)";
 
 export function FieldOrdersDashboard({
   workOrders = [],

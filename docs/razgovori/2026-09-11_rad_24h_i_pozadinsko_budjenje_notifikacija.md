@@ -62,3 +62,16 @@
 - **Rješenje:** Korisnik je učitao Firebase Service Account JSON u Expo Credentials (Android -> FCM V1).
 - **Verifikacija:** Testno slanje na oba registrovana servisera (`ExponentPushToken[-cYZrzBxEhroW9FtDLFsSo]` i `ExponentPushToken[6MsLFmLq8F5WDa9REIjRRY]`) je vratilo `status: "ok"` od strane Expo-a, a naknadna provjera računa (`getReceipts`) potvrdila uspješnu isporuku na Google FCM servere za oba uređaja.
 
+---
+
+## 5. Standard za inkrementalne OTA verzije (V1.1 ➔ V1.11 ➔ V1.12...)
+- **Zahtjev korisnika:** Prilikom kreiranja update-a preko EAS-a primjenjivati inkrementalno označavanje verzija: `V1.1` -> `V1.11` -> `V1.12`...
+- **Usklađivanje sa Expo Runtime Version:**
+  - Da bi već instalirani APK (`runtimeVersion: "1.1.0"`) mogao bez reinstalacije preuzeti sve buduće inkrementalne OTA pakete, u `servis-mobilna-app/app.json` je fiksiran `"runtimeVersion": "1.1.0"`, dok se `"version"` inkrementira na `1.11`, `1.12`, itd.
+  - U `FieldOrdersDashboard.jsx` se prikazuje trenutna verzija (npr. `V1.11 (Build 2026.09.11)`).
+- **Objavljeno za V1.11:**
+  - Web deployan na Firebase Hosting (`https://analiza-transporta-flota.web.app`).
+  - EAS Update objavljen na grani `preview` (Update ID: `01a09030-95a7-777f-902e-3578f9d1c737`).
+  - Serviser u mobilnoj aplikaciji može kliknuti na **"🔄 PROVJERI OTA AŽURIRANJE"** u meniju i automatski povući V1.11.
+
+

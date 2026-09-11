@@ -2,7 +2,7 @@
   "expo": {
     "name": "Bingo Servis Mehanizacije",
     "slug": "bingo-servis-mehanizacije",
-    "version": "1.1.0",
+    "version": "1.11",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -51,9 +51,7 @@
         "projectId": "aba5c8a2-9d9f-4ec6-8060-442bc8068155"
       }
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.1.0",
     "updates": {
       "url": "https://u.expo.dev/aba5c8a2-9d9f-4ec6-8060-442bc8068155"
     },
