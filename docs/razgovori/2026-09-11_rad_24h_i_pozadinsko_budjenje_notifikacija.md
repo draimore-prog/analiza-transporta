@@ -54,3 +54,11 @@
 - **Web produkcija:** Raspoređeno na Firebase Hosting (`https://analiza-transporta-flota.web.app`).
 - **EAS OTA Update:** Poslano na Expo preview granu.
 - **Git Version Control:** Izmjene zabilježene i poslane na `origin/master`.
+
+---
+
+## 4. Rješenje za pozadinske notifikacije (FCM V1 ključ)
+- **Problem:** Expo Push servis nije mogao prosljeđivati poruke na Google FCM jer na Expo Dashboardu nije bio povezan Google Service Account V1 ključ (greška `InvalidCredentials`).
+- **Rješenje:** Korisnik je učitao Firebase Service Account JSON u Expo Credentials (Android -> FCM V1).
+- **Verifikacija:** Testno slanje na oba registrovana servisera (`ExponentPushToken[-cYZrzBxEhroW9FtDLFsSo]` i `ExponentPushToken[6MsLFmLq8F5WDa9REIjRRY]`) je vratilo `status: "ok"` od strane Expo-a, a naknadna provjera računa (`getReceipts`) potvrdila uspješnu isporuku na Google FCM servere za oba uređaja.
+
