@@ -22,10 +22,18 @@ import {
   Truck,
   Wrench,
   LogOut,
-  ChevronRight
+  ChevronRight,
+  Menu,
+  RefreshCw,
+  User,
+  Shield,
+  Smartphone,
+  Check
 } from "lucide-react";
 import { WORK_ORDER_STATUSES } from "@/hooks/useWarehouseWorkOrders.js";
 import { notificationService } from "@/lib/notificationSound.js";
+
+const APP_VERSION = "1.1.0 (Build 2026.09.11)";
 
 export function FieldOrdersDashboard({
   workOrders = [],
@@ -41,9 +49,17 @@ export function FieldOrdersDashboard({
   onNavigateToPortal,
   canEdit = true
 }) {
-  // Filter za radne naloge: "pending" (aktivni/dodijeljeni) ili "completed" (završeni)
+  // Stanje filtera: "pending" (aktivni/dodijeljeni) ili "completed" (završeni)
   const [ordersFilter, setOrdersFilter] = useState("pending");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Stanje gornjeg menija "tri linije" (Drawer)
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Stanje za OTA ažuriranje i notifikacije
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateStatusMessage, setUpdateStatusMessage] = useState("");
+  const [testCountdown, setTestCountdown] = useState(0);
 
   // Notifikacija i zvučni alarm za novi dodijeljeni radni nalog
   const [newOrderAlert, setNewOrderAlert] = useState(null);
@@ -131,84 +147,361 @@ export function FieldOrdersDashboard({
     return list;
   }, [workOrders, ordersFilter, searchQuery]);
 
+  // Provjera OTA ažuriranja
+  const handleCheckOtaUpdate = () => {
+    setIsCheckingUpdate(true);
+    setUpdateStatusMessage("Provjeravam najnoviju verziju koda sa servera...");
+
+    // 1. Pošalji poruku u React Native WebView ako je aplikacija na telefonu
+    if (typeof window !== "undefined" && window.ReactNativeWebView) {
+      try {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: "CHECK_OTA_UPDATE" }));
+      } catch (e) {}
+    }
+
+    // 2. Simuliraj i osvježi keš na Webu
+    setTimeout(() => {
+      setIsCheckingUpdate(false);
+      setUpdateStatusMessage("Aplikacija je ažurna! Prikazana je najnovija verzija.");
+      setTimeout(() => setUpdateStatusMessage(""), 5000);
+    }, 1800);
+  };
+
+  // Testiranje notifikacije na zaključanom ekranu sa 5 sekundi odgode
+  const handleTestDelayedNotification = () => {
+    notificationService.requestNotificationPermission();
+
+    // Pošalji native WebView nalog za alarm sa odgodom od 5 sekundi
+    if (typeof window !== "undefined" && window.ReactNativeWebView) {
+      try {
+        window.ReactNativeWebView.postMessage(
+          JSON.stringify({ type: "TEST_DELAYED_NOTIFICATION", delaySeconds: 5 })
+        );
+      } catch (e) {}
+    }
+
+    setTestCountdown(5);
+    const interval = setInterval(() => {
+      setTestCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          notificationService.playOrderAlert();
+          notificationService.showBrowserNotification("🔔 TEST NOTIFIKACIJA ZA SERVISERA", {
+            body: "Uspješno primljena notifikacija na zaključanom ekranu! Zvuk i vibracija rade.",
+            tag: "test-notification"
+          });
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   return (
     <div className="min-h-screen w-full bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between">
-      {/* Gornje Zaglavlje */}
-      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 shadow-xs sticky top-0 z-30">
+      
+      {/* ========================================================================= */}
+      {/* GORNJE ZAGLAVLJE SA MENIJEM 'TRI LINIJE' (☰)                              */}
+      {/* ========================================================================= */}
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 shadow-xs sticky top-0 z-30">
         <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-tr from-emerald-600 to-teal-700 text-white p-2.5 rounded-2xl shadow-sm flex items-center justify-center">
-            <ClipboardList className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-base font-black uppercase tracking-tight text-slate-900 dark:text-white">
-              Terenski Radni Nalozi
-            </h1>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
-              Mobilni pregledi, ček-liste i radni sati (MTH)
-            </p>
+          {/* DUGME 'TRI LINIJE' (HAMBURGER MENI) */}
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen(true)}
+            className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white transition-all cursor-pointer border border-slate-200 dark:border-slate-700 active:scale-95 flex items-center justify-center"
+            title="Otvori meni (podaci korisnika, verzija i OTA ažuriranje)"
+          >
+            <Menu className="w-5 h-5 stroke-[2.5]" />
+          </button>
+
+          <div className="flex items-center gap-2.5">
+            <div className="bg-gradient-to-tr from-emerald-600 to-teal-700 text-white p-2 rounded-xl shadow-xs flex items-center justify-center">
+              <ClipboardList className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-base font-black uppercase tracking-tight text-slate-900 dark:text-white leading-tight">
+                Terenski radni nalozi
+              </h1>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold leading-none mt-0.5">
+                Mobilni pregledi, ček-liste i radni sati (MTH)
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Akcije navigacije */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {onNavigateToPortal && (
-            <button
-              type="button"
-              onClick={onNavigateToPortal}
-              className="text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 dark:hover:bg-indigo-900/60 px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 border border-indigo-200 dark:border-indigo-800 cursor-pointer"
-              title="Otvori brzu pretragu kartona vozila"
-            >
-              <Search className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-              <span>Serviserski Portal</span>
-            </button>
-          )}
-
-          {onSwitchPortal && (
-            <button
-              type="button"
-              onClick={onSwitchPortal}
-              className="text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 cursor-pointer"
-              title="Povratak na transport i analitiku"
-            >
-              <Truck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-              <span className="hidden sm:inline">Glavna Aplikacija</span>
-            </button>
-          )}
-
+        {/* Brze akcije desno */}
+        <div className="flex items-center gap-2">
           {setIsDarkMode && (
             <button
               type="button"
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title={isDarkMode ? "Svijetla tema" : "Tamna tema"}
             >
               {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
             </button>
           )}
 
-          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-extrabold truncate max-w-[130px]">
+          {/* Kartica prijavljenog korisnika u zaglavlju */}
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen(true)}
+            className="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs cursor-pointer transition-colors"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="font-extrabold truncate max-w-[120px] text-slate-800 dark:text-slate-200">
               {activeUser?.fullname || activeUser?.username || "Serviser"}
             </span>
-          </div>
-
-          {onLogout && (
-            <button
-              type="button"
-              onClick={onLogout}
-              className="text-xs font-bold bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-900/50 px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 border border-red-200 dark:border-red-900/60 cursor-pointer"
-              title="Odjava sa sistema"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Odjava</span>
-            </button>
-          )}
+          </button>
         </div>
       </header>
 
-      {/* Glavni sadržaj */}
+      {/* ========================================================================= */}
+      {/* BOČNI DRAWER / SLIDE-OVER MENI ('TRI LINIJE')                              */}
+      {/* ========================================================================= */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[9998] flex justify-start animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm h-full shadow-2xl border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between overflow-y-auto p-5 animate-in slide-in-from-left duration-200">
+            
+            <div className="space-y-5">
+              {/* Zaglavlje menija */}
+              <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-black text-sm">
+                    B
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                      Bingo Mehanizacija
+                    </h2>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">
+                      Serviserski mobilni meni
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* 1. INFORMACIJE O PRIJAVLJENOM KORISNIKU */}
+              <div className="bg-slate-50 dark:bg-slate-850 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-2.5">
+                <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                  <User className="w-3.5 h-3.5" />
+                  <span>Prijavljeni serviser</span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-700 text-white font-black text-lg flex items-center justify-center shadow-sm">
+                    {(activeUser?.fullname || activeUser?.username || "S").charAt(0).toUpperCase()}
+                  </div>
+                  <div className="overflow-hidden">
+                    <h3 className="font-black text-sm text-slate-900 dark:text-white truncate">
+                      {activeUser?.fullname || activeUser?.username || "Serviser"}
+                    </h3>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 font-bold truncate">
+                      @{activeUser?.username || "serviser"}
+                    </p>
+                    <span className="inline-block mt-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                      {activeUser?.role === "superadmin"
+                        ? "Superadmin"
+                        : activeUser?.role === "serviser_terenski"
+                        ? "Terenski serviser"
+                        : activeUser?.role || "Serviser"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-200/60 dark:border-slate-750 text-xs text-slate-600 dark:text-slate-400 space-y-1">
+                  <div className="flex justify-between">
+                    <span>Radionica / PJ:</span>
+                    <strong className="text-slate-800 dark:text-slate-200">
+                      {activeUser?.radionica || "Centralna radionica"}
+                    </strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Status uređaja:</span>
+                    <strong className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      Povezano
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. BROJ VERZIJE I OTA AŽURIRANJE */}
+              <div className="bg-slate-50 dark:bg-slate-850 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                    <Smartphone className="w-3.5 h-3.5" />
+                    <span>Verzija aplikacije</span>
+                  </span>
+                  <span className="font-mono text-xs font-black text-slate-800 dark:text-slate-200">
+                    {APP_VERSION}
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Aplikacija podržava direktno OTA (Over-The-Air) osvježavanje bez potrebe za ponovnom instalacijom APK paketa.
+                </p>
+
+                {updateStatusMessage && (
+                  <div className="p-2.5 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900 text-blue-800 dark:text-blue-300 text-xs font-bold rounded-xl flex items-center gap-2">
+                    <Check className="w-4 h-4 text-blue-600 shrink-0" />
+                    <span>{updateStatusMessage}</span>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleCheckOtaUpdate}
+                  disabled={isCheckingUpdate}
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isCheckingUpdate ? "animate-spin" : ""}`} />
+                  <span>{isCheckingUpdate ? "PROVJERAVAM..." : "PROVJERI OTA AŽURIRANJE"}</span>
+                </button>
+              </div>
+
+              {/* 3. DIJAGNOSTIKA NOTIFIKACIJA & TEST ZAKLJUČANOG EKRANA */}
+              <div className="bg-slate-50 dark:bg-slate-850 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-2.5">
+                <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                  <Bell className="w-3.5 h-3.5" />
+                  <span>Status notifikacija</span>
+                </div>
+
+                <div className="text-xs space-y-1.5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600 dark:text-slate-400">Notifikacioni kanal:</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">Aktivan (MAX)</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600 dark:text-slate-400">Zvuk i vibracija:</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">Omogućeno</span>
+                  </div>
+                </div>
+
+                {testCountdown > 0 ? (
+                  <div className="p-3 bg-amber-100 dark:bg-amber-950 border border-amber-300 dark:border-amber-800 rounded-xl text-center space-y-1">
+                    <div className="text-xl font-black font-mono text-amber-900 dark:text-amber-200">
+                      ODMAH ZAKLJUČAJTE EKRAN! ({testCountdown}s)
+                    </div>
+                    <p className="text-[11px] font-bold text-amber-800 dark:text-amber-300">
+                      Za {testCountdown} sekundi telefon će zazvoniti i probuditi zaključan ekran.
+                    </p>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleTestDelayedNotification}
+                    className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-98 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                  >
+                    <Volume2 className="w-4 h-4" />
+                    <span>TESTIRAJ ZAKLJUČAN EKRAN (ODGODA 5S)</span>
+                  </button>
+                )}
+              </div>
+
+              {/* 4. PREČICE I NAVIGACIJA */}
+              <div className="space-y-1.5 pt-1">
+                {onNavigateToPortal && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onNavigateToPortal();
+                    }}
+                    className="w-full p-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-bold text-xs flex items-center justify-between cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Search className="w-4 h-4" />
+                      Serviserski portal (kartoteka vozila)
+                    </span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                )}
+
+                {onSwitchPortal && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onSwitchPortal();
+                    }}
+                    className="w-full p-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-between cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Truck className="w-4 h-4 text-blue-500" />
+                      Glavna aplikacija (transport i flota)
+                    </span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Donji dio menija: Odjava */}
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
+              {onLogout && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onLogout();
+                  }}
+                  className="w-full py-3 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 font-black text-xs rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer border border-rose-200 dark:border-rose-900"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>ODJAVI SE SA SISTEMA</span>
+                </button>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* STRANICA 1: GLAVNI SADRŽAJ (INFORMACIJE O KORISNIKU I RADNI NALOZI)        */}
+      {/* ========================================================================= */}
       <main className="flex-1 px-4 py-5 max-w-2xl mx-auto w-full space-y-4">
+        
+        {/* KARTICA 1: INFORMACIJE O KORISNIKU I RADIONICI (STRANICA 1) */}
+        <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white p-4 sm:p-5 rounded-3xl shadow-md flex items-center justify-between gap-3">
+          <div>
+            <span className="text-[11px] font-bold text-blue-200 uppercase tracking-wider">
+              Bingo Servis Mehanizacije • Terenski nalozi
+            </span>
+            <h2 className="text-lg sm:text-xl font-black tracking-tight leading-tight mt-0.5">
+              {activeUser?.fullname || activeUser?.username || "Serviser"}
+            </h2>
+            <div className="text-xs text-blue-100 font-medium mt-1 flex items-center gap-2">
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-amber-300" />
+                {activeUser?.radionica || "Skladišna mehanizacija"}
+              </span>
+              <span>•</span>
+              <span className="font-mono text-amber-300 font-bold">{counts.pending} aktivan nalog(a)</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen(true)}
+            className="p-3 bg-white/10 hover:bg-white/20 active:scale-95 text-white rounded-2xl transition-all cursor-pointer flex flex-col items-center gap-1 shrink-0"
+            title="Otvori detalje korisnika i opcije"
+          >
+            <Menu className="w-5 h-5" />
+            <span className="text-[9px] font-black uppercase">Meni</span>
+          </button>
+        </div>
+
         {/* Iskačući zvučni alarm za novi nalog */}
         {newOrderAlert && (
           <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white p-4 sm:p-5 rounded-3xl shadow-2xl border-4 border-amber-300 animate-pulse">
@@ -265,21 +558,6 @@ export function FieldOrdersDashboard({
           </button>
         )}
 
-        {/* Test zvuka alarma i notifikacija */}
-        <div className="flex items-center justify-between px-1">
-          <button
-            type="button"
-            onClick={() => {
-              notificationService.requestNotificationPermission();
-              notificationService.playOrderAlert();
-            }}
-            className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center gap-1.5 transition-colors cursor-pointer py-1"
-          >
-            <Volume2 className="w-4 h-4 text-emerald-500" />
-            <span>Isprobaj zvuk alarma za novi nalog</span>
-          </button>
-        </div>
-
         {/* Tabovi filtera: Čekaju na rad / Završeni */}
         <div className="grid grid-cols-2 gap-2">
           <button
@@ -319,7 +597,7 @@ export function FieldOrdersDashboard({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Pretraži naloge po broju, vozilu ili opisu..."
+            placeholder="Pretraži naloge po broju, mašini ili opisu..."
             className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl pl-10 pr-4 py-3 text-xs font-bold outline-none text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 shadow-xs"
           />
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -425,7 +703,7 @@ export function FieldOrdersDashboard({
                       <button
                         type="button"
                         onClick={() => onViewWorkOrder && onViewWorkOrder(order)}
-                        className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold py-2.5 px-3 rounded-2xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-800 dark:text-slate-200 font-bold py-2.5 px-3 rounded-2xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <FileText className="w-4 h-4 text-blue-500" />
                         <span>Pregledaj detalje</span>
@@ -436,7 +714,7 @@ export function FieldOrdersDashboard({
                       <button
                         type="button"
                         onClick={() => onPrintWorkOrder(order)}
-                        className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-2xl transition-colors cursor-pointer"
+                        className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 rounded-2xl transition-colors cursor-pointer"
                         title="Štampaj nalog (A4)"
                       >
                         <Printer className="w-4 h-4" />

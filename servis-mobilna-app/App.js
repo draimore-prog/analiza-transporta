@@ -9,16 +9,19 @@ import {
   SafeAreaView,
   StatusBar,
   Platform,
-  AppState
+  AppState,
+  Alert
 } from "react-native";
 import { WebView } from "react-native-webview";
 import * as Notifications from "expo-notifications";
 import * as ImagePicker from "expo-image-picker";
+import * as Updates from "expo-updates";
 import { collection, onSnapshot, query, where, doc, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
 
 const PORTAL_URL = "https://analiza-transporta-flota.web.app/?portal=terenski-nalozi";
 const EXPO_PROJECT_ID = "aba5c8a2-9d9f-4ec6-8060-442bc8068155";
+const APP_VERSION = "1.1.0";
 
 // Konfiguracija prikaza notifikacija dok je aplikacija aktivna u prvom planu
 Notifications.setNotificationHandler({
@@ -43,6 +46,8 @@ const INJECTED_VIEWPORT_LOCK = `
     }
     // Isključi dvoklik zumiranje
     document.addEventListener('dblclick', function(e) { e.preventDefault(); }, { passive: false });
+    window.__IS_NATIVE_APP = true;
+    window.__APP_VERSION = "${APP_VERSION}";
   })();
   true;
 `;
@@ -53,6 +58,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [registeredPushToken, setRegisteredPushToken] = useState(null);
 
   // 1. Inicijalizacija notifikacionog kanala visokog prioriteta i traženje dozvola
   useEffect(() => {
@@ -65,7 +71,7 @@ export default function App() {
             description: "Obavještenja o novim i dodijeljenim radnim nalozima za mehanizaciju",
             importance: Notifications.AndroidImportance.MAX,
             vibrationPattern: [0, 250, 250, 250, 400],
-            lightColor: "#4f46e5",
+            lightColor: "#10b981",
             lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
             sound: "default",
             enableVibrate: true,
@@ -91,6 +97,7 @@ export default function App() {
             });
             if (tokenResult?.data) {
               const token = tokenResult.data;
+              setRegisteredPushToken(token);
               const cleanDocId = token.replace(/[^a-zA-Z0-9_-]/g, "_");
               await setDoc(
                 doc(db, "serviser_push_tokens", cleanDocId),
@@ -98,14 +105,23 @@ export default function App() {
                   token,
                   platform: Platform.OS,
                   updatedAt: new Date().toISOString(),
-                  appVersion: "1.0.0"
+                  appVersion: APP_VERSION,
+                  deviceModel: Platform.OS === "android" ? "Android Device" : "iOS Device"
                 },
                 { merge: true }
               );
               console.log("Push token registrovan u bazi:", token);
+
+              // Iniciraj u webview ako je već spreman
+              if (webViewRef.current) {
+                webViewRef.current.injectJavaScript(`
+                  window.__EXPO_PUSH_TOKEN = "${token}";
+                  true;
+                `);
+              }
             }
           } catch (tokenErr) {
-            console.warn("Push token registracija obavijest:", tokenErr);
+            console.warn("Push token registracija info:", tokenErr);
           }
         }
 
@@ -128,7 +144,7 @@ export default function App() {
     setupNotificationsAndPermissions();
   }, []);
 
-  // 2. Real-time osluškivanje novih radnih naloga iz tačne kolekcije 'warehouse_work_orders'
+  // 2. Real-time osluškivanje novih radnih naloga iz kolekcije 'warehouse_work_orders' dok je app otvoren
   useEffect(() => {
     let isFirstLoad = true;
     let unsubscribe = () => {};
@@ -172,7 +188,7 @@ export default function App() {
           });
         },
         (error) => {
-          console.warn("Firestore warehouse_work_orders listener obavijest:", error);
+          console.warn("Firestore warehouse_work_orders listener info:", error);
         }
       );
     } catch (err) {
@@ -182,11 +198,10 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // 3. Upravljanje vraćanjem iz pozadine (AppState) radi pouzdanog očuvanja kanala i sinhronizacije
+  // 3. Upravljanje vraćanjem iz pozadine (AppState) radi sinhronizacije
   useEffect(() => {
     const handleAppStateChange = (nextAppState) => {
       if (nextAppState === "active") {
-        // Kada serviser ponovo otvori aplikaciju iz pozadine
         if (webViewRef.current) {
           webViewRef.current.injectJavaScript(`
             if (typeof window !== 'undefined' && window.location) {
@@ -224,16 +239,70 @@ export default function App() {
     };
   }, []);
 
-  // 3. Prijem poruka iz WebView-a za slanje nativnih notifikacija
+  // 5. Prijem poruka iz WebView-a (OTA ažuriranja, testiranje notifikacija sa odgodom i native alarmi)
   const handleWebViewMessage = async (event) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
-      if (data && (data.type === "NOTIFICATION" || data.type === "NEW_WORK_ORDER")) {
+      if (!data) return;
+
+      // A) Provjera i preuzimanje OTA ažuriranja preko Expo Updates
+      if (data.type === "CHECK_OTA_UPDATE") {
+        try {
+          if (__DEV__) {
+            Alert.alert("Razvojno okruženje", "OTA ažuriranje se testira u produkcijskom buildu aplikacije.");
+            return;
+          }
+          const update = await Updates.checkForUpdateAsync();
+          if (update.isAvailable) {
+            await Updates.fetchUpdateAsync();
+            Alert.alert(
+              "Novo ažuriranje je spremno!",
+              "Preuzeta je najnovija verzija koda aplikacije. Želite li je primijeniti odmah?",
+              [
+                { text: "Kasnije", style: "cancel" },
+                {
+                  text: "Ažuriraj odmah",
+                  onPress: async () => {
+                    await Updates.reloadAsync();
+                  }
+                }
+              ]
+            );
+          } else {
+            Alert.alert("Ažurno", "Imate najnoviju verziju mobilne aplikacije.");
+          }
+        } catch (err) {
+          Alert.alert("Ažuriranje", "Aplikacija koristi najnoviji web prikaz sa servera.");
+        }
+        return;
+      }
+
+      // B) Testiranje notifikacije sa odgodom (za provjeru zaključanog ekrana)
+      if (data.type === "TEST_DELAYED_NOTIFICATION") {
+        const delaySeconds = data.delaySeconds || 5;
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "🔔 TEST NOTIFIKACIJA ZA SERVISERA",
+            body: "Uspješno primljena notifikacija na zaključanom ekranu! Zvuk, vibracija i buđenje ekrana rade.",
+            sound: "default",
+            priority: Notifications.AndroidNotificationPriority.MAX,
+            channelId: "radni-nalozi-channel"
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            seconds: delaySeconds
+          }
+        });
+        return;
+      }
+
+      // C) Redovna notifikacija
+      if (data.type === "NOTIFICATION" || data.type === "NEW_WORK_ORDER") {
         await Notifications.scheduleNotificationAsync({
           content: {
             title: data.title || "🔔 NOVI RADNI NALOG!",
             body: data.body || "Dodijeljen vam je novi radni nalog mehanizacije.",
-            sound: true,
+            sound: "default",
             priority: Notifications.AndroidNotificationPriority.MAX,
             channelId: "radni-nalozi-channel"
           },
@@ -317,7 +386,15 @@ export default function App() {
               setCanGoBack(navState.canGoBack);
             }}
             onLoadStart={() => setIsLoading(true)}
-            onLoadEnd={() => setIsLoading(false)}
+            onLoadEnd={() => {
+              setIsLoading(false);
+              if (registeredPushToken && webViewRef.current) {
+                webViewRef.current.injectJavaScript(`
+                  window.__EXPO_PUSH_TOKEN = "${registeredPushToken}";
+                  true;
+                `);
+              }
+            }}
             onError={(syntheticEvent) => {
               const { nativeEvent } = syntheticEvent;
               console.warn("WebView error: ", nativeEvent);
@@ -333,9 +410,9 @@ export default function App() {
           {isLoading && (
             <View style={styles.loadingOverlay}>
               <View style={styles.loadingCard}>
-                <ActivityIndicator size="large" color="#4f46e5" />
-                <Text style={styles.loadingTitle}>Servisna Radionica</Text>
-                <Text style={styles.loadingSubtitle}>Bingo Mehanizacija...</Text>
+                <ActivityIndicator size="large" color="#10b981" />
+                <Text style={styles.loadingTitle}>Servis Mehanizacije</Text>
+                <Text style={styles.loadingSubtitle}>Bingo Terenski Nalozi...</Text>
               </View>
             </View>
           )}
@@ -435,7 +512,7 @@ const styles = StyleSheet.create({
     maxWidth: 280
   },
   retryButton: {
-    backgroundColor: "#4f46e5",
+    backgroundColor: "#10b981",
     paddingVertical: 14,
     paddingHorizontal: 28,
     borderRadius: 14,
