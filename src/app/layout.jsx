@@ -1,34 +1,35 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Bingo Mehanizacija & Transport | Flota i Servisna Radionica",
+  title: "Bingo MotorFix | Transportna Flota & Servis",
   description:
-    "Centralni informacioni sistem za upravljanje voznim parkom, skladišnom mehanizacijom, terenskim radnim nalozima i servisnom radionicom Bingo d.o.o. Tuzla.",
-  applicationName: "Bingo Mehanizacija",
-  authors: [{ name: "Bingo d.o.o. - Sektor transporta i mehanizacije" }],
+    "Centralni informacioni sistem za upravljanje voznim parkom, skladišnom mehanizacijom, terenskim radnim nalozima i servisom Bingo d.o.o. Tuzla.",
+  applicationName: "Bingo MotorFix",
+  authors: [{ name: "Bingo d.o.o. - Sektor transporta i servisa" }],
   keywords: [
+    "Bingo MotorFix",
     "Bingo d.o.o.",
-    "Servis mehanizacije",
+    "Servis vozila",
     "Skladišna mehanizacija",
     "Viljuškari",
+    "Teretni transport",
     "Terenski radni nalozi",
     "Vozni park",
-    "Transport",
-    "Preventivni pregledi",
-    "Servisna radionica"
+    "Održavanje flote"
   ],
   icons: {
     icon: [
-      { url: "/icon.svg", type: "image/svg+xml" }
+      { url: "/icon.png", sizes: "512x512", type: "image/png" },
+      { url: "/favicon.png", sizes: "192x192", type: "image/png" }
     ],
     apple: [
-      { url: "/icon.svg", type: "image/svg+xml" }
+      { url: "/icon.png", sizes: "512x512", type: "image/png" }
     ]
   },
   manifest: "/manifest.json",
   openGraph: {
-    title: "Bingo Mehanizacija & Transport",
-    description: "Sistem za upravljanje voznim parkom, skladišnom mehanizacijom i radnim nalozima",
+    title: "Bingo MotorFix | Transportna Flota & Servis",
+    description: "Sistem za upravljanje voznim parkom, mehanizacijom i servisnim radnim nalozima",
     type: "website",
     locale: "bs_BA"
   }

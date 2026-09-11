@@ -85,9 +85,21 @@
    - U `Header.jsx` ugrađeno hamburger dugme (`Menu`) koje otvara klizajući meni sa tamnom pozadinom.
    - U `Sidebar.jsx` ugrađeno dugme `X` za zatvaranje, a meni se automatski zatvara i na klik bilo koje navigacijske stavke ili klik izvan menija.
 3. **Favicon, ikonica aplikacije i metapodaci:**
-   - Kreiran moderan vektorski `icon.svg` koji kombinuje Bingo brending, kran i viljuške skladišnog viljuškara i servisni ključ sa zupčanikom.
-   - Postavljen kao automatski favicon za browser (`/icon.svg` i `/public/icon.svg`) i manifest ikonica.
-   - U `src/app/layout.jsx` popunjeni puni metapodaci (naslov, opis, ključne riječi, OpenGraph, theme-color `#0f172a`).
+   - Kreirana je nova čista, ultra-premium 3D ikonica visoke rezolucije bez suvišnog teksta i bedževa:
+     - Realističan moderan plavi tegljač (kamion) sa lijeve strane.
+     - Industrijski žuti skladišni viljuškar sa desne strane.
+     - Dva masivna ukrštena profesionalna hromirana mehanička ključa (okasti i viljuškasti sa preciznim čeličnim fasetama).
+     - Tamna metalik pozadina sa suptilnim neonskim smaragdnim sjajem.
+   - Ikonica je konvertovana i raspoređena u sve nativne i web rezolucije: `servis-mobilna-app/assets/icon.png`, `android-icon-foreground.png`, `public/icon.png`, `public/favicon.png` i `src/app/icon.png`.
+   - Zvanični naziv u metapodacima i mobilnoj aplikaciji postavljen na **Bingo MotorFix**.
+
+---
+
+## 7. Objava inkrementalne verzije V1.13
+- **Mobilna verzija:** `V1.13 (Build 2026.09.11)`
+- **EAS Update ID:** `01a09044-ae6c-75fe-a5d4-7b4561343c8c`
+- **Web produkcija:** Ažurirana na Firebase Hosting (`https://analiza-transporta-flota.web.app`).
+
 
 
 

@@ -1,7 +1,7 @@
 {
-  "name": "Bingo Mehanizacija & Transport",
-  "short_name": "Mehanizacija",
-  "description": "Radni nalozi, terenski pregledi, skladišna mehanizacija i upravljanje flotom Bingo d.o.o.",
+  "name": "Bingo MotorFix",
+  "short_name": "MotorFix",
+  "description": "Radni nalozi, terenski servisi i upravljanje transportnom flotom Bingo d.o.o.",
   "start_url": "/?portal=servisna-radionica",
   "display": "standalone",
   "orientation": "portrait",
@@ -9,10 +9,15 @@
   "theme_color": "#0f172a",
   "icons": [
     {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
     }
   ]
 }

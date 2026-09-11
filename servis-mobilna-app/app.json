@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Bingo Servis Mehanizacije",
+    "name": "Bingo MotorFix",
     "slug": "bingo-servis-mehanizacije",
-    "version": "1.12",
+    "version": "1.13",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
