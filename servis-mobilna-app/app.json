@@ -25,9 +25,10 @@
         "android.permission.USE_EXACT_ALARM"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#10B981",
+        "backgroundColor": "#0f172a",
         "foregroundImage": "./assets/android-icon-foreground.png"
       },
+      "versionCode": 3,
       "googleServicesFile": "./google-services.json"
     },
     "plugins": [
