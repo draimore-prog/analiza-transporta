@@ -44,7 +44,7 @@ export function Sidebar({
             <img
               src="/icon.png"
               alt="Logistika - Servis motornih vozila"
-              className="w-11 h-11 object-contain drop-shadow-md shrink-0 select-none"
+              className="w-11 h-11 object-contain shrink-0 select-none"
             />
             <div>
               <h1 className="text-xs font-black text-slate-900 dark:text-white leading-tight tracking-tight uppercase">

@@ -37,7 +37,7 @@ export function LoginModal({ isOpen, onLogin, onGoogleLogin, sessionTimeoutMessa
             <img
               src="/icon.png"
               alt="Logistika - Servis motornih vozila"
-              className="w-24 h-24 sm:w-28 sm:h-28 object-contain drop-shadow-xl select-none"
+              className="w-24 h-24 sm:w-28 sm:h-28 object-contain select-none"
             />
           </div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
