@@ -33,13 +33,17 @@ export function LoginModal({ isOpen, onLogin, onGoogleLogin, sessionTimeoutMessa
     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex justify-center items-center z-[9999] p-4 animate-in fade-in duration-200">
       <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100 dark:border-slate-800 p-8">
         <div className="text-center mb-6">
-          <div className="inline-flex bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 p-4 rounded-2xl mb-3 shadow-inner">
-            <Lock className="w-8 h-8" />
+          <div className="inline-flex bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl mb-3 shadow-inner border border-slate-200 dark:border-slate-700">
+            <img
+              src="/icon.png"
+              alt="Logistika - Servis motornih vozila"
+              className="w-14 h-14 object-contain drop-shadow-sm"
+            />
           </div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
             Prijava u Sistem
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-semibold">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-semibold flex items-center justify-center gap-1.5">
             Logistika - Servis motornih vozila
           </p>
         </div>
