@@ -33,6 +33,7 @@ export function ServiceTable({
   const [colFilterOpis, setColFilterOpis] = useState("");
   const [colFilterSupplier, setColFilterSupplier] = useState("");
   const [colFilterInvoice, setColFilterInvoice] = useState("");
+  const [colFilterInternalExternal, setColFilterInternalExternal] = useState("all");
 
   const [sortMode, setSortMode] = useState("new-first");
   const [visibleCount, setVisibleCount] = useState(60);
@@ -123,10 +124,28 @@ export function ServiceTable({
 
       const matchInvoice =
         !invoiceTerm ||
-        (item.brojRacuna && item.brojRacuna.toLowerCase().includes(invoiceTerm)) ||
-        (item.fakturaTip && item.fakturaTip.toLowerCase().includes(invoiceTerm));
+        (item.brojRacuna && item.brojRacuna.toLowerCase().includes(invoiceTerm));
 
-      return matchYear && matchReg && matchGb && matchType && matchBrand && matchSegment && matchOpis && matchSup && matchInvoice;
+      const isItemInternal =
+        item.type === "Interno" ||
+        (item.fakturaTip && item.fakturaTip.toLowerCase().includes("intern"));
+      const matchInternalExternal =
+        colFilterInternalExternal === "all" ||
+        (colFilterInternalExternal === "Interno" && isItemInternal) ||
+        (colFilterInternalExternal === "Eksterno" && !isItemInternal);
+
+      return (
+        matchYear &&
+        matchReg &&
+        matchGb &&
+        matchType &&
+        matchBrand &&
+        matchSegment &&
+        matchOpis &&
+        matchSup &&
+        matchInvoice &&
+        matchInternalExternal
+      );
     });
 
     if (sortMode === "new-first") {
@@ -159,6 +178,7 @@ export function ServiceTable({
     colFilterOpis,
     colFilterSupplier,
     colFilterInvoice,
+    colFilterInternalExternal,
     sortMode
   ]);
 
@@ -175,6 +195,7 @@ export function ServiceTable({
     colFilterOpis,
     colFilterSupplier,
     colFilterInvoice,
+    colFilterInternalExternal,
     sortMode
   ]);
 
@@ -236,7 +257,8 @@ export function ServiceTable({
     colFilterSegment !== "all" ||
     colFilterOpis !== "" ||
     colFilterSupplier !== "" ||
-    colFilterInvoice !== "";
+    colFilterInvoice !== "" ||
+    colFilterInternalExternal !== "all";
 
   const resetAllFilters = () => {
     setSelectedYear("all");
@@ -248,6 +270,7 @@ export function ServiceTable({
     setColFilterOpis("");
     setColFilterSupplier("");
     setColFilterInvoice("");
+    setColFilterInternalExternal("all");
     setVisibleCount(BATCH_SIZE);
   };
 
@@ -329,7 +352,8 @@ export function ServiceTable({
                   <th className="py-2.5 px-3 w-36">Segment</th>
                   <th className="py-2.5 px-3 w-64">Opis Popravke</th>
                   <th className="py-2.5 px-3 w-40">Serviser / Dobavljač</th>
-                  <th className="py-2.5 px-3 w-36">Broj Računa</th>
+                  <th className="py-2.5 px-3 w-32">Broj Fakture</th>
+                  <th className="py-2.5 px-3 w-28 text-center">Interno / Eksterno</th>
                   <th className="py-2.5 px-3 text-right w-28">Trošak (KM)</th>
                 </tr>
 
@@ -448,15 +472,28 @@ export function ServiceTable({
                     />
                   </th>
 
-                  {/* Broj Računa filter */}
+                  {/* Broj Fakture filter */}
                   <th className="p-1.5">
                     <input
                       type="text"
                       value={colFilterInvoice}
                       onChange={(e) => setColFilterInvoice(e.target.value)}
-                      placeholder="🔍 Račun..."
+                      placeholder="🔍 Faktura..."
                       className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white"
                     />
+                  </th>
+
+                  {/* Interno / Eksterno filter */}
+                  <th className="p-1.5">
+                    <select
+                      value={colFilterInternalExternal}
+                      onChange={(e) => setColFilterInternalExternal(e.target.value)}
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-1.5 py-1 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white cursor-pointer"
+                    >
+                      <option value="all">Sve</option>
+                      <option value="Interno">Interno</option>
+                      <option value="Eksterno">Eksterno</option>
+                    </select>
                   </th>
 
                   {/* Reset akcija */}
@@ -537,18 +574,22 @@ export function ServiceTable({
                         </td>
                         <td className="py-2 px-3 text-xs whitespace-nowrap">
                           {item.brojRacuna && item.brojRacuna !== "-" ? (
-                            <div className="flex flex-col gap-0.5">
-                              <span className="font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-[11px] inline-block w-fit">
-                                {item.brojRacuna}
-                              </span>
-                              {item.fakturaTip && item.fakturaTip !== "-" && (
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">
-                                  {item.fakturaTip}
-                                </span>
-                              )}
-                            </div>
+                            <span className="font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-[11px] inline-block">
+                              {item.brojRacuna}
+                            </span>
                           ) : (
                             <span className="text-slate-400 dark:text-slate-600">-</span>
+                          )}
+                        </td>
+                        <td className="py-2 px-3 text-xs text-center whitespace-nowrap">
+                          {item.type === "Interno" || (item.fakturaTip && item.fakturaTip.toLowerCase().includes("intern")) ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                              Interno
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                              Eksterno
+                            </span>
                           )}
                         </td>
                         <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-slate-200">
@@ -587,7 +628,7 @@ export function ServiceTable({
                 ) : (
                   <tr>
                     <td
-                      colSpan={isPrikljucnaFilter ? 10 : 11}
+                      colSpan={isPrikljucnaFilter ? 11 : 12}
                       className="py-8 text-center text-slate-400 font-medium italic"
                     >
                       Nema zapisa koji odgovaraju odabranim kolonskim filterima.
