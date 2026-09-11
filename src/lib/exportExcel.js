@@ -35,6 +35,8 @@ export function exportTransactionsToExcel(data, filename = "Tabela_Servisa_Trans
     return {
       "R.b.": i + 1,
       "Datum": formatDate(c.datumObj || c.datum),
+      "Broj Računa": c.brojRacuna || "-",
+      "Tip Fakture": c.fakturaTip || (c.type === "Interno" ? "Interna" : "Eksterna"),
       "Godina": c.year,
       "Garažni Broj": c.garazniBroj || "-",
       "Registracija / Oznaka": c.reg,

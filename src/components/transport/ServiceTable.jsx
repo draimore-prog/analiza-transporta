@@ -32,6 +32,7 @@ export function ServiceTable({
   const [colFilterSegment, setColFilterSegment] = useState("all");
   const [colFilterOpis, setColFilterOpis] = useState("");
   const [colFilterSupplier, setColFilterSupplier] = useState("");
+  const [colFilterInvoice, setColFilterInvoice] = useState("");
 
   const [sortMode, setSortMode] = useState("new-first");
   const [visibleCount, setVisibleCount] = useState(60);
@@ -90,6 +91,7 @@ export function ServiceTable({
     const gbTerm = colFilterGb.trim().toLowerCase();
     const opisTerm = colFilterOpis.trim().toLowerCase();
     const supTerm = colFilterSupplier.trim().toLowerCase();
+    const invoiceTerm = colFilterInvoice.trim().toLowerCase();
 
     const filtered = costData.filter((item) => {
       // Godina
@@ -119,7 +121,12 @@ export function ServiceTable({
         (item.dobavljacOrig && item.dobavljacOrig.toLowerCase().includes(supTerm)) ||
         (item.dobavljac && item.dobavljac.toLowerCase().includes(supTerm));
 
-      return matchYear && matchReg && matchGb && matchType && matchBrand && matchSegment && matchOpis && matchSup;
+      const matchInvoice =
+        !invoiceTerm ||
+        (item.brojRacuna && item.brojRacuna.toLowerCase().includes(invoiceTerm)) ||
+        (item.fakturaTip && item.fakturaTip.toLowerCase().includes(invoiceTerm));
+
+      return matchYear && matchReg && matchGb && matchType && matchBrand && matchSegment && matchOpis && matchSup && matchInvoice;
     });
 
     if (sortMode === "new-first") {
@@ -151,6 +158,7 @@ export function ServiceTable({
     colFilterSegment,
     colFilterOpis,
     colFilterSupplier,
+    colFilterInvoice,
     sortMode
   ]);
 
@@ -166,6 +174,7 @@ export function ServiceTable({
     colFilterSegment,
     colFilterOpis,
     colFilterSupplier,
+    colFilterInvoice,
     sortMode
   ]);
 
@@ -226,7 +235,8 @@ export function ServiceTable({
     colFilterBrand !== "all" ||
     colFilterSegment !== "all" ||
     colFilterOpis !== "" ||
-    colFilterSupplier !== "";
+    colFilterSupplier !== "" ||
+    colFilterInvoice !== "";
 
   const resetAllFilters = () => {
     setSelectedYear("all");
@@ -237,6 +247,7 @@ export function ServiceTable({
     setColFilterSegment("all");
     setColFilterOpis("");
     setColFilterSupplier("");
+    setColFilterInvoice("");
     setVisibleCount(BATCH_SIZE);
   };
 
@@ -318,6 +329,7 @@ export function ServiceTable({
                   <th className="py-2.5 px-3 w-36">Segment</th>
                   <th className="py-2.5 px-3 w-64">Opis Popravke</th>
                   <th className="py-2.5 px-3 w-40">Serviser / Dobavljač</th>
+                  <th className="py-2.5 px-3 w-36">Broj Računa</th>
                   <th className="py-2.5 px-3 text-right w-28">Trošak (KM)</th>
                 </tr>
 
@@ -436,6 +448,17 @@ export function ServiceTable({
                     />
                   </th>
 
+                  {/* Broj Računa filter */}
+                  <th className="p-1.5">
+                    <input
+                      type="text"
+                      value={colFilterInvoice}
+                      onChange={(e) => setColFilterInvoice(e.target.value)}
+                      placeholder="🔍 Račun..."
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] font-medium outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-white"
+                    />
+                  </th>
+
                   {/* Reset akcija */}
                   <th className="p-1.5 text-center">
                     <button
@@ -512,6 +535,22 @@ export function ServiceTable({
                         >
                           {item.dobavljacOrig || item.dobavljac || "-"}
                         </td>
+                        <td className="py-2 px-3 text-xs whitespace-nowrap">
+                          {item.brojRacuna && item.brojRacuna !== "-" ? (
+                            <div className="flex flex-col gap-0.5">
+                              <span className="font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-[11px] inline-block w-fit">
+                                {item.brojRacuna}
+                              </span>
+                              {item.fakturaTip && item.fakturaTip !== "-" && (
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">
+                                  {item.fakturaTip}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 dark:text-slate-600">-</span>
+                          )}
+                        </td>
                         <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-slate-200">
                           <div className="flex items-center justify-end gap-1.5">
                             <span>{formatKM(item.cost || 0)}</span>
@@ -548,7 +587,7 @@ export function ServiceTable({
                 ) : (
                   <tr>
                     <td
-                      colSpan={isPrikljucnaFilter ? 9 : 10}
+                      colSpan={isPrikljucnaFilter ? 10 : 11}
                       className="py-8 text-center text-slate-400 font-medium italic"
                     >
                       Nema zapisa koji odgovaraju odabranim kolonskim filterima.

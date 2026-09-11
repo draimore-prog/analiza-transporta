@@ -306,6 +306,11 @@ export function useFleetData() {
       createdAt: new Date().toISOString()
     };
     await setDoc(docRef, fullRecord);
+    try {
+      await setDoc(doc(db, "fleet_costs", docRef.id), fullRecord, { merge: true });
+    } catch (err) {
+      console.warn("Notice syncing new record to fleet_costs:", err);
+    }
   };
 
   const deleteCostRecord = async (recordId) => {

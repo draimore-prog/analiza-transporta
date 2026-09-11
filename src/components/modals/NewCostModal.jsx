@@ -397,6 +397,7 @@ export function NewCostModal({
         brojRacuna: brojRacuna.trim() || "-",
         vrstaTroska: vrstaTroska,
         vrstaFakture: vrstaFakture,
+        fakturaTip: vrstaFakture,
         type: isInternal ? "Interno" : "Eksterno",
         opisPopravke: opis.trim() || "Servis / Popravka",
         opisRadova: opis.trim() || "Servis / Popravka",

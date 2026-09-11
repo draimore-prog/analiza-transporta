@@ -51,6 +51,7 @@ export function VehicleCardModal({
   const [colFilterSegment, setColFilterSegment] = useState("all");
   const [colFilterOpis, setColFilterOpis] = useState("");
   const [colFilterSupplier, setColFilterSupplier] = useState("");
+  const [colFilterInvoice, setColFilterInvoice] = useState("");
 
   // Preview stanja za račun i multi-slike vozila
   const [previewInvoice, setPreviewInvoice] = useState(null);
@@ -155,6 +156,7 @@ export function VehicleCardModal({
   const filteredHistory = useMemo(() => {
     const opisTerm = colFilterOpis.trim().toLowerCase();
     const supTerm = colFilterSupplier.trim().toLowerCase();
+    const invoiceTerm = colFilterInvoice.trim().toLowerCase();
 
     return history.filter((c) => {
       const matchYear =
@@ -176,9 +178,14 @@ export function VehicleCardModal({
         (c.dobavljacOrig && c.dobavljacOrig.toLowerCase().includes(supTerm)) ||
         (c.dobavljac && c.dobavljac.toLowerCase().includes(supTerm));
 
-      return matchYear && matchMonth && matchSegment && matchOpis && matchSup;
+      const matchInvoice =
+        !invoiceTerm ||
+        (c.brojRacuna && c.brojRacuna.toLowerCase().includes(invoiceTerm)) ||
+        (c.fakturaTip && c.fakturaTip.toLowerCase().includes(invoiceTerm));
+
+      return matchYear && matchMonth && matchSegment && matchOpis && matchSup && matchInvoice;
     });
-  }, [history, selectedYearFilter, selectedMonthFilter, colFilterSegment, colFilterOpis, colFilterSupplier]);
+  }, [history, selectedYearFilter, selectedMonthFilter, colFilterSegment, colFilterOpis, colFilterSupplier, colFilterInvoice]);
 
   // Ukupno uloženo (ukupno i za filtrirane)
   const totalCost = useMemo(() => {
@@ -395,7 +402,8 @@ export function VehicleCardModal({
     selectedMonthFilter !== "all" ||
     colFilterSegment !== "all" ||
     colFilterOpis !== "" ||
-    colFilterSupplier !== "";
+    colFilterSupplier !== "" ||
+    colFilterInvoice !== "";
 
   const resetAllCardFilters = () => {
     setSelectedYearFilter("all");
@@ -403,6 +411,7 @@ export function VehicleCardModal({
     setColFilterSegment("all");
     setColFilterOpis("");
     setColFilterSupplier("");
+    setColFilterInvoice("");
   };
 
   const monthNamesFull = [
@@ -778,6 +787,7 @@ export function VehicleCardModal({
                     <th className="p-2.5 w-32">Segment</th>
                     <th className="p-2.5">Opis Radova / Dijelovi</th>
                     <th className="p-2.5 w-40">Serviser</th>
+                    <th className="p-2.5 w-32">Broj Računa</th>
                     {!isServiser ? (
                       <th className="p-2.5 text-right w-28">Iznos (KM)</th>
                     ) : (
@@ -846,6 +856,17 @@ export function VehicleCardModal({
                       />
                     </th>
 
+                    {/* Broj Računa filter */}
+                    <th className="p-1">
+                      <input
+                        type="text"
+                        value={colFilterInvoice}
+                        onChange={(e) => setColFilterInvoice(e.target.value)}
+                        placeholder="🔍 Račun..."
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-0.5 text-[11px] font-medium outline-none"
+                      />
+                    </th>
+
                     {/* Reset */}
                     <th className="p-1 text-center">
                       <button
@@ -894,6 +915,22 @@ export function VehicleCardModal({
                           title={c.dobavljacOrig || c.dobavljac}
                         >
                           {c.dobavljacOrig || c.dobavljac || "-"}
+                        </td>
+                        <td className="p-2.5 whitespace-nowrap text-xs">
+                          {c.brojRacuna && c.brojRacuna !== "-" ? (
+                            <div className="flex flex-col gap-0.5">
+                              <span className="font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-[11px] inline-block w-fit">
+                                {c.brojRacuna}
+                              </span>
+                              {c.fakturaTip && c.fakturaTip !== "-" && (
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                                  {c.fakturaTip}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 dark:text-slate-600">-</span>
+                          )}
                         </td>
                         {!isServiser ? (
                           <td className="p-2.5 text-right font-bold text-slate-900 dark:text-white whitespace-nowrap print:text-slate-900">
@@ -948,7 +985,7 @@ export function VehicleCardModal({
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={isPrikljucno ? 5 : 6} className="p-6 text-center text-slate-400 italic">
+                      <td colSpan={isPrikljucno ? 6 : 7} className="p-6 text-center text-slate-400 italic">
                         Nema zabilježenih servisa za odabrane filtere.
                       </td>
                     </tr>
