@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 async function processIcon() {
-  const inputPath = "C:\\Users\\silvio.suljic\\.gemini\\antigravity-ide\\brain\\bf5972bd-9a1e-4eac-a198-f6018c976e4f\\.user_uploaded\\media_1789139658270.jpg";
+  const inputPath = "C:\\Users\\silvio.suljic\\.gemini\\antigravity-ide\\brain\\bf5972bd-9a1e-4eac-a198-f6018c976e4f\\service_logo_green_1789140913954.jpg";
   
   const image = sharp(inputPath);
   const { data, info } = await image.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
