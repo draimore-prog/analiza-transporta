@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { uploadVehicleImages } from "@/lib/fileUpload.js";
 import { normalizeVehicleStatus } from "@/lib/calculations.js";
+import { useConfirm } from "@/context/ConfirmContext.jsx";
 
 const MAX_IMAGES = 10;
 
@@ -29,6 +30,7 @@ export function EditVehicleModal({
   currentRole,
   initialVehicle
 }) {
+  const { confirmDelete, alert: showAlert } = useConfirm();
   const [reg, setReg] = useState("");
   const [garazniBroj, setGarazniBroj] = useState("");
   const [tipMehan, setTipMehan] = useState("Teretna vozila");
@@ -109,14 +111,22 @@ export function EditVehicleModal({
     const remainingSlots = MAX_IMAGES - currentCount;
 
     if (remainingSlots <= 0) {
-      alert(`Dostigli ste maksimalan limit od ${MAX_IMAGES} slika za ovo vozilo.`);
+      await showAlert({
+        title: "Limit slika",
+        message: `Dostigli ste maksimalan limit od ${MAX_IMAGES} slika za ovo vozilo.`,
+        variant: "warning"
+      });
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
     let filesToUpload = files;
     if (files.length > remainingSlots) {
-      alert(`Odabrali ste ${files.length} slika. Zbog limita od ${MAX_IMAGES} slika, biće učitano prvih ${remainingSlots}.`);
+      await showAlert({
+        title: "Limit slika",
+        message: `Odabrali ste ${files.length} slika. Zbog limita od ${MAX_IMAGES} slika, biće učitano prvih ${remainingSlots}.`,
+        variant: "warning"
+      });
       filesToUpload = files.slice(0, remainingSlots);
     }
 
@@ -133,7 +143,11 @@ export function EditVehicleModal({
         setImages((prev) => [...prev, ...uploaded].slice(0, MAX_IMAGES));
       }
     } catch (err) {
-      alert("Greška pri učitavanju slika na Firebase Storage: " + (err.message || err));
+      await showAlert({
+        title: "Greška pri učitavanju",
+        message: "Greška pri učitavanju slika na Firebase Storage: " + (err.message || err),
+        variant: "danger"
+      });
     } finally {
       setIsUploading(false);
       setUploadProgress("");
@@ -160,7 +174,11 @@ export function EditVehicleModal({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!reg.trim()) {
-      alert("Registarska oznaka je obavezno polje!");
+      await showAlert({
+        title: "Obavezno polje",
+        message: "Registarska oznaka je obavezno polje!",
+        variant: "warning"
+      });
       return;
     }
 
@@ -182,10 +200,18 @@ export function EditVehicleModal({
       };
 
       await onSaveVehicle(vObj);
-      alert(`Vozilo ${vObj.reg} sa ${images.length} slika je uspješno ${isEditMode ? "ažurirano" : "sačuvano"} u bazi!`);
+      await showAlert({
+        title: "Uspješno sačuvano",
+        message: `Vozilo ${vObj.reg} sa ${images.length} slika je uspješno ${isEditMode ? "ažurirano" : "sačuvano"} u bazi!`,
+        variant: "success"
+      });
       onClose();
     } catch (err) {
-      alert("Greška pri spremanju vozila: " + err.message);
+      await showAlert({
+        title: "Greška pri spremanju",
+        message: "Greška pri spremanju vozila: " + err.message,
+        variant: "danger"
+      });
     } finally {
       setIsSaving(false);
     }
@@ -459,7 +485,12 @@ export function EditVehicleModal({
                 <button
                   type="button"
                   onClick={async () => {
-                    if (confirm(`Da li ste sigurni da želite TRAJNO obrisati vozilo "${reg}" iz baze podataka?`)) {
+                    const ok = await confirmDelete({
+                      itemName: reg,
+                      itemType: "vozilo",
+                      message: `Da li ste sigurni da želite TRAJNO obrisati vozilo "${reg}" iz baze podataka?`
+                    });
+                    if (ok) {
                       await onDeleteVehicle(reg);
                       onClose();
                     }

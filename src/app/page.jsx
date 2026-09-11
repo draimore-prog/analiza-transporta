@@ -6,6 +6,7 @@ import { useFleetData } from "@/hooks/useFleetData.js";
 import { Sidebar } from "@/components/layout/Sidebar.jsx";
 import { Header } from "@/components/layout/Header.jsx";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary.jsx";
+import { ConfirmProvider } from "@/context/ConfirmContext.jsx";
 
 // Transport Tabovi
 import { TransportKpis } from "@/components/transport/TransportKpis.jsx";
@@ -1014,7 +1015,9 @@ export default function DashboardPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-slate-900" />}>
       <ErrorBoundary title="Došlo je do neočekivane greške na portalu">
-        <DashboardContent />
+        <ConfirmProvider>
+          <DashboardContent />
+        </ConfirmProvider>
       </ErrorBoundary>
     </Suspense>
   );

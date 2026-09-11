@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import { useConfirm } from "@/context/ConfirmContext.jsx";
 
 export function EditUserModal({
   isOpen,
@@ -10,6 +11,7 @@ export function EditUserModal({
   users = [],
   onSaveUser
 }) {
+  const { alert: showAlert } = useConfirm();
   const [username, setUsername] = useState("");
   const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
@@ -34,7 +36,11 @@ export function EditUserModal({
     const cleanUsername = username.trim().toLowerCase();
     const cleanFullname = fullname.trim();
     if (!cleanUsername || !cleanFullname) {
-      alert("Korisničko ime i puno ime su obavezna polja!");
+      await showAlert({
+        title: "Obavezna polja",
+        message: "Korisničko ime i puno ime su obavezna polja!",
+        variant: "warning"
+      });
       return;
     }
 
@@ -43,7 +49,11 @@ export function EditUserModal({
       cleanUsername !== origUsername &&
       users.some((u) => (u.username || "").trim().toLowerCase() === cleanUsername)
     ) {
-      alert(`Korisničko ime "${cleanUsername}" već koristi drugi korisnički nalog!`);
+      await showAlert({
+        title: "Korisnik postoji",
+        message: `Korisničko ime "${cleanUsername}" već koristi drugi korisnički nalog!`,
+        variant: "warning"
+      });
       return;
     }
 
@@ -60,10 +70,18 @@ export function EditUserModal({
       };
 
       await onSaveUser(updated, origUsername);
-      alert(`Korisnički nalog "${updated.username}" je uspješno ažuriran sa ulogom "${updated.role}"!`);
+      await showAlert({
+        title: "Korisnik ažuriran",
+        message: `Korisnički nalog "${updated.username}" je uspješno ažuriran sa ulogom "${updated.role}"!`,
+        variant: "success"
+      });
       onClose();
     } catch (err) {
-      alert("Greška pri ažuriranju korisnika: " + err.message);
+      await showAlert({
+        title: "Greška",
+        message: "Greška pri ažuriranju korisnika: " + err.message,
+        variant: "danger"
+      });
     } finally {
       setIsSaving(false);
     }

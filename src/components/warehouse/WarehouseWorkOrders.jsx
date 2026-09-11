@@ -18,6 +18,7 @@ import {
   Check
 } from "lucide-react";
 import { WORK_ORDER_STATUSES } from "@/hooks/useWarehouseWorkOrders.js";
+import { useConfirm } from "@/context/ConfirmContext.jsx";
 
 export function WarehouseWorkOrders({
   workOrders = [],
@@ -30,6 +31,7 @@ export function WarehouseWorkOrders({
   onDeleteOrder,
   canEdit = true
 }) {
+  const { confirmDelete } = useConfirm();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -377,8 +379,13 @@ export function WarehouseWorkOrders({
                           )}
                           {canEdit && (
                             <button
-                              onClick={() => {
-                                if (confirm(`Sigurno želite obrisati radni nalog ${order.orderNumber}?`)) {
+                              onClick={async () => {
+                                const ok = await confirmDelete({
+                                  itemName: order.orderNumber,
+                                  itemType: "radni nalog",
+                                  message: `Sigurno želite obrisati radni nalog "${order.orderNumber}"?`
+                                });
+                                if (ok) {
                                   onDeleteOrder(order.id);
                                 }
                               }}

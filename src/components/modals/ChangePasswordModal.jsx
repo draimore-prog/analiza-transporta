@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { X, Key } from "lucide-react";
+import { useConfirm } from "@/context/ConfirmContext.jsx";
 
 export function ChangePasswordModal({
   isOpen,
@@ -9,6 +10,7 @@ export function ChangePasswordModal({
   user,
   onSaveUser
 }) {
+  const { alert: showAlert } = useConfirm();
   const [newPassword, setNewPassword] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -17,7 +19,11 @@ export function ChangePasswordModal({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newPassword.trim()) {
-      alert("Molimo unesite novu lozinku!");
+      await showAlert({
+        title: "Obavezno polje",
+        message: "Molimo unesite novu lozinku!",
+        variant: "warning"
+      });
       return;
     }
 
@@ -27,11 +33,19 @@ export function ChangePasswordModal({
         ...user,
         password: newPassword.trim()
       });
-      alert(`Lozinka za nalog "${user.username}" je uspješno izmijenjena!`);
+      await showAlert({
+        title: "Lozinka izmijenjena",
+        message: `Lozinka za nalog "${user.username}" je uspješno izmijenjena!`,
+        variant: "success"
+      });
       setNewPassword("");
       onClose();
     } catch (err) {
-      alert("Greška: " + err.message);
+      await showAlert({
+        title: "Greška",
+        message: "Greška: " + err.message,
+        variant: "danger"
+      });
     } finally {
       setIsSaving(false);
     }

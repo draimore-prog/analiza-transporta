@@ -3,6 +3,7 @@ import { formatKM, formatDate, cleanVehicleType, formatMileage, formatOperatingH
 import Chart from "@/lib/chartSetup.js";
 import { InvoicePreviewModal } from "./InvoicePreviewModal.jsx";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary.jsx";
+import { useConfirm } from "@/context/ConfirmContext.jsx";
 import {
   X,
   Printer,
@@ -35,6 +36,7 @@ export function VehicleCardModal({
   currentRole,
   activeUser
 }) {
+  const { confirmDelete } = useConfirm();
   const isServiser =
     activeUser?.role === "serviser" ||
     activeUser?.role === "mobile_serviser" ||
@@ -548,7 +550,12 @@ export function VehicleCardModal({
             {isSuperadmin && onDeleteVehicle && (
               <button
                 onClick={async () => {
-                  if (confirm(`Da li ste sigurni da želite TRAJNO obrisati vozilo "${vehicleInfo.reg}" iz baze podataka?`)) {
+                  const ok = await confirmDelete({
+                    itemName: vehicleInfo.reg,
+                    itemType: "vozilo",
+                    message: `Da li ste sigurni da želite TRAJNO obrisati vozilo "${vehicleInfo.reg}" iz baze podataka?`
+                  });
+                  if (ok) {
                     await onDeleteVehicle(vehicleInfo.reg);
                     onClose();
                   }

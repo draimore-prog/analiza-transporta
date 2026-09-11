@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Users, Shield, Plus, Edit2, RefreshCw, X, Sparkles, ExternalLink } from "lucide-react";
+import { useConfirm } from "@/context/ConfirmContext.jsx";
 
 export function AdminPanelModal({
   isOpen,
@@ -15,6 +16,7 @@ export function AdminPanelModal({
   onDeleteUser,
   onReseedRoles
 }) {
+  const { confirmDelete, alert: showAlert } = useConfirm();
   const [activeAdminTab, setActiveAdminTab] = useState("users");
 
   // New user forma
@@ -35,12 +37,20 @@ export function AdminPanelModal({
     const cleanPassword = newPassword.trim();
 
     if (!cleanUsername || !cleanFullname || !cleanPassword) {
-      alert("Molimo popunite sva obavezna polja!");
+      await showAlert({
+        title: "Obavezna polja",
+        message: "Molimo popunite sva obavezna polja!",
+        variant: "warning"
+      });
       return;
     }
 
     if (users.some((u) => (u.username || "").trim().toLowerCase() === cleanUsername)) {
-      alert(`Korisnički nalog sa korisničkim imenom "${cleanUsername}" već postoji!`);
+      await showAlert({
+        title: "Korisnik postoji",
+        message: `Korisnički nalog sa korisničkim imenom "${cleanUsername}" već postoji!`,
+        variant: "warning"
+      });
       return;
     }
 
@@ -56,14 +66,22 @@ export function AdminPanelModal({
       };
 
       await onSaveUser(newUserObj);
-      alert(`Nalog "${newUserObj.username}" je uspješno kreiran sa ulogom "${newUserObj.role}"!`);
+      await showAlert({
+        title: "Korisnik kreiran",
+        message: `Nalog "${newUserObj.username}" je uspješno kreiran sa ulogom "${newUserObj.role}"!`,
+        variant: "success"
+      });
       setNewUsername("");
       setNewFullname("");
       setNewEmail("");
       setNewPassword("");
       setNewRole("editor");
     } catch (err) {
-      alert("Greška: " + err.message);
+      await showAlert({
+        title: "Greška",
+        message: "Greška: " + err.message,
+        variant: "danger"
+      });
     } finally {
       setIsCreatingUser(false);
     }
@@ -73,9 +91,17 @@ export function AdminPanelModal({
     setIsReseeding(true);
     try {
       await onReseedRoles();
-      alert("Sve sistemske uloge i permisije su uspješno sinhronizovane na Firestore kolekciju 'app_roles'!");
+      await showAlert({
+        title: "Sinhronizacija uloga",
+        message: "Sve sistemske uloge i permisije su uspješno sinhronizovane na Firestore kolekciju 'app_roles'!",
+        variant: "success"
+      });
     } catch (err) {
-      alert("Greška: " + err.message);
+      await showAlert({
+        title: "Greška",
+        message: "Greška: " + err.message,
+        variant: "danger"
+      });
     } finally {
       setIsReseeding(false);
     }
@@ -308,8 +334,13 @@ export function AdminPanelModal({
                               </button>
                               {!isSuper && activeUser?.username !== u.username && (
                                 <button
-                                  onClick={() => {
-                                    if (confirm(`Da li ste sigurni da želite obrisati nalog "${u.username}"?`)) {
+                                  onClick={async () => {
+                                    const ok = await confirmDelete({
+                                      itemName: u.username,
+                                      itemType: "korisnički nalog",
+                                      message: `Da li ste sigurni da želite obrisati nalog "${u.username}"?`
+                                    });
+                                    if (ok) {
                                       onDeleteUser(u);
                                     }
                                   }}

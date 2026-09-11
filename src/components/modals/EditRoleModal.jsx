@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { X, Check, Shield, Eye, Edit3, Slash } from "lucide-react";
 import { isEditablePage, getRolePagePermission } from "@/lib/constants.js";
+import { useConfirm } from "@/context/ConfirmContext.jsx";
 
 const ALL_PAGES = [
   // Analitika
@@ -41,6 +42,7 @@ export function EditRoleModal({
   role,
   onSaveRole
 }) {
+  const { alert: showAlert } = useConfirm();
   const [roleName, setRoleName] = useState("");
   const [roleIcon, setRoleIcon] = useState("🛡️");
   const [description, setDescription] = useState("");
@@ -117,10 +119,18 @@ export function EditRoleModal({
       };
 
       await onSaveRole(updatedRole);
-      alert(`Uloga "${updatedRole.roleName}" i njene dozvole su uspješno ažurirane!`);
+      await showAlert({
+        title: "Uloga ažurirana",
+        message: `Uloga "${updatedRole.roleName}" i njene dozvole su uspješno ažurirane!`,
+        variant: "success"
+      });
       onClose();
     } catch (err) {
-      alert("Greška pri snimanju uloge: " + err.message);
+      await showAlert({
+        title: "Greška",
+        message: "Greška pri snimanju uloge: " + err.message,
+        variant: "danger"
+      });
     } finally {
       setIsSaving(false);
     }

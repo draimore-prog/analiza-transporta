@@ -5,6 +5,7 @@ import { exportMasterFleetToExcel } from "@/lib/exportExcel.js";
 import { normalizeVehicleStatus, getVehicleStatusBadge } from "@/lib/calculations.js";
 import { canEditPage } from "@/lib/constants.js";
 import { Download, RotateCcw, ArrowDown as ScrollDown, CheckCircle2, Loader2, Edit3, Trash2, FilterX } from "lucide-react";
+import { useConfirm } from "@/context/ConfirmContext.jsx";
 
 export function WarehouseFleet({
   warehouseMasterFleet,
@@ -15,6 +16,7 @@ export function WarehouseFleet({
   currentRole,
   canEdit
 }) {
+  const { confirmDelete } = useConfirm();
   const [colFilterGarazni, setColFilterGarazni] = useState("");
   const [colFilterReg, setColFilterReg] = useState("");
   const [colFilterBrand, setColFilterBrand] = useState("all");
@@ -389,8 +391,13 @@ export function WarehouseFleet({
                           )}
                           {isSuperadmin && onDeleteVehicle && (
                             <button
-                              onClick={() => {
-                                if (confirm(`Da li ste sigurni da želite TRAJNO obrisati mašinu "${v.reg}" iz baze mehanizacije?`)) {
+                              onClick={async () => {
+                                const ok = await confirmDelete({
+                                  itemName: v.reg,
+                                  itemType: "mašinu",
+                                  message: `Da li ste sigurni da želite TRAJNO obrisati mašinu "${v.reg}" iz baze mehanizacije?`
+                                });
+                                if (ok) {
                                   onDeleteVehicle(v.reg);
                                 }
                               }}

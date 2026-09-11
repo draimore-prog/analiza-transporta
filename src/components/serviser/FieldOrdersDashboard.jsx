@@ -28,9 +28,9 @@ import {
   User,
   Shield,
   Smartphone,
-  Check,
-  Zap
+  Info
 } from "lucide-react";
+import { useConfirm } from "@/context/ConfirmContext.jsx";
 import { WORK_ORDER_STATUSES } from "@/hooks/useWarehouseWorkOrders.js";
 import { notificationService } from "@/lib/notificationSound.js";
 
@@ -50,6 +50,7 @@ export function FieldOrdersDashboard({
   onNavigateToPortal,
   canEdit = true
 }) {
+  const { alert: showAlert } = useConfirm();
   // Stanje filtera: "pending" (aktivni/dodijeljeni) ili "completed" (završeni)
   const [ordersFilter, setOrdersFilter] = useState("pending");
   const [searchQuery, setSearchQuery] = useState("");
@@ -276,7 +277,11 @@ export function FieldOrdersDashboard({
         );
       } catch (e) {}
     } else {
-      alert("Ova opcija je namijenjena Android aplikaciji kako sistem ne bi gasio aplikaciju u pozadini nakon više sati neaktivnosti.");
+      showAlert({
+        title: "Optimizacija baterije",
+        message: "Ova opcija je namijenjena Android aplikaciji kako sistem ne bi gasio aplikaciju u pozadini nakon više sati neaktivnosti.",
+        variant: "info"
+      });
     }
   };
 

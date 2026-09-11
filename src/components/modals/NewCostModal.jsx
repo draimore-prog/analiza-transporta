@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { uploadMediaFile } from "@/lib/fileUpload.js";
 import { cleanVehicleType, formatDate } from "@/lib/calculations.js";
+import { useConfirm } from "@/context/ConfirmContext.jsx";
 
 export function NewCostModal({
   isOpen,
@@ -29,6 +30,7 @@ export function NewCostModal({
   onSaveCost,
   activeUser
 }) {
+  const { confirm, alert: showAlert } = useConfirm();
   // Osnovni podaci o vozilu
   const [reg, setReg] = useState("");
   const [garazniBroj, setGarazniBroj] = useState("");
@@ -312,7 +314,11 @@ export function NewCostModal({
         setInvoiceType(res.type || file.type);
       }
     } catch (err) {
-      alert("Greška pri učitavanju računa: " + err.message);
+      await showAlert({
+        title: "Greška pri učitavanju",
+        message: "Greška pri učitavanju računa: " + err.message,
+        variant: "danger"
+      });
     } finally {
       setIsUploadingInvoice(false);
     }
@@ -325,10 +331,19 @@ export function NewCostModal({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleRequestClose = () => {
-    const confirmCancel = window.confirm(
-      "Da li ste sigurni da želite odustati od unosa troška? Svi uneseni podaci bit će poništeni."
-    );
+  const handleRequestClose = async () => {
+    const hasData = !!(reg || opis || cost || brojRacuna || dobavljac || invoiceUrl);
+    if (!hasData) {
+      onClose();
+      return;
+    }
+    const confirmCancel = await confirm({
+      title: "Prekid unosa",
+      message: "Da li ste sigurni da želite odustati od unosa troška? Svi uneseni podaci bit će poništeni.",
+      confirmText: "Odustani od unosa",
+      cancelText: "Nastavi unos",
+      variant: "warning"
+    });
     if (confirmCancel) {
       onClose();
     }
@@ -337,20 +352,36 @@ export function NewCostModal({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!reg.trim()) {
-      alert("Molimo unesite registraciju ili odaberite vozilo!");
+      await showAlert({
+        title: "Obavezno polje",
+        message: "Molimo unesite registraciju ili odaberite vozilo!",
+        variant: "warning"
+      });
       return;
     }
     if (!datum) {
-      alert("Molimo odaberite datum intervencije!");
+      await showAlert({
+        title: "Obavezno polje",
+        message: "Molimo odaberite datum intervencije!",
+        variant: "warning"
+      });
       return;
     }
     if (!opis.trim()) {
-      alert("Molimo unesite opis kvara ili servisnih radova!");
+      await showAlert({
+        title: "Obavezno polje",
+        message: "Molimo unesite opis kvara ili servisnih radova!",
+        variant: "warning"
+      });
       return;
     }
     const totalCostNum = parseFloat(cost);
     if (isNaN(totalCostNum) || totalCostNum <= 0) {
-      alert("Molimo unesite ispravan iznos troška u polje 'Total Trošak'!");
+      await showAlert({
+        title: "Neispravan iznos",
+        message: "Molimo unesite ispravan iznos troška u polje 'Total Trošak'!",
+        variant: "warning"
+      });
       return;
     }
 
@@ -414,10 +445,18 @@ export function NewCostModal({
       };
 
       await onSaveCost(newRecord);
-      alert(`Servisni nalog za vozilo ${reg} je uspješno upisan u bazu podataka!`);
+      await showAlert({
+        title: "Uspješan unos",
+        message: `Servisni nalog za vozilo ${reg} je uspješno upisan u bazu podataka!`,
+        variant: "success"
+      });
       onClose();
     } catch (err) {
-      alert("Greška pri unosu: " + err.message);
+      await showAlert({
+        title: "Greška pri unosu",
+        message: "Greška pri unosu: " + err.message,
+        variant: "danger"
+      });
     } finally {
       setIsSubmitting(false);
     }
