@@ -36,9 +36,14 @@ async function dispatchPushNotificationToServisers({ title, body, data }) {
       sound: "default",
       title,
       body,
-      data,
+      data: {
+        ...data,
+        _displayInForeground: true
+      },
       channelId: "radni-nalozi-channel",
-      priority: "high"
+      priority: "high",
+      badge: 1,
+      ttl: 2419200
     }));
 
     const res = await fetch("https://exp.host/--/api/v2/push/send", {

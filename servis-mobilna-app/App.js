@@ -17,12 +17,24 @@ import { WebView } from "react-native-webview";
 import * as Notifications from "expo-notifications";
 import * as ImagePicker from "expo-image-picker";
 import * as Updates from "expo-updates";
+import * as TaskManager from "expo-task-manager";
+import * as IntentLauncher from "expo-intent-launcher";
 import { collection, onSnapshot, query, where, doc, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
 
 const PORTAL_URL = "https://analiza-transporta-flota.web.app/?portal=terenski-nalozi";
 const EXPO_PROJECT_ID = "aba5c8a2-9d9f-4ec6-8060-442bc8068155";
 const APP_VERSION = "1.1.0";
+const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND_NOTIFICATION_TASK";
+
+// Pozadinski task za buđenje aplikacije na zaključanom ekranu i nakon više sati neaktivnosti
+TaskManager.defineTask(BACKGROUND_NOTIFICATION_TASK, async ({ data, error, executionInfo }) => {
+  if (error) {
+    console.warn("Pozadinski task notifikacija greška:", error);
+    return;
+  }
+  console.log("Pozadinski task notifikacija uspješno probudio aplikaciju:", data);
+});
 
 // Konfiguracija prikaza notifikacija dok je aplikacija aktivna u prvom planu
 Notifications.setNotificationHandler({
@@ -63,6 +75,27 @@ export default function App() {
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [registeredPushToken, setRegisteredPushToken] = useState(null);
+
+  // Zahtjev za rad 24h u pozadini / izuzeće iz Android Doze moda i uštede baterije
+  const requestBatteryOptimizationExemption = async () => {
+    if (Platform.OS !== "android") return;
+    try {
+      const pkg = "ba.bingo.servismehanizacije";
+      await IntentLauncher.startActivityAsync(
+        IntentLauncher.ActivityAction.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+        { data: `package:${pkg}` }
+      );
+    } catch (err) {
+      console.warn("Direktan intent za bateriju nije uspio, otvaram postavke:", err);
+      try {
+        await IntentLauncher.startActivityAsync(
+          IntentLauncher.ActivityAction.IGNORE_BATTERY_OPTIMIZATION_SETTINGS
+        );
+      } catch (e2) {
+        console.warn("Otvaranje postavki baterije nije uspjelo:", e2);
+      }
+    }
+  };
 
   // Sinhronizacija sistemske teme telefona u WebView
   useEffect(() => {
@@ -159,6 +192,21 @@ export default function App() {
         const { status: existingMediaStatus } = await ImagePicker.getMediaLibraryPermissionsAsync();
         if (existingMediaStatus !== "granted") {
           await ImagePicker.requestMediaLibraryPermissionsAsync();
+        }
+
+        // F) Registracija pozadinskog Task Managera za buđenje aplikacije kad nije korištena satima
+        try {
+          await Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK);
+          console.log("Pozadinski task notifikacija uspješno povezan sa sistemom.");
+        } catch (taskErr) {
+          console.warn("Greška pri registraciji pozadinskog taska:", taskErr);
+        }
+
+        // G) Zatraži rad 24h u pozadini (isključenje iz uštede baterije)
+        if (Platform.OS === "android") {
+          setTimeout(() => {
+            requestBatteryOptimizationExemption();
+          }, 2000);
         }
       } catch (err) {
         console.warn("Greška pri postavljanju dozvola na uređaju:", err);
@@ -354,7 +402,13 @@ export default function App() {
         return;
       }
 
-      // C) Redovna notifikacija
+      // C) Zahtjev za rad 24h u pozadini / izuzeće iz uštede baterije
+      if (data.type === "REQUEST_BATTERY_OPTIMIZATION") {
+        await requestBatteryOptimizationExemption();
+        return;
+      }
+
+      // D) Lokalna notifikacija (direktan bridge poziv)
       if (data.type === "NOTIFICATION" || data.type === "NEW_WORK_ORDER") {
         await Notifications.scheduleNotificationAsync({
           content: {

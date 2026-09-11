@@ -28,7 +28,8 @@ import {
   User,
   Shield,
   Smartphone,
-  Check
+  Check,
+  Zap
 } from "lucide-react";
 import { WORK_ORDER_STATUSES } from "@/hooks/useWarehouseWorkOrders.js";
 import { notificationService } from "@/lib/notificationSound.js";
@@ -282,6 +283,19 @@ export function FieldOrdersDashboard({
     }, 1000);
   };
 
+  // Zahtjev za neometan rad 24h u pozadini (isključenje uštede baterije za aplikaciju)
+  const handleRequestBatteryOptimization = () => {
+    if (typeof window !== "undefined" && window.ReactNativeWebView) {
+      try {
+        window.ReactNativeWebView.postMessage(
+          JSON.stringify({ type: "REQUEST_BATTERY_OPTIMIZATION" })
+        );
+      } catch (e) {}
+    } else {
+      alert("Ova opcija je namijenjena Android aplikaciji kako sistem ne bi gasio aplikaciju u pozadini nakon više sati neaktivnosti.");
+    }
+  };
+
   return (
     <div className="min-h-screen w-full bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between">
       
@@ -478,14 +492,25 @@ export function FieldOrdersDashboard({
                     </p>
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={handleTestDelayedNotification}
-                    className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-98 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
-                  >
-                    <Volume2 className="w-4 h-4" />
-                    <span>TESTIRAJ ZAKLJUČAN EKRAN (ODGODA 5S)</span>
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={handleTestDelayedNotification}
+                      className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-98 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                    >
+                      <Volume2 className="w-4 h-4" />
+                      <span>TESTIRAJ ZAKLJUČAN EKRAN (ODGODA 5S)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleRequestBatteryOptimization}
+                      className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                    >
+                      <Zap className="w-4 h-4 text-amber-300" />
+                      <span>DOZVOLI RAD 24H (ISKLJUČI UŠTEDU BATERIJE)</span>
+                    </button>
+                  </div>
                 )}
               </div>
 
