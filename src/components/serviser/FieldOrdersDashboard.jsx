@@ -28,7 +28,9 @@ import {
   User,
   Shield,
   Smartphone,
-  Info
+  Info,
+  Zap,
+  ShieldCheck
 } from "lucide-react";
 import { useConfirm } from "@/context/ConfirmContext.jsx";
 import { WORK_ORDER_STATUSES } from "@/hooks/useWarehouseWorkOrders.js";
@@ -285,6 +287,23 @@ export function FieldOrdersDashboard({
     }
   };
 
+  // Provjera i ručni test statusa 24/7 pozadinskog servisa
+  const handleCheckBackgroundSync = () => {
+    if (typeof window !== "undefined" && window.ReactNativeWebView) {
+      try {
+        window.ReactNativeWebView.postMessage(
+          JSON.stringify({ type: "CHECK_BACKGROUND_SYNC" })
+        );
+      } catch (e) {}
+    } else {
+      showAlert({
+        title: "Pozadinski Servis 24/7",
+        message: "Pozadinski servis radi neprekidno na Android uređaju (startOnBoot, WorkManager, tihi statusni servis) čak i kad je aplikacija zatvorena ili mobitel bio ugašen.",
+        variant: "info"
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen w-full bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between">
       
@@ -498,6 +517,15 @@ export function FieldOrdersDashboard({
                     >
                       <Zap className="w-4 h-4 text-amber-300" />
                       <span>DOZVOLI RAD 24H (ISKLJUČI UŠTEDU BATERIJE)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleCheckBackgroundSync}
+                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                    >
+                      <ShieldCheck className="w-4 h-4 text-emerald-200" />
+                      <span>POZADINSKI SERVIS (PROVJERI 24/7 RAD)</span>
                     </button>
                   </div>
                 )}

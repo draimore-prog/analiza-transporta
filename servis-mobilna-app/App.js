@@ -25,16 +25,8 @@ import { db } from "./firebase";
 const PORTAL_URL = "https://analiza-transporta-flota.web.app/?portal=terenski-nalozi";
 const EXPO_PROJECT_ID = "aba5c8a2-9d9f-4ec6-8060-442bc8068155";
 const APP_VERSION = "1.1.0";
-const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND_NOTIFICATION_TASK";
-
-// Pozadinski task za buđenje aplikacije na zaključanom ekranu i nakon više sati neaktivnosti
-TaskManager.defineTask(BACKGROUND_NOTIFICATION_TASK, async ({ data, error, executionInfo }) => {
-  if (error) {
-    console.warn("Pozadinski task notifikacija greška:", error);
-    return;
-  }
-  console.log("Pozadinski task notifikacija uspješno probudio aplikaciju:", data);
-});
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { setupBackgroundWatcher, checkAndNotifyNewWorkOrders } from "./backgroundWatcher.js";
 
 // Konfiguracija prikaza notifikacija dok je aplikacija aktivna u prvom planu
 Notifications.setNotificationHandler({
@@ -194,12 +186,12 @@ export default function App() {
           await ImagePicker.requestMediaLibraryPermissionsAsync();
         }
 
-        // F) Registracija pozadinskog Task Managera za buđenje aplikacije kad nije korištena satima
+        // F) Registracija 24/7 pozadinskog Task Managera sa startOnBoot i stopOnTerminate
         try {
-          await Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK);
-          console.log("Pozadinski task notifikacija uspješno povezan sa sistemom.");
+          await setupBackgroundWatcher();
+          console.log("Pozadinski servis uspješno pokrenut i povezan sa sistemom.");
         } catch (taskErr) {
-          console.warn("Greška pri registraciji pozadinskog taska:", taskErr);
+          console.warn("Greška pri pokretanju pozadinskog servisa:", taskErr);
         }
 
         // G) Zatraži rad 24h u pozadini (isključenje iz uštede baterije)
@@ -216,9 +208,8 @@ export default function App() {
     setupNotificationsAndPermissions();
   }, []);
 
-  // 2. Real-time osluškivanje novih radnih naloga iz kolekcije 'warehouse_work_orders' dok je app otvoren
+  // 2. Real-time osluškivanje novih radnih naloga sa trajnom perzistencijom u AsyncStorage
   useEffect(() => {
-    let isFirstLoad = true;
     let unsubscribe = () => {};
 
     try {
@@ -229,25 +220,24 @@ export default function App() {
 
       unsubscribe = onSnapshot(
         q,
-        (snapshot) => {
-          // Na prvo otvaranje samo evidentiraj postojeće naloge bez oglašavanja i spama
-          if (isFirstLoad) {
-            isFirstLoad = false;
-            snapshot.forEach((docSnap) => {
-              alertedOrdersRef.current.add(docSnap.id);
-            });
-            return;
-          }
+        async (snapshot) => {
+          let alertedSet = new Set();
+          try {
+            const raw = await AsyncStorage.getItem("@bingo_motorfix_alerted_orders_v1");
+            if (raw) alertedSet = new Set(JSON.parse(raw));
+          } catch (e) {}
 
-          // Samo za NOVE naloge pristigle dok aplikacija radi (ne za 'modified')
+          let hasChanges = false;
+
           snapshot.docChanges().forEach(async (change) => {
             if (change.type === "added") {
               const order = change.doc.data();
               if (order.status !== "pending" && order.status !== "in_progress") return;
 
               const orderId = change.doc.id;
-              if (alertedOrdersRef.current.has(orderId)) return;
-              alertedOrdersRef.current.add(orderId);
+              if (alertedSet.has(orderId)) return;
+              alertedSet.add(orderId);
+              hasChanges = true;
 
               const vehId = order.vehicleId || "Skladišna mehanizacija";
               const desc = order.workDescription || order.notes || "Novi nalog za pregled ili servis";
@@ -260,6 +250,7 @@ export default function App() {
                   sound: "default",
                   priority: Notifications.AndroidNotificationPriority.MAX,
                   channelId: "radni-nalozi-channel",
+                  vibrate: [0, 500, 200, 500, 200, 500],
                   data: {
                     orderId: change.doc.id,
                     vehicleId: vehId
@@ -269,6 +260,13 @@ export default function App() {
               });
             }
           });
+
+          if (hasChanges) {
+            try {
+              const arr = Array.from(alertedSet).slice(-500);
+              await AsyncStorage.setItem("@bingo_motorfix_alerted_orders_v1", JSON.stringify(arr));
+            } catch (e) {}
+          }
         },
         (error) => {
           console.warn("Firestore warehouse_work_orders listener info:", error);
@@ -285,14 +283,7 @@ export default function App() {
   useEffect(() => {
     const handleAppStateChange = (nextAppState) => {
       if (nextAppState === "active") {
-        if (webViewRef.current) {
-          webViewRef.current.injectJavaScript(`
-            if (typeof window !== 'undefined' && window.location) {
-              console.log('App resumed from background');
-            }
-            true;
-          `);
-        }
+        checkAndNotifyNewWorkOrders(false);
       }
     };
 
@@ -382,6 +373,16 @@ export default function App() {
       // C) Zahtjev za rad 24h u pozadini / izuzeće iz uštede baterije
       if (data.type === "REQUEST_BATTERY_OPTIMIZATION") {
         await requestBatteryOptimizationExemption();
+        return;
+      }
+
+      // C2) Provjera i ručni test pozadinskog servisa (24/7)
+      if (data.type === "CHECK_BACKGROUND_SYNC") {
+        const count = await checkAndNotifyNewWorkOrders(true);
+        Alert.alert(
+          "Pozadinsko Praćenje (24/7)",
+          `Pozadinski servis je aktivan!\n\nPrati radne naloge čak i kad je aplikacija skroz zatvorena ili mobitel ponovo upaljen.\n\nStatus sinhronizacije: ${count > 0 ? `Pronađeno ${count} novih naloga.` : "Svi radni nalozi su sinhronizovani."}`
+        );
         return;
       }
 

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Bingo MotorFix",
     "slug": "bingo-servis-mehanizacije",
-    "version": "1.13",
+    "version": "1.14",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -28,7 +28,7 @@
         "backgroundColor": "#0f172a",
         "foregroundImage": "./assets/android-icon-foreground.png"
       },
-      "versionCode": 3,
+      "versionCode": 4,
       "googleServicesFile": "./google-services.json"
     },
     "plugins": [
